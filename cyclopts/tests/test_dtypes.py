@@ -14,7 +14,7 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 import os
 import numpy  as np
 
-from analysis import dtypes
+from cyclopts import dtypes
 
 
 if __name__ == '__main__':

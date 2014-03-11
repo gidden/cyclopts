@@ -16,7 +16,7 @@ import os
 import numpy  as np
 from collections import Container, Mapping
 
-from analysis import stlcontainers
+from cyclopts import stlcontainers
 
 
 if __name__ == '__main__':
