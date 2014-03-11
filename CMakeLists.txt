@@ -8,6 +8,11 @@ SET( CYCLOPTS_SOURCE_DIR ${CMAKE_SOURCE_DIR} )
 # Tell CMake where the modules are
 SET( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CYCLOPTS_SOURCE_DIR}/cmake )
 
+# Use new Python library finder
+find_package(PythonInterp REQUIRED)
+find_package(PythonLibsNew REQUIRED)
+message("-- PYTHON_EXECUTABLE: ${PYTHON_EXECUTABLE}")
+
 # Find cycluscore
 FIND_PACKAGE( cycluscore REQUIRED )
 SET(CYCLOPTS_INCLUDE_DIR ${CYCLOPTS_INCLUDE_DIR} ${CYCLUS_CORE_INCLUDE_DIR})
@@ -22,11 +27,6 @@ INCLUDE_DIRECTORIES( ${CYCLOPTS_INCLUDE_DIR} )
 # This makes all the libraries build as SHARED
 set(BUILD_SHARED_LIBS true)
 message("-- CMake Install Prefix: ${CMAKE_INSTALL_PREFIX}")
-
-# Use new Python library finder
-find_package(PythonInterp REQUIRED)
-find_package(PythonLibsNew REQUIRED)
-message("-- PYTHON_EXECUTABLE: ${PYTHON_EXECUTABLE}")
 
 # Include the CMake script UseCython.cmake.  This defines add_cython_module().
 # Instruction for use can be found at the top of cmake/UseCython.cmake.
@@ -48,6 +48,20 @@ add_custom_target(ReplicatePythonSourceTree ALL "${CMAKE_COMMAND}" -P
 
 ADD_SUBDIRECTORY(cpp)
 ADD_SUBDIRECTORY(cyclopts)
+
+get_property(inc_dirs DIRECTORY PROPERTY INCLUDE_DIRECTORIES)
+message("-- C_INCLUDE_PATH for ${CMAKE_CURRENT_SOURCE_DIR}: ${inc_dirs}")
+
+message("-- Copying C/C++ header files.")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/cpp/" DESTINATION
+    "${CMAKE_BINARY_DIR}/cyclopts/include/" FILES_MATCHING PATTERN "*.h")
+
+message("-- Copying Cython header files.")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/cyclopts/"
+    DESTINATION "${CMAKE_BINARY_DIR}/cyclopts/"
+    FILES_MATCHING PATTERN "*.pxd"
+                   PATTERN "lib" EXCLUDE
+                   PATTERN "include" EXCLUDE)
 
 # # Build cycamore_unit_tests
 # ADD_EXECUTABLE( cyclopts ${CYCLOPTS_SRC} )

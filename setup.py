@@ -13,7 +13,7 @@ except ImportError:
 # much of the inspiration for this setup file has come from pyne (pyne.io)
 
 # Thanks to http://patorjk.com/software/taag/
-cyclopts_logo = """ \
+cyclopts_logo = r""" 
    ___           _             _       
   / __\   _  ___| | ___  _ __ | |_ ___ 
  / / | | | |/ __| |/ _ \| '_ \| __/ __|
@@ -105,6 +105,7 @@ def main_body():
 
 def main():
     success = False
+    print(cyclopts_logo)
     try:
         main_body()
         success = True
