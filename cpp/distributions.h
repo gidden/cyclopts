@@ -1,5 +1,5 @@
-#ifndef EXCHNG_ANALYSIS_GENERATOR_H_
-#define EXCHNG_ANALYSIS_GENERATOR_H_
+#ifndef CYCLOPTS_GENERATOR_H_
+#define CYCLOPTS_GENERATOR_H_
 
 #include <string>
 
@@ -15,4 +15,4 @@ class Generator {
   std::string type_;
 };
 
-#endif // EXCHNG_ANALYSIS_GENERATOR_H_
+#endif // CYCLOPTS_GENERATOR_H_
