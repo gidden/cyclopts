@@ -9,15 +9,16 @@ SET(
   PARENT_SCOPE
   )
 
+FILE(GLOB src_files "${CMAKE_CURRENT_SOURCE_DIR}/*.cc")
 SET(
-  CYCLOPTS_SRC ${CYCLOPTS_SRC} 
-  "${CMAKE_CURRENT_SOURCE_DIR}/distributions.cc"
+  CYCLOPTS_SRC ${CYCLOPTS_SRC} ${src_files}
   PARENT_SCOPE
   )
 
+FILE(GLOB header_files "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
 INSTALL(
   FILES
-  distributions.h
+  ${header_files}
   DESTINATION include/cyclopts
   COMPONENT cyclopts
 )

@@ -3,8 +3,6 @@
 
 #include <string>
 
-void run_exchange(int nsup, int ncon, double fraction, bool flag) {}
-
 class Generator {
  public:
   Generator();

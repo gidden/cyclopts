@@ -11,7 +11,7 @@
 from libcpp cimport bool as cpp_bool
 
 # function signatures
-cdef extern from "distributions.h" :
+cdef extern from "execute.h" :
 
     void run_exchange() except +
     void run_exchange(int) except +

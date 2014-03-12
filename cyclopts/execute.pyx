@@ -8,7 +8,7 @@
 ################################################
 """
 """
-cimport cpp_distributions
+cimport cpp_execute
 from libcpp cimport bool as cpp_bool
 
 
@@ -16,7 +16,7 @@ from libcpp cimport bool as cpp_bool
 def run_exchange(nsup, ncon, fraction, flag):
     """run_exchange(nsup, ncon, fraction, flag)
     no docstring for run_exchange, please file a bug report!"""
-    cpp_distributions.run_exchange(<int> nsup, <int> ncon, <double> fraction, <bint> flag)
+    cpp_execute.run_exchange(<int> nsup, <int> ncon, <double> fraction, <bint> flag)
 
 
 

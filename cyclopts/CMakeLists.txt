@@ -23,7 +23,7 @@ set_source_files_properties("${PROJECT_SOURCE_DIR}/cyclopts/stlcontainers.pyx"
                             PROPERTIES CYTHON_IS_CXX TRUE)
 cython_add_module(stlcontainers stlcontainers.pyx)
 
-# distributions
-set_source_files_properties("${PROJECT_SOURCE_DIR}/cyclopts/distributions.pyx"
+# execute
+set_source_files_properties("${PROJECT_SOURCE_DIR}/cyclopts/execute.pyx"
                             PROPERTIES CYTHON_IS_CXX TRUE)
-cython_add_module(distributions distributions.pyx ${})
+cython_add_module(execute execute.pyx ${})
