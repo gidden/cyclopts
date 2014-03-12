@@ -1,5 +1,7 @@
 from xdress.utils import apiname
 
+parsers = "clang"
+
 package = 'cyclopts'     # top-level python package name
 packagedir = 'cyclopts'  # location of the python package
 
