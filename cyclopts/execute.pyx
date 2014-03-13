@@ -9,14 +9,13 @@
 """
 """
 cimport cpp_execute
-from libcpp cimport bool as cpp_bool
 
 
 
-def run_exchange(nsup, ncon, fraction, flag):
-    """run_exchange(nsup, ncon, fraction, flag)
-    no docstring for run_exchange, please file a bug report!"""
-    cpp_execute.run_exchange(<int> nsup, <int> ncon, <double> fraction, <bint> flag)
+def run_rxtr_req(n_supply=1, n_consume=1, con_node_avg=1, n_commod=1, con_commod_avg=1, excl_prob=0.0, connect_prob=1.0):
+    """run_rxtr_req(n_supply=1, n_consume=1, con_node_avg=1, n_commod=1, con_commod_avg=1, excl_prob=0.0, connect_prob=1.0)
+    no docstring for run_rxtr_req, please file a bug report!"""
+    cpp_execute.run_rxtr_req(<int> n_supply, <int> n_consume, <int> con_node_avg, <int> n_commod, <int> con_commod_avg, <double> excl_prob, <double> connect_prob)
 
 
 

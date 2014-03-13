@@ -8,16 +8,19 @@
 ################################################
 
 
-from libcpp cimport bool as cpp_bool
+
 
 # function signatures
 cdef extern from "execute.h" :
 
-    void run_exchange() except +
-    void run_exchange(int) except +
-    void run_exchange(int, int) except +
-    void run_exchange(int, int, double) except +
-    void run_exchange(int, int, double, cpp_bool) except +
+    void run_rxtr_req() except +
+    void run_rxtr_req(int) except +
+    void run_rxtr_req(int, int) except +
+    void run_rxtr_req(int, int, int) except +
+    void run_rxtr_req(int, int, int, int) except +
+    void run_rxtr_req(int, int, int, int, int) except +
+    void run_rxtr_req(int, int, int, int, int, double) except +
+    void run_rxtr_req(int, int, int, int, int, double, double) except +
 
 
 
