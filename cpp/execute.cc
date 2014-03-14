@@ -2,7 +2,10 @@
 
 #include <vector>
 #include <math.h>
+#include <cassert>
 #include <algorithm>
+
+#include <boost/math/special_functions/round.hpp>
 
 #include "exchange_graph.h"
 #include "prog_solver.h"
@@ -95,25 +98,21 @@ void run_rxtr_req(int n_supply,
   }  
 
   for (int i = 0; i != n_commods; i++) {
-    std::vector<ExchangeNode::Ptr> reqs = reqs_by_commods[i];
-    int n_reqs = reqs.size();
-    std::vector<ExchangeNodeGroup::Ptr> sups = supply_by_commods[i];
-    int n_sups = sups.size();
-    double N_arcs_d = n_sups * (n_reqs - 1) * connect_prob + n_sups;
-    double pref;
-    int N_arcs = std::modf(N_arcs_d, &pref) > 0.5 ?
-                 std::ceil(N_arcs_d) : std::floor(N_arcs_d);
-    int n_arcs = 0;
-    while (n_arcs != N_arcs) {
-      int i_req = n_arcs % n_reqs;
-      int i_sup = n_arcs % n_sups;
-      if (i_req == 0) std::random_shuffle(reqs.begin(), reqs.end());
-      if (i_sup == 0) std::random_shuffle(sups.begin(), sups.end());
+    std::vector<ExchangeNode::Ptr>& reqs = reqs_by_commods[i];
+    std::vector<ExchangeNodeGroup::Ptr>& sups = supply_by_commods[i];
+    int N_arcs = boost::math::round(
+        sups.size() * (reqs.size() - 1) * connect_prob + sups.size());
+
+    std::vector< std::pair<ExchangeNode::Ptr, ExchangeNodeGroup::Ptr> >
+        pairs = s.ReqArcs(reqs, sups, N_arcs);
+
+    assert(pairs.size() == N_arcs);
+    
+    for (int j = 0; j != pairs.size(); j++) {
       ExchangeNode::Ptr sup(new ExchangeNode());
-      sups[i_sup]->AddExchangeNode(sup);
-      Arc a(reqs[i_req], sup);
+      pairs[j].second->AddExchangeNode(sup);
+      Arc a(pairs[j].first, sup);
       g.AddArc(a);
-      n_arcs++;
     }
   }
   

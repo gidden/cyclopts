@@ -5,22 +5,18 @@
 #include <vector>
 
 #include <boost/random/mersenne_twister.hpp>
+#include <boost/random/uniform_int.hpp>
+#include <boost/random/variate_generator.hpp>
 #include <boost/random/uniform_real.hpp>
 
-class Generator {
- public:
-  Generator();
-
-  std::string type() const { return type_; }
-
- private:
-  std::string type_;
-};
+#include "exchange_graph.h"
 
 class Sampler {
  public:
   Sampler() {};
+
   double SampleReqAmt() { return 10.0; }
+
   int SampleNNodes(int avg) { return avg; }
 
   /// generates a commodity index vector.
@@ -69,6 +65,30 @@ class Sampler {
     return v;
   }
 
+  /// returns a random set of request-node, supply-group pairings with size
+  /// equal to N
+  std::vector< std::pair<cyclus::ExchangeNode::Ptr, cyclus::ExchangeNodeGroup::Ptr> >
+      ReqArcs(std::vector<cyclus::ExchangeNode::Ptr>& reqs,
+              std::vector<cyclus::ExchangeNodeGroup::Ptr>& sups,
+              int N) {
+    
+    std::vector< std::pair<cyclus::ExchangeNode::Ptr,
+        cyclus::ExchangeNodeGroup::Ptr> > pairs;
+    for (int j = 0; j != reqs.size(); j++) {
+      for (int k = 0; k != sups.size(); k++) {
+        pairs.push_back(std::make_pair(reqs[j], sups[k]));
+      }
+    }
+
+    boost::uniform_int<> uni_dist;
+    boost::variate_generator<boost::mt19937&, boost::uniform_int<> >
+        rand_num(rng_, uni_dist);
+    std::random_shuffle(pairs.begin(), pairs.end(), rand_num);
+
+    return std::vector< std::pair<cyclus::ExchangeNode::Ptr,
+        cyclus::ExchangeNodeGroup::Ptr> > (pairs.begin(), pairs.begin() + N);
+  }
+  
  private:
   boost::mt19937 rng_;
 };
