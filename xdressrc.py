@@ -9,8 +9,9 @@ packagedir = 'cyclopts'  # location of the python package
 
 includes = [
     os.path.expanduser('~/.local/include/cyclus'),
+    '/usr/include/boost',
     ]
 
 functions = [
-    apiname('run_rxtr_req', 'cpp/execute.*', incfiles='execute.h'),
+    apiname('*', 'cpp/execute.*', incfiles='execute.h'),
     ]

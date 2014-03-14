@@ -26,4 +26,5 @@ cython_add_module(stlcontainers stlcontainers.pyx)
 # execute
 set_source_files_properties("${PROJECT_SOURCE_DIR}/cyclopts/execute.pyx"
                             PROPERTIES CYTHON_IS_CXX TRUE)
-cython_add_module(execute execute.pyx ${})
+cython_add_module(execute execute.pyx ${CYCLOPTS_SRC})
+target_link_libraries(execute dl ${LIBS})
