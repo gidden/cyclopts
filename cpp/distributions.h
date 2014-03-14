@@ -67,6 +67,12 @@ class Sampler {
 
   /// returns a random set of request-node, supply-group pairings with size
   /// equal to N
+  ///
+  /// @param reqs all request nodes that could possibly be connected with a
+  /// supply group
+  /// @param sups all supply node groups that could be connected with a request
+  /// node in reqs
+  /// @param N the total number of connections to be made
   std::vector< std::pair<cyclus::ExchangeNode::Ptr, cyclus::ExchangeNodeGroup::Ptr> >
       ReqArcs(std::vector<cyclus::ExchangeNode::Ptr>& reqs,
               std::vector<cyclus::ExchangeNodeGroup::Ptr>& sups,
