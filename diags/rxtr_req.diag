@@ -1,0 +1,70 @@
+blockdiag {
+
+   // set default shape
+   default_shape = roundedbox;  // default value is 'box'
+
+   // set default colors
+   default_node_color = lightblue;
+   default_group_color = "#7777FF";
+   default_linecolor = blue;
+   default_textcolor = black;
+
+   A [label = "Sample Problem Space"]
+
+   A -> B1;
+
+   B1 [label = "Sample Request Amount", width = 200]
+   B2 [label = "Sample Subrequest Number"] // batch -> assembly
+   B3 [label = "Sample Base Commodity"]
+   B4 [label = "Add Initial Subrequests"]
+   B1 -> B2 -> B3 -> B4;
+   group requests {
+      label = "For each request in n_request"
+      orientation = portrait
+      color = lightsalmon 
+      B1; B2; B3; B4;
+
+      B11 [label = "Sample Multi-Commodity Zone Size"] // % of subrequests
+      B12 [label = "Sample Commodities in Zone"] 
+      B4 -> B11 -> B12;
+      // requires n_commod >= n_zones * commods_per_zone + 1
+      group zones {
+         label = "For each zone in n_zones"
+	 color = lightgreen
+	 B11; B12;
+	 
+      	 B111 [label = "Add Subrequests equal to Zone Size"]
+	 B12 -> B111;
+      	 group per_zone {
+            label = "For each commod in Zone"
+	    B111;
+      	 }
+      }
+   }
+
+   C1 [label = "Sample Commodities to Supply"]
+   C2 [label = "Add Supply Group for each Commodity"]
+   B111 -> C1 -> C2;
+   group supply {
+      label = "For each supply in n_supply"
+      color = purple
+      orientation = portrait
+      C1; C2;
+   }
+
+   D [label = "Sample Connections"]
+   C2 -> D;
+
+   E1 [label = "Sample Preferences"]
+   E2 [label = "Sample Unit Capacities"]
+   E3 [label = "Sample Supply RHS"]
+   E4 [label = "Sample Demand RHS"]
+   D -> E1 -> E2 -> E3 -> E4;
+   group instance {
+      label = "Instance Construction"
+      color = orange
+      orientation = portrait
+      E1; E2; E3; E4;
+   }
+
+}
