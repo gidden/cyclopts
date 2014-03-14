@@ -1,6 +1,8 @@
 #include "execute.h"
 
 #include <vector>
+#include <math.h>
+#include <algorithm>
 
 #include "exchange_graph.h"
 #include "prog_solver.h"
@@ -60,19 +62,20 @@ void run_rxtr_req(int n_supply,
   Sampler s;
 
   std::map<ExchangeNode::Ptr, int> request_commods;
-  std::map<int, std::vector<ExchangeNode::Ptr> > request_by_commods;
+  std::map<int, std::vector<ExchangeNode::Ptr> > reqs_by_commods;
     
   for (int i = 0; i != n_demand; i++) {
-    double amt = s.SampleReqAmt();
+    double amt = s.SampleReqAmt(); // total request amount
     RequestGroup::Ptr rg(new RequestGroup(amt));
-    int n_nodes = s.SampleNNodes(dem_node_avg);
+    int n_nodes = s.SampleNNodes(dem_node_avg); // total number of request nodes in group
     std::vector<int> commods = s.SampleCommods(n_nodes, n_commods,
-                                               dem_commod_avg);
+                                               dem_commod_avg); // assign commodity to each node
     for (int j = 0; j != n_nodes; j++) {
-      ExchangeNode::Ptr n(new ExchangeNode(amt, s.SampleLinear(excl_prob))); // revisit this!
+      // revisit this!
+      ExchangeNode::Ptr n(new ExchangeNode(amt, s.SampleLinear(excl_prob))); // request node amt and exclusivity
       rg->AddExchangeNode(n);
       request_commods[n] = commods[j];
-      request_by_commods[commods[j]].push_back(n);
+      reqs_by_commods[commods[j]].push_back(n);
     }
     g.AddRequestGroup(rg);
   }
@@ -85,21 +88,34 @@ void run_rxtr_req(int n_supply,
                                                            avg_commod_sup);
     for (int j = 0; j != commod_subset.size(); j++) {
       ExchangeNodeGroup::Ptr sg(new ExchangeNodeGroup());
-      std::vector<ExchangeNode::Ptr>& nodes = request_by_commods[commod_subset[j]];
-      std::vector<int> subset_indicies = s.SampleSubsetProb(nodes.size(),
-                                                            connect_prob);
-      for (int k = 0; k != subset_indicies.size(); k++) {
-        ExchangeNode::Ptr sup(new ExchangeNode());
-        ExchangeNode::Ptr req = nodes[k];
-        Arc a(req, sup);
-        sg->AddExchangeNode(sup);
-        g.AddArc(a);
-      }
       g.AddSupplyGroup(sg);
       supply_commods[sg] = commod_subset[j];
       supply_by_commods[commod_subset[j]].push_back(sg);
     }
   }  
+
+  for (int i = 0; i != n_commods; i++) {
+    std::vector<ExchangeNode::Ptr> reqs = reqs_by_commods[i];
+    int n_reqs = reqs.size();
+    std::vector<ExchangeNodeGroup::Ptr> sups = supply_by_commods[i];
+    int n_sups = sups.size();
+    double N_arcs_d = n_sups * (n_reqs - 1) * connect_prob + n_sups;
+    double pref;
+    int N_arcs = std::modf(N_arcs_d, &pref) > 0.5 ?
+                 std::ceil(N_arcs_d) : std::floor(N_arcs_d);
+    int n_arcs = 0;
+    while (n_arcs != N_arcs) {
+      int i_req = n_arcs % n_reqs;
+      int i_sup = n_arcs % n_sups;
+      if (i_req == 0) std::random_shuffle(reqs.begin(), reqs.end());
+      if (i_sup == 0) std::random_shuffle(sups.begin(), sups.end());
+      ExchangeNode::Ptr sup(new ExchangeNode());
+      sups[i_sup]->AddExchangeNode(sup);
+      Arc a(reqs[i_req], sup);
+      g.AddArc(a);
+      n_arcs++;
+    }
+  }
   
   solver.ExchangeSolver::Solve(&g);
 }
