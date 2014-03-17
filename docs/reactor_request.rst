@@ -43,17 +43,81 @@ arbitrarily, an inherently random process.
 number of requesters
 --------------------
 
+The number of request groups, where a group defines an overall request that will
+fuel a reactor. Some portion of that request may be satisfied by more than one
+commodity.
+
 assemblies per request
 ----------------------
 
+How many items to include in the request group. Nominally, a small number (1, 2)
+corresponds to a "batch"-type fueling system whereas a large number corresponds
+to an assembly-type fueling system. Generally, each assembly corresponds to a
+node in the exchange graph. If an assembly can be satisfied by multiple
+commodities, multiple exchange nodes will be added while the subsequent demand
+constraint remains the same.
+
 multicommodity zone fraction
------------------------------
+----------------------------
+
+The fraction of requests that can be met with more than one commodity. This
+expands the number of request nodes by (factor * assemblies * (commodities - 1)).
 
 commodities in multicommodity zone
 ----------------------------------
 
+The number of commodities that satisfy the multicommodity fraction of assemblies.
+
 connection probability
 ----------------------
 
+A measure of the probability that an request node and supply node of the same
+commodity will be connected. A probabiliy of 0 indicates that the graph is
+minimally connected (i.e., each request node has exactly one arc to it) whereas
+a probability of 1 indicates that the graph is maximally connected (all possible
+connections are made).
+
 exclusion probability
 ---------------------
+
+The probability that a given assembly request will be exclusive (i.e., each
+commodity-assembly request associated with it is exclusive).
+
+number of suppliers
+-------------------
+
+The number of suppliers. A supplier may supply more than one commodity. By
+definition, there must be at least one supplier per commodity. If there are more
+suppliers than commodities, the additional suppliers are randomly assigned base
+commodities.
+
+number of commodities per supplier
+----------------------------------
+
+The average number of commodities that a supplier supplies. For each supplier,
+their total number of commodities is sampled and their individual additional
+commodities are assigned randomly.
+
+number of supply constraints
+----------------------------
+
+The average number of additional supply constraints that a supply group adds to
+the solver.
+
+number of demand constraints
+----------------------------
+
+The average number of additional demand constraints that a supply group adds to
+the solver.
+
+supply constraint values
+------------------------
+
+demand constraint values
+------------------------
+
+unit capacity coefficient values
+--------------------------------
+
+preference coefficient values
+-----------------------------
