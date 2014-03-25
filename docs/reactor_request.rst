@@ -1,4 +1,3 @@
-
 Overview
 ========
 
@@ -45,12 +44,23 @@ number of commodities
 
 The number of commodities associated with the exchange.
 
+Distribution Candidacy
+~~~~~~~~~~~~~~~~~~~~~~
+
+None
+
 number of requesters
 --------------------
 
 The number of request groups, where a group defines an overall request that will
 fuel a reactor. Some portion of that request may be satisfied by more than one
 commodity.
+
+Distribution Candidacy
+~~~~~~~~~~~~~~~~~~~~~~
+
+None
+
 
 assemblies per request
 ----------------------
@@ -62,31 +72,75 @@ node in the exchange graph. If an assembly can be satisfied by multiple
 commodities, multiple exchange nodes will be added while the subsequent demand
 constraint remains the same.
 
+It is likely that this parameter will be sampled bimodally -- in small numbers
+(i.e., 1 - 3) to model batch-type reactors and in large numbers (40 - 65). The
+large number scaling is indicative of a range for an AP1000 operating in a
+4-batch mode (i.e., 157 / 4) to a "Typical XL Plant" running in 3-batch mode
+(i.e., 193 / 3) (see
+http://www.nrc.gov/reactors/new-reactors/design-cert/ap1000/dcd/Tier%202/Chapter%204/4-1_r14.pdf).
+
+Distribution Candidacy
+~~~~~~~~~~~~~~~~~~~~~~
+
+Possibly a integral distribution around an average.   
+
+total request value
+-------------------
+
+Request values are modeling total reactor requests. A basic assumption will be
+made that each assembly-type object will be equal in size and can be represented
+as having a quantity of unity.
+
+Distribution Candidacy
+~~~~~~~~~~~~~~~~~~~~~~
+
+None
+
 multicommodity zone fraction
 ----------------------------
 
 The fraction of requests that can be met with more than one commodity. This
-expands the number of request nodes by (factor * assemblies * (commodities - 1)).
+expands the number of request nodes by (fraction * assemblies * (commodities - 1)).
+
+Distribution Candidacy
+~~~~~~~~~~~~~~~~~~~~~~
+
+Possibly a distribution around an average. 
 
 commodities in multicommodity zone
 ----------------------------------
 
 The number of commodities that satisfy the multicommodity fraction of assemblies.
 
+Distribution Candidacy
+~~~~~~~~~~~~~~~~~~~~~~
+
+Possibly a integral distribution around an average. 
+
 connection probability
 ----------------------
 
-A measure of the probability that an request node and supply node of the same
+A measure of the probability that a request node and supply node of the same
 commodity will be connected. A probabiliy of 0 indicates that the graph is
 minimally connected (i.e., each request node has exactly one arc to it) whereas
 a probability of 1 indicates that the graph is maximally connected (all possible
 connections are made).
+
+Distribution Candidacy
+~~~~~~~~~~~~~~~~~~~~~~
+
+Possibly a distribution around an average, but unlikely.  
 
 exclusion probability
 ---------------------
 
 The probability that a given assembly request will be exclusive (i.e., each
 commodity-assembly request associated with it is exclusive).
+
+Distribution Candidacy
+~~~~~~~~~~~~~~~~~~~~~~
+
+Possibly a distribution around an average, but unlikely. 
 
 number of suppliers
 -------------------
@@ -96,6 +150,11 @@ definition, there must be at least one supplier per commodity. If there are more
 suppliers than commodities, the additional suppliers are randomly assigned base
 commodities.
 
+Distribution Candidacy
+~~~~~~~~~~~~~~~~~~~~~~
+
+None
+
 number of commodities per supplier
 ----------------------------------
 
@@ -104,6 +163,11 @@ their total number of commodities is sampled and their individual additional
 commodities are assigned randomly. Accordingly, the total number of supply
 groups is equal to the number of suppliers multiplied by the average number of
 commodities per supplier.
+
+Distribution Candidacy
+~~~~~~~~~~~~~~~~~~~~~~
+
+Possibly an integral distribution around an average.
 
 number of supply constraints
 ----------------------------
@@ -117,6 +181,11 @@ Two primary issues exist:
 * whether the number of additional constraints should be a static or average
   value
 
+Distribution Candidacy
+~~~~~~~~~~~~~~~~~~~~~~
+
+Possibly an integral distribution around an average.
+
 If the average value is used, an integral, truncated distribution that peaks at
 the average will be sampled.
 
@@ -125,7 +194,15 @@ number of demand constraints
 
 The average number of additional demand constraints that a supply group adds to
 the solver. This will follow the number of supply constraints with one
-additional constraint to mirror the default mass-flow demand constraitn.
+additional constraint to mirror the default mass-flow demand constraint.
+
+Distribution Candidacy
+~~~~~~~~~~~~~~~~~~~~~~
+
+Possibly an integral distribution around an average.
+
+If the average value is used, an integral, truncated distribution that peaks at
+the average will be sampled.
 
 demand constraint values
 ------------------------
@@ -135,6 +212,12 @@ demand constraint value is equal to a given request group's total
 request. Accordingly, additional demand constraint values will either be equal
 to or approximately equal to the mass-flow demand constraint value, the effect
 of which will be investigated.
+
+Distribution Candidacy
+~~~~~~~~~~~~~~~~~~~~~~
+
+Possibly a distribution around the total request value for the given request
+group.
 
 unit capacity coefficient values
 --------------------------------
@@ -152,8 +235,11 @@ ranging. However, the following assumptions are made:
 In other words, two arbitrarily chosen supply constraints look approximately the
 same if each is normalized.
 
-The primary question remaining is which distribution to choose the unit
-capacities.
+Distribution Candidacy
+~~~~~~~~~~~~~~~~~~~~~~
+
+A distribution around unity will be used, however the distribution has yet to be
+chosen.
 
 supply constraint values
 ------------------------
@@ -182,6 +268,12 @@ one constraint enforcing that effect. It is assumed that the effect of less-than
 sufficient constraints will manifest with the first such constraint but will not
 increase with subsequent additions.
 
+Distribution Candidacy
+~~~~~~~~~~~~~~~~~~~~~~
+
+A distribution around unity will be used, however the distribution has yet to be
+chosen.
+
 preference coefficient values
 -----------------------------
 
@@ -189,3 +281,9 @@ Because preferences are a relative value, a simple (0, 1) uniform distribution
 is used for each preference assignment. A possible improvement would be to
 sample preferences in the same neighborhood for each supplier/consumer group
 pair.
+
+Distribution Candidacy
+~~~~~~~~~~~~~~~~~~~~~~
+
+A (0, 1) uniform distribution will be used with possible clustering around
+requester/supplier pairs.
