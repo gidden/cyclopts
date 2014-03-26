@@ -12,7 +12,6 @@ request satisfy the same demand. For example, a fast reactor may make a request
 for assemblies for its radial blanket. Such a request could include mostly
 natural uranium, but a subset may be replaceable with thorium. 
 
-
 Parameters
 ==========
 
@@ -49,6 +48,11 @@ Distribution Candidacy
 
 None
 
+Theoretical Basis
+~~~~~~~~~~~~~~~~~
+
+The number of commodities is a fundamental parameter for resource exchange.
+
 number of requesters
 --------------------
 
@@ -61,6 +65,10 @@ Distribution Candidacy
 
 None
 
+Theoretical Basis
+~~~~~~~~~~~~~~~~~
+
+The number of requesters is a fundamental parameter for resource exchange.
 
 assemblies per request
 ----------------------
@@ -84,17 +92,33 @@ Distribution Candidacy
 
 Possibly a integral distribution around an average.   
 
+Theoretical Basis
+~~~~~~~~~~~~~~~~~
+
+In general, the number of assemblies per request is directly proportional to the
+total number of request nodes. Therefore, scaling all requests simultaneous
+simply results in a larger problem size. Medium-scale problem sizes are handled
+by medium-scale number of assemblies.
+
 total request value
 -------------------
 
-Request values are modeling total reactor requests. A basic assumption will be
-made that each assembly-type object will be equal in size and can be represented
-as having a quantity of unity.
+Total request values are modeling full reactor requests. A basic assumption will
+be made that each assembly-type object will be equal in size and can be
+represented as having a quantity of unity.
 
 Distribution Candidacy
 ~~~~~~~~~~~~~~~~~~~~~~
 
 None
+
+Theoretical Basis
+~~~~~~~~~~~~~~~~~
+
+Perturbation effects based on variable assembly quantities manifest themselves
+as variable unit coefficients on the primary request constraint. This effect is
+handled by the addition of request constraints with distribution-sampled unit
+coefficients.
 
 multicommodity zone fraction
 ----------------------------
@@ -105,7 +129,16 @@ expands the number of request nodes by (fraction * assemblies * (commodities - 1
 Distribution Candidacy
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Possibly a distribution around an average. 
+Possibly a (0, 1) distribution around an average. 
+
+Theoretical Basis
+~~~~~~~~~~~~~~~~~
+
+Any non-trivial reactor-request resource exchange will involve demand that can
+be met by more than one commodity. Because the total number of request nodes is
+directly proportional to this parameter, a first attempt will be made with
+integral values. If a distribution is used, it will simply serve as a way to
+investigate problem sizes within the integral value bounds.
 
 commodities in multicommodity zone
 ----------------------------------
@@ -117,77 +150,33 @@ Distribution Candidacy
 
 Possibly a integral distribution around an average. 
 
-connection probability
-----------------------
+Theoretical Basis
+~~~~~~~~~~~~~~~~~
 
-A measure of the probability that a request node and supply node of the same
-commodity will be connected. A probabiliy of 0 indicates that the graph is
-minimally connected (i.e., each request node has exactly one arc to it) whereas
-a probability of 1 indicates that the graph is maximally connected (all possible
-connections are made).
-
-Distribution Candidacy
-~~~~~~~~~~~~~~~~~~~~~~
-
-Possibly a distribution around an average, but unlikely.  
+It is possible for more than one commodity to satisfy a request, and conceivable
+that an arbitrary number of commodities could satisfy a request.
 
 exclusion probability
 ---------------------
 
-The probability that a given assembly request will be exclusive (i.e., each
-commodity-assembly request associated with it is exclusive).
+The probability that a given request group will be comprised of exclusive
+requests. A basic assumption is made that for a given collection of requests
+(i.e., request group), a reactor will want each node to either be exclusively
+satisfied or not. In other words, either a request group models quantized
+assemblies or it does not.
 
 Distribution Candidacy
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Possibly a distribution around an average, but unlikely. 
 
-number of suppliers
--------------------
+Theoretical Basis
+~~~~~~~~~~~~~~~~~
 
-The number of suppliers. A supplier may supply more than one commodity. By
-definition, there must be at least one supplier per commodity. If there are more
-suppliers than commodities, the additional suppliers are randomly assigned base
-commodities.
-
-Distribution Candidacy
-~~~~~~~~~~~~~~~~~~~~~~
-
-None
-
-number of commodities per supplier
-----------------------------------
-
-The average number of commodities that a supplier supplies. For each supplier,
-their total number of commodities is sampled and their individual additional
-commodities are assigned randomly. Accordingly, the total number of supply
-groups is equal to the number of suppliers multiplied by the average number of
-commodities per supplier.
-
-Distribution Candidacy
-~~~~~~~~~~~~~~~~~~~~~~
-
-Possibly an integral distribution around an average.
-
-number of supply constraints
-----------------------------
-
-The number of additional supply constraints that a supply group adds to
-the solver. Values are integral and span [0, 3]. 
-
-Two primary issues exist:
-
-* what should the upper bound be (is there a good reason why it shouldn't be 3?)
-* whether the number of additional constraints should be a static or average
-  value
-
-Distribution Candidacy
-~~~~~~~~~~~~~~~~~~~~~~
-
-Possibly an integral distribution around an average.
-
-If the average value is used, an integral, truncated distribution that peaks at
-the average will be sampled.
+This parameter is directly related to the assembly modeling fidelity required by
+a given reactor model. A value of 0 implies minimum fidelity, a value of 1
+implies maximum fidelity, and it is conceiveable with module mixing that this
+level of fidelity may exist on a spectrum.
 
 number of demand constraints
 ----------------------------
@@ -204,6 +193,12 @@ Possibly an integral distribution around an average.
 If the average value is used, an integral, truncated distribution that peaks at
 the average will be sampled.
 
+Theoretical Basis
+~~~~~~~~~~~~~~~~~
+
+A given requester may have multiple filters on their requests (e.g., mass and
+plutonium content).
+
 demand constraint values
 ------------------------
 
@@ -219,27 +214,97 @@ Distribution Candidacy
 Possibly a distribution around the total request value for the given request
 group.
 
-unit capacity coefficient values
---------------------------------
+Theoretical Basis
+~~~~~~~~~~~~~~~~~
 
-The unit capacity coefficients are designed to model the amount of capacity
-consumed by satisfying a unit of a request, i.e., if a unit of the proposed
-resource flows along the arc in quesiton. Because the coefficients will depend
-on the process being modeled, e.g., enrichment, separations, etc., the actual
-translation function that produces such coefficients can be wide
-ranging. However, the following assumptions are made:
+Two assumptions are made for additional demand constraints: that the constraint
+values are proportional to the total mass of the demand (e.g. plutonium content
+is proportional to the total mass for plutonium-based commodities, or reactivity
+is proportional to the total mass for reactor fuel), and that variability
+amongst suppliers occurs implying that unit capacities can be sampled around
+unity (see below).
 
-* the supply constraint value is proportional to the mass flow supply constraint
-* the unit capacities are distributed with an average of unity
+number of suppliers
+-------------------
 
-In other words, two arbitrarily chosen supply constraints look approximately the
-same if each is normalized.
+The number of suppliers. A supplier may supply more than one commodity. By
+definition, there must be at least one supplier per commodity. If there are more
+suppliers than commodities, the additional suppliers are randomly assigned base
+commodities.
 
 Distribution Candidacy
 ~~~~~~~~~~~~~~~~~~~~~~
 
-A distribution around unity will be used, however the distribution has yet to be
-chosen.
+None
+
+Theoretical Basis
+~~~~~~~~~~~~~~~~~
+
+The number of suppliers is a fundamental parameter for resource exchange.
+
+fraction of multi-commodities suppliers
+---------------------------------------
+
+The fraction of suppliers that supply more than one commodity. 
+
+Distribution Candidacy
+~~~~~~~~~~~~~~~~~~~~~~
+
+Possibly a distribution around an average.
+
+Theoretical Basis
+~~~~~~~~~~~~~~~~~
+
+An example might include a fast reactor fuel supplier that supplies multiple
+types of fast reactor fuel defined as different commodities.
+
+number of commodities per supplier
+----------------------------------
+
+The average number of commodities that a multicommodity supplier supplies. 
+
+Distribution Candidacy
+~~~~~~~~~~~~~~~~~~~~~~
+
+Primarily two cases of interest exist. The first assumes a relatively even
+distribution of suppliers per commodity. The second assumes that the
+distribution peaks at some commodity, while some are minimally satisfied. The
+former case will be investigated first.
+
+Theoretical Basis
+~~~~~~~~~~~~~~~~~
+
+A supplier may offer more than one commodity that share constraint values, e.g.,
+a fast reactor fuel supplier may offer two types of fast reactor fuel which are
+istopically similar but treated as separate commodities.
+
+number of supply constraints
+----------------------------
+
+The number of additional supply constraints that a supply group adds to
+the solver. Values are integral and span [1, 3]. 
+
+Two primary issues exist:
+
+* what should the upper bound be (is there a good reason why it shouldn't be 3?)
+* whether the number of additional constraints should be a static or average
+  value
+
+See the discussion regarding supply constraint values.
+
+Distribution Candidacy
+~~~~~~~~~~~~~~~~~~~~~~
+
+Possibly an integral distribution around an average.
+
+If the average value is used, an integral, truncated distribution that peaks at
+the average will be sampled.
+
+Theoretical Basis
+~~~~~~~~~~~~~~~~~
+
+A given supplier may have multiple constraints on their supply, for example
+process and existing inventory constraints.
 
 supply constraint values
 ------------------------
@@ -271,8 +336,41 @@ increase with subsequent additions.
 Distribution Candidacy
 ~~~~~~~~~~~~~~~~~~~~~~
 
+Described above.
+
+Theoretical Basis
+~~~~~~~~~~~~~~~~~
+
+Suppliers can be constrained by more than one non-related constraint (e.g.,
+process constraints and inventory constraints), which suggests the above
+approach is reasonable to investigate such cases.
+
+unit capacity/demand coefficient values
+---------------------------------------
+
+The unit capacity coefficients are designed to model the amount of capacity (or
+demand) consumed by satisfying a unit of a request, i.e., if a unit of the
+proposed resource flows along the arc in quesiton. 
+
+Distribution Candidacy
+~~~~~~~~~~~~~~~~~~~~~~
+
 A distribution around unity will be used, however the distribution has yet to be
 chosen.
+
+Theoretical Basis
+~~~~~~~~~~~~~~~~~
+
+Because the coefficients will depend on the process being modeled, e.g.,
+enrichment, separations, etc., the actual translation function that produces
+such coefficients can be wide ranging. Similarly, demand translation functions
+can be wide ranging. However, a basic assumption is made that the relation
+between the unit capacity coefficients and capacitating value is approximately
+the same for demand constraints and supply constraints in the same "class"
+(i.e., full, half, quarter of required supply).
+
+In other words, two arbitrarily chosen supply or demand constraints look
+approximately the same if each is normalized.
 
 preference coefficient values
 -----------------------------
@@ -287,3 +385,31 @@ Distribution Candidacy
 
 A (0, 1) uniform distribution will be used with possible clustering around
 requester/supplier pairs.
+
+Theoretical Basis
+~~~~~~~~~~~~~~~~~
+
+A simulation's entities can have an arbitrary process for providing preference
+values, and a known use case includes preferring region-region or
+institution-institution trades. The former implies using a simple uniform
+distribution and the latter implies using a clustered distribution as described.
+
+connection probability
+----------------------
+
+A measure of the probability that a request node and supply node of the same
+commodity will be connected. A probabiliy of 0 indicates that the graph is
+minimally connected (i.e., each request node has exactly one arc to it) whereas
+a probability of 1 indicates that the graph is maximally connected (all possible
+connections are made).
+
+Distribution Candidacy
+~~~~~~~~~~~~~~~~~~~~~~
+
+Possibly a distribution around an average, but unlikely.  
+
+Theoretical Basis
+~~~~~~~~~~~~~~~~~
+
+Not all possible connections are required to be accounted for, and reducing
+possible connections reduces problem size.
