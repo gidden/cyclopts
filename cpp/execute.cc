@@ -15,6 +15,8 @@
 using namespace cyclus;
 
 void test() {
+  std::cout << "testing cyclopts!\n";
+  
   ProgSolver s("cbc", true); 
   ExchangeGraph g;
 
