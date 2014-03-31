@@ -29,4 +29,20 @@ void run_rxtr_req(int n_supply = 1,
 
 void test();
 
+class RequestRC {
+ public:
+  int i();
+  
+ private:
+  int i_;
+};
+
+class SupplyRC {
+ public:
+  int i();
+  
+ private:
+  int i_;
+};
+
 #endif // CYCLOPTS_EXECUTE_H_

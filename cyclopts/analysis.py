@@ -1,9 +1,13 @@
 from __future__ import print_function
 
-from execute import run_rxtr_req
+from cyclopts.execute import run_rxtr_req
+from cyclopts.execute import test
+from cyclopts.execute import SupplyRC
 
 def main():
-    run_rxtr_req()
+    test()
+    rc = SupplyRC()
+    print("rc's i:", rc.i())
 
 if __name__ == "__main__":
     main()

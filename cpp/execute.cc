@@ -14,6 +14,9 @@
 
 using namespace cyclus;
 
+int RequestRC::i() { return i_; }
+int SupplyRC::i() { return i_; }
+
 void test() {
   std::cout << "testing cyclopts!\n";
   

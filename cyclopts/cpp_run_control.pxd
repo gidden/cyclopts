@@ -8,23 +8,35 @@
 ################################################
 
 
-from cyclopts cimport cpp_execute
+
+
+cdef extern from "cpp/run_control.h" :
+
+    cdef cppclass RequestRC:
+        # constructors
+        RequestRC() except +
+
+        # attributes
+
+
+        # methods
+        int i() except +
+        pass
 
 
 
-cdef class SupplyRC:
-    cdef void * _inst
-    cdef public bint _free_inst
-    pass
+cdef extern from "cpp/run_control.h" :
+
+    cdef cppclass SupplyRC:
+        # constructors
+        SupplyRC() except +
+
+        # attributes
 
 
-
-
-
-cdef class RequestRC:
-    cdef void * _inst
-    cdef public bint _free_inst
-    pass
+        # methods
+        int i() except +
+        pass
 
 
 

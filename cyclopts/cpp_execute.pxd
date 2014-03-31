@@ -10,6 +10,36 @@
 
 
 
+cdef extern from "execute.h" :
+
+    cdef cppclass RequestRC:
+        # constructors
+        RequestRC() except +
+
+        # attributes
+
+
+        # methods
+        int i() except +
+        pass
+
+
+
+cdef extern from "execute.h" :
+
+    cdef cppclass SupplyRC:
+        # constructors
+        SupplyRC() except +
+
+        # attributes
+
+
+        # methods
+        int i() except +
+        pass
+
+
+
 # function signatures
 cdef extern from "execute.h" :
 
