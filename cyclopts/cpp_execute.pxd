@@ -10,6 +10,28 @@
 
 
 
+# function signatures
+cdef extern from "execute.h" :
+
+    void run_rxtr_req() except +
+    void run_rxtr_req(int) except +
+    void run_rxtr_req(int, int) except +
+    void run_rxtr_req(int, int, int) except +
+    void run_rxtr_req(int, int, int, int) except +
+    void run_rxtr_req(int, int, int, int, int) except +
+    void run_rxtr_req(int, int, int, int, int, int) except +
+    void run_rxtr_req(int, int, int, int, int, int, double) except +
+    void run_rxtr_req(int, int, int, int, int, int, double, double) except +
+    void run_rxtr_req(int, int, int, int, int, int, double, double, int) except +
+    void run_rxtr_req(int, int, int, int, int, int, double, double, int, int) except +
+
+
+
+# function signatures
+cdef extern from "execute.h" :
+
+    void test() except +
+
 
 
 

@@ -17,9 +17,9 @@ includes = [
     '/usr/include/boost',
     ]
 
-classes = [
-    ('Sampler', 'cpp/distributions.*'),
-    ]
+# classes = [
+#     ('Sampler', 'cpp/distributions.*'),
+#     ]
 
 functions = [
     apiname('*', 'cpp/execute.*', incfiles='execute.h'),
