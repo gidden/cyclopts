@@ -6,6 +6,12 @@
 
 /// place holder until a distribution class is added
 class Distribution {
+ public:
+  explicit Distribution(int i) : i_(i) {};
+  int i() { return i_; }
+
+ private:
+  int i_;
 };
 
 /// a simple template class to encapsulate an execution run control parameter
@@ -33,7 +39,7 @@ class Param {
 };
 
 /// number of assemblies
-class AssemblyParam: public Param<int> {
+class AssemblyParam : public Param<int> {
  public:
   AssemblyParam(int val = 1, Distribution* dist = NULL) : Param<int>(val, dist) {};
 };
