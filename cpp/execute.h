@@ -15,24 +15,46 @@ struct RequestParams {
   /// request node to request amount
   /// @warning all request nodes must have an entry
   std::map<int, double> u_node_qty;
-  
+
   /// whether a request is exclusive
   /// @warning all request nodes must have an entry
   std::map<int, bool> u_node_excl;
   
-  /// requester : groupings of nodes (assemblies) that meet the same demand
-  /// @warning all request groups must have an entry
-  std::map<int, std::vector< std::vector<int> > > mutual_req_grps;
+  /// node : (arc : unit capacities)
+  std::map<int, std::map<int, std::vector<double> > > node_ucaps;
+
+  /// requester or supplier : constraint rhs values 
+  /// @warning all groups must have an entry
+  std::map<int, std::vector<double> > constr_vals;
+
+  /// request node : the default mass constraint coefficient
+  /// note this is how multicommodity requests are taken into account
+  /// @warning all request nodes must have an entry
+  std::map<int, double> def_constr_coeffs;
   
-  /// requester : the average quantity of mutual request groups
+  /// requester : the default mass constraint value
   /// @warning all request groups must have an entry
-  /// @warning the ordering of vector entries must follow mutual_req_grps
-  std::map<int, std::vector<int> > mutual_req_avg_qty;
+  std::map<int, double> def_constr_val;
+
+  /// arc id : u_node id and v_node id
+  std::map<int, std::pair<int, int> > arcs_to_nodes;
+
+  /// the preference associated with an arc
+  /// @warning all arcs must have an entry
+  std::map<int, double> arc_pref;
+    
+  /// /// requester : groupings of nodes (assemblies) that meet the same demand
+  /// /// @warning all request groups must have an entry
+  /// std::map<int, std::vector< std::vector<int> > > mutual_req_grps;
+  
+  /// /// requester : the average quantity of mutual request groups
+  /// /// @warning all request groups must have an entry
+  /// /// @warning the ordering of vector entries must follow mutual_req_grps
+  /// std::map<int, std::vector<int> > mutual_req_avg_qty;
 
   /// /// request node to commodity
   /// std::map<int, int> u_node_commods;
 
-  /// std::map<int, std::map<int, std::vector<double> > > node_ucaps;
 };
 
 struct SupplyParams {

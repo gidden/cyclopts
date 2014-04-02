@@ -21,6 +21,15 @@ written to (i.e., whether to write to a new database or add to an existing
 one). The python layer can then manage any analysis as required on the
 database(s).
 
+Notes
+=====
+
+Implementation differences w.r.t. the Cyclus Exchange Graph
+-----------------------------------------------------------
+
+* default capacity constraint values are added at the end of the respective
+  constrait coefficient and rhs value lists
+
 Adding C++ Files
 ================
 

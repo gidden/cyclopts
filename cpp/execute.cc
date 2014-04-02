@@ -75,9 +75,38 @@ void add_requests(RequestParams& params,
       id_to_node[node_id] = n;
     }
 
+    std::vector<double>& vals = params.constr_vals[grp_id];
+    for (i = 0; i != vals.size(); i++) {
+      rg->AddCapacity(vals[i]);
+    }
+    rg->AddCapacity(params.def_constr_val[grp_id]);
     g.AddRequestGroup(rg);
   }
   
+}
+
+void add_arcs(RequestParams& params,
+              ExchangeGraph& g, 
+              std::map<int, ExchangeNode::Ptr>& id_to_node,
+              std::map<int, Arc>& id_to_arc) {
+  
+  std::map<int, std::pair<int, int> >& arcs_to_nodes = params.arcs_to_nodes;
+  std::map<int, std::pair<int, int> >::iterator m_it;
+  int u_id, v_id, a_id;
+  ExchangeNode::Ptr u, v;
+  for (m_it = arcs_to_nodes.begin(); m_it != arcs_to_nodes.end(); ++m_it) {
+    a_id = m_it->first;
+    u_id = m_it->second.first;
+    v_id = m_it->second.second;
+    u = id_to_node[u_id];
+    v = id_to_node[v_id];
+    Arc a(u, v);
+    id_to_arc[a_id] = a;
+    u->unit_capacities[a] = params.node_ucaps[u_id][a_id];
+    u->unit_capacities[a].push_back(params.def_constr_coeffs[u_id]); // @TODO confirm this is correct
+    u->prefs[a] = params.arc_pref[a_id];
+    v->unit_capacities[a] = params.node_ucaps[v_id][a_id];
+  }
 }
 
 void execute_exchange(RequestParams& params, std::string db_path) {
@@ -86,8 +115,10 @@ void execute_exchange(RequestParams& params, std::string db_path) {
 
   std::map<int, ExchangeNode::Ptr> id_to_node;
   std::map<int, RequestGroup::Ptr> id_to_req_grp;
+  std::map<int, Arc> id_to_arc;
 
   add_requests(params, g, id_to_node, id_to_req_grp);
+  add_arcs(params, g, id_to_node, id_to_arc);
 
   // // this belongs in the constraint addition
   // std::vector< std::vector<int> >& mutual_grps = params.mutual_req_grps[grp_id];
