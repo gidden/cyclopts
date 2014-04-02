@@ -16,6 +16,7 @@ def main():
     # param = AssemblyParam()
     run_rxtr_req(rc)
     print("rc's i:", rc.i())
+    return rc.i()
 
 if __name__ == "__main__":
     main()

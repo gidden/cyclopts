@@ -63,9 +63,9 @@ file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/cyclopts/"
                    PATTERN "lib" EXCLUDE
                    PATTERN "include" EXCLUDE)
 
-# # Build cycamore_unit_tests
-# ADD_EXECUTABLE( cyclopts ${CYCLOPTS_SRC} )
-# TARGET_LINK_LIBRARIES( cyclopts dl ${LIBS} )
+# # Build cyclopts_unit_tests
+# ADD_EXECUTABLE( cyclopts_unit_tests ${CYCLOPTS_SRC} )
+# TARGET_LINK_LIBRARIES( cyclopts_unit_tests dl ${LIBS} )
 
 # INSTALL(
 #   TARGETS cyclopts
