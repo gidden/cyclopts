@@ -9,6 +9,18 @@ Cyclus to instantiate and execute the exchange. The Python-C++ communication is
 made possible by using [xdress](xdress.org) to generate Cython wrappers from the
 C++ source code. Pretty neat!
 
+Basic Workflow Strategy
+=======================
+
+For a given exchange, all parameters and values are defined in the Python layer
+using POD, STL containers, or simple structs. The C++ layer is responsible for
+translating those data into a Cyclus exchange graph and solver, executing the
+solve, and dumping graph and solution data to an output database using the tools
+available in Cyclus. The python layer will manage which database is actually
+written to (i.e., whether to write to a new database or add to an existing
+one). The python layer can then manage any analysis as required on the
+database(s).
+
 Adding C++ Files
 ================
 
