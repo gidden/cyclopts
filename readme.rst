@@ -16,7 +16,7 @@ Adding *.h/*.cc files takes a number of steps in order to hook them into the
 xdress workflow.
 
 This mini-tutorial assumes that you have some header/implementation file pair,
-``mycpp.h`` and ``mycpp.cc``. Of course start off by ``git add``ing them. The
+``mycpp.h`` and ``mycpp.cc``. Of course start off by ``git add`` ing them. The
 ``CMakeLists.txt`` file in ``cyclopts/cpp`` will automatically add them to the build
 system.
 
