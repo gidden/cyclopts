@@ -8,23 +8,6 @@
 ################################################
 
 
-from cyclopts cimport cpp_execute
-
-
-
-cdef class SupplyRC:
-    cdef void * _inst
-    cdef public bint _free_inst
-    pass
-
-
-
-
-
-cdef class RequestRC:
-    cdef void * _inst
-    cdef public bint _free_inst
-    pass
 
 
 

@@ -140,3 +140,16 @@ cdef extern from "xdress_extra_types.h" namespace "xdress_extra_types":
         T * renew(void *) nogil except +
         void deall(T *) nogil except +
 
+# double dtype
+ctypedef struct PyXDDouble_Type:
+    Py_ssize_t ob_refcnt
+    PyTypeObject *ob_typ
+    double obval
+
+cdef object pyxd_double_getitem(void * data, void * arr)
+cdef int pyxd_double_setitem(object value, void * data, void * arr)
+cdef void pyxd_double_copyswapn(void * dest, np.npy_intp dstride, void * src, np.npy_intp sstride, np.npy_intp n, int swap, void * arr)
+cdef void pyxd_double_copyswap(void * dest, void * src, int swap, void * arr)
+cdef np.npy_bool pyxd_double_nonzero(void * data, void * arr)
+
+

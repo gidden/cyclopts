@@ -19,5 +19,228 @@ from collections import Container, Mapping
 from cyclopts import stlcontainers
 
 
+# Vector Double
+
+
+# MapIntDouble
+def test_map_int_double():
+    m = stlcontainers.MapIntDouble()
+    uismap = isinstance(-65.5555, Mapping) 
+    m[1] = 18
+    m[42] = -65.5555
+    import pprint
+    pprint.pprint(m)
+    assert_equal(len(m), 2)
+    if uismap:
+        for key, value in m[42].items():
+            print(key, value, -65.5555[key])
+            if isinstance(value, np.ndarray):
+                assert_almost_equal(value, -65.5555[key])
+            else:
+                assert_equal(value, -65.5555[key])
+    else:
+        assert_almost_equal(m[42], -65.5555)
+
+    m = stlcontainers.MapIntDouble({-65: 42.42, 18: 1.0})
+    assert_equal(len(m), 2)
+    if uismap:
+        for key, value in m[-65].items():
+            if isinstance(value, np.ndarray):
+                print(key, value, 42.42[key])
+                assert_almost_equal(value, 42.42[key])
+            else:
+                assert_equal(value, 42.42[key])
+    else:
+        assert_almost_equal(m[-65], 42.42)
+
+    n = stlcontainers.MapIntDouble(m, False)
+    assert_equal(len(n), 2)
+    if uismap:
+        for key, value in m[-65].items():
+            if isinstance(value, np.ndarray):
+                assert_almost_equal(value, 42.42[key])
+            else:
+                assert_equal(value, 42.42[key])
+    else:
+        assert_almost_equal(m[-65], 42.42)
+
+    # points to the same underlying map
+    n[42] = -65.5555
+    if uismap:
+        for key, value in m[42].items():
+            if isinstance(value, np.ndarray):
+                assert_almost_equal(value, -65.5555[key])
+            else:
+                assert_equal(value, -65.5555[key])
+    else:
+        assert_almost_equal(m[42], -65.5555)
+
+
+
+# MapIntInt
+def test_map_int_int():
+    m = stlcontainers.MapIntInt()
+    uismap = isinstance(-65, Mapping) 
+    m[1] = 18
+    m[42] = -65
+    import pprint
+    pprint.pprint(m)
+    assert_equal(len(m), 2)
+    if uismap:
+        for key, value in m[42].items():
+            print(key, value, -65[key])
+            if isinstance(value, np.ndarray):
+                assert_almost_equal(value, -65[key])
+            else:
+                assert_equal(value, -65[key])
+    else:
+        assert_almost_equal(m[42], -65)
+
+    m = stlcontainers.MapIntInt({-65: 42, 18: 1})
+    assert_equal(len(m), 2)
+    if uismap:
+        for key, value in m[-65].items():
+            if isinstance(value, np.ndarray):
+                print(key, value, 42[key])
+                assert_almost_equal(value, 42[key])
+            else:
+                assert_equal(value, 42[key])
+    else:
+        assert_almost_equal(m[-65], 42)
+
+    n = stlcontainers.MapIntInt(m, False)
+    assert_equal(len(n), 2)
+    if uismap:
+        for key, value in m[-65].items():
+            if isinstance(value, np.ndarray):
+                assert_almost_equal(value, 42[key])
+            else:
+                assert_equal(value, 42[key])
+    else:
+        assert_almost_equal(m[-65], 42)
+
+    # points to the same underlying map
+    n[42] = -65
+    if uismap:
+        for key, value in m[42].items():
+            if isinstance(value, np.ndarray):
+                assert_almost_equal(value, -65[key])
+            else:
+                assert_equal(value, -65[key])
+    else:
+        assert_almost_equal(m[42], -65)
+
+
+
+# MapIntVectorDouble
+def test_map_int_vector_double():
+    m = stlcontainers.MapIntVectorDouble()
+    uismap = isinstance([1.0, -65.5555, 1.0, -65.5555], Mapping) 
+    m[1] = [42.42, 18, 42.42, 18]
+    m[42] = [1.0, -65.5555, 1.0, -65.5555]
+    import pprint
+    pprint.pprint(m)
+    assert_equal(len(m), 2)
+    if uismap:
+        for key, value in m[42].items():
+            print(key, value, [1.0, -65.5555, 1.0, -65.5555][key])
+            if isinstance(value, np.ndarray):
+                assert_array_almost_equal(value, [1.0, -65.5555, 1.0, -65.5555][key])
+            else:
+                assert_equal(value, [1.0, -65.5555, 1.0, -65.5555][key])
+    else:
+        assert_array_almost_equal(m[42], [1.0, -65.5555, 1.0, -65.5555])
+
+    m = stlcontainers.MapIntVectorDouble({-65: [18, -65.5555, 42.42, 1.0], 18: [1.0, 42.42, -65.5555, 18]})
+    assert_equal(len(m), 2)
+    if uismap:
+        for key, value in m[-65].items():
+            if isinstance(value, np.ndarray):
+                print(key, value, [18, -65.5555, 42.42, 1.0][key])
+                assert_array_almost_equal(value, [18, -65.5555, 42.42, 1.0][key])
+            else:
+                assert_equal(value, [18, -65.5555, 42.42, 1.0][key])
+    else:
+        assert_array_almost_equal(m[-65], [18, -65.5555, 42.42, 1.0])
+
+    n = stlcontainers.MapIntVectorDouble(m, False)
+    assert_equal(len(n), 2)
+    if uismap:
+        for key, value in m[-65].items():
+            if isinstance(value, np.ndarray):
+                assert_array_almost_equal(value, [18, -65.5555, 42.42, 1.0][key])
+            else:
+                assert_equal(value, [18, -65.5555, 42.42, 1.0][key])
+    else:
+        assert_array_almost_equal(m[-65], [18, -65.5555, 42.42, 1.0])
+
+    # points to the same underlying map
+    n[42] = [1.0, -65.5555, 1.0, -65.5555]
+    if uismap:
+        for key, value in m[42].items():
+            if isinstance(value, np.ndarray):
+                assert_array_almost_equal(value, [1.0, -65.5555, 1.0, -65.5555][key])
+            else:
+                assert_equal(value, [1.0, -65.5555, 1.0, -65.5555][key])
+    else:
+        assert_array_almost_equal(m[42], [1.0, -65.5555, 1.0, -65.5555])
+
+
+
+# MapIntMapIntVectorDouble
+def test_map_int_map_int_vector_double():
+    m = stlcontainers.MapIntMapIntVectorDouble()
+    uismap = isinstance({1: [1.0, 42.42, -65.5555, 18], -65: [1.0, -65.5555, 1.0, -65.5555]}, Mapping) 
+    m[1] = {42: [18, -65.5555, 42.42, 1.0], 18: [42.42, 18, 42.42, 18]}
+    m[42] = {1: [1.0, 42.42, -65.5555, 18], -65: [1.0, -65.5555, 1.0, -65.5555]}
+    import pprint
+    pprint.pprint(m)
+    assert_equal(len(m), 2)
+    if uismap:
+        for key, value in m[42].items():
+            print(key, value, {1: [1.0, 42.42, -65.5555, 18], -65: [1.0, -65.5555, 1.0, -65.5555]}[key])
+            if isinstance(value, np.ndarray):
+                assert_array_almost_equal(value, {1: [1.0, 42.42, -65.5555, 18], -65: [1.0, -65.5555, 1.0, -65.5555]}[key])
+            else:
+                assert_equal(value, {1: [1.0, 42.42, -65.5555, 18], -65: [1.0, -65.5555, 1.0, -65.5555]}[key])
+    else:
+        assert_array_almost_equal(m[42], {1: [1.0, 42.42, -65.5555, 18], -65: [1.0, -65.5555, 1.0, -65.5555]})
+
+    m = stlcontainers.MapIntMapIntVectorDouble({-65: {1: [1.0, 42.42, -65.5555, 18], 18: [42.42, 18, 42.42, 18], 42: [18, -65.5555, 42.42, 1.0], -65: [1.0, -65.5555, 1.0, -65.5555]}, 18: {1: [1.0, 42.42, -65.5555, 18], 42: [18, -65.5555, 42.42, 1.0], 18: [42.42, 18, 42.42, 18], -65: [1.0, -65.5555, 1.0, -65.5555]}})
+    assert_equal(len(m), 2)
+    if uismap:
+        for key, value in m[-65].items():
+            if isinstance(value, np.ndarray):
+                print(key, value, {1: [1.0, 42.42, -65.5555, 18], 18: [42.42, 18, 42.42, 18], 42: [18, -65.5555, 42.42, 1.0], -65: [1.0, -65.5555, 1.0, -65.5555]}[key])
+                assert_array_almost_equal(value, {1: [1.0, 42.42, -65.5555, 18], 18: [42.42, 18, 42.42, 18], 42: [18, -65.5555, 42.42, 1.0], -65: [1.0, -65.5555, 1.0, -65.5555]}[key])
+            else:
+                assert_equal(value, {1: [1.0, 42.42, -65.5555, 18], 18: [42.42, 18, 42.42, 18], 42: [18, -65.5555, 42.42, 1.0], -65: [1.0, -65.5555, 1.0, -65.5555]}[key])
+    else:
+        assert_array_almost_equal(m[-65], {1: [1.0, 42.42, -65.5555, 18], 18: [42.42, 18, 42.42, 18], 42: [18, -65.5555, 42.42, 1.0], -65: [1.0, -65.5555, 1.0, -65.5555]})
+
+    n = stlcontainers.MapIntMapIntVectorDouble(m, False)
+    assert_equal(len(n), 2)
+    if uismap:
+        for key, value in m[-65].items():
+            if isinstance(value, np.ndarray):
+                assert_array_almost_equal(value, {1: [1.0, 42.42, -65.5555, 18], 18: [42.42, 18, 42.42, 18], 42: [18, -65.5555, 42.42, 1.0], -65: [1.0, -65.5555, 1.0, -65.5555]}[key])
+            else:
+                assert_equal(value, {1: [1.0, 42.42, -65.5555, 18], 18: [42.42, 18, 42.42, 18], 42: [18, -65.5555, 42.42, 1.0], -65: [1.0, -65.5555, 1.0, -65.5555]}[key])
+    else:
+        assert_array_almost_equal(m[-65], {1: [1.0, 42.42, -65.5555, 18], 18: [42.42, 18, 42.42, 18], 42: [18, -65.5555, 42.42, 1.0], -65: [1.0, -65.5555, 1.0, -65.5555]})
+
+    # points to the same underlying map
+    n[42] = {1: [1.0, 42.42, -65.5555, 18], -65: [1.0, -65.5555, 1.0, -65.5555]}
+    if uismap:
+        for key, value in m[42].items():
+            if isinstance(value, np.ndarray):
+                assert_array_almost_equal(value, {1: [1.0, 42.42, -65.5555, 18], -65: [1.0, -65.5555, 1.0, -65.5555]}[key])
+            else:
+                assert_equal(value, {1: [1.0, 42.42, -65.5555, 18], -65: [1.0, -65.5555, 1.0, -65.5555]}[key])
+    else:
+        assert_array_almost_equal(m[42], {1: [1.0, 42.42, -65.5555, 18], -65: [1.0, -65.5555, 1.0, -65.5555]})
+
+
+
 if __name__ == '__main__':
     nose.run()

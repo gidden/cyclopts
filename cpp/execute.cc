@@ -10,12 +10,7 @@
 #include "exchange_graph.h"
 #include "prog_solver.h"
 
-#include "distributions.h"
-
 using namespace cyclus;
-
-int RequestRC::i() { return i_; }
-int SupplyRC::i() { return i_; }
 
 void test() {
   std::cout << "testing cyclopts!\n";
@@ -54,74 +49,99 @@ void test() {
   s.ExchangeSolver::Solve(&g);
 }
 
-void run_rxtr_req(RequestRC rc) {}; // place holder
-
-// void run_rxtr_req(int n_supply,
-//                   int n_demand,
-//                   int dem_node_avg,
-//                   int n_commods,
-//                   int dem_commod_avg,
-//                   int avg_commod_sup,
-//                   double excl_prob,
-//                   double connect_prob,
-//                   int avg_sup_caps,
-//                   int avg_dem_caps) {
-//   ProgSolver solver("cbc", true); 
-//   ExchangeGraph g;
-
-//   Sampler s;
-
-//   std::map<ExchangeNode::Ptr, int> request_commods;
-//   std::map<int, std::vector<ExchangeNode::Ptr> > reqs_by_commods;
-    
-//   for (int i = 0; i != n_demand; i++) {
-//     double amt = s.SampleReqAmt(); // total request amount
-//     RequestGroup::Ptr rg(new RequestGroup(amt));
-//     int n_nodes = s.SampleNNodes(dem_node_avg); // total number of request nodes in group
-//     std::vector<int> commods = s.SampleCommods(n_nodes, n_commods,
-//                                                dem_commod_avg); // assign commodity to each node
-//     for (int j = 0; j != n_nodes; j++) {
-//       // revisit this!
-//       ExchangeNode::Ptr n(new ExchangeNode(amt, s.SampleLinear(excl_prob))); // request node amt and exclusivity
-//       rg->AddExchangeNode(n);
-//       request_commods[n] = commods[j];
-//       reqs_by_commods[commods[j]].push_back(n);
-//     }
-//     g.AddRequestGroup(rg);
-//   }
+void add_requests(RequestParams& params,
+                  ExchangeGraph& g, 
+                  std::map<int, ExchangeNode::Ptr>& id_to_node,
+                  std::map<int, RequestGroup::Ptr>& id_to_req_grp) {
   
-//   std::map<ExchangeNodeGroup::Ptr, int> supply_commods;
-//   std::map<int, std::vector<ExchangeNodeGroup::Ptr> > supply_by_commods;
-
-//   for (int i = 0; i != n_supply; i++) {
-//     std::vector<int> commod_subset = s.SampleSubsetAvgSize(n_commods,
-//                                                            avg_commod_sup);
-//     for (int j = 0; j != commod_subset.size(); j++) {
-//       ExchangeNodeGroup::Ptr sg(new ExchangeNodeGroup());
-//       g.AddSupplyGroup(sg);
-//       supply_commods[sg] = commod_subset[j];
-//       supply_by_commods[commod_subset[j]].push_back(sg);
-//     }
-//   }  
-
-//   for (int i = 0; i != n_commods; i++) {
-//     std::vector<ExchangeNode::Ptr>& reqs = reqs_by_commods[i];
-//     std::vector<ExchangeNodeGroup::Ptr>& sups = supply_by_commods[i];
-//     int N_arcs = boost::math::round(
-//         sups.size() * (reqs.size() - 1) * connect_prob + sups.size());
-
-//     std::vector< std::pair<ExchangeNode::Ptr, ExchangeNodeGroup::Ptr> >
-//         pairs = s.ReqArcs(reqs, sups, N_arcs);
-
-//     assert(pairs.size() == N_arcs);
+  std::map<int, std::vector<int> >& req_grps = params.u_nodes_per_req;
+  std::map<int, std::vector<int> >::iterator m_it;
+  int grp_id;
+  RequestGroup::Ptr rg;
+  for (m_it = req_grps.begin(); m_it != req_grps.end(); ++m_it) {
+    grp_id = m_it->first;
+    rg = RequestGroup::Ptr(new RequestGroup(params.req_qty[grp_id]));
+    id_to_req_grp[m_it->first] = rg;
     
-//     for (int j = 0; j != pairs.size(); j++) {
-//       ExchangeNode::Ptr sup(new ExchangeNode());
-//       pairs[j].second->AddExchangeNode(sup);
-//       Arc a(pairs[j].first, sup);
-//       g.AddArc(a);
-//     }
-//   }
+    std::vector<int>& nodes = m_it->second;  
+    int i;
+    int node_id;
+    ExchangeNode::Ptr n;
+    for (i = 0; i != nodes.size(); i++) {
+      node_id = nodes[i];
+      n = ExchangeNode::Ptr(new ExchangeNode(params.u_node_qty[node_id],
+                                             params.u_node_excl[node_id]));
+      rg->AddExchangeNode(n);
+      id_to_node[node_id] = n;
+    }
+
+    g.AddRequestGroup(rg);
+  }
   
-//   solver.ExchangeSolver::Solve(&g);
-// }
+}
+
+void execute_exchange(RequestParams& params, std::string db_path) {
+  ProgSolver solver("cbc", true); 
+  ExchangeGraph g;
+
+  std::map<int, ExchangeNode::Ptr> id_to_node;
+  std::map<int, RequestGroup::Ptr> id_to_req_grp;
+
+  add_requests(params, g, id_to_node, id_to_req_grp);
+
+  // // this belongs in the constraint addition
+  // std::vector< std::vector<int> >& mutual_grps = params.mutual_req_grps[grp_id];
+  // std::vector<ExchangeNode::Ptr> mutual_reqs;
+  // int j;
+  // for (i = 0; i != mutual_grps.size(); i++) {
+  //   std::vector<int>& mutual_grp = mutual_grps[i];
+  //   for (j = 0; j != mutual_grp.size(); j++) {
+  //     node_id = mutual_grp[j];
+  //     mutual_reqs.push_back(id_to_node[node_id]);
+  //   }
+  //   rg->AddMutualReqs(mutual_reqs);
+  //   mutual_reqs.clear();
+  // }
+  
+  // std::map<ExchangeNodeGroup::Ptr, int> supply_commods;
+  // std::map<int, std::vector<ExchangeNodeGroup::Ptr> > supply_by_commods;
+
+  // for (int i = 0; i != n_supply; i++) {
+  //   std::vector<int> commod_subset = s.SampleSubsetAvgSize(n_commods,
+  //                                                          avg_commod_sup);
+  //   for (int j = 0; j != commod_subset.size(); j++) {
+  //     ExchangeNodeGroup::Ptr sg(new ExchangeNodeGroup());
+  //     g.AddSupplyGroup(sg);
+  //     supply_commods[sg] = commod_subset[j];
+  //     supply_by_commods[commod_subset[j]].push_back(sg);
+  //   }
+  // }  
+
+  // for (int i = 0; i != n_commods; i++) {
+  //   std::vector<ExchangeNode::Ptr>& reqs = reqs_by_commods[i];
+  //   std::vector<ExchangeNodeGroup::Ptr>& sups = supply_by_commods[i];
+  //   int N_arcs = boost::math::round(
+  //       sups.size() * (reqs.size() - 1) * connect_prob + sups.size());
+
+  //   std::vector< std::pair<ExchangeNode::Ptr, ExchangeNodeGroup::Ptr> >
+  //       pairs = s.ReqArcs(reqs, sups, N_arcs);
+
+  //   assert(pairs.size() == N_arcs);
+    
+  //   for (int j = 0; j != pairs.size(); j++) {
+  //     ExchangeNode::Ptr sup(new ExchangeNode());
+  //     pairs[j].second->AddExchangeNode(sup);
+  //     Arc a(pairs[j].first, sup);
+  //     g.AddArc(a);
+  //   }
+  // }
+  
+  solver.ExchangeSolver::Solve(&g);
+}
+
+void execute_exchange(SupplyParams& params, std::string db_path) {
+  ProgSolver solver("cbc", true); 
+  ExchangeGraph g;
+  
+  solver.ExchangeSolver::Solve(&g);
+}

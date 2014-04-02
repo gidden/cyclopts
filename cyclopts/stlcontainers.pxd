@@ -26,5 +26,61 @@ cimport numpy as np
 
 
 # Cython Imports For Types
+from libcpp.map cimport map as cpp_map
+from libcpp.vector cimport vector as cpp_vector
+
+# double vector
+
+
+# MapIntDouble
+cdef class _MapIterIntDouble(object):
+    cdef cpp_map[int, double].iterator * iter_now
+    cdef cpp_map[int, double].iterator * iter_end
+    cdef void init(_MapIterIntDouble, cpp_map[int, double] *)
+
+cdef class _MapIntDouble:
+    cdef cpp_map[int, double] * map_ptr
+    cdef public bint _free_map
+
+
+
+
+# MapIntInt
+cdef class _MapIterIntInt(object):
+    cdef cpp_map[int, int].iterator * iter_now
+    cdef cpp_map[int, int].iterator * iter_end
+    cdef void init(_MapIterIntInt, cpp_map[int, int] *)
+
+cdef class _MapIntInt:
+    cdef cpp_map[int, int] * map_ptr
+    cdef public bint _free_map
+
+
+
+
+# MapIntVectorDouble
+cdef class _MapIterIntVectorDouble(object):
+    cdef cpp_map[int, cpp_vector[double]].iterator * iter_now
+    cdef cpp_map[int, cpp_vector[double]].iterator * iter_end
+    cdef void init(_MapIterIntVectorDouble, cpp_map[int, cpp_vector[double]] *)
+
+cdef class _MapIntVectorDouble:
+    cdef cpp_map[int, cpp_vector[double]] * map_ptr
+    cdef public bint _free_map
+
+
+
+
+# MapIntMapIntVectorDouble
+cdef class _MapIterIntMapIntVectorDouble(object):
+    cdef cpp_map[int, cpp_map[int, cpp_vector[double]]].iterator * iter_now
+    cdef cpp_map[int, cpp_map[int, cpp_vector[double]]].iterator * iter_end
+    cdef void init(_MapIterIntMapIntVectorDouble, cpp_map[int, cpp_map[int, cpp_vector[double]]] *)
+
+cdef class _MapIntMapIntVectorDouble:
+    cdef cpp_map[int, cpp_map[int, cpp_vector[double]]] * map_ptr
+    cdef public bint _free_map
+
+
 
 

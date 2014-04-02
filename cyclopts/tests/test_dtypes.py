@@ -17,5 +17,24 @@ import numpy  as np
 from cyclopts import dtypes
 
 
+# dtypeDouble
+def test_dtype_double():
+    a = np.array([1.0, 42.42, -65.5555, 18], dtype=dtypes.xd_double)
+    #for x, y in zip(a, np.array([1.0, 42.42, -65.5555, 18], dtype=dtypes.xd_double)):
+    #    assert_equal(x, y)
+    a[:] = [18, -65.5555, 42.42, 1.0]
+    #for x, y in zip(a, np.array([18, -65.5555, 42.42, 1.0], dtype=dtypes.xd_double)):
+    #    assert_equal(x, y)
+    a = np.array([1.0, -65.5555, 1.0, -65.5555] + [42.42, 18, 42.42, 18], dtype=dtypes.xd_double)
+    #for x, y in zip(a, np.array([1.0, -65.5555, 1.0, -65.5555] + [42.42, 18, 42.42, 18], dtype=dtypes.xd_double)):
+    #    assert_equal(x, y)
+    b =  np.array(([1.0, -65.5555, 1.0, -65.5555] + [42.42, 18, 42.42, 18])[::2], dtype=dtypes.xd_double)
+    #for x, y in zip(a[::2], b):
+    #    assert_equal(x, y)
+    a[:2] = b[-2:]
+    print(a)
+
+
+
 if __name__ == '__main__':
     nose.run()

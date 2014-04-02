@@ -9,19 +9,6 @@
 """
 """
 cimport cpp_execute
-cimport dtypes
-cimport execute
-from cyclopts cimport cpp_execute
-from libc.stdlib cimport free
-
-import dtypes
-
-def run_rxtr_req(rc):
-    """run_rxtr_req(rc)
-    no docstring for run_rxtr_req, please file a bug report!"""
-    cdef RequestRC rc_proxy
-    rc_proxy = <RequestRC> rc
-    cpp_execute.run_rxtr_req((<cpp_execute.RequestRC *> rc_proxy._inst)[0])
 
 
 
@@ -29,90 +16,6 @@ def test():
     """test()
     no docstring for test, please file a bug report!"""
     cpp_execute.test()
-
-
-
-
-
-cdef class RequestRC:
-    """no docstring for {'tarbase': 'execute', 'tarname': 'RequestRC', 'language': 'c++', 'srcname': 'RequestRC', 'sidecars': (), 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
-
-
-
-    # constuctors
-    def __cinit__(self, *args, **kwargs):
-        self._inst = NULL
-        self._free_inst = True
-
-        # cached property defaults
-
-
-    def __init__(self, ):
-        """RequestRC(self, )
-        """
-        self._inst = new cpp_execute.RequestRC()
-    
-    
-    def __dealloc__(self):
-        if self._free_inst:
-            free(self._inst)
-
-    # attributes
-
-    # methods
-    def i(self, ):
-        """i(self, )
-        no docstring for i, please file a bug report!"""
-        cdef int rtnval
-        rtnval = (<cpp_execute.RequestRC *> self._inst).i()
-        return int(rtnval)
-    
-    
-    
-
-    pass
-
-
-
-
-
-cdef class SupplyRC:
-    """no docstring for {'tarbase': 'execute', 'tarname': 'SupplyRC', 'language': 'c++', 'srcname': 'SupplyRC', 'sidecars': (), 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
-
-
-
-    # constuctors
-    def __cinit__(self, *args, **kwargs):
-        self._inst = NULL
-        self._free_inst = True
-
-        # cached property defaults
-
-
-    def __init__(self, ):
-        """SupplyRC(self, )
-        """
-        self._inst = new cpp_execute.SupplyRC()
-    
-    
-    def __dealloc__(self):
-        if self._free_inst:
-            free(self._inst)
-
-    # attributes
-
-    # methods
-    def i(self, ):
-        """i(self, )
-        no docstring for i, please file a bug report!"""
-        cdef int rtnval
-        rtnval = (<cpp_execute.SupplyRC *> self._inst).i()
-        return int(rtnval)
-    
-    
-    
-
-    pass
 
 
 
