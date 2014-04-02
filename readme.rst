@@ -12,7 +12,7 @@ C++ source code. Pretty neat!
 Adding C++ Files
 ================
 
-Adding *.h/*.cc files takes a number of steps in order to hook them into the
+Adding \*.h/\*.cc files takes a number of steps in order to hook them into the
 xdress workflow.
 
 This mini-tutorial assumes that you have some header/implementation file pair,
