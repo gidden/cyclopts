@@ -9,14 +9,19 @@
 """
 """
 cimport cpp_execute
+cimport dtypes
+cimport execute
+from cyclopts cimport cpp_execute
 from libc.stdlib cimport free
 
+import dtypes
 
-
-def run_rxtr_req(n_supply=1, n_demand=1, dem_node_avg=1, n_commods=1, dem_commod_avg=1, avg_commod_sup=1, excl_prob=0.0, connect_prob=1.0, avg_sup_caps=1, avg_dem_caps=1):
-    """run_rxtr_req(n_supply=1, n_demand=1, dem_node_avg=1, n_commods=1, dem_commod_avg=1, avg_commod_sup=1, excl_prob=0.0, connect_prob=1.0, avg_sup_caps=1, avg_dem_caps=1)
+def run_rxtr_req(rc):
+    """run_rxtr_req(rc)
     no docstring for run_rxtr_req, please file a bug report!"""
-    cpp_execute.run_rxtr_req(<int> n_supply, <int> n_demand, <int> dem_node_avg, <int> n_commods, <int> dem_commod_avg, <int> avg_commod_sup, <double> excl_prob, <double> connect_prob, <int> avg_sup_caps, <int> avg_dem_caps)
+    cdef RequestRC rc_proxy
+    rc_proxy = <RequestRC> rc
+    cpp_execute.run_rxtr_req((<cpp_execute.RequestRC *> rc_proxy._inst)[0])
 
 
 

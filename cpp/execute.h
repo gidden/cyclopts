@@ -1,7 +1,44 @@
 #ifndef CYCLOPTS_EXECUTE_H_
 #define CYCLOPTS_EXECUTE_H_
 
-/// constructs and runs a reactor-request resource exchange
+#include <cstddef>
+#include <string>
+
+/// place holder until a distribution class is added
+class Distribution {
+};
+
+/// a simple template class to encapsulate an execution run control parameter
+/// @warning if a distribution is provided to the Param, it will take charge of
+/// its deletion
+template <class T>
+class Param {
+ public:
+  /// @param val the (possibly average) value of the parameter
+  /// @param dist an optional distribution
+  /// @warning if dist is provided, the Param takes ownership of it (i.e., will
+  /// delete it)
+  Param(T val, Distribution* dist = NULL) : val_(val), dist_(dist) { }
+
+  ~Param() { if(dist_ != NULL) delete dist_; }
+  
+  inline T val() const { return val_; }
+
+  /// sample a value; subclasses can override to provide custom sampling
+  virtual T sample() const { if(dist_ == NULL) return val_; }
+
+ private:
+  T val_;
+  Distribution* dist_;
+};
+
+/// number of assemblies
+class AssemblyParam: public Param<int> {
+ public:
+  AssemblyParam(int val = 1, Distribution* dist = NULL) : Param<int>(val, dist) {};
+};
+
+/// defines the run control parameters for a reactor-request-based exchange
 ///
 /// @param n_supply the number of supplier node groups
 /// @param n_consume the number of consumer node groups
@@ -16,19 +53,6 @@
 /// request and supply of the same commodity
 /// @param avg_sup_caps average number of supply capacities per group
 /// @param avg_sup_caps average number of demand capacities per group
-void run_rxtr_req(int n_supply = 1,
-                  int n_consume = 1,
-                  int con_node_avg = 1,
-                  int n_commods = 1,
-                  int con_commod_avg = 1,
-                  int avg_commod_sup = 1,
-                  double excl_prob = 0.0,
-                  double connect_prob = 1.0,
-                  int avg_sup_caps = 1,
-                  int avg_dem_caps = 1);
-
-void test();
-
 class RequestRC {
  public:
   int i();
@@ -44,5 +68,11 @@ class SupplyRC {
  private:
   int i_;
 };
+
+/// constructs and runs a reactor-request resource exchange
+///
+void run_rxtr_req(RequestRC rc);
+
+void test();
 
 #endif // CYCLOPTS_EXECUTE_H_
