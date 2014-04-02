@@ -8,6 +8,61 @@
 ################################################
 
 
+from cyclopts cimport cpp_execute
+from libcpp cimport bool as cpp_bool
+from libcpp.map cimport map as cpp_map
+from libcpp.string cimport string as std_string
+from libcpp.vector cimport vector as cpp_vector
+
+cdef extern from "execute.h" :
+
+    cdef cppclass RequestParams:
+        # constructors
+        RequestParams() except +
+
+        # attributes
+        cpp_map[int, double] arc_pref
+        cpp_map[int, int] arc_to_unode
+        cpp_map[int, int] arc_to_vnode
+        cpp_map[int, cpp_vector[double]] constr_vals
+        cpp_map[int, double] def_constr_coeffs
+        cpp_map[int, double] def_constr_val
+        cpp_map[int, cpp_map[int, cpp_vector[double]]] node_ucaps
+        cpp_map[int, double] req_qty
+        cpp_map[int, cpp_bool] u_node_excl
+        cpp_map[int, double] u_node_qty
+        cpp_map[int, cpp_vector[int]] u_nodes_per_req
+
+        # methods
+
+        pass
+
+
+
+cdef extern from "execute.h" :
+
+    cdef cppclass SupplyParams:
+        # constructors
+        SupplyParams() except +
+
+        # attributes
+        cpp_map[int, double] node_qtys
+
+        # methods
+
+        pass
+
+
+
+# function signatures
+cdef extern from "execute.h" :
+
+    void execute_exchange() except +
+    void execute_exchange(RequestParams &) except +
+    void execute_exchange(RequestParams &, std_string) except +
+    void execute_exchange(SupplyParams &) except +
+    void execute_exchange(SupplyParams &, std_string) except +
+
 
 
 # function signatures

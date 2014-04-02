@@ -90,14 +90,14 @@ void add_arcs(RequestParams& params,
               std::map<int, ExchangeNode::Ptr>& id_to_node,
               std::map<int, Arc>& id_to_arc) {
   
-  std::map<int, std::pair<int, int> >& arcs_to_nodes = params.arcs_to_nodes;
-  std::map<int, std::pair<int, int> >::iterator m_it;
+  std::map<int, int>& arc_to_unode = params.arc_to_unode;
+  std::map<int, int>::iterator m_it;
   int u_id, v_id, a_id;
   ExchangeNode::Ptr u, v;
-  for (m_it = arcs_to_nodes.begin(); m_it != arcs_to_nodes.end(); ++m_it) {
+  for (m_it = arc_to_unode.begin(); m_it != arc_to_unode.end(); ++m_it) {
     a_id = m_it->first;
-    u_id = m_it->second.first;
-    v_id = m_it->second.second;
+    u_id = m_it->second;
+    v_id = params.arc_to_vnode[a_id];
     u = id_to_node[u_id];
     v = id_to_node[v_id];
     Arc a(u, v);

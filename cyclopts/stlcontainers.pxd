@@ -27,6 +27,7 @@ cimport numpy as np
 
 # Cython Imports For Types
 from libcpp.map cimport map as cpp_map
+from libcpp cimport bool as cpp_bool
 from libcpp.vector cimport vector as cpp_vector
 
 # double vector
@@ -53,6 +54,32 @@ cdef class _MapIterIntInt(object):
 
 cdef class _MapIntInt:
     cdef cpp_map[int, int] * map_ptr
+    cdef public bint _free_map
+
+
+
+
+# MapIntBool
+cdef class _MapIterIntBool(object):
+    cdef cpp_map[int, cpp_bool].iterator * iter_now
+    cdef cpp_map[int, cpp_bool].iterator * iter_end
+    cdef void init(_MapIterIntBool, cpp_map[int, cpp_bool] *)
+
+cdef class _MapIntBool:
+    cdef cpp_map[int, cpp_bool] * map_ptr
+    cdef public bint _free_map
+
+
+
+
+# MapIntVectorInt
+cdef class _MapIterIntVectorInt(object):
+    cdef cpp_map[int, cpp_vector[int]].iterator * iter_now
+    cdef cpp_map[int, cpp_vector[int]].iterator * iter_end
+    cdef void init(_MapIterIntVectorInt, cpp_map[int, cpp_vector[int]] *)
+
+cdef class _MapIntVectorInt:
+    cdef cpp_map[int, cpp_vector[int]] * map_ptr
     cdef public bint _free_map
 
 

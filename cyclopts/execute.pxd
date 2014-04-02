@@ -8,6 +8,41 @@
 ################################################
 
 
+cimport dtypes
+cimport numpy as np
+cimport stlcontainers
+from cyclopts cimport cpp_execute
+from libcpp cimport bool as cpp_bool
+from libcpp.map cimport map as cpp_map
+from libcpp.vector cimport vector as cpp_vector
+
+
+
+cdef class SupplyParams:
+    cdef void * _inst
+    cdef public bint _free_inst
+    cdef public stlcontainers._MapIntDouble _node_qtys
+    pass
+
+
+
+
+
+cdef class RequestParams:
+    cdef void * _inst
+    cdef public bint _free_inst
+    cdef public stlcontainers._MapIntDouble _arc_pref
+    cdef public stlcontainers._MapIntInt _arc_to_unode
+    cdef public stlcontainers._MapIntInt _arc_to_vnode
+    cdef public stlcontainers._MapIntVectorDouble _constr_vals
+    cdef public stlcontainers._MapIntDouble _def_constr_coeffs
+    cdef public stlcontainers._MapIntDouble _def_constr_val
+    cdef public stlcontainers._MapIntMapIntVectorDouble _node_ucaps
+    cdef public stlcontainers._MapIntDouble _req_qty
+    cdef public stlcontainers._MapIntBool _u_node_excl
+    cdef public stlcontainers._MapIntDouble _u_node_qty
+    cdef public stlcontainers._MapIntVectorInt _u_nodes_per_req
+    pass
 
 
 

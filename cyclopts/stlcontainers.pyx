@@ -29,8 +29,9 @@ cimport xdress_extra_types
 # Cython Imports For Types
 from libcpp.map cimport map as cpp_map
 cimport dtypes
-from libcpp.vector cimport vector as cpp_vector
+from libcpp cimport bool as cpp_bool
 cimport numpy as np
+from libcpp.vector cimport vector as cpp_vector
 
 # Imports For Types
 import numpy as np
@@ -332,6 +333,346 @@ cdef class _MapIntInt:
 
 class MapIntInt(_MapIntInt, collections.MutableMapping):
     """Wrapper class for C++ standard library maps of type <integer, integer>.
+    Provides dictionary like interface on the Python level.
+
+    Parameters
+    ----------
+    new_map : bool or dict-like
+        Boolean on whether to make a new map or not, or dict-like object
+        with keys and values which are castable to the appropriate type.
+    free_map : bool
+        Flag for whether the pointer to the C++ map should be deallocated
+        when the wrapper is dereferenced.
+    """
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        return "{" + ", ".join(["{0}: {1}".format(repr(key), repr(value)) for key, value in self.items()]) + "}"
+
+
+
+# Map(Int, Bool)
+cdef class _MapIterIntBool(object):
+    cdef void init(self, cpp_map[int, cpp_bool] * map_ptr):
+        cdef cpp_map[int, cpp_bool].iterator * itn = <cpp_map[int, cpp_bool].iterator *> malloc(sizeof(map_ptr.begin()))
+        itn[0] = map_ptr.begin()
+        self.iter_now = itn
+
+        cdef cpp_map[int, cpp_bool].iterator * ite = <cpp_map[int, cpp_bool].iterator *> malloc(sizeof(map_ptr.end()))
+        ite[0] = map_ptr.end()
+        self.iter_end = ite
+
+    def __dealloc__(self):
+        free(self.iter_now)
+        free(self.iter_end)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        cdef cpp_map[int, cpp_bool].iterator inow = deref(self.iter_now)
+        cdef cpp_map[int, cpp_bool].iterator iend = deref(self.iter_end)
+
+        if inow != iend:
+
+            pyval = int(deref(inow).first)
+        else:
+            raise StopIteration
+
+        inc(deref(self.iter_now))
+        return pyval
+
+cdef class _MapIntBool:
+    def __cinit__(self, new_map=True, bint free_map=True):
+        cdef pair[int, cpp_bool] item
+        cdef cpp_map[int, cpp_bool] * map_ptr
+
+
+
+        # Decide how to init map, if at all
+        if isinstance(new_map, _MapIntBool):
+            self.map_ptr = (<_MapIntBool> new_map).map_ptr
+        elif isinstance(new_map, np.generic) and np.PyArray_DescrFromScalar(new_map).type_num == np.NPY_OBJECT:
+            # scalars are copies, sadly not views, so we need to re-copy
+            if self.map_ptr == NULL:
+                self.map_ptr = new cpp_map[int, cpp_bool]()
+            np.PyArray_ScalarAsCtype(new_map, &map_ptr)
+            self.map_ptr[0] = map_ptr[0]
+        elif hasattr(new_map, 'items'):
+            self.map_ptr = new cpp_map[int, cpp_bool]()
+            for key, value in new_map.items():
+
+
+                item = pair[int, cpp_bool](<int> key, <bint> value)
+                self.map_ptr.insert(item)
+        elif hasattr(new_map, '__len__'):
+            self.map_ptr = new cpp_map[int, cpp_bool]()
+            for key, value in new_map:
+
+
+                item = pair[int, cpp_bool](<int> key, <bint> value)
+                self.map_ptr.insert(item)
+        elif bool(new_map):
+            self.map_ptr = new cpp_map[int, cpp_bool]()
+
+        # Store free_map
+        self._free_map = free_map
+
+    def __dealloc__(self):
+        if self._free_map:
+            del self.map_ptr
+
+    def __contains__(self, key):
+        cdef int k
+
+        if not isinstance(key, int):
+            return False
+
+        k = <int> key
+
+        if 0 < self.map_ptr.count(k):
+            return True
+        else:
+            return False
+
+    def __len__(self):
+        return self.map_ptr.size()
+
+    def __iter__(self):
+        cdef _MapIterIntBool mi = _MapIterIntBool()
+        mi.init(self.map_ptr)
+        return mi
+
+    def __getitem__(self, key):
+        cdef int k
+        cdef cpp_bool v
+
+
+        if not isinstance(key, int):
+            raise TypeError("Only integer keys are valid.")
+
+        k = <int> key
+
+        if 0 < self.map_ptr.count(k):
+            v = deref(self.map_ptr)[k]
+
+            return bool(deref(self.map_ptr)[k])
+        else:
+            raise KeyError
+
+    def __setitem__(self, key, value):
+
+
+        cdef pair[int, cpp_bool] item
+
+
+        item = pair[int, cpp_bool](<int> key, <bint> value)
+        if 0 < self.map_ptr.count(<int> key):
+            self.map_ptr.erase(<int> key)
+        self.map_ptr.insert(item)
+
+    def __delitem__(self, key):
+        cdef int k
+
+        if key in self:
+
+            k = <int> key
+            self.map_ptr.erase(k)
+
+
+class MapIntBool(_MapIntBool, collections.MutableMapping):
+    """Wrapper class for C++ standard library maps of type <integer, boolean>.
+    Provides dictionary like interface on the Python level.
+
+    Parameters
+    ----------
+    new_map : bool or dict-like
+        Boolean on whether to make a new map or not, or dict-like object
+        with keys and values which are castable to the appropriate type.
+    free_map : bool
+        Flag for whether the pointer to the C++ map should be deallocated
+        when the wrapper is dereferenced.
+    """
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        return "{" + ", ".join(["{0}: {1}".format(repr(key), repr(value)) for key, value in self.items()]) + "}"
+
+
+
+# Map(Int, VectorInt)
+cdef class _MapIterIntVectorInt(object):
+    cdef void init(self, cpp_map[int, cpp_vector[int]] * map_ptr):
+        cdef cpp_map[int, cpp_vector[int]].iterator * itn = <cpp_map[int, cpp_vector[int]].iterator *> malloc(sizeof(map_ptr.begin()))
+        itn[0] = map_ptr.begin()
+        self.iter_now = itn
+
+        cdef cpp_map[int, cpp_vector[int]].iterator * ite = <cpp_map[int, cpp_vector[int]].iterator *> malloc(sizeof(map_ptr.end()))
+        ite[0] = map_ptr.end()
+        self.iter_end = ite
+
+    def __dealloc__(self):
+        free(self.iter_now)
+        free(self.iter_end)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        cdef cpp_map[int, cpp_vector[int]].iterator inow = deref(self.iter_now)
+        cdef cpp_map[int, cpp_vector[int]].iterator iend = deref(self.iter_end)
+
+        if inow != iend:
+
+            pyval = int(deref(inow).first)
+        else:
+            raise StopIteration
+
+        inc(deref(self.iter_now))
+        return pyval
+
+cdef class _MapIntVectorInt:
+    def __cinit__(self, new_map=True, bint free_map=True):
+        cdef pair[int, cpp_vector[int]] item
+        cdef cpp_map[int, cpp_vector[int]] * map_ptr
+
+        cdef cpp_vector[int] value_proxy
+        cdef int ivalue
+        cdef int value_size
+        cdef int * value_data
+
+        # Decide how to init map, if at all
+        if isinstance(new_map, _MapIntVectorInt):
+            self.map_ptr = (<_MapIntVectorInt> new_map).map_ptr
+        elif isinstance(new_map, np.generic) and np.PyArray_DescrFromScalar(new_map).type_num == np.NPY_OBJECT:
+            # scalars are copies, sadly not views, so we need to re-copy
+            if self.map_ptr == NULL:
+                self.map_ptr = new cpp_map[int, cpp_vector[int]]()
+            np.PyArray_ScalarAsCtype(new_map, &map_ptr)
+            self.map_ptr[0] = map_ptr[0]
+        elif hasattr(new_map, 'items'):
+            self.map_ptr = new cpp_map[int, cpp_vector[int]]()
+            for key, value in new_map.items():
+
+                # value is a ('vector', 'int32', 0)
+                value_size = len(value)
+                if isinstance(value, np.ndarray) and (<np.ndarray> value).descr.type_num == np.NPY_INT32:
+                    value_data = <int *> np.PyArray_DATA(<np.ndarray> value)
+                    value_proxy = cpp_vector[int](<size_t> value_size)
+                    for ivalue in range(value_size):
+                        value_proxy[ivalue] = value_data[ivalue]
+                else:
+                    value_proxy = cpp_vector[int](<size_t> value_size)
+                    for ivalue in range(value_size):
+                        value_proxy[ivalue] = <int> value[ivalue]
+                item = pair[int, cpp_vector[int]](<int> key, value_proxy)
+                self.map_ptr.insert(item)
+        elif hasattr(new_map, '__len__'):
+            self.map_ptr = new cpp_map[int, cpp_vector[int]]()
+            for key, value in new_map:
+
+                # value is a ('vector', 'int32', 0)
+                value_size = len(value)
+                if isinstance(value, np.ndarray) and (<np.ndarray> value).descr.type_num == np.NPY_INT32:
+                    value_data = <int *> np.PyArray_DATA(<np.ndarray> value)
+                    value_proxy = cpp_vector[int](<size_t> value_size)
+                    for ivalue in range(value_size):
+                        value_proxy[ivalue] = value_data[ivalue]
+                else:
+                    value_proxy = cpp_vector[int](<size_t> value_size)
+                    for ivalue in range(value_size):
+                        value_proxy[ivalue] = <int> value[ivalue]
+                item = pair[int, cpp_vector[int]](<int> key, value_proxy)
+                self.map_ptr.insert(item)
+        elif bool(new_map):
+            self.map_ptr = new cpp_map[int, cpp_vector[int]]()
+
+        # Store free_map
+        self._free_map = free_map
+
+    def __dealloc__(self):
+        if self._free_map:
+            del self.map_ptr
+
+    def __contains__(self, key):
+        cdef int k
+
+        if not isinstance(key, int):
+            return False
+
+        k = <int> key
+
+        if 0 < self.map_ptr.count(k):
+            return True
+        else:
+            return False
+
+    def __len__(self):
+        return self.map_ptr.size()
+
+    def __iter__(self):
+        cdef _MapIterIntVectorInt mi = _MapIterIntVectorInt()
+        mi.init(self.map_ptr)
+        return mi
+
+    def __getitem__(self, key):
+        cdef int k
+        cdef cpp_vector[int] v
+
+        cdef np.ndarray v_proxy
+        cdef np.npy_intp v_proxy_shape[1]
+        if not isinstance(key, int):
+            raise TypeError("Only integer keys are valid.")
+
+        k = <int> key
+
+        if 0 < self.map_ptr.count(k):
+            v = deref(self.map_ptr)[k]
+            v_proxy_shape[0] = <np.npy_intp> deref(self.map_ptr)[k].size()
+            v_proxy = np.PyArray_SimpleNewFromData(1, v_proxy_shape, np.NPY_INT32, &deref(self.map_ptr)[k][0])
+            return v_proxy
+        else:
+            raise KeyError
+
+    def __setitem__(self, key, value):
+
+        cdef cpp_vector[int] value_proxy
+        cdef int ivalue
+        cdef int value_size
+        cdef int * value_data
+        cdef pair[int, cpp_vector[int]] item
+
+        # value is a ('vector', 'int32', 0)
+        value_size = len(value)
+        if isinstance(value, np.ndarray) and (<np.ndarray> value).descr.type_num == np.NPY_INT32:
+            value_data = <int *> np.PyArray_DATA(<np.ndarray> value)
+            value_proxy = cpp_vector[int](<size_t> value_size)
+            for ivalue in range(value_size):
+                value_proxy[ivalue] = value_data[ivalue]
+        else:
+            value_proxy = cpp_vector[int](<size_t> value_size)
+            for ivalue in range(value_size):
+                value_proxy[ivalue] = <int> value[ivalue]
+        item = pair[int, cpp_vector[int]](<int> key, value_proxy)
+        if 0 < self.map_ptr.count(<int> key):
+            self.map_ptr.erase(<int> key)
+        self.map_ptr.insert(item)
+
+    def __delitem__(self, key):
+        cdef int k
+
+        if key in self:
+
+            k = <int> key
+            self.map_ptr.erase(k)
+
+
+class MapIntVectorInt(_MapIntVectorInt, collections.MutableMapping):
+    """Wrapper class for C++ standard library maps of type <integer, vector [ndarray] of integer>.
     Provides dictionary like interface on the Python level.
 
     Parameters

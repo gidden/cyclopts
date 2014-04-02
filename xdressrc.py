@@ -12,6 +12,8 @@ stlcontainers = [
     ('vector', 'float'),
     ('map', 'int', 'float'),
     ('map', 'int', 'int'),
+    ('map', 'int', 'bool'),
+    ('map', 'int', ('vector', 'int')),
     ('map', 'int', ('vector', 'float')),
     ('map', 'int', ('map', 'int', ('vector', 'float'))),
     ]
@@ -21,14 +23,10 @@ includes = [
     '/usr/include/boost',
     ]
 
-# classes = [
-#     apiname('*', 'cpp/execute.*', incfiles='execute.h'),
-#     ]
-
-# functions = [
-#     apiname('*', 'cpp/execute.*', incfiles='execute.h'),
-#     ]
+classes = [
+    apiname('*', 'cpp/execute.*', incfiles='execute.h'),
+    ]
 
 functions = [
-    apiname('test', 'cpp/execute.*', incfiles='execute.h'),
+    apiname('*', 'cpp/execute.*', incfiles='execute.h'),
     ]

@@ -36,8 +36,11 @@ struct RequestParams {
   /// @warning all request groups must have an entry
   std::map<int, double> def_constr_val;
 
-  /// arc id : u_node id and v_node id
-  std::map<int, std::pair<int, int> > arcs_to_nodes;
+  /// arc id : u_node id
+  std::map<int, int> arc_to_unode;
+
+  /// arc id : v_node id
+  std::map<int, int> arc_to_vnode;
 
   /// the preference associated with an arc
   /// @warning all arcs must have an entry
@@ -54,7 +57,6 @@ struct RequestParams {
 
   /// /// request node to commodity
   /// std::map<int, int> u_node_commods;
-
 };
 
 struct SupplyParams {
