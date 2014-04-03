@@ -27,10 +27,20 @@ cimport numpy as np
 
 # Cython Imports For Types
 from libcpp.map cimport map as cpp_map
+from cyclopts cimport cpp_execute
 from libcpp cimport bool as cpp_bool
 from libcpp.vector cimport vector as cpp_vector
 
+# int vector
+
+
 # double vector
+
+
+# cpp_execute.ArcFlow vector
+
+
+# cpp_vector[int] vector
 
 
 # MapIntDouble
@@ -93,6 +103,19 @@ cdef class _MapIterIntVectorDouble(object):
 
 cdef class _MapIntVectorDouble:
     cdef cpp_map[int, cpp_vector[double]] * map_ptr
+    cdef public bint _free_map
+
+
+
+
+# MapIntVectorVectorInt
+cdef class _MapIterIntVectorVectorInt(object):
+    cdef cpp_map[int, cpp_vector[cpp_vector[int]]].iterator * iter_now
+    cdef cpp_map[int, cpp_vector[cpp_vector[int]]].iterator * iter_end
+    cdef void init(_MapIterIntVectorVectorInt, cpp_map[int, cpp_vector[cpp_vector[int]]] *)
+
+cdef class _MapIntVectorVectorInt:
+    cdef cpp_map[int, cpp_vector[cpp_vector[int]]] * map_ptr
     cdef public bint _free_map
 
 

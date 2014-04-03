@@ -18,17 +18,16 @@ from libcpp.vector cimport vector as cpp_vector
 
 
 
-cdef class SupplyParams:
+cdef class ArcFlow:
     cdef void * _inst
     cdef public bint _free_inst
-    cdef public stlcontainers._MapIntDouble _node_qtys
     pass
 
 
 
 
 
-cdef class RequestParams:
+cdef class Params:
     cdef void * _inst
     cdef public bint _free_inst
     cdef public stlcontainers._MapIntDouble _arc_pref
@@ -36,6 +35,8 @@ cdef class RequestParams:
     cdef public stlcontainers._MapIntInt _arc_to_vnode
     cdef public stlcontainers._MapIntVectorDouble _constr_vals
     cdef public stlcontainers._MapIntDouble _def_constr_coeffs
+    cdef public stlcontainers._MapIntVectorVectorInt _excl_req_nodes
+    cdef public stlcontainers._MapIntVectorInt _excl_sup_nodes
     cdef public stlcontainers._MapIntBool _node_excl
     cdef public stlcontainers._MapIntDouble _node_qty
     cdef public stlcontainers._MapIntMapIntVectorDouble _node_ucaps

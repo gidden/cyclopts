@@ -20,7 +20,8 @@ cimport numpy as np
 cimport xdress_extra_types
 
 # Cython imports for types
-
+from cyclopts cimport cpp_execute
+from libcpp.vector cimport vector as cpp_vector
 
 cdef extern from "Python.h":
     ctypedef Py_ssize_t Py_ssize_t
@@ -140,6 +141,19 @@ cdef extern from "xdress_extra_types.h" namespace "xdress_extra_types":
         T * renew(void *) nogil except +
         void deall(T *) nogil except +
 
+# int dtype
+ctypedef struct PyXDInt_Type:
+    Py_ssize_t ob_refcnt
+    PyTypeObject *ob_typ
+    int obval
+
+cdef object pyxd_int_getitem(void * data, void * arr)
+cdef int pyxd_int_setitem(object value, void * data, void * arr)
+cdef void pyxd_int_copyswapn(void * dest, np.npy_intp dstride, void * src, np.npy_intp sstride, np.npy_intp n, int swap, void * arr)
+cdef void pyxd_int_copyswap(void * dest, void * src, int swap, void * arr)
+cdef np.npy_bool pyxd_int_nonzero(void * data, void * arr)
+
+
 # double dtype
 ctypedef struct PyXDDouble_Type:
     Py_ssize_t ob_refcnt
@@ -151,5 +165,31 @@ cdef int pyxd_double_setitem(object value, void * data, void * arr)
 cdef void pyxd_double_copyswapn(void * dest, np.npy_intp dstride, void * src, np.npy_intp sstride, np.npy_intp n, int swap, void * arr)
 cdef void pyxd_double_copyswap(void * dest, void * src, int swap, void * arr)
 cdef np.npy_bool pyxd_double_nonzero(void * data, void * arr)
+
+
+# cpp_execute.ArcFlow dtype
+ctypedef struct PyXDArcFlow_Type:
+    Py_ssize_t ob_refcnt
+    PyTypeObject *ob_typ
+    cpp_execute.ArcFlow obval
+
+cdef object pyxd_arcflow_getitem(void * data, void * arr)
+cdef int pyxd_arcflow_setitem(object value, void * data, void * arr)
+cdef void pyxd_arcflow_copyswapn(void * dest, np.npy_intp dstride, void * src, np.npy_intp sstride, np.npy_intp n, int swap, void * arr)
+cdef void pyxd_arcflow_copyswap(void * dest, void * src, int swap, void * arr)
+cdef np.npy_bool pyxd_arcflow_nonzero(void * data, void * arr)
+
+
+# cpp_vector[int] dtype
+ctypedef struct PyXDVectorInt_Type:
+    Py_ssize_t ob_refcnt
+    PyTypeObject *ob_typ
+    cpp_vector[int] obval
+
+cdef object pyxd_vector_int_getitem(void * data, void * arr)
+cdef int pyxd_vector_int_setitem(object value, void * data, void * arr)
+cdef void pyxd_vector_int_copyswapn(void * dest, np.npy_intp dstride, void * src, np.npy_intp sstride, np.npy_intp n, int swap, void * arr)
+cdef void pyxd_vector_int_copyswap(void * dest, void * src, int swap, void * arr)
+cdef np.npy_bool pyxd_vector_int_nonzero(void * data, void * arr)
 
 

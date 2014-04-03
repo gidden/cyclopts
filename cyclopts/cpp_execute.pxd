@@ -16,9 +16,9 @@ from libcpp.vector cimport vector as cpp_vector
 
 cdef extern from "execute.h" :
 
-    cdef cppclass RequestParams:
+    cdef cppclass Params:
         # constructors
-        RequestParams() except +
+        Params() except +
 
         # attributes
         cpp_map[int, double] arc_pref
@@ -26,6 +26,8 @@ cdef extern from "execute.h" :
         cpp_map[int, int] arc_to_vnode
         cpp_map[int, cpp_vector[double]] constr_vals
         cpp_map[int, double] def_constr_coeffs
+        cpp_map[int, cpp_vector[cpp_vector[int]]] excl_req_nodes
+        cpp_map[int, cpp_vector[int]] excl_sup_nodes
         cpp_map[int, cpp_bool] node_excl
         cpp_map[int, double] node_qty
         cpp_map[int, cpp_map[int, cpp_vector[double]]] node_ucaps
@@ -41,12 +43,16 @@ cdef extern from "execute.h" :
 
 cdef extern from "execute.h" :
 
-    cdef cppclass SupplyParams:
+    cdef cppclass ArcFlow:
         # constructors
-        SupplyParams() except +
+        ArcFlow() except +
+        ArcFlow(int) except +
+        ArcFlow(int, double) except +
+        ArcFlow(const ArcFlow &) except +
 
         # attributes
-        cpp_map[int, double] node_qtys
+        double flow
+        int id
 
         # methods
 
@@ -57,11 +63,9 @@ cdef extern from "execute.h" :
 # function signatures
 cdef extern from "execute.h" :
 
-    void execute_exchange() except +
-    void execute_exchange(RequestParams &) except +
-    void execute_exchange(RequestParams &, std_string) except +
-    void execute_exchange(SupplyParams &) except +
-    void execute_exchange(SupplyParams &, std_string) except +
+    cpp_vector[ArcFlow] execute_exchange() except +
+    cpp_vector[ArcFlow] execute_exchange(Params &) except +
+    cpp_vector[ArcFlow] execute_exchange(Params &, std_string) except +
 
 
 

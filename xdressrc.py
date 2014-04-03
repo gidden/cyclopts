@@ -9,12 +9,16 @@ packagedir = 'cyclopts'  # location of the python package
 extra_types = 'xdress_extra_types'
 
 stlcontainers = [
+    ('vector', 'int'),
     ('vector', 'float'),
+    ('vector', 'ArcFlow'),
+    ('vector', ('vector', 'int')),
     ('map', 'int', 'float'),
     ('map', 'int', 'int'),
     ('map', 'int', 'bool'),
     ('map', 'int', ('vector', 'int')),
     ('map', 'int', ('vector', 'float')),
+    ('map', 'int', ('vector', ('vector', 'int'))),
     ('map', 'int', ('map', 'int', ('vector', 'float'))),
     ]
 

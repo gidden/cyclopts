@@ -17,6 +17,25 @@ import numpy  as np
 from cyclopts import dtypes
 
 
+# dtypeInt
+def test_dtype_int():
+    a = np.array([1, 42, -65, 18], dtype=dtypes.xd_int)
+    #for x, y in zip(a, np.array([1, 42, -65, 18], dtype=dtypes.xd_int)):
+    #    assert_equal(x, y)
+    a[:] = [18, -65, 42, 1]
+    #for x, y in zip(a, np.array([18, -65, 42, 1], dtype=dtypes.xd_int)):
+    #    assert_equal(x, y)
+    a = np.array([1, -65, 1, -65] + [42, 18, 42, 18], dtype=dtypes.xd_int)
+    #for x, y in zip(a, np.array([1, -65, 1, -65] + [42, 18, 42, 18], dtype=dtypes.xd_int)):
+    #    assert_equal(x, y)
+    b =  np.array(([1, -65, 1, -65] + [42, 18, 42, 18])[::2], dtype=dtypes.xd_int)
+    #for x, y in zip(a[::2], b):
+    #    assert_equal(x, y)
+    a[:2] = b[-2:]
+    print(a)
+
+
+
 # dtypeDouble
 def test_dtype_double():
     a = np.array([1.0, 42.42, -65.5555, 18], dtype=dtypes.xd_double)
@@ -33,6 +52,10 @@ def test_dtype_double():
     #    assert_equal(x, y)
     a[:2] = b[-2:]
     print(a)
+
+
+
+
 
 
 

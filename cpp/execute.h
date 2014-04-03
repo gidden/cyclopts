@@ -5,7 +5,23 @@
 #include <map>
 #include <vector>
 
-struct RequestParams {
+class ArcFlow {
+public:
+  ArcFlow() : id(-1), flow(0) { };
+  ArcFlow(int id, double flow) : id(id), flow(flow) { };
+  ArcFlow(const ArcFlow& other) : id(other.id), flow(other.flow) { };
+  inline ArcFlow& operator=(const ArcFlow& other) {
+    id = other.id;
+    flow = other.flow;
+    return *this;
+  }
+
+  int id;
+  double flow;
+};
+
+class Params {
+ public:  
   /// requester : their request nodes
   std::map<int, std::vector<int> > u_nodes_per_req;
 
@@ -22,6 +38,14 @@ struct RequestParams {
   /// whether a node is exclusive
   /// @warning all nodes must have an entry
   std::map<int, bool> node_excl;
+
+  /// requester id : all groupings of exclusive nodes
+  /// @warning all request groups must have an entry
+  std::map<int, std::vector< std::vector<int> > > excl_req_nodes;
+ 
+  /// supplier id : exclusive bid node ids
+  /// @warning all supply groups must have an entry
+  std::map<int, std::vector<int> > excl_sup_nodes;
   
   /// node : (arc : unit capacities)
   std::map<int, std::map<int, std::vector<double> > > node_ucaps;
@@ -44,35 +68,13 @@ struct RequestParams {
   /// the preference associated with an arc
   /// @warning all arcs must have an entry
   std::map<int, double> arc_pref;
-    
-  /// /// requester : groupings of nodes (assemblies) that meet the same demand
-  /// /// @warning all request groups must have an entry
-  /// std::map<int, std::vector< std::vector<int> > > mutual_req_grps;
-  
-  /// /// requester : the average quantity of mutual request groups
-  /// /// @warning all request groups must have an entry
-  /// /// @warning the ordering of vector entries must follow mutual_req_grps
-  /// std::map<int, std::vector<int> > mutual_req_avg_qty;
-
-  /// /// request node to commodity
-  /// std::map<int, int> u_node_commods;
 };
 
-struct SupplyParams {
-  std::map<int, double> node_qtys;
-};
-  
-/// constructs and runs a reactor-request-based resource exchange
+/// constructs and runs a resource exchange
 ///
 /// @param params all exchange parameters
 /// @param db_path the path to the output database to use
-void execute_exchange(RequestParams& params, std::string db_path);
-
-/// constructs and runs a reactor-supply-based resource exchange
-///
-/// @param params all exchange parameters
-/// @param db_path the path to the output database to use
-void execute_exchange(SupplyParams& params, std::string db_path);
+std::vector<ArcFlow> execute_exchange(Params& params, std::string db_path);
 
 void test();
 

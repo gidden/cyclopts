@@ -23,10 +23,14 @@ np.import_array()
 cimport xdress_extra_types
 
 # Cython imports for types
-
+from cyclopts cimport cpp_execute
+cimport execute
+from libcpp.vector cimport vector as cpp_vector
+cimport numpy as np
 
 # imports for types
-
+import execute
+import numpy as np
 
 dtypes = {}
 
@@ -40,6 +44,247 @@ cdef extern from *:
     cdef void emit_ifpy3k "#if PY_MAJOR_VERSION == 3 //" ()
     cdef void emit_else "#else //" ()
     cdef void emit_endif "#endif //" ()
+
+# int dtype
+cdef MemoryKnight[int] mk_int = MemoryKnight[int]()
+cdef MemoryKnight[PyXDInt_Type] mk_int_type = MemoryKnight[PyXDInt_Type]()
+
+cdef object pyxd_int_getitem(void * data, void * arr):
+
+
+    pyval = int((<int *> data)[0])
+    return pyval
+
+cdef int pyxd_int_setitem(object value, void * data, void * arr):
+    cdef int * new_data
+
+    if isinstance(value, int):
+
+        new_data = mk_int.renew(data)
+        new_data[0] = <int> value
+        return 0
+    else:
+        return -1
+
+cdef void pyxd_int_copyswapn(void * dest, np.npy_intp dstride, void * src, np.npy_intp sstride, np.npy_intp n, int swap, void * arr):
+    cdef np.npy_intp i
+    cdef char * a 
+    cdef char * b 
+    cdef char c = 0
+    cdef int j
+    cdef int m
+    cdef int * new_dest
+
+    if src != NULL:
+        if (sstride == sizeof(int) and dstride == sizeof(int)):
+            new_dest = mk_int.renew(dest)
+            new_dest[0] = deref(<int *> src)
+        else:
+            a = <char *> dest
+            b = <char *> src
+            for i in range(n):
+                new_dest = mk_int.renew(<void *> a)
+                new_dest[0] = deref(<int *> b)
+                a += dstride
+                b += sstride
+    if swap: 
+        m = sizeof(int) / 2
+        a = <char *> dest
+        for i in range(n, 0, -1):
+            b = a + (sizeof(int) - 1);
+            for j in range(m):
+                c = a[0]
+                a[0] = b[0]
+                a += 1
+                b[0] = c
+                b -= 1
+            a += dstride - m
+
+cdef void pyxd_int_copyswap(void * dest, void * src, int swap, void * arr):
+    cdef char * a 
+    cdef char * b 
+    cdef char c = 0
+    cdef int j
+    cdef int m
+    cdef int * new_dest
+    if src != NULL:
+        new_dest = mk_int.renew(dest)
+        new_dest[0] = (<int *> src)[0]
+    if swap:
+        m = sizeof(int) / 2
+        a = <char *> dest
+        b = a + (sizeof(int) - 1);
+        for j in range(m):
+            c = a[0]
+            a[0] = b[0]
+            a += 1
+            b[0] = c
+            b -= 1
+
+cdef np.npy_bool pyxd_int_nonzero(void * data, void * arr):
+    return (data != NULL)
+    # FIXME comparisons not defined for arbitrary types
+    #cdef int zero = int()
+    #return ((<int *> data)[0] != zero)
+
+cdef int pyxd_int_compare(const void * d1, const void * d2, void * arr):
+    return (d1 == d2) - 1
+    # FIXME comparisons not defined for arbitrary types
+    #if deref(<int *> d1) == deref(<int *> d2):
+    #    return 0
+    #else:
+    #    return -1
+
+cdef PyArray_ArrFuncs PyXD_Int_ArrFuncs 
+PyArray_InitArrFuncs(&PyXD_Int_ArrFuncs)
+PyXD_Int_ArrFuncs.getitem = <PyArray_GetItemFunc *> (&pyxd_int_getitem)
+PyXD_Int_ArrFuncs.setitem = <PyArray_SetItemFunc *> (&pyxd_int_setitem)
+PyXD_Int_ArrFuncs.copyswapn = <PyArray_CopySwapNFunc *> (&pyxd_int_copyswapn)
+PyXD_Int_ArrFuncs.copyswap = <PyArray_CopySwapFunc *> (&pyxd_int_copyswap)
+PyXD_Int_ArrFuncs.nonzero = <PyArray_NonzeroFunc *> (&pyxd_int_nonzero)
+PyXD_Int_ArrFuncs.compare = <PyArray_CompareFunc *> (&pyxd_int_compare)
+
+cdef object pyxd_int_type_alloc(PyTypeObject * self, Py_ssize_t nitems):
+    cdef PyXDInt_Type * cval
+    cdef object pyval
+    cval = mk_int_type.defnew()
+    cval.ob_typ = self
+    pyval = <object> cval
+    return pyval
+
+cdef void pyxd_int_type_dealloc(object self):
+    cdef PyXDInt_Type * cself = <PyXDInt_Type *> self
+    mk_int_type.deall(cself)
+    return
+
+cdef object pyxd_int_type_new(PyTypeObject * subtype, object args, object kwds):
+    return pyxd_int_type_alloc(subtype, 0)
+
+cdef void pyxd_int_type_free(void * self):
+    return
+
+cdef object pyxd_int_type_str(object self):
+    cdef PyXDInt_Type * cself = <PyXDInt_Type *> self
+
+
+    pyval = int((cself.obval))
+    s = str(pyval)
+    return s
+
+cdef object pyxd_int_type_repr(object self):
+    cdef PyXDInt_Type * cself = <PyXDInt_Type *> self
+
+
+    pyval = int((cself.obval))
+    s = repr(pyval)
+    return s
+
+cdef int pyxd_int_type_compare(object a, object b):
+    return (a is b) - 1
+    # FIXME comparisons not defined for arbitrary types
+    #cdef PyXDInt_Type * x
+    #cdef PyXDInt_Type * y
+    #if type(a) is not type(b):
+    #    raise NotImplementedError
+    #x = <PyXDInt_Type *> a
+    #y = <PyXDInt_Type *> b
+    #if (x.obval == y.obval):
+    #    return 0
+    #elif (x.obval < y.obval):
+    #    return -1
+    #elif (x.obval > y.obval):
+    #    return 1
+    #else:
+    #    raise NotImplementedError
+
+cdef object pyxd_int_type_richcompare(object a, object b, int op):
+    if op == Py_EQ:
+        return (a is b)
+    elif op == Py_NE:
+        return (a is not b)
+    else:
+        return NotImplemented
+    # FIXME comparisons not defined for arbitrary types
+    #cdef PyXDInt_Type * x
+    #cdef PyXDInt_Type * y
+    #if type(a) is not type(b):
+    #    return NotImplemented
+    #x = <PyXDInt_Type *> a
+    #y = <PyXDInt_Type *> b
+    #if op == Py_LT:
+    #    return (x.obval < y.obval)
+    #elif op == Py_LE:
+    #    return (x.obval <= y.obval)
+    #elif op == Py_EQ:
+    #    return (x.obval == y.obval)
+    #elif op == Py_NE:
+    #    return (x.obval != y.obval)
+    #elif op == Py_GT:
+    #    return (x.obval > y.obval)
+    #elif op == Py_GE:
+    #    return (x.obval >= y.obval)
+    #else:
+    #    return NotImplemented    
+
+cdef long pyxd_int_type_hash(object self):
+    return id(self)
+
+cdef PyMemberDef pyxd_int_type_members[1]
+pyxd_int_type_members[0] = PyMemberDef(NULL, 0, 0, 0, NULL)
+
+cdef PyGetSetDef pyxd_int_type_getset[1]
+pyxd_int_type_getset[0] = PyGetSetDef(NULL)
+
+cdef bint pyxd_int_is_ready
+cdef type PyXD_Int = type("xd_int", ((<object> PyArray_API[10]),), {})
+pyxd_int_is_ready = PyType_Ready(<object> PyXD_Int)
+(<PyTypeObject *> PyXD_Int).tp_basicsize = sizeof(PyXDInt_Type)
+(<PyTypeObject *> PyXD_Int).tp_itemsize = 0
+(<PyTypeObject *> PyXD_Int).tp_doc = "Python scalar type for int"
+(<PyTypeObject *> PyXD_Int).tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_CHECKTYPES | Py_TPFLAGS_HEAPTYPE
+(<PyTypeObject *> PyXD_Int).tp_alloc = pyxd_int_type_alloc
+(<PyTypeObject *> PyXD_Int).tp_dealloc = pyxd_int_type_dealloc
+(<PyTypeObject *> PyXD_Int).tp_new = pyxd_int_type_new
+(<PyTypeObject *> PyXD_Int).tp_free = pyxd_int_type_free
+(<PyTypeObject *> PyXD_Int).tp_str = pyxd_int_type_str
+(<PyTypeObject *> PyXD_Int).tp_repr = pyxd_int_type_repr
+(<PyTypeObject *> PyXD_Int).tp_base = (<PyTypeObject *> PyArray_API[10])  # PyGenericArrType_Type
+(<PyTypeObject *> PyXD_Int).tp_hash = pyxd_int_type_hash
+emit_ifpy2k()
+(<PyTypeObject *> PyXD_Int).tp_compare = &pyxd_int_type_compare
+emit_endif()
+(<PyTypeObject *> PyXD_Int).tp_richcompare = pyxd_int_type_richcompare
+(<PyTypeObject *> PyXD_Int).tp_members = pyxd_int_type_members
+(<PyTypeObject *> PyXD_Int).tp_getset = pyxd_int_type_getset
+pyxd_int_is_ready = PyType_Ready(<object> PyXD_Int)
+Py_INCREF(PyXD_Int)
+XDInt = PyXD_Int
+
+cdef PyArray_Descr * c_xd_int_descr = <PyArray_Descr *> malloc(sizeof(PyArray_Descr))
+(<PyObject *> c_xd_int_descr).ob_refcnt = 0 # ob_refcnt
+(<PyObject *> c_xd_int_descr).ob_type = <PyTypeObject *> PyArray_API[3]
+c_xd_int_descr.typeobj = <PyTypeObject *> PyXD_Int # typeobj
+c_xd_int_descr.kind = 'x'  # kind, for xdress
+c_xd_int_descr.type = 'x'  # type
+c_xd_int_descr.byteorder = '='  # byteorder
+c_xd_int_descr.flags = 0    # flags
+c_xd_int_descr.type_num = 0    # type_num, assigned at registration
+c_xd_int_descr.elsize = sizeof(int)  # elsize, 
+c_xd_int_descr.alignment = 8  # alignment
+c_xd_int_descr.subarray = NULL  # subarray
+c_xd_int_descr.fields = NULL  # fields
+c_xd_int_descr.names = NULL
+(<PyArray_Descr *> c_xd_int_descr).f = <PyArray_ArrFuncs *> &PyXD_Int_ArrFuncs  # f == PyArray_ArrFuncs
+
+cdef object xd_int_descr = <object> (<void *> c_xd_int_descr)
+Py_INCREF(<object> xd_int_descr)
+xd_int = xd_int_descr
+cdef int xd_int_num = PyArray_RegisterDataType(c_xd_int_descr)
+dtypes['int'] = xd_int
+dtypes['xd_int'] = xd_int
+dtypes[xd_int_num] = xd_int
+
+
 
 # double dtype
 cdef MemoryKnight[double] mk_double = MemoryKnight[double]()
@@ -279,6 +524,510 @@ cdef int xd_double_num = PyArray_RegisterDataType(c_xd_double_descr)
 dtypes['double'] = xd_double
 dtypes['xd_double'] = xd_double
 dtypes[xd_double_num] = xd_double
+
+
+
+# cpp_execute.ArcFlow dtype
+cdef MemoryKnight[cpp_execute.ArcFlow] mk_arcflow = MemoryKnight[cpp_execute.ArcFlow]()
+cdef MemoryKnight[PyXDArcFlow_Type] mk_arcflow_type = MemoryKnight[PyXDArcFlow_Type]()
+
+cdef object pyxd_arcflow_getitem(void * data, void * arr):
+    cdef execute.ArcFlow data_proxy
+    data_proxy = execute.ArcFlow()
+    (<cpp_execute.ArcFlow *> data_proxy._inst)[0] = (<cpp_execute.ArcFlow *> data)[0]
+    pyval = data_proxy
+    return pyval
+
+cdef int pyxd_arcflow_setitem(object value, void * data, void * arr):
+    cdef cpp_execute.ArcFlow * new_data
+    cdef execute.ArcFlow value_proxy
+    if isinstance(value, execute.ArcFlow):
+        value_proxy = <execute.ArcFlow> value
+        new_data = mk_arcflow.renew(data)
+        new_data[0] = (<cpp_execute.ArcFlow *> value_proxy._inst)[0]
+        return 0
+    else:
+        return -1
+
+cdef void pyxd_arcflow_copyswapn(void * dest, np.npy_intp dstride, void * src, np.npy_intp sstride, np.npy_intp n, int swap, void * arr):
+    cdef np.npy_intp i
+    cdef char * a 
+    cdef char * b 
+    cdef char c = 0
+    cdef int j
+    cdef int m
+    cdef cpp_execute.ArcFlow * new_dest
+
+    if src != NULL:
+        if (sstride == sizeof(cpp_execute.ArcFlow) and dstride == sizeof(cpp_execute.ArcFlow)):
+            new_dest = mk_arcflow.renew(dest)
+            new_dest[0] = deref(<cpp_execute.ArcFlow *> src)
+        else:
+            a = <char *> dest
+            b = <char *> src
+            for i in range(n):
+                new_dest = mk_arcflow.renew(<void *> a)
+                new_dest[0] = deref(<cpp_execute.ArcFlow *> b)
+                a += dstride
+                b += sstride
+    if swap: 
+        m = sizeof(cpp_execute.ArcFlow) / 2
+        a = <char *> dest
+        for i in range(n, 0, -1):
+            b = a + (sizeof(cpp_execute.ArcFlow) - 1);
+            for j in range(m):
+                c = a[0]
+                a[0] = b[0]
+                a += 1
+                b[0] = c
+                b -= 1
+            a += dstride - m
+
+cdef void pyxd_arcflow_copyswap(void * dest, void * src, int swap, void * arr):
+    cdef char * a 
+    cdef char * b 
+    cdef char c = 0
+    cdef int j
+    cdef int m
+    cdef cpp_execute.ArcFlow * new_dest
+    if src != NULL:
+        new_dest = mk_arcflow.renew(dest)
+        new_dest[0] = (<cpp_execute.ArcFlow *> src)[0]
+    if swap:
+        m = sizeof(cpp_execute.ArcFlow) / 2
+        a = <char *> dest
+        b = a + (sizeof(cpp_execute.ArcFlow) - 1);
+        for j in range(m):
+            c = a[0]
+            a[0] = b[0]
+            a += 1
+            b[0] = c
+            b -= 1
+
+cdef np.npy_bool pyxd_arcflow_nonzero(void * data, void * arr):
+    return (data != NULL)
+    # FIXME comparisons not defined for arbitrary types
+    #cdef cpp_execute.ArcFlow zero = cpp_execute.ArcFlow()
+    #return ((<cpp_execute.ArcFlow *> data)[0] != zero)
+
+cdef int pyxd_arcflow_compare(const void * d1, const void * d2, void * arr):
+    return (d1 == d2) - 1
+    # FIXME comparisons not defined for arbitrary types
+    #if deref(<cpp_execute.ArcFlow *> d1) == deref(<cpp_execute.ArcFlow *> d2):
+    #    return 0
+    #else:
+    #    return -1
+
+cdef PyArray_ArrFuncs PyXD_ArcFlow_ArrFuncs 
+PyArray_InitArrFuncs(&PyXD_ArcFlow_ArrFuncs)
+PyXD_ArcFlow_ArrFuncs.getitem = <PyArray_GetItemFunc *> (&pyxd_arcflow_getitem)
+PyXD_ArcFlow_ArrFuncs.setitem = <PyArray_SetItemFunc *> (&pyxd_arcflow_setitem)
+PyXD_ArcFlow_ArrFuncs.copyswapn = <PyArray_CopySwapNFunc *> (&pyxd_arcflow_copyswapn)
+PyXD_ArcFlow_ArrFuncs.copyswap = <PyArray_CopySwapFunc *> (&pyxd_arcflow_copyswap)
+PyXD_ArcFlow_ArrFuncs.nonzero = <PyArray_NonzeroFunc *> (&pyxd_arcflow_nonzero)
+PyXD_ArcFlow_ArrFuncs.compare = <PyArray_CompareFunc *> (&pyxd_arcflow_compare)
+
+cdef object pyxd_arcflow_type_alloc(PyTypeObject * self, Py_ssize_t nitems):
+    cdef PyXDArcFlow_Type * cval
+    cdef object pyval
+    cval = mk_arcflow_type.defnew()
+    cval.ob_typ = self
+    pyval = <object> cval
+    return pyval
+
+cdef void pyxd_arcflow_type_dealloc(object self):
+    cdef PyXDArcFlow_Type * cself = <PyXDArcFlow_Type *> self
+    mk_arcflow_type.deall(cself)
+    return
+
+cdef object pyxd_arcflow_type_new(PyTypeObject * subtype, object args, object kwds):
+    return pyxd_arcflow_type_alloc(subtype, 0)
+
+cdef void pyxd_arcflow_type_free(void * self):
+    return
+
+cdef object pyxd_arcflow_type_str(object self):
+    cdef PyXDArcFlow_Type * cself = <PyXDArcFlow_Type *> self
+    cdef execute.ArcFlow val_proxy
+    val_proxy = execute.ArcFlow()
+    (<cpp_execute.ArcFlow *> val_proxy._inst)[0] = (cself.obval)
+    pyval = val_proxy
+    s = str(pyval)
+    return s
+
+cdef object pyxd_arcflow_type_repr(object self):
+    cdef PyXDArcFlow_Type * cself = <PyXDArcFlow_Type *> self
+    cdef execute.ArcFlow val_proxy
+    val_proxy = execute.ArcFlow()
+    (<cpp_execute.ArcFlow *> val_proxy._inst)[0] = (cself.obval)
+    pyval = val_proxy
+    s = repr(pyval)
+    return s
+
+cdef int pyxd_arcflow_type_compare(object a, object b):
+    return (a is b) - 1
+    # FIXME comparisons not defined for arbitrary types
+    #cdef PyXDArcFlow_Type * x
+    #cdef PyXDArcFlow_Type * y
+    #if type(a) is not type(b):
+    #    raise NotImplementedError
+    #x = <PyXDArcFlow_Type *> a
+    #y = <PyXDArcFlow_Type *> b
+    #if (x.obval == y.obval):
+    #    return 0
+    #elif (x.obval < y.obval):
+    #    return -1
+    #elif (x.obval > y.obval):
+    #    return 1
+    #else:
+    #    raise NotImplementedError
+
+cdef object pyxd_arcflow_type_richcompare(object a, object b, int op):
+    if op == Py_EQ:
+        return (a is b)
+    elif op == Py_NE:
+        return (a is not b)
+    else:
+        return NotImplemented
+    # FIXME comparisons not defined for arbitrary types
+    #cdef PyXDArcFlow_Type * x
+    #cdef PyXDArcFlow_Type * y
+    #if type(a) is not type(b):
+    #    return NotImplemented
+    #x = <PyXDArcFlow_Type *> a
+    #y = <PyXDArcFlow_Type *> b
+    #if op == Py_LT:
+    #    return (x.obval < y.obval)
+    #elif op == Py_LE:
+    #    return (x.obval <= y.obval)
+    #elif op == Py_EQ:
+    #    return (x.obval == y.obval)
+    #elif op == Py_NE:
+    #    return (x.obval != y.obval)
+    #elif op == Py_GT:
+    #    return (x.obval > y.obval)
+    #elif op == Py_GE:
+    #    return (x.obval >= y.obval)
+    #else:
+    #    return NotImplemented    
+
+cdef long pyxd_arcflow_type_hash(object self):
+    return id(self)
+
+cdef PyMemberDef pyxd_arcflow_type_members[1]
+pyxd_arcflow_type_members[0] = PyMemberDef(NULL, 0, 0, 0, NULL)
+
+cdef PyGetSetDef pyxd_arcflow_type_getset[1]
+pyxd_arcflow_type_getset[0] = PyGetSetDef(NULL)
+
+cdef bint pyxd_arcflow_is_ready
+cdef type PyXD_ArcFlow = type("xd_arcflow", ((<object> PyArray_API[10]),), {})
+pyxd_arcflow_is_ready = PyType_Ready(<object> PyXD_ArcFlow)
+(<PyTypeObject *> PyXD_ArcFlow).tp_basicsize = sizeof(PyXDArcFlow_Type)
+(<PyTypeObject *> PyXD_ArcFlow).tp_itemsize = 0
+(<PyTypeObject *> PyXD_ArcFlow).tp_doc = "Python scalar type for cpp_execute.ArcFlow"
+(<PyTypeObject *> PyXD_ArcFlow).tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_CHECKTYPES | Py_TPFLAGS_HEAPTYPE
+(<PyTypeObject *> PyXD_ArcFlow).tp_alloc = pyxd_arcflow_type_alloc
+(<PyTypeObject *> PyXD_ArcFlow).tp_dealloc = pyxd_arcflow_type_dealloc
+(<PyTypeObject *> PyXD_ArcFlow).tp_new = pyxd_arcflow_type_new
+(<PyTypeObject *> PyXD_ArcFlow).tp_free = pyxd_arcflow_type_free
+(<PyTypeObject *> PyXD_ArcFlow).tp_str = pyxd_arcflow_type_str
+(<PyTypeObject *> PyXD_ArcFlow).tp_repr = pyxd_arcflow_type_repr
+(<PyTypeObject *> PyXD_ArcFlow).tp_base = (<PyTypeObject *> PyArray_API[10])  # PyGenericArrType_Type
+(<PyTypeObject *> PyXD_ArcFlow).tp_hash = pyxd_arcflow_type_hash
+emit_ifpy2k()
+(<PyTypeObject *> PyXD_ArcFlow).tp_compare = &pyxd_arcflow_type_compare
+emit_endif()
+(<PyTypeObject *> PyXD_ArcFlow).tp_richcompare = pyxd_arcflow_type_richcompare
+(<PyTypeObject *> PyXD_ArcFlow).tp_members = pyxd_arcflow_type_members
+(<PyTypeObject *> PyXD_ArcFlow).tp_getset = pyxd_arcflow_type_getset
+pyxd_arcflow_is_ready = PyType_Ready(<object> PyXD_ArcFlow)
+Py_INCREF(PyXD_ArcFlow)
+XDArcFlow = PyXD_ArcFlow
+
+cdef PyArray_Descr * c_xd_arcflow_descr = <PyArray_Descr *> malloc(sizeof(PyArray_Descr))
+(<PyObject *> c_xd_arcflow_descr).ob_refcnt = 0 # ob_refcnt
+(<PyObject *> c_xd_arcflow_descr).ob_type = <PyTypeObject *> PyArray_API[3]
+c_xd_arcflow_descr.typeobj = <PyTypeObject *> PyXD_ArcFlow # typeobj
+c_xd_arcflow_descr.kind = 'x'  # kind, for xdress
+c_xd_arcflow_descr.type = 'x'  # type
+c_xd_arcflow_descr.byteorder = '='  # byteorder
+c_xd_arcflow_descr.flags = 0    # flags
+c_xd_arcflow_descr.type_num = 0    # type_num, assigned at registration
+c_xd_arcflow_descr.elsize = sizeof(cpp_execute.ArcFlow)  # elsize, 
+c_xd_arcflow_descr.alignment = 8  # alignment
+c_xd_arcflow_descr.subarray = NULL  # subarray
+c_xd_arcflow_descr.fields = NULL  # fields
+c_xd_arcflow_descr.names = NULL
+(<PyArray_Descr *> c_xd_arcflow_descr).f = <PyArray_ArrFuncs *> &PyXD_ArcFlow_ArrFuncs  # f == PyArray_ArrFuncs
+
+cdef object xd_arcflow_descr = <object> (<void *> c_xd_arcflow_descr)
+Py_INCREF(<object> xd_arcflow_descr)
+xd_arcflow = xd_arcflow_descr
+cdef int xd_arcflow_num = PyArray_RegisterDataType(c_xd_arcflow_descr)
+dtypes['arcflow'] = xd_arcflow
+dtypes['xd_arcflow'] = xd_arcflow
+dtypes[xd_arcflow_num] = xd_arcflow
+
+
+
+# cpp_vector[int] dtype
+cdef MemoryKnight[cpp_vector[int]] mk_vector_int = MemoryKnight[cpp_vector[int]]()
+cdef MemoryKnight[PyXDVectorInt_Type] mk_vector_int_type = MemoryKnight[PyXDVectorInt_Type]()
+
+cdef object pyxd_vector_int_getitem(void * data, void * arr):
+    cdef np.ndarray data_proxy
+    cdef np.npy_intp data_proxy_shape[1]
+    data_proxy_shape[0] = <np.npy_intp> (<cpp_vector[int] *> data)[0].size()
+    data_proxy = np.PyArray_SimpleNewFromData(1, data_proxy_shape, np.NPY_INT32, &(<cpp_vector[int] *> data)[0][0])
+    pyval = data_proxy
+    return pyval
+
+cdef int pyxd_vector_int_setitem(object value, void * data, void * arr):
+    cdef cpp_vector[int] * new_data
+    cdef cpp_vector[int] value_proxy
+    cdef int ivalue
+    cdef int value_size
+    cdef int * value_data
+    if isinstance(value, list) or isinstance(value, tuple) or isinstance(value, np.ndarray):
+        # value is a ('vector', 'int32', 0)
+        value_size = len(value)
+        if isinstance(value, np.ndarray) and (<np.ndarray> value).descr.type_num == xd_vector_int.num:
+            value_data = <int *> np.PyArray_DATA(<np.ndarray> value)
+            value_proxy = cpp_vector[int](<size_t> value_size)
+            for ivalue in range(value_size):
+                value_proxy[ivalue] = value_data[ivalue]
+        else:
+            value_proxy = cpp_vector[int](<size_t> value_size)
+            for ivalue in range(value_size):
+                value_proxy[ivalue] = <int> value[ivalue]
+        new_data = mk_vector_int.renew(data)
+        new_data[0] = value_proxy
+        return 0
+    else:
+        return -1
+
+cdef void pyxd_vector_int_copyswapn(void * dest, np.npy_intp dstride, void * src, np.npy_intp sstride, np.npy_intp n, int swap, void * arr):
+    cdef np.npy_intp i
+    cdef char * a 
+    cdef char * b 
+    cdef char c = 0
+    cdef int j
+    cdef int m
+    cdef cpp_vector[int] * new_dest
+
+    if src != NULL:
+        if (sstride == sizeof(cpp_vector[int]) and dstride == sizeof(cpp_vector[int])):
+            new_dest = mk_vector_int.renew(dest)
+            new_dest[0] = deref(<cpp_vector[int] *> src)
+        else:
+            a = <char *> dest
+            b = <char *> src
+            for i in range(n):
+                new_dest = mk_vector_int.renew(<void *> a)
+                new_dest[0] = deref(<cpp_vector[int] *> b)
+                a += dstride
+                b += sstride
+    if swap: 
+        m = sizeof(cpp_vector[int]) / 2
+        a = <char *> dest
+        for i in range(n, 0, -1):
+            b = a + (sizeof(cpp_vector[int]) - 1);
+            for j in range(m):
+                c = a[0]
+                a[0] = b[0]
+                a += 1
+                b[0] = c
+                b -= 1
+            a += dstride - m
+
+cdef void pyxd_vector_int_copyswap(void * dest, void * src, int swap, void * arr):
+    cdef char * a 
+    cdef char * b 
+    cdef char c = 0
+    cdef int j
+    cdef int m
+    cdef cpp_vector[int] * new_dest
+    if src != NULL:
+        new_dest = mk_vector_int.renew(dest)
+        new_dest[0] = (<cpp_vector[int] *> src)[0]
+    if swap:
+        m = sizeof(cpp_vector[int]) / 2
+        a = <char *> dest
+        b = a + (sizeof(cpp_vector[int]) - 1);
+        for j in range(m):
+            c = a[0]
+            a[0] = b[0]
+            a += 1
+            b[0] = c
+            b -= 1
+
+cdef np.npy_bool pyxd_vector_int_nonzero(void * data, void * arr):
+    return (data != NULL)
+    # FIXME comparisons not defined for arbitrary types
+    #cdef cpp_vector[int] zero = cpp_vector[int]()
+    #return ((<cpp_vector[int] *> data)[0] != zero)
+
+cdef int pyxd_vector_int_compare(const void * d1, const void * d2, void * arr):
+    return (d1 == d2) - 1
+    # FIXME comparisons not defined for arbitrary types
+    #if deref(<cpp_vector[int] *> d1) == deref(<cpp_vector[int] *> d2):
+    #    return 0
+    #else:
+    #    return -1
+
+cdef PyArray_ArrFuncs PyXD_VectorInt_ArrFuncs 
+PyArray_InitArrFuncs(&PyXD_VectorInt_ArrFuncs)
+PyXD_VectorInt_ArrFuncs.getitem = <PyArray_GetItemFunc *> (&pyxd_vector_int_getitem)
+PyXD_VectorInt_ArrFuncs.setitem = <PyArray_SetItemFunc *> (&pyxd_vector_int_setitem)
+PyXD_VectorInt_ArrFuncs.copyswapn = <PyArray_CopySwapNFunc *> (&pyxd_vector_int_copyswapn)
+PyXD_VectorInt_ArrFuncs.copyswap = <PyArray_CopySwapFunc *> (&pyxd_vector_int_copyswap)
+PyXD_VectorInt_ArrFuncs.nonzero = <PyArray_NonzeroFunc *> (&pyxd_vector_int_nonzero)
+PyXD_VectorInt_ArrFuncs.compare = <PyArray_CompareFunc *> (&pyxd_vector_int_compare)
+
+cdef object pyxd_vector_int_type_alloc(PyTypeObject * self, Py_ssize_t nitems):
+    cdef PyXDVectorInt_Type * cval
+    cdef object pyval
+    cval = mk_vector_int_type.defnew()
+    cval.ob_typ = self
+    pyval = <object> cval
+    return pyval
+
+cdef void pyxd_vector_int_type_dealloc(object self):
+    cdef PyXDVectorInt_Type * cself = <PyXDVectorInt_Type *> self
+    mk_vector_int_type.deall(cself)
+    return
+
+cdef object pyxd_vector_int_type_new(PyTypeObject * subtype, object args, object kwds):
+    return pyxd_vector_int_type_alloc(subtype, 0)
+
+cdef void pyxd_vector_int_type_free(void * self):
+    return
+
+cdef object pyxd_vector_int_type_str(object self):
+    cdef PyXDVectorInt_Type * cself = <PyXDVectorInt_Type *> self
+    cdef np.ndarray val_proxy
+    cdef np.npy_intp val_proxy_shape[1]
+    val_proxy_shape[0] = <np.npy_intp> (cself.obval).size()
+    val_proxy = np.PyArray_SimpleNewFromData(1, val_proxy_shape, np.NPY_INT32, &(cself.obval)[0])
+    pyval = val_proxy
+    s = str(pyval)
+    return s
+
+cdef object pyxd_vector_int_type_repr(object self):
+    cdef PyXDVectorInt_Type * cself = <PyXDVectorInt_Type *> self
+    cdef np.ndarray val_proxy
+    cdef np.npy_intp val_proxy_shape[1]
+    val_proxy_shape[0] = <np.npy_intp> (cself.obval).size()
+    val_proxy = np.PyArray_SimpleNewFromData(1, val_proxy_shape, np.NPY_INT32, &(cself.obval)[0])
+    pyval = val_proxy
+    s = repr(pyval)
+    return s
+
+cdef int pyxd_vector_int_type_compare(object a, object b):
+    return (a is b) - 1
+    # FIXME comparisons not defined for arbitrary types
+    #cdef PyXDVectorInt_Type * x
+    #cdef PyXDVectorInt_Type * y
+    #if type(a) is not type(b):
+    #    raise NotImplementedError
+    #x = <PyXDVectorInt_Type *> a
+    #y = <PyXDVectorInt_Type *> b
+    #if (x.obval == y.obval):
+    #    return 0
+    #elif (x.obval < y.obval):
+    #    return -1
+    #elif (x.obval > y.obval):
+    #    return 1
+    #else:
+    #    raise NotImplementedError
+
+cdef object pyxd_vector_int_type_richcompare(object a, object b, int op):
+    if op == Py_EQ:
+        return (a is b)
+    elif op == Py_NE:
+        return (a is not b)
+    else:
+        return NotImplemented
+    # FIXME comparisons not defined for arbitrary types
+    #cdef PyXDVectorInt_Type * x
+    #cdef PyXDVectorInt_Type * y
+    #if type(a) is not type(b):
+    #    return NotImplemented
+    #x = <PyXDVectorInt_Type *> a
+    #y = <PyXDVectorInt_Type *> b
+    #if op == Py_LT:
+    #    return (x.obval < y.obval)
+    #elif op == Py_LE:
+    #    return (x.obval <= y.obval)
+    #elif op == Py_EQ:
+    #    return (x.obval == y.obval)
+    #elif op == Py_NE:
+    #    return (x.obval != y.obval)
+    #elif op == Py_GT:
+    #    return (x.obval > y.obval)
+    #elif op == Py_GE:
+    #    return (x.obval >= y.obval)
+    #else:
+    #    return NotImplemented    
+
+cdef long pyxd_vector_int_type_hash(object self):
+    return id(self)
+
+cdef PyMemberDef pyxd_vector_int_type_members[1]
+pyxd_vector_int_type_members[0] = PyMemberDef(NULL, 0, 0, 0, NULL)
+
+cdef PyGetSetDef pyxd_vector_int_type_getset[1]
+pyxd_vector_int_type_getset[0] = PyGetSetDef(NULL)
+
+cdef bint pyxd_vector_int_is_ready
+cdef type PyXD_VectorInt = type("xd_vector_int", ((<object> PyArray_API[10]),), {})
+pyxd_vector_int_is_ready = PyType_Ready(<object> PyXD_VectorInt)
+(<PyTypeObject *> PyXD_VectorInt).tp_basicsize = sizeof(PyXDVectorInt_Type)
+(<PyTypeObject *> PyXD_VectorInt).tp_itemsize = 0
+(<PyTypeObject *> PyXD_VectorInt).tp_doc = "Python scalar type for cpp_vector[int]"
+(<PyTypeObject *> PyXD_VectorInt).tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_CHECKTYPES | Py_TPFLAGS_HEAPTYPE
+(<PyTypeObject *> PyXD_VectorInt).tp_alloc = pyxd_vector_int_type_alloc
+(<PyTypeObject *> PyXD_VectorInt).tp_dealloc = pyxd_vector_int_type_dealloc
+(<PyTypeObject *> PyXD_VectorInt).tp_new = pyxd_vector_int_type_new
+(<PyTypeObject *> PyXD_VectorInt).tp_free = pyxd_vector_int_type_free
+(<PyTypeObject *> PyXD_VectorInt).tp_str = pyxd_vector_int_type_str
+(<PyTypeObject *> PyXD_VectorInt).tp_repr = pyxd_vector_int_type_repr
+(<PyTypeObject *> PyXD_VectorInt).tp_base = (<PyTypeObject *> PyArray_API[10])  # PyGenericArrType_Type
+(<PyTypeObject *> PyXD_VectorInt).tp_hash = pyxd_vector_int_type_hash
+emit_ifpy2k()
+(<PyTypeObject *> PyXD_VectorInt).tp_compare = &pyxd_vector_int_type_compare
+emit_endif()
+(<PyTypeObject *> PyXD_VectorInt).tp_richcompare = pyxd_vector_int_type_richcompare
+(<PyTypeObject *> PyXD_VectorInt).tp_members = pyxd_vector_int_type_members
+(<PyTypeObject *> PyXD_VectorInt).tp_getset = pyxd_vector_int_type_getset
+pyxd_vector_int_is_ready = PyType_Ready(<object> PyXD_VectorInt)
+Py_INCREF(PyXD_VectorInt)
+XDVectorInt = PyXD_VectorInt
+
+cdef PyArray_Descr * c_xd_vector_int_descr = <PyArray_Descr *> malloc(sizeof(PyArray_Descr))
+(<PyObject *> c_xd_vector_int_descr).ob_refcnt = 0 # ob_refcnt
+(<PyObject *> c_xd_vector_int_descr).ob_type = <PyTypeObject *> PyArray_API[3]
+c_xd_vector_int_descr.typeobj = <PyTypeObject *> PyXD_VectorInt # typeobj
+c_xd_vector_int_descr.kind = 'x'  # kind, for xdress
+c_xd_vector_int_descr.type = 'x'  # type
+c_xd_vector_int_descr.byteorder = '='  # byteorder
+c_xd_vector_int_descr.flags = 0    # flags
+c_xd_vector_int_descr.type_num = 0    # type_num, assigned at registration
+c_xd_vector_int_descr.elsize = sizeof(cpp_vector[int])  # elsize, 
+c_xd_vector_int_descr.alignment = 8  # alignment
+c_xd_vector_int_descr.subarray = NULL  # subarray
+c_xd_vector_int_descr.fields = NULL  # fields
+c_xd_vector_int_descr.names = NULL
+(<PyArray_Descr *> c_xd_vector_int_descr).f = <PyArray_ArrFuncs *> &PyXD_VectorInt_ArrFuncs  # f == PyArray_ArrFuncs
+
+cdef object xd_vector_int_descr = <object> (<void *> c_xd_vector_int_descr)
+Py_INCREF(<object> xd_vector_int_descr)
+xd_vector_int = xd_vector_int_descr
+cdef int xd_vector_int_num = PyArray_RegisterDataType(c_xd_vector_int_descr)
+dtypes['vector_int'] = xd_vector_int
+dtypes['xd_vector_int'] = xd_vector_int
+dtypes[xd_vector_int_num] = xd_vector_int
 
 
 
