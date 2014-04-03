@@ -45,12 +45,12 @@ cdef class RequestParams:
         self._arc_to_vnode = None
         self._constr_vals = None
         self._def_constr_coeffs = None
-        self._def_constr_val = None
+        self._node_excl = None
+        self._node_qty = None
         self._node_ucaps = None
         self._req_qty = None
-        self._u_node_excl = None
-        self._u_node_qty = None
         self._u_nodes_per_req = None
+        self._v_nodes_per_sup = None
 
     def __init__(self, ):
         """RequestParams(self, )
@@ -149,21 +149,38 @@ cdef class RequestParams:
             self._def_constr_coeffs = None
     
     
-    property def_constr_val:
-        """no docstring for def_constr_val, please file a bug report!"""
+    property node_excl:
+        """no docstring for node_excl, please file a bug report!"""
         def __get__(self):
-            cdef stlcontainers._MapIntDouble def_constr_val_proxy
-            if self._def_constr_val is None:
-                def_constr_val_proxy = stlcontainers.MapIntDouble(False, False)
-                def_constr_val_proxy.map_ptr = &(<cpp_execute.RequestParams *> self._inst).def_constr_val
-                self._def_constr_val = def_constr_val_proxy
-            return self._def_constr_val
+            cdef stlcontainers._MapIntBool node_excl_proxy
+            if self._node_excl is None:
+                node_excl_proxy = stlcontainers.MapIntBool(False, False)
+                node_excl_proxy.map_ptr = &(<cpp_execute.RequestParams *> self._inst).node_excl
+                self._node_excl = node_excl_proxy
+            return self._node_excl
+    
+        def __set__(self, value):
+            cdef stlcontainers._MapIntBool value_proxy
+            value_proxy = stlcontainers.MapIntBool(value, not isinstance(value, stlcontainers._MapIntBool))
+            (<cpp_execute.RequestParams *> self._inst).node_excl = value_proxy.map_ptr[0]
+            self._node_excl = None
+    
+    
+    property node_qty:
+        """no docstring for node_qty, please file a bug report!"""
+        def __get__(self):
+            cdef stlcontainers._MapIntDouble node_qty_proxy
+            if self._node_qty is None:
+                node_qty_proxy = stlcontainers.MapIntDouble(False, False)
+                node_qty_proxy.map_ptr = &(<cpp_execute.RequestParams *> self._inst).node_qty
+                self._node_qty = node_qty_proxy
+            return self._node_qty
     
         def __set__(self, value):
             cdef stlcontainers._MapIntDouble value_proxy
             value_proxy = stlcontainers.MapIntDouble(value, not isinstance(value, stlcontainers._MapIntDouble))
-            (<cpp_execute.RequestParams *> self._inst).def_constr_val = value_proxy.map_ptr[0]
-            self._def_constr_val = None
+            (<cpp_execute.RequestParams *> self._inst).node_qty = value_proxy.map_ptr[0]
+            self._node_qty = None
     
     
     property node_ucaps:
@@ -200,40 +217,6 @@ cdef class RequestParams:
             self._req_qty = None
     
     
-    property u_node_excl:
-        """no docstring for u_node_excl, please file a bug report!"""
-        def __get__(self):
-            cdef stlcontainers._MapIntBool u_node_excl_proxy
-            if self._u_node_excl is None:
-                u_node_excl_proxy = stlcontainers.MapIntBool(False, False)
-                u_node_excl_proxy.map_ptr = &(<cpp_execute.RequestParams *> self._inst).u_node_excl
-                self._u_node_excl = u_node_excl_proxy
-            return self._u_node_excl
-    
-        def __set__(self, value):
-            cdef stlcontainers._MapIntBool value_proxy
-            value_proxy = stlcontainers.MapIntBool(value, not isinstance(value, stlcontainers._MapIntBool))
-            (<cpp_execute.RequestParams *> self._inst).u_node_excl = value_proxy.map_ptr[0]
-            self._u_node_excl = None
-    
-    
-    property u_node_qty:
-        """no docstring for u_node_qty, please file a bug report!"""
-        def __get__(self):
-            cdef stlcontainers._MapIntDouble u_node_qty_proxy
-            if self._u_node_qty is None:
-                u_node_qty_proxy = stlcontainers.MapIntDouble(False, False)
-                u_node_qty_proxy.map_ptr = &(<cpp_execute.RequestParams *> self._inst).u_node_qty
-                self._u_node_qty = u_node_qty_proxy
-            return self._u_node_qty
-    
-        def __set__(self, value):
-            cdef stlcontainers._MapIntDouble value_proxy
-            value_proxy = stlcontainers.MapIntDouble(value, not isinstance(value, stlcontainers._MapIntDouble))
-            (<cpp_execute.RequestParams *> self._inst).u_node_qty = value_proxy.map_ptr[0]
-            self._u_node_qty = None
-    
-    
     property u_nodes_per_req:
         """no docstring for u_nodes_per_req, please file a bug report!"""
         def __get__(self):
@@ -249,6 +232,23 @@ cdef class RequestParams:
             value_proxy = stlcontainers.MapIntVectorInt(value, not isinstance(value, stlcontainers._MapIntVectorInt))
             (<cpp_execute.RequestParams *> self._inst).u_nodes_per_req = value_proxy.map_ptr[0]
             self._u_nodes_per_req = None
+    
+    
+    property v_nodes_per_sup:
+        """no docstring for v_nodes_per_sup, please file a bug report!"""
+        def __get__(self):
+            cdef stlcontainers._MapIntVectorInt v_nodes_per_sup_proxy
+            if self._v_nodes_per_sup is None:
+                v_nodes_per_sup_proxy = stlcontainers.MapIntVectorInt(False, False)
+                v_nodes_per_sup_proxy.map_ptr = &(<cpp_execute.RequestParams *> self._inst).v_nodes_per_sup
+                self._v_nodes_per_sup = v_nodes_per_sup_proxy
+            return self._v_nodes_per_sup
+    
+        def __set__(self, value):
+            cdef stlcontainers._MapIntVectorInt value_proxy
+            value_proxy = stlcontainers.MapIntVectorInt(value, not isinstance(value, stlcontainers._MapIntVectorInt))
+            (<cpp_execute.RequestParams *> self._inst).v_nodes_per_sup = value_proxy.map_ptr[0]
+            self._v_nodes_per_sup = None
     
     
     # methods

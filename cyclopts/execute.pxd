@@ -36,12 +36,12 @@ cdef class RequestParams:
     cdef public stlcontainers._MapIntInt _arc_to_vnode
     cdef public stlcontainers._MapIntVectorDouble _constr_vals
     cdef public stlcontainers._MapIntDouble _def_constr_coeffs
-    cdef public stlcontainers._MapIntDouble _def_constr_val
+    cdef public stlcontainers._MapIntBool _node_excl
+    cdef public stlcontainers._MapIntDouble _node_qty
     cdef public stlcontainers._MapIntMapIntVectorDouble _node_ucaps
     cdef public stlcontainers._MapIntDouble _req_qty
-    cdef public stlcontainers._MapIntBool _u_node_excl
-    cdef public stlcontainers._MapIntDouble _u_node_qty
     cdef public stlcontainers._MapIntVectorInt _u_nodes_per_req
+    cdef public stlcontainers._MapIntVectorInt _v_nodes_per_sup
     pass
 
 

@@ -9,16 +9,19 @@ struct RequestParams {
   /// requester : their request nodes
   std::map<int, std::vector<int> > u_nodes_per_req;
 
+  /// supplier : their supply nodes
+  std::map<int, std::vector<int> > v_nodes_per_sup;
+
   /// requester : request qty
   std::map<int, double> req_qty;
 
-  /// request node to request amount
-  /// @warning all request nodes must have an entry
-  std::map<int, double> u_node_qty;
+  /// node id to node quantity
+  /// @warning all nodes must have an entry
+  std::map<int, double> node_qty;
 
-  /// whether a request is exclusive
-  /// @warning all request nodes must have an entry
-  std::map<int, bool> u_node_excl;
+  /// whether a node is exclusive
+  /// @warning all nodes must have an entry
+  std::map<int, bool> node_excl;
   
   /// node : (arc : unit capacities)
   std::map<int, std::map<int, std::vector<double> > > node_ucaps;
@@ -31,10 +34,6 @@ struct RequestParams {
   /// note this is how multicommodity requests are taken into account
   /// @warning all request nodes must have an entry
   std::map<int, double> def_constr_coeffs;
-  
-  /// requester : the default mass constraint value
-  /// @warning all request groups must have an entry
-  std::map<int, double> def_constr_val;
 
   /// arc id : u_node id
   std::map<int, int> arc_to_unode;
@@ -61,7 +60,6 @@ struct RequestParams {
 
 struct SupplyParams {
   std::map<int, double> node_qtys;
-  /// std::map<int, std::map<int, std::vector<double> > > node_ucaps;
 };
   
 /// constructs and runs a reactor-request-based resource exchange

@@ -26,12 +26,12 @@ cdef extern from "execute.h" :
         cpp_map[int, int] arc_to_vnode
         cpp_map[int, cpp_vector[double]] constr_vals
         cpp_map[int, double] def_constr_coeffs
-        cpp_map[int, double] def_constr_val
+        cpp_map[int, cpp_bool] node_excl
+        cpp_map[int, double] node_qty
         cpp_map[int, cpp_map[int, cpp_vector[double]]] node_ucaps
         cpp_map[int, double] req_qty
-        cpp_map[int, cpp_bool] u_node_excl
-        cpp_map[int, double] u_node_qty
         cpp_map[int, cpp_vector[int]] u_nodes_per_req
+        cpp_map[int, cpp_vector[int]] v_nodes_per_sup
 
         # methods
 
