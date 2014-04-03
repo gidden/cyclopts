@@ -299,8 +299,8 @@ def test():
 
 
 
-def execute_exchange(params, db_path):
-    """execute_exchange(params, db_path)
+def execute_exchange(params, db_path=''):
+    """execute_exchange(params, db_path='')
     no docstring for execute_exchange, please file a bug report!"""
     cdef Params params_proxy
     cdef char * db_path_proxy
