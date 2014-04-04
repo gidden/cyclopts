@@ -5,7 +5,7 @@ import os
 
 package = 'cyclopts'     # top-level python package name
 packagedir = 'cyclopts'  # location of the python package
-testdir = '.'           # location of root dir for tests, i.e., root/tests
+testdir = '.'            # location of root dir for tests, i.e., root/tests
 
 extra_types = 'xdress_extra_types'
 

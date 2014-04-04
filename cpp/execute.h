@@ -8,8 +8,11 @@
 class ArcFlow {
 public:
   ArcFlow() : id(-1), flow(0) { };
+
   ArcFlow(int id, double flow) : id(id), flow(flow) { };
+
   ArcFlow(const ArcFlow& other) : id(other.id), flow(other.flow) { };
+
   inline ArcFlow& operator=(const ArcFlow& other) {
     id = other.id;
     flow = other.flow;
@@ -74,7 +77,8 @@ class Params {
 ///
 /// @param params all exchange parameters
 /// @param db_path the path to the output database to use
-std::vector<ArcFlow> execute_exchange(Params& params, std::string db_path = "");
+/// std::vector<ArcFlow> execute_exchange(Params& params, std::string db_path = "");
+void execute_exchange(Params& params, std::string db_path = "");
 
 void test();
 
