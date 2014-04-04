@@ -9,6 +9,6 @@ from nose.tools import assert_equal
 def test_null():
     exp = np.zeros(0, dtype=xd_arcflow)
     params = Params()
-    # obs = execute_exchange(params)
-    # assert_equal(exp, obs)
-    execute_exchange(params)
+    obs = execute_exchange(params)
+    assert_equal(exp, obs)
+    # execute_exchange(params)

@@ -177,8 +177,8 @@ void add_arcs(Params& params, ExchangeGraph& g, ExecContext& ctx) {
   }
 }
 
-// std::vector<ArcFlow> execute_exchange(Params& params, std::string db_path) {
-void execute_exchange(Params& params, std::string db_path) {
+std::vector<ArcFlow> execute_exchange(Params& params, std::string db_path) {
+// void execute_exchange(Params& params, std::string db_path) {
   ProgSolver solver("cbc", true); 
   ExchangeGraph g;
   ExecContext ctx;
@@ -195,5 +195,5 @@ void execute_exchange(Params& params, std::string db_path) {
     flows.push_back(ArcFlow(ctx.arc_to_id[matches[i].first],
                             matches[i].second));
   }
-  // return flows;
+  return flows;
 }

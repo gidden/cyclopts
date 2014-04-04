@@ -63,9 +63,9 @@ cdef extern from "execute.h" :
 # function signatures
 cdef extern from "execute.h" :
 
-    void execute_exchange() except +
-    void execute_exchange(Params &) except +
-    void execute_exchange(Params &, std_string) except +
+    cpp_vector[ArcFlow] execute_exchange() except +
+    cpp_vector[ArcFlow] execute_exchange(Params &) except +
+    cpp_vector[ArcFlow] execute_exchange(Params &, std_string) except +
 
 
 

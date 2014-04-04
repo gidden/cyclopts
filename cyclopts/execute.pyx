@@ -304,9 +304,16 @@ def execute_exchange(params, db_path=''):
     no docstring for execute_exchange, please file a bug report!"""
     cdef Params params_proxy
     cdef char * db_path_proxy
+    cdef cpp_vector[cpp_execute.ArcFlow] rtnval
+    
+    cdef np.npy_intp rtnval_proxy_shape[1]
     params_proxy = <Params> params
     db_path_bytes = db_path.encode()
-    cpp_execute.execute_exchange((<cpp_execute.Params *> params_proxy._inst)[0], std_string(<char *> db_path_bytes))
+    rtnval = cpp_execute.execute_exchange((<cpp_execute.Params *> params_proxy._inst)[0], std_string(<char *> db_path_bytes))
+    rtnval_proxy_shape[0] = <np.npy_intp> rtnval.size()
+    rtnval_proxy = np.PyArray_SimpleNewFromData(1, rtnval_proxy_shape, dtypes.xd_arcflow.num, &rtnval[0])
+    rtnval_proxy = np.PyArray_Copy(rtnval_proxy)
+    return rtnval_proxy
 
 
 
