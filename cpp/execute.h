@@ -19,6 +19,14 @@ public:
     return *this;
   }
 
+  inline bool operator==(const ArcFlow& other) {
+    return id == other.id && flow == other.flow;
+  }
+
+  inline bool operator!=(const ArcFlow& other) {
+    return !(this->operator==(other));
+  }
+  
   int id;
   double flow;
 };

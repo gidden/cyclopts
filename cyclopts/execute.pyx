@@ -21,6 +21,7 @@ from libcpp.string cimport string as std_string
 from libcpp.vector cimport vector as cpp_vector
 
 import collections
+import dtypes
 import numpy as np
 import stlcontainers
 
@@ -29,7 +30,7 @@ np.import_array()
 
 
 cdef class Params:
-    """no docstring for {'tarbase': 'execute', 'tarname': 'Params', 'language': 'c++', 'srcname': 'Params', 'sidecars': (), 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
+    """no docstring for {'sidecars': (), 'tarbase': 'execute', 'tarname': 'Params', 'language': 'c++', 'srcname': 'Params', 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
 
 
 
@@ -320,7 +321,7 @@ def execute_exchange(params, db_path=''):
 
 
 cdef class ArcFlow:
-    """no docstring for {'tarbase': 'execute', 'tarname': 'ArcFlow', 'language': 'c++', 'srcname': 'ArcFlow', 'sidecars': (), 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
+    """no docstring for {'sidecars': (), 'tarbase': 'execute', 'tarname': 'ArcFlow', 'language': 'c++', 'srcname': 'ArcFlow', 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
 
 
 

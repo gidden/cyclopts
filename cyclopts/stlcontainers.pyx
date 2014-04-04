@@ -39,6 +39,7 @@ cimport numpy as np
 import execute
 import numpy as np
 import collections
+import dtypes
 
 if PY_MAJOR_VERSION >= 3:
     basestring = str
