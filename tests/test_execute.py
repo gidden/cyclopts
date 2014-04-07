@@ -57,11 +57,27 @@ def test_simple():
 
     params.def_constr_coeffs = {0: 1}
     
+    # pref first to second
     params.arc_pref = {0: 0.75, 1: 0.25}
 
     obs = execute_exchange(params)
     exp = {0: params.constr_vals[1][0], 
            1: params.req_qty[0] - params.constr_vals[1][0]}    
+    print("exp", exp)
+    print("nobs", len(obs))
+    for i in range(len(obs)):
+        ob = ArcFlow(obs[i:])
+        print("obs id and flow", ob.id, ob.flow)
+    for i in range(len(obs)):
+        ob = ArcFlow(obs[i:])
+        assert_equal(exp[ob.id], ob.flow)
+
+    # pref second to first
+    params.arc_pref = {0: 0.25, 1: 0.75}
+
+    obs = execute_exchange(params)
+    exp = {1: params.constr_vals[2][0],
+           0: params.req_qty[0] - params.constr_vals[2][0]}    
     print("exp", exp)
     print("nobs", len(obs))
     for i in range(len(obs)):
