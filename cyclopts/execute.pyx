@@ -30,7 +30,7 @@ np.import_array()
 
 
 cdef class Params:
-    """no docstring for {'sidecars': (), 'tarbase': 'execute', 'tarname': 'Params', 'language': 'c++', 'srcname': 'Params', 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'execute', 'tarname': 'Params', 'language': 'c++', 'srcname': 'Params', 'sidecars': (), 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
 
 
 
@@ -296,7 +296,14 @@ cdef class Params:
 def test():
     """test()
     no docstring for test, please file a bug report!"""
-    cpp_execute.test()
+    cdef cpp_vector[cpp_execute.ArcFlow] rtnval
+    
+    cdef np.npy_intp rtnval_proxy_shape[1]
+    rtnval = cpp_execute.test()
+    rtnval_proxy_shape[0] = <np.npy_intp> rtnval.size()
+    rtnval_proxy = np.PyArray_SimpleNewFromData(1, rtnval_proxy_shape, dtypes.xd_arcflow.num, &rtnval[0])
+    rtnval_proxy = np.PyArray_Copy(rtnval_proxy)
+    return rtnval_proxy
 
 
 
@@ -321,7 +328,7 @@ def execute_exchange(params, db_path=''):
 
 
 cdef class ArcFlow:
-    """no docstring for {'sidecars': (), 'tarbase': 'execute', 'tarname': 'ArcFlow', 'language': 'c++', 'srcname': 'ArcFlow', 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'execute', 'tarname': 'ArcFlow', 'language': 'c++', 'srcname': 'ArcFlow', 'sidecars': (), 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
 
 
 

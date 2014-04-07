@@ -1,4 +1,6 @@
-from cyclopts.execute import Params, execute_exchange
+from __future__ import print_function
+
+from cyclopts.execute import ArcFlow, Params, execute_exchange
 from cyclopts.dtypes import xd_arcflow
 
 import numpy as np
@@ -42,19 +44,29 @@ def test_simple():
     params.excl_req_nodes = {0: np.array(np.array([], dtype='int'))}
     params.excl_sup_nodes = {1: np.array([], dtype='int')}
 
-    params.node_ucaps = {0: {0: np.array([], dtype='float'), 1: np.array([], dtype='float')},
+    params.node_ucaps = {0: {0: np.array([], dtype='float'), 
+                             1: np.array([], dtype='float')},
                          1: {0: np.array([1.0], dtype='float')},
                          2: {1: np.array([1.0], dtype='float')},}
 
     params.constr_vals = {0: np.array([], dtype='float'), 
                           1: np.array([3], dtype='float'), 
-                          2: np.array([params.req_qty[0] - 3 + 0.1], dtype='float')}
+                          2: np.array([params.req_qty[0] - 3 + 0.1], 
+                                      dtype='float')}
+    print("constr vals", params.constr_vals)
 
     params.def_constr_coeffs = {0: 1}
     
     params.arc_pref = {0: 0.75, 1: 0.25}
 
     obs = execute_exchange(params)
-    exp = {0: params.constr_vals[1][0], 1: params.req_qty[0] - params.constr_vals[2][0]}    
-    for i in range(len(exp)):
-        assert_equal(exp[obs[i].id], obs[i].flow)
+    exp = {0: params.constr_vals[1][0], 
+           1: params.req_qty[0] - params.constr_vals[1][0]}    
+    print("exp", exp)
+    print("nobs", len(obs))
+    for i in range(len(obs)):
+        ob = ArcFlow(obs[i:])
+        print("obs id and flow", ob.id, ob.flow)
+    for i in range(len(obs)):
+        ob = ArcFlow(obs[i:])
+        assert_equal(exp[ob.id], ob.flow)

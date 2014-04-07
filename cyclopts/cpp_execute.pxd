@@ -72,7 +72,7 @@ cdef extern from "execute.h" :
 # function signatures
 cdef extern from "execute.h" :
 
-    void test() except +
+    cpp_vector[ArcFlow] test() except +
 
 
 
