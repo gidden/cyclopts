@@ -27,7 +27,7 @@ cdef class ArcFlow:
 
 
 
-cdef class Params:
+cdef class ExecParams:
     cdef void * _inst
     cdef public bint _free_inst
     cdef public stlcontainers._MapIntDouble _arc_pref

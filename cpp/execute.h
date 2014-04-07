@@ -31,7 +31,7 @@ public:
   double flow;
 };
 
-class Params {
+class ExecParams {
  public:  
   /// requester : their request nodes
   std::map<int, std::vector<int> > u_nodes_per_req;
@@ -85,8 +85,8 @@ class Params {
 ///
 /// @param params all exchange parameters
 /// @param db_path the path to the output database to use
-std::vector<ArcFlow> execute_exchange(Params& params, std::string db_path = "");
-/// void execute_exchange(Params& params, std::string db_path = "");
+std::vector<ArcFlow> execute_exchange(ExecParams& params, std::string db_path = "");
+/// void execute_exchange(ExecParams& params, std::string db_path = "");
 
 std::vector<ArcFlow> test();
 

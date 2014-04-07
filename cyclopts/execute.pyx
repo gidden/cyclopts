@@ -27,10 +27,42 @@ import stlcontainers
 
 np.import_array()
 
+def execute_exchange(params, db_path=''):
+    """execute_exchange(params, db_path='')
+    no docstring for execute_exchange, please file a bug report!"""
+    cdef ExecParams params_proxy
+    cdef char * db_path_proxy
+    cdef cpp_vector[cpp_execute.ArcFlow] rtnval
+    
+    cdef np.npy_intp rtnval_proxy_shape[1]
+    params_proxy = <ExecParams> params
+    db_path_bytes = db_path.encode()
+    rtnval = cpp_execute.execute_exchange((<cpp_execute.ExecParams *> params_proxy._inst)[0], std_string(<char *> db_path_bytes))
+    rtnval_proxy_shape[0] = <np.npy_intp> rtnval.size()
+    rtnval_proxy = np.PyArray_SimpleNewFromData(1, rtnval_proxy_shape, dtypes.xd_arcflow.num, &rtnval[0])
+    rtnval_proxy = np.PyArray_Copy(rtnval_proxy)
+    return rtnval_proxy
 
 
-cdef class Params:
-    """no docstring for {'tarbase': 'execute', 'tarname': 'Params', 'language': 'c++', 'srcname': 'Params', 'sidecars': (), 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
+
+def test():
+    """test()
+    no docstring for test, please file a bug report!"""
+    cdef cpp_vector[cpp_execute.ArcFlow] rtnval
+    
+    cdef np.npy_intp rtnval_proxy_shape[1]
+    rtnval = cpp_execute.test()
+    rtnval_proxy_shape[0] = <np.npy_intp> rtnval.size()
+    rtnval_proxy = np.PyArray_SimpleNewFromData(1, rtnval_proxy_shape, dtypes.xd_arcflow.num, &rtnval[0])
+    rtnval_proxy = np.PyArray_Copy(rtnval_proxy)
+    return rtnval_proxy
+
+
+
+
+
+cdef class ExecParams:
+    """no docstring for {'tarbase': 'execute', 'tarname': 'ExecParams', 'language': 'c++', 'srcname': 'ExecParams', 'sidecars': (), 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
 
 
 
@@ -55,9 +87,9 @@ cdef class Params:
         self._v_nodes_per_sup = None
 
     def __init__(self, ):
-        """Params(self, )
+        """ExecParams(self, )
         """
-        self._inst = new cpp_execute.Params()
+        self._inst = new cpp_execute.ExecParams()
     
     
     def __dealloc__(self):
@@ -71,14 +103,14 @@ cdef class Params:
             cdef stlcontainers._MapIntDouble arc_pref_proxy
             if self._arc_pref is None:
                 arc_pref_proxy = stlcontainers.MapIntDouble(False, False)
-                arc_pref_proxy.map_ptr = &(<cpp_execute.Params *> self._inst).arc_pref
+                arc_pref_proxy.map_ptr = &(<cpp_execute.ExecParams *> self._inst).arc_pref
                 self._arc_pref = arc_pref_proxy
             return self._arc_pref
     
         def __set__(self, value):
             cdef stlcontainers._MapIntDouble value_proxy
             value_proxy = stlcontainers.MapIntDouble(value, not isinstance(value, stlcontainers._MapIntDouble))
-            (<cpp_execute.Params *> self._inst).arc_pref = value_proxy.map_ptr[0]
+            (<cpp_execute.ExecParams *> self._inst).arc_pref = value_proxy.map_ptr[0]
             self._arc_pref = None
     
     
@@ -88,14 +120,14 @@ cdef class Params:
             cdef stlcontainers._MapIntInt arc_to_unode_proxy
             if self._arc_to_unode is None:
                 arc_to_unode_proxy = stlcontainers.MapIntInt(False, False)
-                arc_to_unode_proxy.map_ptr = &(<cpp_execute.Params *> self._inst).arc_to_unode
+                arc_to_unode_proxy.map_ptr = &(<cpp_execute.ExecParams *> self._inst).arc_to_unode
                 self._arc_to_unode = arc_to_unode_proxy
             return self._arc_to_unode
     
         def __set__(self, value):
             cdef stlcontainers._MapIntInt value_proxy
             value_proxy = stlcontainers.MapIntInt(value, not isinstance(value, stlcontainers._MapIntInt))
-            (<cpp_execute.Params *> self._inst).arc_to_unode = value_proxy.map_ptr[0]
+            (<cpp_execute.ExecParams *> self._inst).arc_to_unode = value_proxy.map_ptr[0]
             self._arc_to_unode = None
     
     
@@ -105,14 +137,14 @@ cdef class Params:
             cdef stlcontainers._MapIntInt arc_to_vnode_proxy
             if self._arc_to_vnode is None:
                 arc_to_vnode_proxy = stlcontainers.MapIntInt(False, False)
-                arc_to_vnode_proxy.map_ptr = &(<cpp_execute.Params *> self._inst).arc_to_vnode
+                arc_to_vnode_proxy.map_ptr = &(<cpp_execute.ExecParams *> self._inst).arc_to_vnode
                 self._arc_to_vnode = arc_to_vnode_proxy
             return self._arc_to_vnode
     
         def __set__(self, value):
             cdef stlcontainers._MapIntInt value_proxy
             value_proxy = stlcontainers.MapIntInt(value, not isinstance(value, stlcontainers._MapIntInt))
-            (<cpp_execute.Params *> self._inst).arc_to_vnode = value_proxy.map_ptr[0]
+            (<cpp_execute.ExecParams *> self._inst).arc_to_vnode = value_proxy.map_ptr[0]
             self._arc_to_vnode = None
     
     
@@ -122,14 +154,14 @@ cdef class Params:
             cdef stlcontainers._MapIntVectorDouble constr_vals_proxy
             if self._constr_vals is None:
                 constr_vals_proxy = stlcontainers.MapIntVectorDouble(False, False)
-                constr_vals_proxy.map_ptr = &(<cpp_execute.Params *> self._inst).constr_vals
+                constr_vals_proxy.map_ptr = &(<cpp_execute.ExecParams *> self._inst).constr_vals
                 self._constr_vals = constr_vals_proxy
             return self._constr_vals
     
         def __set__(self, value):
             cdef stlcontainers._MapIntVectorDouble value_proxy
             value_proxy = stlcontainers.MapIntVectorDouble(value, not isinstance(value, stlcontainers._MapIntVectorDouble))
-            (<cpp_execute.Params *> self._inst).constr_vals = value_proxy.map_ptr[0]
+            (<cpp_execute.ExecParams *> self._inst).constr_vals = value_proxy.map_ptr[0]
             self._constr_vals = None
     
     
@@ -139,14 +171,14 @@ cdef class Params:
             cdef stlcontainers._MapIntDouble def_constr_coeffs_proxy
             if self._def_constr_coeffs is None:
                 def_constr_coeffs_proxy = stlcontainers.MapIntDouble(False, False)
-                def_constr_coeffs_proxy.map_ptr = &(<cpp_execute.Params *> self._inst).def_constr_coeffs
+                def_constr_coeffs_proxy.map_ptr = &(<cpp_execute.ExecParams *> self._inst).def_constr_coeffs
                 self._def_constr_coeffs = def_constr_coeffs_proxy
             return self._def_constr_coeffs
     
         def __set__(self, value):
             cdef stlcontainers._MapIntDouble value_proxy
             value_proxy = stlcontainers.MapIntDouble(value, not isinstance(value, stlcontainers._MapIntDouble))
-            (<cpp_execute.Params *> self._inst).def_constr_coeffs = value_proxy.map_ptr[0]
+            (<cpp_execute.ExecParams *> self._inst).def_constr_coeffs = value_proxy.map_ptr[0]
             self._def_constr_coeffs = None
     
     
@@ -156,14 +188,14 @@ cdef class Params:
             cdef stlcontainers._MapIntVectorVectorInt excl_req_nodes_proxy
             if self._excl_req_nodes is None:
                 excl_req_nodes_proxy = stlcontainers.MapIntVectorVectorInt(False, False)
-                excl_req_nodes_proxy.map_ptr = &(<cpp_execute.Params *> self._inst).excl_req_nodes
+                excl_req_nodes_proxy.map_ptr = &(<cpp_execute.ExecParams *> self._inst).excl_req_nodes
                 self._excl_req_nodes = excl_req_nodes_proxy
             return self._excl_req_nodes
     
         def __set__(self, value):
             cdef stlcontainers._MapIntVectorVectorInt value_proxy
             value_proxy = stlcontainers.MapIntVectorVectorInt(value, not isinstance(value, stlcontainers._MapIntVectorVectorInt))
-            (<cpp_execute.Params *> self._inst).excl_req_nodes = value_proxy.map_ptr[0]
+            (<cpp_execute.ExecParams *> self._inst).excl_req_nodes = value_proxy.map_ptr[0]
             self._excl_req_nodes = None
     
     
@@ -173,14 +205,14 @@ cdef class Params:
             cdef stlcontainers._MapIntVectorInt excl_sup_nodes_proxy
             if self._excl_sup_nodes is None:
                 excl_sup_nodes_proxy = stlcontainers.MapIntVectorInt(False, False)
-                excl_sup_nodes_proxy.map_ptr = &(<cpp_execute.Params *> self._inst).excl_sup_nodes
+                excl_sup_nodes_proxy.map_ptr = &(<cpp_execute.ExecParams *> self._inst).excl_sup_nodes
                 self._excl_sup_nodes = excl_sup_nodes_proxy
             return self._excl_sup_nodes
     
         def __set__(self, value):
             cdef stlcontainers._MapIntVectorInt value_proxy
             value_proxy = stlcontainers.MapIntVectorInt(value, not isinstance(value, stlcontainers._MapIntVectorInt))
-            (<cpp_execute.Params *> self._inst).excl_sup_nodes = value_proxy.map_ptr[0]
+            (<cpp_execute.ExecParams *> self._inst).excl_sup_nodes = value_proxy.map_ptr[0]
             self._excl_sup_nodes = None
     
     
@@ -190,14 +222,14 @@ cdef class Params:
             cdef stlcontainers._MapIntBool node_excl_proxy
             if self._node_excl is None:
                 node_excl_proxy = stlcontainers.MapIntBool(False, False)
-                node_excl_proxy.map_ptr = &(<cpp_execute.Params *> self._inst).node_excl
+                node_excl_proxy.map_ptr = &(<cpp_execute.ExecParams *> self._inst).node_excl
                 self._node_excl = node_excl_proxy
             return self._node_excl
     
         def __set__(self, value):
             cdef stlcontainers._MapIntBool value_proxy
             value_proxy = stlcontainers.MapIntBool(value, not isinstance(value, stlcontainers._MapIntBool))
-            (<cpp_execute.Params *> self._inst).node_excl = value_proxy.map_ptr[0]
+            (<cpp_execute.ExecParams *> self._inst).node_excl = value_proxy.map_ptr[0]
             self._node_excl = None
     
     
@@ -207,14 +239,14 @@ cdef class Params:
             cdef stlcontainers._MapIntDouble node_qty_proxy
             if self._node_qty is None:
                 node_qty_proxy = stlcontainers.MapIntDouble(False, False)
-                node_qty_proxy.map_ptr = &(<cpp_execute.Params *> self._inst).node_qty
+                node_qty_proxy.map_ptr = &(<cpp_execute.ExecParams *> self._inst).node_qty
                 self._node_qty = node_qty_proxy
             return self._node_qty
     
         def __set__(self, value):
             cdef stlcontainers._MapIntDouble value_proxy
             value_proxy = stlcontainers.MapIntDouble(value, not isinstance(value, stlcontainers._MapIntDouble))
-            (<cpp_execute.Params *> self._inst).node_qty = value_proxy.map_ptr[0]
+            (<cpp_execute.ExecParams *> self._inst).node_qty = value_proxy.map_ptr[0]
             self._node_qty = None
     
     
@@ -224,14 +256,14 @@ cdef class Params:
             cdef stlcontainers._MapIntMapIntVectorDouble node_ucaps_proxy
             if self._node_ucaps is None:
                 node_ucaps_proxy = stlcontainers.MapIntMapIntVectorDouble(False, False)
-                node_ucaps_proxy.map_ptr = &(<cpp_execute.Params *> self._inst).node_ucaps
+                node_ucaps_proxy.map_ptr = &(<cpp_execute.ExecParams *> self._inst).node_ucaps
                 self._node_ucaps = node_ucaps_proxy
             return self._node_ucaps
     
         def __set__(self, value):
             cdef stlcontainers._MapIntMapIntVectorDouble value_proxy
             value_proxy = stlcontainers.MapIntMapIntVectorDouble(value, not isinstance(value, stlcontainers._MapIntMapIntVectorDouble))
-            (<cpp_execute.Params *> self._inst).node_ucaps = value_proxy.map_ptr[0]
+            (<cpp_execute.ExecParams *> self._inst).node_ucaps = value_proxy.map_ptr[0]
             self._node_ucaps = None
     
     
@@ -241,14 +273,14 @@ cdef class Params:
             cdef stlcontainers._MapIntDouble req_qty_proxy
             if self._req_qty is None:
                 req_qty_proxy = stlcontainers.MapIntDouble(False, False)
-                req_qty_proxy.map_ptr = &(<cpp_execute.Params *> self._inst).req_qty
+                req_qty_proxy.map_ptr = &(<cpp_execute.ExecParams *> self._inst).req_qty
                 self._req_qty = req_qty_proxy
             return self._req_qty
     
         def __set__(self, value):
             cdef stlcontainers._MapIntDouble value_proxy
             value_proxy = stlcontainers.MapIntDouble(value, not isinstance(value, stlcontainers._MapIntDouble))
-            (<cpp_execute.Params *> self._inst).req_qty = value_proxy.map_ptr[0]
+            (<cpp_execute.ExecParams *> self._inst).req_qty = value_proxy.map_ptr[0]
             self._req_qty = None
     
     
@@ -258,14 +290,14 @@ cdef class Params:
             cdef stlcontainers._MapIntVectorInt u_nodes_per_req_proxy
             if self._u_nodes_per_req is None:
                 u_nodes_per_req_proxy = stlcontainers.MapIntVectorInt(False, False)
-                u_nodes_per_req_proxy.map_ptr = &(<cpp_execute.Params *> self._inst).u_nodes_per_req
+                u_nodes_per_req_proxy.map_ptr = &(<cpp_execute.ExecParams *> self._inst).u_nodes_per_req
                 self._u_nodes_per_req = u_nodes_per_req_proxy
             return self._u_nodes_per_req
     
         def __set__(self, value):
             cdef stlcontainers._MapIntVectorInt value_proxy
             value_proxy = stlcontainers.MapIntVectorInt(value, not isinstance(value, stlcontainers._MapIntVectorInt))
-            (<cpp_execute.Params *> self._inst).u_nodes_per_req = value_proxy.map_ptr[0]
+            (<cpp_execute.ExecParams *> self._inst).u_nodes_per_req = value_proxy.map_ptr[0]
             self._u_nodes_per_req = None
     
     
@@ -275,14 +307,14 @@ cdef class Params:
             cdef stlcontainers._MapIntVectorInt v_nodes_per_sup_proxy
             if self._v_nodes_per_sup is None:
                 v_nodes_per_sup_proxy = stlcontainers.MapIntVectorInt(False, False)
-                v_nodes_per_sup_proxy.map_ptr = &(<cpp_execute.Params *> self._inst).v_nodes_per_sup
+                v_nodes_per_sup_proxy.map_ptr = &(<cpp_execute.ExecParams *> self._inst).v_nodes_per_sup
                 self._v_nodes_per_sup = v_nodes_per_sup_proxy
             return self._v_nodes_per_sup
     
         def __set__(self, value):
             cdef stlcontainers._MapIntVectorInt value_proxy
             value_proxy = stlcontainers.MapIntVectorInt(value, not isinstance(value, stlcontainers._MapIntVectorInt))
-            (<cpp_execute.Params *> self._inst).v_nodes_per_sup = value_proxy.map_ptr[0]
+            (<cpp_execute.ExecParams *> self._inst).v_nodes_per_sup = value_proxy.map_ptr[0]
             self._v_nodes_per_sup = None
     
     
@@ -290,38 +322,6 @@ cdef class Params:
     
 
     pass
-
-
-
-def test():
-    """test()
-    no docstring for test, please file a bug report!"""
-    cdef cpp_vector[cpp_execute.ArcFlow] rtnval
-    
-    cdef np.npy_intp rtnval_proxy_shape[1]
-    rtnval = cpp_execute.test()
-    rtnval_proxy_shape[0] = <np.npy_intp> rtnval.size()
-    rtnval_proxy = np.PyArray_SimpleNewFromData(1, rtnval_proxy_shape, dtypes.xd_arcflow.num, &rtnval[0])
-    rtnval_proxy = np.PyArray_Copy(rtnval_proxy)
-    return rtnval_proxy
-
-
-
-def execute_exchange(params, db_path=''):
-    """execute_exchange(params, db_path='')
-    no docstring for execute_exchange, please file a bug report!"""
-    cdef Params params_proxy
-    cdef char * db_path_proxy
-    cdef cpp_vector[cpp_execute.ArcFlow] rtnval
-    
-    cdef np.npy_intp rtnval_proxy_shape[1]
-    params_proxy = <Params> params
-    db_path_bytes = db_path.encode()
-    rtnval = cpp_execute.execute_exchange((<cpp_execute.Params *> params_proxy._inst)[0], std_string(<char *> db_path_bytes))
-    rtnval_proxy_shape[0] = <np.npy_intp> rtnval.size()
-    rtnval_proxy = np.PyArray_SimpleNewFromData(1, rtnval_proxy_shape, dtypes.xd_arcflow.num, &rtnval[0])
-    rtnval_proxy = np.PyArray_Copy(rtnval_proxy)
-    return rtnval_proxy
 
 
 

@@ -16,9 +16,9 @@ from libcpp.vector cimport vector as cpp_vector
 
 cdef extern from "execute.h" :
 
-    cdef cppclass Params:
+    cdef cppclass ExecParams:
         # constructors
-        Params() except +
+        ExecParams() except +
 
         # attributes
         cpp_map[int, double] arc_pref
@@ -64,8 +64,8 @@ cdef extern from "execute.h" :
 cdef extern from "execute.h" :
 
     cpp_vector[ArcFlow] execute_exchange() except +
-    cpp_vector[ArcFlow] execute_exchange(Params &) except +
-    cpp_vector[ArcFlow] execute_exchange(Params &, std_string) except +
+    cpp_vector[ArcFlow] execute_exchange(ExecParams &) except +
+    cpp_vector[ArcFlow] execute_exchange(ExecParams &, std_string) except +
 
 
 

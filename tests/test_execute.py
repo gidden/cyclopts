@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from cyclopts.execute import ArcFlow, Params, execute_exchange
+from cyclopts.execute import ArcFlow, ExecParams, execute_exchange
 from cyclopts.dtypes import xd_arcflow
 
 import numpy as np
@@ -10,7 +10,7 @@ import nose
 from nose.tools import assert_equal, assert_true
 
 def test_null():
-    params = Params()
+    params = ExecParams()
     obs = execute_exchange(params)
     assert_true(np.empty(obs))
 
@@ -23,7 +23,7 @@ def test_null():
 # flow from s1 -> r := f1
 # flow from s2 -> r := f2
 def test_simple():
-    params = Params()
+    params = ExecParams()
     reqs = [0]
     sups = [1, 2]
     u_nodes = [0]
