@@ -9,7 +9,7 @@ from execute import ExecParams
 class Param(object):
     """A base class for sampled parameters.
     """
-    def __init__(self, avg, dist = None):
+    def __init__(self, avg, dist = None, *args, **kwargs):
         self.avg = avg
         self.dist = dist
 
