@@ -88,6 +88,7 @@ class ExecParams {
 std::vector<ArcFlow> execute_exchange(ExecParams& params, std::string db_path = "");
 /// void execute_exchange(ExecParams& params, std::string db_path = "");
 
+/// std::vector<int> test();
 std::vector<ArcFlow> test();
 
 #endif // CYCLOPTS_EXECUTE_H_

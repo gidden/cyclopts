@@ -12,6 +12,7 @@
 
 using namespace cyclus;
 
+// std::vector<int> test() {
 std::vector<ArcFlow> test() {
   std::cout << "testing cyclopts!\n";
   
@@ -48,6 +49,7 @@ std::vector<ArcFlow> test() {
 
   s.ExchangeSolver::Solve(&g);
   
+  // std::vector<int> flows;
   std::vector<ArcFlow> flows;
   for (int i = 0; i != g.matches().size(); i++) {
     std::cout << "Adding arc\n";
@@ -56,6 +58,8 @@ std::vector<ArcFlow> test() {
     flows.push_back(ArcFlow(i, g.matches()[i].second));
   }
   flows.push_back(ArcFlow(99, 4.5)); // for example purposes
+  // flows.push_back(1);
+  // flows.push_back(99);
   return flows;
 }
 
