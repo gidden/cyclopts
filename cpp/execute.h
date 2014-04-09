@@ -54,6 +54,15 @@ class ExecParams {
   /// requester : request qty
   std::map<int, double> req_qty;
 
+  /// requester or supplier : constraint rhs values 
+  /// @warning all groups must have an entry
+  std::map<int, std::vector<double> > constr_vals;
+
+  /// request node : the default mass constraint coefficient
+  /// note this is how multicommodity requests are taken into account
+  /// @warning all request nodes must have an entry
+  std::map<int, double> def_constr_coeff;
+
   /// node id to node quantity
   /// @warning all nodes must have an entry
   std::map<int, double> node_qty;
@@ -61,7 +70,6 @@ class ExecParams {
   /// whether a node is exclusive
   /// @warning all nodes must have an entry
   std::map<int, bool> node_excl;
-
  
   /// requester id : exclusive bid node ids
   /// @warning all request groups must have an entry
@@ -75,15 +83,6 @@ class ExecParams {
   
   /// node : (arc : unit capacities)
   std::map<int, std::map<int, std::vector<double> > > node_ucaps;
-
-  /// requester or supplier : constraint rhs values 
-  /// @warning all groups must have an entry
-  std::map<int, std::vector<double> > constr_vals;
-
-  /// request node : the default mass constraint coefficient
-  /// note this is how multicommodity requests are taken into account
-  /// @warning all request nodes must have an entry
-  std::map<int, double> def_constr_coeff;
 
   /// arc id : u_node id
   std::map<int, int> arc_to_unode;

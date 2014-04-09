@@ -13,7 +13,7 @@ def test_default_rxtr_req():
     assert_equal(1, s.n_commods.sample())
     assert_equal(1, s.n_request.sample())
     assert_equal(1, s.assem_per_req.sample())
-    assert_equal(0, s.req_multi_frac.sample())
+    assert_false(s.assem_multi_commod.sample())
     assert_equal(1, s.req_multi_commods.sample())
     assert_false(s.exclusive.sample())
     assert_equal(0, s.n_req_constr.sample())

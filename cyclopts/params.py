@@ -6,6 +6,7 @@ parameter definition of a resource exchange graph in Cyclus.
 
 import random as rnd
 import numpy as np
+import copy as cp
 
 from execute import ExecParams
 
@@ -109,7 +110,7 @@ class ReactorRequestSampler(object):
     scenarios.
     """
     def __init__(self, n_commods = None, 
-                 n_request = None, assem_per_req = None, req_multi_frac = None, 
+                 n_request = None, assem_per_req = None, assem_multi_commod = None, 
                  req_multi_commods = None, exclusive = None, n_req_constr = None, 
                  n_supply = None, sup_multi_frac = None, sup_multi_commods = None, 
                  n_sup_constr = None, sup_constr_val = None, 
@@ -123,9 +124,9 @@ class ReactorRequestSampler(object):
             the number of requesters (i.e., RequestGroups)
         assem_per_req : Param or similar, optional
             the number of assemblies in a request
-        req_multi_frac : Param or similar, optional
-            the fraction of assemblies that can be satisfied by multiple 
-            commodities (the multicommodity zone)
+        assem_multi_commod : BoolParam or similar, optional
+            whether an assembly request can be satisfied by multiple 
+            commodities
         req_multi_commods : Param or similar, optional
             the number of commodities in a multicommodity zone
         exclusive : BoolParam or similar, optional
@@ -157,8 +158,8 @@ class ReactorRequestSampler(object):
             if n_request is not None else Param(1)
         self.assem_per_req = assem_per_req \
             if assem_per_req is not None else Param(1)
-        self.req_multi_frac = req_multi_frac \
-            if req_multi_frac is not None else Param(0)
+        self.assem_multi_commod = assem_multi_commod \
+            if assem_multi_commod is not None else BoolParam(-1) # never true
         self.req_multi_commods = req_multi_commods \
             if req_multi_commods is not None else Param(1)
         self.exclusive = exclusive \
@@ -209,12 +210,37 @@ class ReactorRequestParams(object):
         """
         self.sampler = sampler
         self.commod_offset = commod_offset
-        self.req_g_ids = Incrementer(req_g_offset)
-        self.sup_g_ids = Incrementer(sup_g_offset)
-        self.req_n_ids = Incrementer(req_n_offset)
-        self.sup_n_ids = Incrementer(sup_n_offset)
+
+        self.commods = set(range(self.commod_offset, 
+                                 self.commod_offset + self.n_commods.sample()))
+        self.n_request = self.n_request.sample() # number of request groups
+        self.n_supply = self.n_supply.sample() # number of supply groups
+        
+        self.req_g_offset = req_g_offset
+        self.sup_g_offset = sup_g_offset
+        self.req_n_offset = req_n_offset
+        self.sup_n_offset = sup_n_offset
+
         self.params = ExecParams()
+        self.req_node_commods = {} # requests to their commodities
+        self.sup_node_commods = {} # supply to their commodities
     
+    def add_req_node(self, n_id, g_id, commod):
+        """Adds a request node to params
+        
+        Parameters
+        ----------
+        n_id : int
+            node id
+        g_id : int
+            group id
+        commod : int
+            commod id
+        """
+        self.params.AddRequestNode(n_id, g_id)
+        self.params.node_excl[n_id] = self.sampler.exclusive.sample()
+        self.req_node_commods[n_id] = primary_commod
+
     def generate_request(self, commods, n_request, *args, **kwargs):
         """Generates supply-related parameters.
 
@@ -225,9 +251,46 @@ class ReactorRequestParams(object):
         n_request : int
             the number of requesters        
         """
+        s = self.sampler
+        p = self.params        
+        self.req_g_ids = Incrementer(req_g_offset)
+        self.req_n_ids = Incrementer(req_n_offset)
+
         for i in range(len(n_request)):
             g_id = self.req_g_ids.next()
+            p.AddRequestGroup(g_id)
+            assems = s.assem_per_req.sample()
+            primary_commod = rnd.choice(commods)
+            # other commodities for assemblies that can be satisfied by 
+            # multiple commodities
+            multi_commods = rnd.sample(cp.copy(commods).remove(primary_commod), 
+                                       s.req_multi_commods.sample())
+
+            # group qty and constrs
+            # assumes 1 assembly == 1 mass unit, all constr vals equivalent
+            p.req_qty[g_id] = assems
+            p.constr_vals[g_id] = \
+                [assems for j in range(s.n_req_constr.sample())]
             
+            # add nodes
+            for j in range(assems):
+                # add primary node
+                n_id = self.req_n_ids.next()
+                self.add_node(n_id, g_id, primary_commod)
+                all_ids = [n_id]
+                
+                # add multicommodity nodes
+                if s.assem_multi_commod.sample():
+                    for commod in multi_commods:
+                        n_id = self.req_n_ids.next()
+                        self.add_node(n_id, g_id, commod)
+                        all_ids += [n_id]
+                
+                for id in all_ids:
+                    # change this if all assemblies have mass != 1
+                    p.node_qty[id] = 1
+                    p.def_constr_coeff[id] = 1 
+                            
     
     def generate_supply(self, commods, n_supply, *args, **kwargs):
         """Generates supply-related parameters.
@@ -241,6 +304,8 @@ class ReactorRequestParams(object):
         
         
         """
+        self.sup_g_ids = Incrementer(sup_g_offset + self.n_request)
+        self.sup_n_ids = Incrementer(sup_n_offset + len(self.req_node_commods))
         pass
     
     def generate_arcs(self, *args, **kwargs):
@@ -257,10 +322,9 @@ class ReactorRequestParams(object):
         """Returns a configured cyclopts.execute.ExecParams after calling each
         generation member function in order.
         """
-        commods = set(range(self.commod_offset, 
-                            self.commod_offset + self.n_commods.sample()))
-        n_request = self.n_request.sample()
-        n_supply = self.n_supply.sample()
+        commods = self.commods
+        n_request = self.n_request
+        n_supply = self.n_supply
 
         self.generate_request(commods, n_request)
         self.generate_supply(commods, n_supply)
