@@ -5,6 +5,7 @@ parameter definition of a resource exchange graph in Cyclus.
 """
 
 import random as rnd
+import numpy as np
 
 from execute import ExecParams
 
@@ -112,7 +113,7 @@ class ReactorRequestSampler(object):
                  req_multi_commods = None, exclusive = None, n_req_constr = None, 
                  n_supply = None, sup_multi_frac = None, sup_multi_commods = None, 
                  n_sup_constr = None, sup_constr_val = None, 
-                 connection = None,
+                 connection = None, constr_coeff = None, pref_coeff = None,
                  *args, **kwargs):
         """Parameters
         ----------
@@ -145,6 +146,10 @@ class ReactorRequestSampler(object):
         connection : BoolParam or similar, optional
             the probability that a possible connection between supply and 
             request nodes is added
+        constr_coeff : CoeffParam or similar, optional
+            constraint coefficients
+        pref_coeff : CoeffParam or similar, optional
+            preference coefficients
         """
         self.n_commods = n_commods if n_commods is not None else Param(1)
         self.n_request = n_request if n_request is not None else Param(1)
@@ -159,6 +164,8 @@ class ReactorRequestSampler(object):
         self.n_sup_constr = n_sup_constr if n_sup_constr is not None else Param(1)
         self.sup_constr_val = sup_constr_val if sup_constr_val is not None else SupConstrParam(1)
         self.connection = connection if connection is not None else BoolParam(1)
+        self.constr_coeff = constr_coeff if constr_coeff is not None else CoeffParam(np.nextafter(0, 1), 1)
+        self.pref_coeff = pref_coeff if pref_coeff is not None else CoeffParam(np.nextafter(0, 1), 1)
 
 class ReactorRequestParams(object):
     """A helper class to translate sampling parameters for a reactor request
