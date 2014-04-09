@@ -12,55 +12,30 @@
 
 using namespace cyclus;
 
-// std::vector<int> test() {
-std::vector<ArcFlow> test() {
-  std::cout << "testing cyclopts!\n";
-  
-  ProgSolver s("cbc", true); 
-  ExchangeGraph g;
+void ExecParams::AddRequestGroup(int g) {
+  u_nodes_per_req[g] = std::vector<int>();
+  req_qty[g] = 0;
+  excl_req_nodes[g] = std::vector< std::vector<int> >();
+  constr_vals[g] = std::vector<double>();
+}
 
-  double qty, unit_cap_req, capacity, unit_cap_sup, flow;
-  qty = 5;
-  unit_cap_req = 1;
-  capacity = 10;
-  unit_cap_sup = 1;
-  flow = qty;
-  bool exclusive_orders = true;
-  
-  ExchangeNode::Ptr u(new ExchangeNode(qty, exclusive_orders));
-  ExchangeNode::Ptr v(new ExchangeNode());
-  Arc a(u, v);
-  
-  u->unit_capacities[a].push_back(unit_cap_req);
-  u->prefs[a] = 1;
-  v->unit_capacities[a].push_back(unit_cap_sup);
-  
-  RequestGroup::Ptr request(new RequestGroup(qty));
-  request->AddCapacity(qty);
-  request->AddExchangeNode(u);  
-  g.AddRequestGroup(request);
+void ExecParams::AddRequestNode(int n) {
+  node_qty[n] = 0;
+  node_excl[n] = false;
+  node_ucaps[n] = std::map<int, std::vector<double> >();
+  def_constr_coeff[n] = 0;
+}
 
-  ExchangeNodeGroup::Ptr supply(new ExchangeNodeGroup());
-  supply->AddCapacity(capacity);
-  supply->AddExchangeNode(v);  
-  g.AddSupplyGroup(supply);
+void ExecParams::AddSupplyGroup(int g) {
+  v_nodes_per_sup[g] = std::vector<int>();
+  excl_sup_nodes[g] = std::vector<int>();
+  constr_vals[g] = std::vector<double>();
+}
 
-  g.AddArc(a);
-
-  s.ExchangeSolver::Solve(&g);
-  
-  // std::vector<int> flows;
-  std::vector<ArcFlow> flows;
-  for (int i = 0; i != g.matches().size(); i++) {
-    std::cout << "Adding arc\n";
-    std::cout << "        i: " << i << "\n";
-    std::cout << "     flow: " << g.matches()[i].second << "\n";
-    flows.push_back(ArcFlow(i, g.matches()[i].second));
-  }
-  flows.push_back(ArcFlow(99, 4.5)); // for example purposes
-  // flows.push_back(1);
-  // flows.push_back(99);
-  return flows;
+void ExecParams::AddSupplyNode(int n) {
+  node_qty[n] = 0;
+  node_excl[n] = false;
+  node_ucaps[n] = std::map<int, std::vector<double> >();
 }
 
 struct ExecContext {  
@@ -185,7 +160,7 @@ void add_arcs(ExecParams& params, ExchangeGraph& g, ExecContext& ctx) {
     // add unit capacities and preferences
     u->unit_capacities[a] = params.node_ucaps[u_id][a_id];
     // @TODO confirm this is correct
-    u->unit_capacities[a].push_back(params.def_constr_coeffs[u_id]); 
+    u->unit_capacities[a].push_back(params.def_constr_coeff[u_id]); 
     u->prefs[a] = params.arc_pref[a_id];
     v->unit_capacities[a] = params.node_ucaps[v_id][a_id];
   }
@@ -209,5 +184,56 @@ std::vector<ArcFlow> execute_exchange(ExecParams& params, std::string db_path) {
     flows.push_back(ArcFlow(ctx.arc_to_id[matches[i].first],
                             matches[i].second));
   }
+  return flows;
+}
+
+// std::vector<int> test() {
+std::vector<ArcFlow> test() {
+  std::cout << "testing cyclopts!\n";
+  
+  ProgSolver s("cbc", true); 
+  ExchangeGraph g;
+
+  double qty, unit_cap_req, capacity, unit_cap_sup, flow;
+  qty = 5;
+  unit_cap_req = 1;
+  capacity = 10;
+  unit_cap_sup = 1;
+  flow = qty;
+  bool exclusive_orders = true;
+  
+  ExchangeNode::Ptr u(new ExchangeNode(qty, exclusive_orders));
+  ExchangeNode::Ptr v(new ExchangeNode());
+  Arc a(u, v);
+  
+  u->unit_capacities[a].push_back(unit_cap_req);
+  u->prefs[a] = 1;
+  v->unit_capacities[a].push_back(unit_cap_sup);
+  
+  RequestGroup::Ptr request(new RequestGroup(qty));
+  request->AddCapacity(qty);
+  request->AddExchangeNode(u);  
+  g.AddRequestGroup(request);
+
+  ExchangeNodeGroup::Ptr supply(new ExchangeNodeGroup());
+  supply->AddCapacity(capacity);
+  supply->AddExchangeNode(v);  
+  g.AddSupplyGroup(supply);
+
+  g.AddArc(a);
+
+  s.ExchangeSolver::Solve(&g);
+  
+  // std::vector<int> flows;
+  std::vector<ArcFlow> flows;
+  for (int i = 0; i != g.matches().size(); i++) {
+    std::cout << "Adding arc\n";
+    std::cout << "        i: " << i << "\n";
+    std::cout << "     flow: " << g.matches()[i].second << "\n";
+    flows.push_back(ArcFlow(i, g.matches()[i].second));
+  }
+  flows.push_back(ArcFlow(99, 4.5)); // for example purposes
+  // flows.push_back(1);
+  // flows.push_back(99);
   return flows;
 }

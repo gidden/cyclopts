@@ -151,21 +151,36 @@ class ReactorRequestSampler(object):
         pref_coeff : CoeffParam or similar, optional
             preference coefficients
         """
-        self.n_commods = n_commods if n_commods is not None else Param(1)
-        self.n_request = n_request if n_request is not None else Param(1)
-        self.assem_per_req = assem_per_req if assem_per_req is not None else Param(1)
-        self.req_multi_frac = req_multi_frac if req_multi_frac is not None else Param(0)
-        self.req_multi_commods = req_multi_commods if req_multi_commods is not None else Param(1)
-        self.exclusive = exclusive if exclusive is not None else BoolParam(-1) # never true
-        self.n_req_constr = n_req_constr if n_req_constr is not None else Param(0)
-        self.n_supply = n_supply if n_supply is not None else Param(1)
-        self.sup_multi_frac = sup_multi_frac if sup_multi_frac is not None else Param(0)
-        self.sup_multi_commods = sup_multi_commods if sup_multi_commods is not None else Param(1)
-        self.n_sup_constr = n_sup_constr if n_sup_constr is not None else Param(1)
-        self.sup_constr_val = sup_constr_val if sup_constr_val is not None else SupConstrParam(1)
-        self.connection = connection if connection is not None else BoolParam(1)
-        self.constr_coeff = constr_coeff if constr_coeff is not None else CoeffParam(np.nextafter(0, 1), 1)
-        self.pref_coeff = pref_coeff if pref_coeff is not None else CoeffParam(np.nextafter(0, 1), 1)
+        self.n_commods = n_commods \
+            if n_commods is not None else Param(1)
+        self.n_request = n_request \
+            if n_request is not None else Param(1)
+        self.assem_per_req = assem_per_req \
+            if assem_per_req is not None else Param(1)
+        self.req_multi_frac = req_multi_frac \
+            if req_multi_frac is not None else Param(0)
+        self.req_multi_commods = req_multi_commods \
+            if req_multi_commods is not None else Param(1)
+        self.exclusive = exclusive \
+            if exclusive is not None else BoolParam(-1) # never true
+        self.n_req_constr = n_req_constr \
+            if n_req_constr is not None else Param(0)
+        self.n_supply = n_supply \
+            if n_supply is not None else Param(1)
+        self.sup_multi_frac = sup_multi_frac \
+            if sup_multi_frac is not None else Param(0)
+        self.sup_multi_commods = sup_multi_commods \
+            if sup_multi_commods is not None else Param(1)
+        self.n_sup_constr = n_sup_constr \
+            if n_sup_constr is not None else Param(1)
+        self.sup_constr_val = sup_constr_val \
+            if sup_constr_val is not None else SupConstrParam(1)
+        self.connection = connection \
+            if connection is not None else BoolParam(1)
+        self.constr_coeff = constr_coeff \
+            if constr_coeff is not None else CoeffParam(np.nextafter(0, 1), 1)
+        self.pref_coeff = pref_coeff \
+            if pref_coeff is not None else CoeffParam(np.nextafter(0, 1), 1)
 
 class ReactorRequestParams(object):
     """A helper class to translate sampling parameters for a reactor request
@@ -253,16 +268,6 @@ class ReactorRequestParams(object):
         self.generate_coeffs()
 
         return self.params
-
-class RSSupplyGen(object):
-    """A helper class to generate supply parameters for reactor supply
-    scenarios.
-    """
-
-class RSDemandGen(object):
-    """A helper class to generate demand parameters for reactor supply
-    scenarios.
-    """
 
 class ReactorSupplyParams(object):
     """A helper class to translate sampling parameters for a reactor supply

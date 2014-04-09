@@ -55,7 +55,7 @@ def test_simple():
                                       dtype='float')}
     print("constr vals", params.constr_vals)
 
-    params.def_constr_coeffs = {0: 1}
+    params.def_constr_coeff = {0: 1}
     
     # pref first to second
     params.arc_pref = {0: 0.75, 1: 0.25}

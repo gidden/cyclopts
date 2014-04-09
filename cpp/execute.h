@@ -32,7 +32,19 @@ public:
 };
 
 class ExecParams {
- public:  
+ public:
+  /// convenience function to populate entries for request groups
+  void AddRequestGroup(int g);
+  
+  /// convenience function to populate entries for request nodes
+  void AddRequestNode(int n);
+
+  /// convenience function to populate entries for supply groups
+  void AddSupplyGroup(int g);
+  
+  /// convenience function to populate entries for supply nodes
+  void AddSupplyNode(int n);
+  
   /// requester : their request nodes
   std::map<int, std::vector<int> > u_nodes_per_req;
 
@@ -51,6 +63,8 @@ class ExecParams {
   std::map<int, bool> node_excl;
 
   /// requester id : all groupings of exclusive nodes
+  /// exclusive node groups are representative of cases where multiple bids
+  /// are represented by the same, quantized resource object (e.g., an assembly)
   /// @warning all request groups must have an entry
   std::map<int, std::vector< std::vector<int> > > excl_req_nodes;
  
@@ -68,7 +82,7 @@ class ExecParams {
   /// request node : the default mass constraint coefficient
   /// note this is how multicommodity requests are taken into account
   /// @warning all request nodes must have an entry
-  std::map<int, double> def_constr_coeffs;
+  std::map<int, double> def_constr_coeff;
 
   /// arc id : u_node id
   std::map<int, int> arc_to_unode;

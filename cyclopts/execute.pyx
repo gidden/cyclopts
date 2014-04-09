@@ -76,7 +76,7 @@ cdef class ExecParams:
         self._arc_to_unode = None
         self._arc_to_vnode = None
         self._constr_vals = None
-        self._def_constr_coeffs = None
+        self._def_constr_coeff = None
         self._excl_req_nodes = None
         self._excl_sup_nodes = None
         self._node_excl = None
@@ -165,21 +165,21 @@ cdef class ExecParams:
             self._constr_vals = None
     
     
-    property def_constr_coeffs:
-        """no docstring for def_constr_coeffs, please file a bug report!"""
+    property def_constr_coeff:
+        """no docstring for def_constr_coeff, please file a bug report!"""
         def __get__(self):
-            cdef stlcontainers._MapIntDouble def_constr_coeffs_proxy
-            if self._def_constr_coeffs is None:
-                def_constr_coeffs_proxy = stlcontainers.MapIntDouble(False, False)
-                def_constr_coeffs_proxy.map_ptr = &(<cpp_execute.ExecParams *> self._inst).def_constr_coeffs
-                self._def_constr_coeffs = def_constr_coeffs_proxy
-            return self._def_constr_coeffs
+            cdef stlcontainers._MapIntDouble def_constr_coeff_proxy
+            if self._def_constr_coeff is None:
+                def_constr_coeff_proxy = stlcontainers.MapIntDouble(False, False)
+                def_constr_coeff_proxy.map_ptr = &(<cpp_execute.ExecParams *> self._inst).def_constr_coeff
+                self._def_constr_coeff = def_constr_coeff_proxy
+            return self._def_constr_coeff
     
         def __set__(self, value):
             cdef stlcontainers._MapIntDouble value_proxy
             value_proxy = stlcontainers.MapIntDouble(value, not isinstance(value, stlcontainers._MapIntDouble))
-            (<cpp_execute.ExecParams *> self._inst).def_constr_coeffs = value_proxy.map_ptr[0]
-            self._def_constr_coeffs = None
+            (<cpp_execute.ExecParams *> self._inst).def_constr_coeff = value_proxy.map_ptr[0]
+            self._def_constr_coeff = None
     
     
     property excl_req_nodes:
@@ -319,6 +319,30 @@ cdef class ExecParams:
     
     
     # methods
+    def AddRequestGroup(self, g):
+        """AddRequestGroup(self, g)
+        no docstring for AddRequestGroup, please file a bug report!"""
+        (<cpp_execute.ExecParams *> self._inst).AddRequestGroup(<int> g)
+    
+    
+    def AddRequestNode(self, n):
+        """AddRequestNode(self, n)
+        no docstring for AddRequestNode, please file a bug report!"""
+        (<cpp_execute.ExecParams *> self._inst).AddRequestNode(<int> n)
+    
+    
+    def AddSupplyGroup(self, g):
+        """AddSupplyGroup(self, g)
+        no docstring for AddSupplyGroup, please file a bug report!"""
+        (<cpp_execute.ExecParams *> self._inst).AddSupplyGroup(<int> g)
+    
+    
+    def AddSupplyNode(self, n):
+        """AddSupplyNode(self, n)
+        no docstring for AddSupplyNode, please file a bug report!"""
+        (<cpp_execute.ExecParams *> self._inst).AddSupplyNode(<int> n)
+    
+    
     
 
     pass
