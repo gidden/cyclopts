@@ -35,8 +35,8 @@ cdef class ExecParams:
     cdef public stlcontainers._MapIntInt _arc_to_vnode
     cdef public stlcontainers._MapIntVectorDouble _constr_vals
     cdef public stlcontainers._MapIntDouble _def_constr_coeff
-    cdef public stlcontainers._MapIntVectorVectorInt _excl_req_nodes
-    cdef public stlcontainers._MapIntVectorInt _excl_sup_nodes
+    cdef public stlcontainers._MapIntVectorInt _excl_req_nodes
+    cdef public stlcontainers._MapIntVectorVectorInt _excl_sup_nodes
     cdef public stlcontainers._MapIntBool _node_excl
     cdef public stlcontainers._MapIntDouble _node_qty
     cdef public stlcontainers._MapIntMapIntVectorDouble _node_ucaps

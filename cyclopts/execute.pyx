@@ -185,16 +185,16 @@ cdef class ExecParams:
     property excl_req_nodes:
         """no docstring for excl_req_nodes, please file a bug report!"""
         def __get__(self):
-            cdef stlcontainers._MapIntVectorVectorInt excl_req_nodes_proxy
+            cdef stlcontainers._MapIntVectorInt excl_req_nodes_proxy
             if self._excl_req_nodes is None:
-                excl_req_nodes_proxy = stlcontainers.MapIntVectorVectorInt(False, False)
+                excl_req_nodes_proxy = stlcontainers.MapIntVectorInt(False, False)
                 excl_req_nodes_proxy.map_ptr = &(<cpp_execute.ExecParams *> self._inst).excl_req_nodes
                 self._excl_req_nodes = excl_req_nodes_proxy
             return self._excl_req_nodes
     
         def __set__(self, value):
-            cdef stlcontainers._MapIntVectorVectorInt value_proxy
-            value_proxy = stlcontainers.MapIntVectorVectorInt(value, not isinstance(value, stlcontainers._MapIntVectorVectorInt))
+            cdef stlcontainers._MapIntVectorInt value_proxy
+            value_proxy = stlcontainers.MapIntVectorInt(value, not isinstance(value, stlcontainers._MapIntVectorInt))
             (<cpp_execute.ExecParams *> self._inst).excl_req_nodes = value_proxy.map_ptr[0]
             self._excl_req_nodes = None
     
@@ -202,16 +202,16 @@ cdef class ExecParams:
     property excl_sup_nodes:
         """no docstring for excl_sup_nodes, please file a bug report!"""
         def __get__(self):
-            cdef stlcontainers._MapIntVectorInt excl_sup_nodes_proxy
+            cdef stlcontainers._MapIntVectorVectorInt excl_sup_nodes_proxy
             if self._excl_sup_nodes is None:
-                excl_sup_nodes_proxy = stlcontainers.MapIntVectorInt(False, False)
+                excl_sup_nodes_proxy = stlcontainers.MapIntVectorVectorInt(False, False)
                 excl_sup_nodes_proxy.map_ptr = &(<cpp_execute.ExecParams *> self._inst).excl_sup_nodes
                 self._excl_sup_nodes = excl_sup_nodes_proxy
             return self._excl_sup_nodes
     
         def __set__(self, value):
-            cdef stlcontainers._MapIntVectorInt value_proxy
-            value_proxy = stlcontainers.MapIntVectorInt(value, not isinstance(value, stlcontainers._MapIntVectorInt))
+            cdef stlcontainers._MapIntVectorVectorInt value_proxy
+            value_proxy = stlcontainers.MapIntVectorVectorInt(value, not isinstance(value, stlcontainers._MapIntVectorVectorInt))
             (<cpp_execute.ExecParams *> self._inst).excl_sup_nodes = value_proxy.map_ptr[0]
             self._excl_sup_nodes = None
     
@@ -325,10 +325,10 @@ cdef class ExecParams:
         (<cpp_execute.ExecParams *> self._inst).AddRequestGroup(<int> g)
     
     
-    def AddRequestNode(self, n):
-        """AddRequestNode(self, n)
+    def AddRequestNode(self, n, g):
+        """AddRequestNode(self, n, g)
         no docstring for AddRequestNode, please file a bug report!"""
-        (<cpp_execute.ExecParams *> self._inst).AddRequestNode(<int> n)
+        (<cpp_execute.ExecParams *> self._inst).AddRequestNode(<int> n, <int> g)
     
     
     def AddSupplyGroup(self, g):
@@ -337,10 +337,10 @@ cdef class ExecParams:
         (<cpp_execute.ExecParams *> self._inst).AddSupplyGroup(<int> g)
     
     
-    def AddSupplyNode(self, n):
-        """AddSupplyNode(self, n)
+    def AddSupplyNode(self, n, g):
+        """AddSupplyNode(self, n, g)
         no docstring for AddSupplyNode, please file a bug report!"""
-        (<cpp_execute.ExecParams *> self._inst).AddSupplyNode(<int> n)
+        (<cpp_execute.ExecParams *> self._inst).AddSupplyNode(<int> n, <int> g)
     
     
     

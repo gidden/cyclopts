@@ -26,8 +26,8 @@ cdef extern from "execute.h" :
         cpp_map[int, int] arc_to_vnode
         cpp_map[int, cpp_vector[double]] constr_vals
         cpp_map[int, double] def_constr_coeff
-        cpp_map[int, cpp_vector[cpp_vector[int]]] excl_req_nodes
-        cpp_map[int, cpp_vector[int]] excl_sup_nodes
+        cpp_map[int, cpp_vector[int]] excl_req_nodes
+        cpp_map[int, cpp_vector[cpp_vector[int]]] excl_sup_nodes
         cpp_map[int, cpp_bool] node_excl
         cpp_map[int, double] node_qty
         cpp_map[int, cpp_map[int, cpp_vector[double]]] node_ucaps
@@ -40,10 +40,12 @@ cdef extern from "execute.h" :
         void AddRequestGroup(int) except +
         void AddRequestNode() except +
         void AddRequestNode(int) except +
+        void AddRequestNode(int, int) except +
         void AddSupplyGroup() except +
         void AddSupplyGroup(int) except +
         void AddSupplyNode() except +
         void AddSupplyNode(int) except +
+        void AddSupplyNode(int, int) except +
         pass
 
 

@@ -37,13 +37,13 @@ class ExecParams {
   void AddRequestGroup(int g);
   
   /// convenience function to populate entries for request nodes
-  void AddRequestNode(int n);
+  void AddRequestNode(int n, int g);
 
   /// convenience function to populate entries for supply groups
   void AddSupplyGroup(int g);
   
   /// convenience function to populate entries for supply nodes
-  void AddSupplyNode(int n);
+  void AddSupplyNode(int n, int g);
   
   /// requester : their request nodes
   std::map<int, std::vector<int> > u_nodes_per_req;
@@ -62,15 +62,16 @@ class ExecParams {
   /// @warning all nodes must have an entry
   std::map<int, bool> node_excl;
 
-  /// requester id : all groupings of exclusive nodes
+ 
+  /// requester id : exclusive bid node ids
+  /// @warning all request groups must have an entry
+  std::map<int, std::vector<int> > excl_req_nodes;
+ 
+  /// supplier id : all groupings of exclusive nodes
   /// exclusive node groups are representative of cases where multiple bids
   /// are represented by the same, quantized resource object (e.g., an assembly)
-  /// @warning all request groups must have an entry
-  std::map<int, std::vector< std::vector<int> > > excl_req_nodes;
- 
-  /// supplier id : exclusive bid node ids
   /// @warning all supply groups must have an entry
-  std::map<int, std::vector<int> > excl_sup_nodes;
+  std::map<int, std::vector< std::vector<int> > > excl_sup_nodes;
   
   /// node : (arc : unit capacities)
   std::map<int, std::map<int, std::vector<double> > > node_ucaps;

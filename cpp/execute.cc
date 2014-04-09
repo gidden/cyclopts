@@ -15,27 +15,29 @@ using namespace cyclus;
 void ExecParams::AddRequestGroup(int g) {
   u_nodes_per_req[g] = std::vector<int>();
   req_qty[g] = 0;
-  excl_req_nodes[g] = std::vector< std::vector<int> >();
+  excl_req_nodes[g] = std::vector<int>();
   constr_vals[g] = std::vector<double>();
 }
 
-void ExecParams::AddRequestNode(int n) {
+void ExecParams::AddRequestNode(int n, int g) {
   node_qty[n] = 0;
   node_excl[n] = false;
   node_ucaps[n] = std::map<int, std::vector<double> >();
   def_constr_coeff[n] = 0;
+  u_nodes_per_req[g].push_back(n);
 }
 
 void ExecParams::AddSupplyGroup(int g) {
   v_nodes_per_sup[g] = std::vector<int>();
-  excl_sup_nodes[g] = std::vector<int>();
+  excl_sup_nodes[g] = std::vector< std::vector<int> >();
   constr_vals[g] = std::vector<double>();
 }
 
-void ExecParams::AddSupplyNode(int n) {
+void ExecParams::AddSupplyNode(int n, int g) {
   node_qty[n] = 0;
   node_excl[n] = false;
   node_ucaps[n] = std::map<int, std::vector<double> >();
+  v_nodes_per_sup[g].push_back(n);
 }
 
 struct ExecContext {  
@@ -52,8 +54,7 @@ void add_requests(ExecParams& params, ExchangeGraph& g, ExecContext& ctx) {
   std::map<int, std::vector<int> >::iterator rg_it;
   RequestGroup::Ptr rg;
   ExchangeNode::Ptr n;
-  std::vector<ExchangeNode::Ptr> excl_grp;
-  int i, j, g_id, n_id;
+  int i, g_id, n_id;
   for (rg_it = req_grps.begin(); rg_it != req_grps.end(); ++rg_it) {
     // make group
     g_id = rg_it->first;
@@ -71,14 +72,9 @@ void add_requests(ExecParams& params, ExchangeGraph& g, ExecContext& ctx) {
     }
 
     // add exclusive request groups
-    std::vector< std::vector<int> >& excl_nodes = params.excl_req_nodes[g_id];
-    for (i = 0; i != excl_nodes.size(); i++) {
-      std::vector<int>& ids = excl_nodes[i];
-      for (j = 0; j != ids.size(); j++) {
-        excl_grp.push_back(ctx.id_to_node[ids[j]]);
-      }
-      rg->AddExclGroup(excl_grp);
-      excl_grp.clear();
+    std::vector<int>& ids = params.excl_req_nodes[g_id];
+    for (i = 0; i != ids.size(); i++) {
+      rg->AddExclNode(ctx.id_to_node[ids[i]]);
     }  
 
     // add constraint rhs
@@ -103,7 +99,8 @@ void add_supply(ExecParams& params, ExchangeGraph& g, ExecContext& ctx) {
   std::map<int, std::vector<int> >::iterator sg_it;
   ExchangeNodeGroup::Ptr sg;
   ExchangeNode::Ptr n;
-  int i, g_id, n_id;
+  std::vector<ExchangeNode::Ptr> excl_grp;
+  int i, j, g_id, n_id;
   for (sg_it = sup_grps.begin(); sg_it != sup_grps.end(); ++sg_it) {
     // make group
     g_id = sg_it->first;
@@ -121,10 +118,16 @@ void add_supply(ExecParams& params, ExchangeGraph& g, ExecContext& ctx) {
     }
 
     // add exclusive bid nodes
-    std::vector<int>& ids = params.excl_sup_nodes[g_id];
-    for (i = 0; i != ids.size(); i++) {
-      sg->AddExclNode(ctx.id_to_node[ids[i]]);
+    std::vector< std::vector<int> >& excl_nodes = params.excl_sup_nodes[g_id];
+    for (i = 0; i != excl_nodes.size(); i++) {
+      std::vector<int>& ids = excl_nodes[i];
+      for (j = 0; j != ids.size(); j++) {
+        excl_grp.push_back(ctx.id_to_node[ids[j]]);
+      }
+      sg->AddExclGroup(excl_grp);
+      excl_grp.clear();
     }  
+
 
     // add constraint rhs
     std::vector<double>& vals = params.constr_vals[g_id];
