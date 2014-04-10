@@ -237,25 +237,10 @@ class ReactorRequestParams(object):
         self.commods_to_reqs = {} # commodities to all requests
         self.sup_node_commods = {} # supply to their commodities
     
-    def add_req_node(self, n_id, g_id, commod):
-        """Adds a request node to params
-        
-        Parameters
-        ----------
-        n_id : int
-            node id
-        g_id : int
-            group id
-        commod : int
-            commod id
-        """
-        self.params.AddRequestNode(n_id, g_id)
-        self.params.node_excl[n_id] = self.sampler.exclusive.sample()
-        self.reqs_to_commods[n_id] = commod
-        self.commods_to_reqs[commod] = n_id
-
     def generate_request(self, commods, requesters, *args, **kwargs):
-        """Generates supply-related parameters.
+        """Returns all requests as a dictionary of requester ids to a list of
+        assembly requests, where each assembly request is a list of id-commodity
+        two-tuples that can satisfy such a request.
 
         Parameters
         ----------
@@ -265,11 +250,9 @@ class ReactorRequestParams(object):
             the requesters        
         """
         s = self.sampler
-        p = self.params        
         n_ids = self.req_n_ids = Incrementer(req_n_offset)
-
+        requests = {}
         for g_id in requesters:
-            p.AddRequestGroup(g_id)
             assems = s.assem_per_req.sample()
             primary_commod = rnd.choice(commods)
             # other commodities for assemblies that can be satisfied by 
@@ -277,61 +260,27 @@ class ReactorRequestParams(object):
             multi_commods = rnd.sample(cp.copy(commods).remove(primary_commod), 
                                        s.req_multi_commods.sample())
 
-            # group qty and constrs
-            # assumes 1 assembly == 1 mass unit, all constr vals equivalent
-            p.req_qty[g_id] = assems
-            p.constr_vals[g_id] = \
-                [assems for j in range(s.n_req_constr.sample())]
-            
+            assem_reqs = []
             # add nodes
-            for j in range(assems):
-                # add primary node
-                n_id = n_ids.next()
-                self.add_node(n_id, g_id, primary_commod)
-                all_ids = [n_id]
+            for i in range(assems):
+                assem_commods = [primary_commod]
+                if s.assem_multi_commod.sample(): 
+                    # multi commod assembly request
+                    assem_commods += multi_commods
+                for commod in assem_commods:
+                    n_id = n_ids.next()
+                    assem_reqs.append((n_id, commod))
+                    self.reqs_to_commods[n_id] = commod
+                    self.commods_to_reqs[commod] = n_id
+
+            requests[g_id] = assem_reqs
+        return requests
                 
-                # add multicommodity nodes
-                if s.assem_multi_commod.sample():
-                    for commod in multi_commods:
-                        n_id = self.req_n_ids.next()
-                        self.add_node(n_id, g_id, commod)
-                        all_ids += [n_id]
-                
-                for n_id in all_ids:
-                    # change this if all assemblies have mass != 1
-                    p.node_qty[n_id] = 1
-                    p.def_constr_coeff[n_id] = 1                             
-
-    def assign_supply_commods(self, exchng_commods, suppliers):
-        """Returns a mapping from supplier to a list commodities it supplies
-
-        Parameters
-        ----------
-        exchng_commods : set
-            the commodities
-        suppliers : list
-            the suppliers
-        """
-        if len(commods) > len(suppliers):
-            raise ValueError("There must be at least as many suppliers as commodities.")
-
-        s = self.sampler
-        commods = cp.copy(exchng_commods)
-        rnd.shuffle(commods)
-        assign = {}
-        i = 0
-        # give each supplier a primary commodity, guaranteeing that all
-        # commodities have at least one supplier, and some number of randomly
-        # sampled secondary commodities if applicable
-        for sup in suppliers:
-            primary = commods[i % len(commods)]
-            nextra = s.sup_multi_commods.sample() if s.sup_multi.sample() else 0 
-            secondaries = rnd.sample(cp.copy(commods).remove(primary), nextra)
-            assign[sup] = [primary] + secondaries
-        return assign
-
-    def generate_possible_supply(self, commods, suppliers, *args, **kwargs):
-        """Returns all possible supply nodes.
+    def generate_supply(self, commods, suppliers, *args, **kwargs):
+        """Returns all supply as a dictionary of supply group id to a list of
+        3-tuples of supply node id, request node id, and commodity. Each
+        possible connection is tested using the connection sampling of the
+        sampler.
 
         Parameters
         ----------
@@ -340,25 +289,57 @@ class ReactorRequestParams(object):
         suppliers : list
             the suppliers        
         """
-        # include request values because ids are global
-        n_ids = self.sup_n_ids = Incrementer(req_n_offset + 
-                                             sup_n_offset + 
-                                             len(self.req_node_commods))
-
-        commod_assign = self.assign_supply_commods(commods, suppliers)
-        possible_supply = []
-        for k, v in commod_assign.items():
-            for commod in v:
-                for req in self.commods_to_reqs[commod]:
-                    possible_supply.append((k, n_ids.next(), req)) # incorrect, should only assign n_id once all nodes are known
-        return possible_supply
-
-    def generate_supply(self, possible_supply, *args, **kwargs):
-        """Returns selected supply nodes.
-        """
         s = self.sampler
-        supply = [sup for sup in possible_supply if s.connection()]
+        # include request values because ids are global
+        sup_ids = self.sup_n_ids = Incrementer(req_n_offset + 
+                                               sup_n_offset + 
+                                               len(self.req_node_commods))
+        commod_assign = self._assign_supply_commods(commods, suppliers)
+        # checks s.connection.sample for each possible entry
+        supply = {g_id : [(n_ids.next(), req_id, commod) \
+                           for req_id in self.commods_to_reqs[commod] \
+                           for commod in g_commods \
+                           if s.connection.sample()] \
+                      for g_id, g_commods in commod_assign.items()}
         return supply
+    
+    def populate_structure_params(self, request, supply):
+        """Given known supply and request, the ExecParams structure is
+        populated.
+
+        Parameters
+        ----------
+        request : as returned by generate_request
+        supply : as returned by generate_supply
+        """
+        p = self.params
+        s = self.sampler
+
+        # collect and remove non-matched request nodes
+        # tup[1] is request_id
+        matched = {tup[1] for tup in v for k, v in supply.items()}
+        non_matched = \
+            {k for k, v in self.reqs_to_commods.items()}.difference(matched)
+        to_remove = {k: [req if req[0] in non_matched for req in v] \
+                         for k, v in requests}
+        for k, v in requests:
+            for req in to_remove[k]:
+                v.remove(req)
+        
+        # populate request params
+        for g_id, reqs in requests:
+            p.AddRequestGroup(g_id)
+            # assumes 1 assembly == 1 mass unit, all constr vals equivalent
+            constr_val = len(reqs)
+            p.req_qty[g_id] = constr_val
+            p.constr_vals[g_id] = \
+                [constr_val for i in range(s.n_req_constr.sample())]
+            for n_id, commod in reqs:
+                p.AddRequestNode(n_id, g_id)
+                # change these if all assemblies have mass != 1
+                p.node_qty[n_id] = 1
+                p.def_constr_coeff[n_id] = 1
+                p.node_excl[n_id] = s.exclusive.sample() # exclusive or not
     
     def populate_coeffs(self, request, supply, *args, **kwargs):
         """Generates constraint and preference coefficients.
@@ -374,13 +355,42 @@ class ReactorRequestParams(object):
         suppliers = self.suppliers
 
         request = self.generate_request(commods, requesters)
-        possible_supply = self.generate_possible_supply(commods, suppliers)
-        supply = self.generate_supply(possible_supply)
+        supply = self.generate_supply(commods, suppliers)
 
         self.populate_structure_params(reqest, supply)
         self.populate_coeffs(request, supply)
 
         return self.params
+
+    def _assign_supply_commods(self, exchng_commods, suppliers):
+        """Returns a mapping from supplier to a list commodities it supplies
+
+        Parameters
+        ----------
+        exchng_commods : set
+            the commodities
+        suppliers : list
+            the suppliers
+        """
+        if len(commods) > len(suppliers):
+            raise ValueError("There must be at least as many suppliers as commodities.")
+
+        s = self.sampler
+        commods = cp.copy(exchng_commods)
+        rnd.shuffle(commods) # get a random ordering
+        assign = {}
+        i = 0
+        # give each supplier a primary commodity, guaranteeing that all
+        # commodities have at least one supplier, and some number of randomly
+        # sampled secondary commodities if applicable
+        for sup in suppliers:
+            primary = commods[i % len(commods)]
+            i += 1
+            n_extra = s.sup_multi_commods.sample() \
+                if s.sup_multi.sample() else 0 
+            secondaries = rnd.sample(cp.copy(commods).remove(primary), n_extra)
+            assign[sup] = [primary] + secondaries
+        return assign
 
 class ReactorSupplyParams(object):
     """A helper class to translate sampling parameters for a reactor supply

@@ -46,9 +46,11 @@ class ExecParams {
   void AddSupplyNode(int n, int g);
   
   /// requester : their request nodes
+  /// gets filled by AddRequestNode
   std::map<int, std::vector<int> > u_nodes_per_req;
 
   /// supplier : their supply nodes
+  /// gets filled by AddSupplyNode
   std::map<int, std::vector<int> > v_nodes_per_sup;
 
   /// requester : request qty

@@ -20,7 +20,7 @@ void ExecParams::AddRequestGroup(int g) {
 }
 
 void ExecParams::AddRequestNode(int n, int g) {
-  node_qty[n] = 0;
+  node_qty[n] = 1;
   node_excl[n] = false;
   node_ucaps[n] = std::map<int, std::vector<double> >();
   def_constr_coeff[n] = 0;
