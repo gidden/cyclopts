@@ -321,13 +321,13 @@ class ReactorRequestParams(object):
         non_matched = \
             {k for k, v in self.reqs_to_commods.items()}.difference(matched)
         to_remove = {k: [req if req[0] in non_matched for req in v] \
-                         for k, v in requests}
-        for k, v in requests:
+                         for k, v in request}
+        for k, v in request:
             for req in to_remove[k]:
                 v.remove(req)
         
         # populate request params
-        for g_id, reqs in requests:
+        for g_id, reqs in request:
             p.AddRequestGroup(g_id)
             # assumes 1 assembly == 1 mass unit, all constr vals equivalent
             constr_val = len(reqs)
@@ -339,7 +339,18 @@ class ReactorRequestParams(object):
                 # change these if all assemblies have mass != 1
                 p.node_qty[n_id] = 1
                 p.def_constr_coeff[n_id] = 1
-                p.node_excl[n_id] = s.exclusive.sample() # exclusive or not
+                excl = s.exclusive.sample() # exclusive or not
+                p.node_excl[n_id] = excl
+                if excl:
+                    p.excl_req_nodes[g_id].append(n_id)
+
+        # populate supply params and arcs
+        arcs = {}
+        a_ids = Incrementer(self.arc_offset)
+        for g_id, sups in supply
+            p.AddSupplyGroup(g_id)
+            for s_id, r_id, commod in sups:
+                arcs[a_ids.next()] = (r_id, s_id)
     
     def populate_coeffs(self, request, supply, *args, **kwargs):
         """Generates constraint and preference coefficients.
