@@ -135,8 +135,8 @@ class ReactorRequestSampler(object):
             the number of constraints associated with a given request group
         n_supply : Param or similar, optional
             the number of suppliers (i.e., supply ExchangeNodeGroups)
-        sup_multi_frac : Param or similar, optional
-            the fraction of suppliers that supply more than one commodity
+        sup_multi : BoolParam or similar, optional
+            whether a supplier supplies more than one commodity
         sup_multi_commods : Param or similar, optional
             the number of commodities a multicommodity supplier supplies
         n_sup_constr : Param or similar, optional
@@ -168,8 +168,8 @@ class ReactorRequestSampler(object):
             if n_req_constr is not None else Param(0)
         self.n_supply = n_supply \
             if n_supply is not None else Param(1)
-        self.sup_multi_frac = sup_multi_frac \
-            if sup_multi_frac is not None else Param(0)
+        self.sup_multi = sup_multi \
+            if sup_multi is not None else BoolParam(-1) # never true
         self.sup_multi_commods = sup_multi_commods \
             if sup_multi_commods is not None else Param(1)
         self.n_sup_constr = n_sup_constr \
@@ -192,6 +192,7 @@ class ReactorRequestParams(object):
     """
     def __init__(self, sampler, commod_offset = 0, req_g_offset = 0, 
                  sup_g_offset = 0, req_n_offset = 0, sup_n_offset = 0, 
+                 arc_offset = 0,
                  *args, **kwargs):
         """Parameters
         ----------
@@ -207,6 +208,8 @@ class ReactorRequestParams(object):
             an offset for request node ids
         sup_n_offset : int, optional
             an offset for supply node ids
+        arc_offset : int, optional
+            an offset for arc ids
         """
         self.sampler = sampler
         self.commod_offset = commod_offset
@@ -220,9 +223,18 @@ class ReactorRequestParams(object):
         self.sup_g_offset = sup_g_offset
         self.req_n_offset = req_n_offset
         self.sup_n_offset = sup_n_offset
+        self.arc_offset = arc_offset
+
+        req_g_ids = Incrementer(req_g_offset)
+        self.requesters = [req_g_ids.next() for i in range(self.n_request)] # request groups
+        # include request values because ids are global
+        sup_g_ids = Incrementer(req_g_offset + sup_g_offset + len(requesters))
+        self.suppliers = [sup_g_ids.next() for i in range(self.n_supply)] # supply groups
+        self.arc_ids = Incrementer(arc_offset)
 
         self.params = ExecParams()
-        self.req_node_commods = {} # requests to their commodities
+        self.reqs_to_commods = {} # requests to their commodities
+        self.commods_to_reqs = {} # commodities to all requests
         self.sup_node_commods = {} # supply to their commodities
     
     def add_req_node(self, n_id, g_id, commod):
@@ -239,25 +251,24 @@ class ReactorRequestParams(object):
         """
         self.params.AddRequestNode(n_id, g_id)
         self.params.node_excl[n_id] = self.sampler.exclusive.sample()
-        self.req_node_commods[n_id] = primary_commod
+        self.reqs_to_commods[n_id] = commod
+        self.commods_to_reqs[commod] = n_id
 
-    def generate_request(self, commods, n_request, *args, **kwargs):
+    def generate_request(self, commods, requesters, *args, **kwargs):
         """Generates supply-related parameters.
 
         Parameters
         ----------
         commods : set
             the commodities
-        n_request : int
-            the number of requesters        
+        requesters : list
+            the requesters        
         """
         s = self.sampler
         p = self.params        
-        self.req_g_ids = Incrementer(req_g_offset)
-        self.req_n_ids = Incrementer(req_n_offset)
+        n_ids = self.req_n_ids = Incrementer(req_n_offset)
 
-        for i in range(len(n_request)):
-            g_id = self.req_g_ids.next()
+        for g_id in requesters:
             p.AddRequestGroup(g_id)
             assems = s.assem_per_req.sample()
             primary_commod = rnd.choice(commods)
@@ -275,7 +286,7 @@ class ReactorRequestParams(object):
             # add nodes
             for j in range(assems):
                 # add primary node
-                n_id = self.req_n_ids.next()
+                n_id = n_ids.next()
                 self.add_node(n_id, g_id, primary_commod)
                 all_ids = [n_id]
                 
@@ -286,32 +297,68 @@ class ReactorRequestParams(object):
                         self.add_node(n_id, g_id, commod)
                         all_ids += [n_id]
                 
-                for id in all_ids:
+                for n_id in all_ids:
                     # change this if all assemblies have mass != 1
-                    p.node_qty[id] = 1
-                    p.def_constr_coeff[id] = 1 
-                            
-    
-    def generate_supply(self, commods, n_supply, *args, **kwargs):
-        """Generates supply-related parameters.
+                    p.node_qty[n_id] = 1
+                    p.def_constr_coeff[n_id] = 1                             
+
+    def assign_supply_commods(self, exchng_commods, suppliers):
+        """Returns a mapping from supplier to a list commodities it supplies
 
         Parameters
         ----------
-        commods : list
-        a list of the commodities
-        n_supply : int
-        the number of suppliers
-        
-        
+        exchng_commods : set
+            the commodities
+        suppliers : list
+            the suppliers
         """
-        self.sup_g_ids = Incrementer(sup_g_offset + self.n_request)
-        self.sup_n_ids = Incrementer(sup_n_offset + len(self.req_node_commods))
-        pass
-    
+        if len(commods) > len(suppliers):
+            raise ValueError("There must be at least as many suppliers as commodities.")
+
+        s = self.sampler
+        commods = cp.copy(exchng_commods)
+        rnd.shuffle(commods)
+        assign = {}
+        i = 0
+        # give each supplier a primary commodity, guaranteeing that all
+        # commodities have at least one supplier, and some number of randomly
+        # sampled secondary commodities if applicable
+        for sup in suppliers:
+            primary = commods[i % len(commods)]
+            nextra = s.sup_multi_commods.sample() if s.sup_multi.sample() else 0 
+            secondaries = rnd.sample(cp.copy(commods).remove(primary), nextra)
+            assign[sup] = [primary] + secondaries
+        return assign
+
+    def generate_supply(self, commods, suppliers, *args, **kwargs):
+        """Returns all possible supply nodes and connections.
+
+        Parameters
+        ----------
+        commods : set
+            the commodities
+        suppliers : list
+            the suppliers        
+        """
+        # include request values because ids are global
+        n_ids = self.sup_n_ids = Incrementer(req_n_offset + 
+                                             sup_n_offset + 
+                                             len(self.req_node_commods))
+
+        commod_assign = self.assign_supply_commods(commods, suppliers)
+        possible_supply = []
+        for k, v in commod_assign.items():
+            for commod in v:
+                for req in self.commods_to_reqs[commod]:
+                    possible_supply.append((k, n_ids.next(), req)) # incorrect, should only assign n_id once all nodes are known
+        return possible_supply
+
     def generate_arcs(self, *args, **kwargs):
-        """Generates arcs between suppliers and requesters.
+        """Returns arcs between suppliers and requesters.
         """
-        pass
+        s = self.sampler
+        arcs = [sup for sup in possible_supply if s.connection()]
+        return arcs
     
     def generate_coeffs(self, *args, **kwargs):
         """Generates constraint and preference coefficients.
@@ -323,11 +370,11 @@ class ReactorRequestParams(object):
         generation member function in order.
         """
         commods = self.commods
-        n_request = self.n_request
-        n_supply = self.n_supply
+        requesters = self.requesters
+        suppliers = self.suppliers
 
-        self.generate_request(commods, n_request)
-        self.generate_supply(commods, n_supply)
+        self.generate_request(commods, requesters)
+        self.generate_supply(commods, suppliers)
         self.generate_arcs()
         self.generate_coeffs()
 
