@@ -353,8 +353,8 @@ class ReactorRequestParams(object):
                     possible_supply.append((k, n_ids.next(), req)) # incorrect, should only assign n_id once all nodes are known
         return possible_supply
 
-    def generate_arcs(self, *args, **kwargs):
-        """Returns arcs between suppliers and requesters.
+    def generate_arcs(self, possible_supply, *args, **kwargs):
+        """Returns arcs given all possibly supply.
         """
         s = self.sampler
         arcs = [sup for sup in possible_supply if s.connection()]
@@ -374,8 +374,8 @@ class ReactorRequestParams(object):
         suppliers = self.suppliers
 
         self.generate_request(commods, requesters)
-        self.generate_supply(commods, suppliers)
-        self.generate_arcs()
+        possible_supply = self.generate_supply(commods, suppliers)
+        self.generate_arcs(possible_supply)
         self.generate_coeffs()
 
         return self.params
