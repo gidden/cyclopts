@@ -7,6 +7,7 @@ parameter definition of a resource exchange graph in Cyclus.
 import random as rnd
 import numpy as np
 import copy as cp
+import collections
 
 from execute import ExecParams
 
@@ -280,7 +281,8 @@ class ReactorRequestParams(object):
         """Returns all supply as a dictionary of supply group id to a list of
         3-tuples of supply node id, request node id, and commodity. Each
         possible connection is tested using the connection sampling of the
-        sampler.
+        sampler. Also returns a dictionary of supply group id to a list of
+        commodities supplied by the supplier.
 
         Parameters
         ----------
@@ -301,9 +303,9 @@ class ReactorRequestParams(object):
                            for commod in g_commods \
                            if s.connection.sample()] \
                       for g_id, g_commods in commod_assign.items()}
-        return supply
+        return supply, commod_assign
     
-    def populate_structure_params(self, request, supply):
+    def populate_structure_params(self, request, supply, supplier_commods):
         """Given known supply and request, the ExecParams structure is
         populated.
 
@@ -311,6 +313,8 @@ class ReactorRequestParams(object):
         ----------
         request : as returned by generate_request
         supply : as returned by generate_supply
+        supplier_commods : commods supplied by suppliers, as returned by
+            generate_supply
         """
         p = self.params
         s = self.sampler
@@ -326,15 +330,18 @@ class ReactorRequestParams(object):
             for req in to_remove[k]:
                 v.remove(req)
         
+        n_node_ucaps = {}
         # populate request params
         for g_id, reqs in request:
             p.AddRequestGroup(g_id)
             # assumes 1 assembly == 1 mass unit, all constr vals equivalent
             constr_val = len(reqs)
             p.req_qty[g_id] = constr_val
+            n_constr = s.n_req_constr.sample()
             p.constr_vals[g_id] = \
-                [constr_val for i in range(s.n_req_constr.sample())]
+                [constr_val for i in range(n_constr)]
             for n_id, commod in reqs:
+                n_node_ucaps[n_id] = n_constr
                 p.AddRequestNode(n_id, g_id)
                 # change these if all assemblies have mass != 1
                 p.node_qty[n_id] = 1
@@ -344,18 +351,40 @@ class ReactorRequestParams(object):
                 if excl:
                     p.excl_req_nodes[g_id].append(n_id)
 
-        # populate supply params and arcs
-        arcs = {}
+        # populate supply params and arc relations
+        arcs = {} # arc: (request id, supply id)
         a_ids = Incrementer(self.arc_offset)
+        commod_demand = collections.defaultdict(0)
+        for req, commod self.reqs_to_commods.items():
+            commod_demand[commod] += 1 # need to change if assembly size != 1
+
+        supplier_demand = {}
+        for sup, commods in supplier_commods.items():
+            demands = [d if c in commods for c, d in commod_demand]
+            supplier_demand[sup] = max(demands) # basic assumption, TODO explain 
+
         for g_id, sups in supply
             p.AddSupplyGroup(g_id)
+            n_constr = s.n_sup_constr.sample()
+            p.constr_vals[g_id] = \
+                [s.sup_constr_val.sample() * supplier_demand[g_id] \
+                     for i in range(n_constr)]
+            # TODO need to add constraint values
             for s_id, r_id, commod in sups:
+                n_node_ucaps[s_id] = n_constr
+                p.AddSupplyNode(s_id, g_id)
                 arcs[a_ids.next()] = (r_id, s_id)
-    
-    def populate_coeffs(self, request, supply, *args, **kwargs):
-        """Generates constraint and preference coefficients.
-        """
-        pass
+
+        # populate arc params
+        for arc, ids in arcs.items():
+            req, sup = ids
+            p.arc_to_unode[arc] = req
+            p.arc_to_vnode[arc] = sup
+            p.node_ucaps[req][arc] = \
+                [s.constr_coeff.sample() for i in range(n_node_ucaps[req])]
+            p.node_ucaps[sup][arc] = \
+                [s.constr_coeff.sample() for i in range(n_node_ucaps[sup])]
+            p.arc_pref[arc] = s.pref_coeff.sample()
 
     def generate(self, *args, **kwargs):
         """Returns a configured cyclopts.execute.ExecParams after calling each
@@ -366,10 +395,9 @@ class ReactorRequestParams(object):
         suppliers = self.suppliers
 
         request = self.generate_request(commods, requesters)
-        supply = self.generate_supply(commods, suppliers)
+        supply, supplier_commods = self.generate_supply(commods, suppliers)
 
-        self.populate_structure_params(reqest, supply)
-        self.populate_coeffs(request, supply)
+        self.populate_structure_params(request, supply, supplier_commods)
 
         return self.params
 

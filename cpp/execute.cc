@@ -1,6 +1,7 @@
 #include "execute.h"
 
 #include <vector>
+#include <limits>
 #include <math.h>
 #include <cassert>
 #include <algorithm>
@@ -34,7 +35,7 @@ void ExecParams::AddSupplyGroup(int g) {
 }
 
 void ExecParams::AddSupplyNode(int n, int g) {
-  node_qty[n] = 0;
+  node_qty[n] = std::numeric_limits<double>::max(); // node flow upper bound
   node_excl[n] = false;
   node_ucaps[n] = std::map<int, std::vector<double> >();
   v_nodes_per_sup[g].push_back(n);
