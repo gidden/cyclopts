@@ -330,8 +330,8 @@ class ReactorRequestParams(object):
             assign[sup] = [primary] + secondaries
         return assign
 
-    def generate_supply(self, commods, suppliers, *args, **kwargs):
-        """Returns all possible supply nodes and connections.
+    def generate_possible_supply(self, commods, suppliers, *args, **kwargs):
+        """Returns all possible supply nodes.
 
         Parameters
         ----------
@@ -353,14 +353,14 @@ class ReactorRequestParams(object):
                     possible_supply.append((k, n_ids.next(), req)) # incorrect, should only assign n_id once all nodes are known
         return possible_supply
 
-    def generate_arcs(self, possible_supply, *args, **kwargs):
-        """Returns arcs given all possibly supply.
+    def generate_supply(self, possible_supply, *args, **kwargs):
+        """Returns selected supply nodes.
         """
         s = self.sampler
-        arcs = [sup for sup in possible_supply if s.connection()]
-        return arcs
+        supply = [sup for sup in possible_supply if s.connection()]
+        return supply
     
-    def generate_coeffs(self, *args, **kwargs):
+    def populate_coeffs(self, request, supply, *args, **kwargs):
         """Generates constraint and preference coefficients.
         """
         pass
@@ -373,10 +373,12 @@ class ReactorRequestParams(object):
         requesters = self.requesters
         suppliers = self.suppliers
 
-        self.generate_request(commods, requesters)
-        possible_supply = self.generate_supply(commods, suppliers)
-        self.generate_arcs(possible_supply)
-        self.generate_coeffs()
+        request = self.generate_request(commods, requesters)
+        possible_supply = self.generate_possible_supply(commods, suppliers)
+        supply = self.generate_supply(possible_supply)
+
+        self.populate_structure_params(reqest, supply)
+        self.populate_coeffs(request, supply)
 
         return self.params
 
