@@ -82,12 +82,14 @@ def test_def_rxtr_req_build():
 def test_rxtr_req_build_changes():
     s = ReactorRequestSampler()
     
+    # more than one commod without more than one supplier
     s.n_commods = Param(2)
     p = ExecParams()
     b = ReactorRequestBuilder(s, p)
     assert_raises(ValueError, b.build)
     s.n_commods = Param(1)
 
+    # exclusive request node
     s.exclusive = BoolParam(1)
     p = ExecParams()
     b = ReactorRequestBuilder(s, p)
@@ -96,4 +98,29 @@ def test_rxtr_req_build_changes():
     assert_equal(p.excl_req_nodes[0][0], 0)
     assert_true(p.node_excl[0])
     s.exclusive = BoolParam(-1)
-    
+
+    # 2 suppliers 0 connection prob
+    s.connection = BoolParam(0)
+    s.n_supply = Param(2)
+    p = ExecParams()
+    b = ReactorRequestBuilder(s, p)
+    b.build()
+    assert_equal(len(p.arc_pref), 1)
+    s.connection = BoolParam(1)
+    s.n_supply = Param(1)
+
+    # 2 suppliers, 2 commods, 2 req nodes
+    s.n_commods = Param(2)
+    s.n_supply = Param(2)
+    s.assem_multi_commod = BoolParam(1)
+    s.req_multi_commods = Param(1)
+    p = ExecParams()
+    b = ReactorRequestBuilder(s, p)
+    b.build()
+    assert_equal(len(p.arc_pref), 2)
+    commods = b._assem_commods([0, 1])
+    assert_true(0 in commods and 1 in commods)
+    s.n_commods = Param(1)
+    s.n_supply = Param(1)
+    s.assem_multi_commod = BoolParam(-1)
+    s.req_multi_commods = Param(0)

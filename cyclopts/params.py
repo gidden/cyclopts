@@ -409,25 +409,24 @@ class ReactorRequestBuilder(object):
         assem_commods += rnd.sample(left, s.req_multi_commods.sample())
         return assem_commods
 
-    def _assign_supply_commods(self, exchng_commods, suppliers):
+    def _assign_supply_commods(self, commods, suppliers):
         """Returns a mapping from supplier to a list commodities it
         supplies. This is a basic modeling assumption for reactor request
         exchange building.
 
         Parameters
         ----------
-        exchng_commods : set
+        commods : set
             the commodities
         suppliers : list
             the suppliers
         """
-        if len(exchng_commods) > len(suppliers):
+        if len(commods) > len(suppliers):
             raise ValueError("There must be at least as many suppliers as commodities.")
 
         s = self.sampler
-        commods = cp.copy(exchng_commods)
-        rnd.shuffle(commods) # get a random ordering
         c_list = list(commods)
+        rnd.shuffle(c_list) # get a random ordering
         assign = {}
         i = 0
         # give each supplier a primary commodity, guaranteeing that all
