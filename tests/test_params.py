@@ -1,4 +1,5 @@
 from cyclopts.params import Incrementer, ReactorRequestSampler
+from cyclopts.execute import ExecParams
 from nose.tools import assert_equal, assert_almost_equal, assert_true, assert_false
 
 def test_incr():
@@ -37,3 +38,9 @@ def test_default_rxtr_req():
         assert_true(pref <= 1)
     assert_almost_equal(0.5, constr_avg / n, places=1)
     assert_almost_equal(0.5, pref_avg / n, places=1)
+
+def test_def_rxtr_req_build():
+    s = ReactorRequestSampler()
+    p = ExecParams()
+    b = ReactorRequestBuilder(s, p)
+    b.build()

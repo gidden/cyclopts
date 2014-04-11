@@ -368,9 +368,8 @@ class ReactorRequestBuilder(object):
                 [s.constr_coeff.sample() for i in range(n_node_ucaps[sup])]
             p.arc_pref[arc] = s.pref_coeff.sample()
 
-    def populate(self, *args, **kwargs):
-        """Returns a configured cyclopts.execute.ExecParams after calling each
-        generation member function in order.
+    def build(self, *args, **kwargs):
+        """Returns a configured cyclopts.execute.ExecParams.
         """
         commods = self.commods
         requesters = self.requesters
