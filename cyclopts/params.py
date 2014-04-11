@@ -209,7 +209,8 @@ class ReactorRequestBuilder(object):
     This builder can be incorporated with other builders by providing the
     appropriate offsets.
     """
-    def __init__(self, sampler, params = None, commod_offset = 0, req_g_offset = 0, 
+    def __init__(self, sampler, params = None, commod_offset = 0, 
+                 req_g_offset = 0, 
                  sup_g_offset = 0, req_n_offset = 0, sup_n_offset = 0, 
                  arc_offset = 0,
                  *args, **kwargs):
@@ -332,6 +333,7 @@ class ReactorRequestBuilder(object):
             p.req_qty[g_id] = self._req_qty(multi_reqs)
             n_constr = s.n_req_constr.sample()
             p.constr_vals[g_id] = self._req_constr_vals(n_constr, multi_reqs)
+            excl_nodes = []
             for reqs in multi_reqs: # mutually satisfying requests
                 for n_id, commod in reqs:
                     n_node_ucaps[n_id] = n_constr
@@ -342,7 +344,8 @@ class ReactorRequestBuilder(object):
                     excl = s.exclusive.sample() # exclusive or not
                     p.node_excl[n_id] = excl
                     if excl:
-                        p.excl_req_nodes[g_id].append(n_id)
+                        excl_nodes.append(n_id)
+            p.excl_req_nodes[g_id] = excl_nodes
     
         # populate supply params and arc relations
         arcs = {} # arc: (request id, supply id)

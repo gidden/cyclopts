@@ -1,7 +1,7 @@
-from cyclopts.params import \
-    Incrementer, ReactorRequestSampler, ReactorRequestBuilder
+from cyclopts.params import Incrementer, Param, BoolParam, ReactorRequestSampler, ReactorRequestBuilder
 from cyclopts.execute import ExecParams
-from nose.tools import assert_equal, assert_almost_equal, assert_true, assert_false
+from nose.tools import assert_equal, assert_almost_equal, assert_true, \
+    assert_false, assert_raises
 
 def test_incr():
     i = Incrementer()
@@ -10,7 +10,7 @@ def test_incr():
     assert_equal(i.next(), 5)
     assert_equal(i.next(), 6)
 
-def test_default_rxtr_req():
+def test_def_rxtr_req_sample():
     s = ReactorRequestSampler()
     assert_equal(1, s.n_commods.sample())
     assert_equal(1, s.n_request.sample())
@@ -45,3 +45,55 @@ def test_def_rxtr_req_build():
     p = ExecParams()
     b = ReactorRequestBuilder(s, p)
     b.build()
+    assert_equal(len(p.u_nodes_per_req), 1)
+    assert_equal(len(p.v_nodes_per_sup), 1)
+    assert_equal(p.u_nodes_per_req[0][0], 0)
+    assert_equal(p.v_nodes_per_sup[1][0], 1)
+    assert_equal(len(p.req_qty), 1)
+    assert_equal(p.req_qty[0], 1)
+    assert_equal(len(p.constr_vals), 2)
+    assert_equal(len(p.constr_vals[0]), 0)
+    assert_equal(len(p.constr_vals[1]), 1)
+    assert_equal(p.constr_vals[1], 1)
+    assert_equal(len(p.def_constr_coeff), 1)
+    assert_equal(p.def_constr_coeff[0], 1)
+    assert_equal(len(p.node_qty), 2)
+    assert_equal(p.node_qty[0], 1)
+    assert_true(p.node_qty[1] > 1e100)
+    assert_equal(len(p.node_excl), 2)
+    assert_false(p.node_excl[0])
+    assert_false(p.node_excl[1])
+    assert_equal(len(p.excl_req_nodes), 1)
+    assert_equal(len(p.excl_req_nodes[0]), 0)
+    assert_equal(len(p.excl_sup_nodes), 1)
+    assert_equal(len(p.excl_sup_nodes[1]), 0)
+    assert_equal(len(p.node_ucaps), 2)
+    assert_equal(len(p.node_ucaps[0]), 1)
+    assert_equal(len(p.node_ucaps[1]), 1)
+    assert_equal(len(p.node_ucaps[0][0]), 0)
+    assert_equal(len(p.node_ucaps[1][0]), 1)
+    assert_equal(len(p.arc_to_unode), 1)
+    assert_equal(p.arc_to_unode[0], 0)
+    assert_equal(len(p.arc_to_vnode), 1)
+    assert_equal(p.arc_to_vnode[0], 1)
+    assert_equal(len(p.arc_pref), 1)
+    assert_true(p.arc_pref[0] > 0 and p.arc_pref[0] <= 1)
+
+def test_rxtr_req_build_changes():
+    s = ReactorRequestSampler()
+    
+    s.n_commods = Param(2)
+    p = ExecParams()
+    b = ReactorRequestBuilder(s, p)
+    assert_raises(ValueError, b.build)
+    s.n_commods = Param(1)
+
+    s.exclusive = BoolParam(1)
+    p = ExecParams()
+    b = ReactorRequestBuilder(s, p)
+    b.build()
+    assert_equal(len(p.excl_req_nodes[0]), 1)
+    assert_equal(p.excl_req_nodes[0][0], 0)
+    assert_true(p.node_excl[0])
+    s.exclusive = BoolParam(-1)
+    
