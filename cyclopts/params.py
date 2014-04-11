@@ -308,10 +308,10 @@ class ReactorRequestBuilder(object):
         # modeling assumption
         supply = self._select_supply(commod_assign)
         return supply, commod_assign
-    
+
     def populate_params(self, request, supply, supplier_commods):
-        """Given known supply and request, the ExecParams structure is
-        populated.
+        """Populates params (the ExecParams structure) given known supply and
+        request
 
         Parameters
         ----------
@@ -320,52 +320,41 @@ class ReactorRequestBuilder(object):
         supplier_commods : commods supplied by suppliers, as returned by
             generate_supply
         """
-        p = self.params
         s = self.sampler
         
-        n_node_ucaps = {}
+        n_node_ucaps = {} # number of capacities per node
         # populate request params
-        for g_id, reqs in request:
+        for g_id, multi_reqs in request:
             p.AddRequestGroup(g_id)
-            # assumes 1 assembly == 1 mass unit, all constr vals equivalent
-            constr_val = len(reqs)
-            p.req_qty[g_id] = constr_val
+            p.req_qty[g_id] = _req_qty(multi_reqs)
             n_constr = s.n_req_constr.sample()
-            p.constr_vals[g_id] = \
-                [constr_val for i in range(n_constr)]
-            for n_id, commod in reqs:
-                n_node_ucaps[n_id] = n_constr
-                p.AddRequestNode(n_id, g_id)
-                # change these if all assemblies have mass != 1
-                p.node_qty[n_id] = 1
-                p.def_constr_coeff[n_id] = 1
-                excl = s.exclusive.sample() # exclusive or not
-                p.node_excl[n_id] = excl
-                if excl:
-                    p.excl_req_nodes[g_id].append(n_id)
-
+            p.constr_vals[g_id] = _req_constr_vals(n_constr, multi_reqs)
+            for reqs in multi_reqs: # mutually satisfying requests
+                for n_id, commod in reqs:
+                    n_node_ucaps[n_id] = n_constr
+                    p.AddRequestNode(n_id, g_id)
+                    qty = self._req_node_qty()
+                    p.node_qty[n_id] = qty
+                    p.def_constr_coeff[n_id] = self._req_def_constr(qty)
+                    excl = s.exclusive.sample() # exclusive or not
+                    p.node_excl[n_id] = excl
+                    if excl:
+                        p.excl_req_nodes[g_id].append(n_id)
+    
         # populate supply params and arc relations
         arcs = {} # arc: (request id, supply id)
         a_ids = Incrementer(self.arc_offset)
-        commod_demand = collections.defaultdict(0)
-        for req, commod self.reqs_to_commods.items():
-            commod_demand[commod] += 1 # need to change if assembly size != 1
-
-        supplier_demand = {}
-        for sup, commods in supplier_commods.items():
-            demands = [d if c in commods for c, d in commod_demand]
-            supplier_demand[sup] = max(demands) # basic assumption, TODO explain 
-
-        for g_id, sups in supply
+        commod_demand = self._commod_demand()
+        supplier_capacity = \
+            self._supplier_capacity(commod_demand, supplier_commods)
+        for g_id, sups in supply:
             p.AddSupplyGroup(g_id)
             n_constr = s.n_sup_constr.sample()
             p.constr_vals[g_id] = \
-                [s.sup_constr_val.sample() * supplier_demand[g_id] \
-                     for i in range(n_constr)]
-            # TODO need to add constraint values
-            for s_id, r_id, commod in sups:
-                n_node_ucaps[s_id] = n_constr
+                self._sup_constr_vals(supplier_capacity[g_id], n_constr)
+            for s_id, r_id in sups:
                 p.AddSupplyNode(s_id, g_id)
+                n_node_ucaps[s_id] = n_constr
                 arcs[a_ids.next()] = (r_id, s_id)
 
         # populate arc params
@@ -478,6 +467,92 @@ class ReactorRequestBuilder(object):
                 if s.connection.sample():
                     supply[g_ids[i]].append((n_ids.next(), req))
         return supply
+
+    def _req_qty(self, reqs):
+        """Returns the request quantity for a request group.
+
+        Parameters
+        ----------
+        reqs : list
+            the requests associated with the group
+        """
+        # assumes 1 assembly == 1 mass unit, all constr vals equivalent. note
+        # that reqs = [ [satisfying commods] ], so one entry per actual request
+        return len(reqs)
+
+    def _req_constr_vals(self, n_constr, reqs):
+        """Returns a list of rhs constraint values for a request group.
+
+        Parameters
+        ----------
+        n_constr : int
+            the number of constraints for the group
+        reqs : list
+            the requests associated with the group
+        """
+        # note that reqs = [ [satisfying commods] ], so one entry per actual
+        # request
+        constr_val = len(reqs)
+        return [constr_val for i in range(n_constr)]
+    
+    def _req_node_qty(self):
+        """Returns the quantity for an individual request."""
+        # change these if all assemblies have mass != 1
+        return 1
+    
+    def _req_def_constr(self, req_qty):
+        """Returns the default constraint value for a request.
+
+        Parameters
+        ----------
+        req_qty : float
+            the request quantity
+        """
+        # change these if all assemblies have mass != 1
+        return 1
+
+    def _commod_demand(self):
+        """Returns a mapping from commodities to the total demand of all nodes
+        for that commodity.
+        """
+        commod_demand = collections.defaultdict(float)
+        for req, commod self.reqs_to_commods.items():
+            commod_demand[commod] += 1 # need to change if assembly size != 1
+        return commod_demand
+
+    def _supplier_capacity(self, commod_demand, supplier_commods):
+        """Returns a mapping from suppliers to their maximum supply
+        capacity. 
+
+        Parameters
+        ----------
+        commod_demand : dict
+            a mapping of commodity to total demand over all request nodes
+        supplier_commods : dict
+            a mapping of suppliers to the commodities they supply
+
+        Details
+        -------
+        The maximum supply capacity is calculated as the maximum demand for all
+        commodities that can be supplied.
+        """
+        # basic assumption, TODO explain
+        return {sup: max([d if c in commods for c, d in commod_demand]) \
+                    for sup, commods in supplier_commods.items()}
+
+    def _sup_constr_vals(self, capacity, n_constr):
+        """Returns a list of rhs constraint values for a supplier.
+
+        Parameters
+        ----------
+        capacity : float
+            the baseline supplier capacity
+        n_constr : int
+            the number of constraints
+        """
+        # assumes that all supplier constraint values are based of a baseline
+        # constraint value
+        return [s.sup_constr_val.sample() * capacity for i in range(n_constr)]            
 
 class ReactorSupplyBuilder(object):
     """A helper class to translate sampling parameters for a reactor supply
