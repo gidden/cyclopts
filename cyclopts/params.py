@@ -122,9 +122,10 @@ class ReactorRequestSampler(object):
     scenarios.
     """
     def __init__(self, n_commods = None, 
-                 n_request = None, assem_per_req = None, assem_multi_commod = None, 
+                 n_request = None, assem_per_req = None, 
+                 assem_multi_commod = None, 
                  req_multi_commods = None, exclusive = None, n_req_constr = None, 
-                 n_supply = None, sup_multi_frac = None, sup_multi_commods = None, 
+                 n_supply = None, sup_multi = None, sup_multi_commods = None, 
                  n_sup_constr = None, sup_constr_val = None, 
                  connection = None, constr_coeff = None, pref_coeff = None,
                  *args, **kwargs):
@@ -173,7 +174,7 @@ class ReactorRequestSampler(object):
         self.assem_multi_commod = assem_multi_commod \
             if assem_multi_commod is not None else BoolParam(-1) # never true
         self.req_multi_commods = req_multi_commods \
-            if req_multi_commods is not None else Param(1)
+            if req_multi_commods is not None else Param(0)
         self.exclusive = exclusive \
             if exclusive is not None else BoolParam(-1) # never true
         self.n_req_constr = n_req_constr \
@@ -231,14 +232,14 @@ class ReactorRequestBuilder(object):
         arc_offset : int, optional
             an offset for arc ids
         """
-        self.sampler = sampler
+        s = self.sampler = sampler
         self.commod_offset = commod_offset
         self.params = params if params is not None else ExecParams()
 
         self.commods = set(range(self.commod_offset, 
-                                 self.commod_offset + self.n_commods.sample()))
-        self.n_request = self.n_request.sample() # number of request groups
-        self.n_supply = self.n_supply.sample() # number of supply groups
+                                 self.commod_offset + s.n_commods.sample()))
+        self.n_request = s.n_request.sample() # number of request groups
+        self.n_supply = s.n_supply.sample() # number of supply groups
         
         self.req_g_offset = req_g_offset
         self.sup_g_offset = sup_g_offset
@@ -250,7 +251,7 @@ class ReactorRequestBuilder(object):
         # request groups
         self.requesters = [req_g_ids.next() for i in range(self.n_request)] 
         # include request values because ids are global
-        sup_g_ids = Incrementer(req_g_offset + sup_g_offset + len(requesters))
+        sup_g_ids = Incrementer(req_g_offset + sup_g_offset + self.n_request)
         # supply groups
         self.suppliers = [sup_g_ids.next() for i in range(self.n_supply)] 
         self.arc_ids = Incrementer(arc_offset)
@@ -272,7 +273,7 @@ class ReactorRequestBuilder(object):
             the requesters        
         """
         s = self.sampler
-        n_ids = self.req_n_ids = Incrementer(req_n_offset)
+        n_ids = self.req_n_ids = Incrementer(self.req_n_offset)
         requests = collections.defaultdict(list)
 
         for g_id in requesters:
@@ -282,13 +283,14 @@ class ReactorRequestBuilder(object):
             for i in range(assems):
                 n_nodes = len(assem_commods) if s.assem_multi_commod.sample() \
                     else 1
+                mutual_reqs = []
                 for j in range(n_nodes):
                     commod = assem_commods[j]
                     n_id = n_ids.next()
-                    requests[g_id].append((n_id, commod))
+                    mutual_reqs.append((n_id, commod))
                     self.reqs_to_commods[n_id] = commod
                     self.commods_to_reqs[commod] = n_id
-
+                requests[g_id].append(mutual_reqs)
         return requests
                 
     def generate_supply(self, commods, suppliers, *args, **kwargs):
@@ -321,14 +323,15 @@ class ReactorRequestBuilder(object):
             generate_supply
         """
         s = self.sampler
+        p = self.params
         
         n_node_ucaps = {} # number of capacities per node
         # populate request params
-        for g_id, multi_reqs in request:
+        for g_id, multi_reqs in request.items():
             p.AddRequestGroup(g_id)
-            p.req_qty[g_id] = _req_qty(multi_reqs)
+            p.req_qty[g_id] = self._req_qty(multi_reqs)
             n_constr = s.n_req_constr.sample()
-            p.constr_vals[g_id] = _req_constr_vals(n_constr, multi_reqs)
+            p.constr_vals[g_id] = self._req_constr_vals(n_constr, multi_reqs)
             for reqs in multi_reqs: # mutually satisfying requests
                 for n_id, commod in reqs:
                     n_node_ucaps[n_id] = n_constr
@@ -347,7 +350,7 @@ class ReactorRequestBuilder(object):
         commod_demand = self._commod_demand()
         supplier_capacity = \
             self._supplier_capacity(commod_demand, supplier_commods)
-        for g_id, sups in supply:
+        for g_id, sups in supply.items():
             p.AddSupplyGroup(g_id)
             n_constr = s.n_sup_constr.sample()
             p.constr_vals[g_id] = \
@@ -377,7 +380,6 @@ class ReactorRequestBuilder(object):
 
         request = self.generate_request(commods, requesters)
         supply, supplier_commods = self.generate_supply(commods, suppliers)
-
         self.populate_params(request, supply, supplier_commods)
 
         return self.params
@@ -396,11 +398,12 @@ class ReactorRequestBuilder(object):
             the commodities
         """
         s = self.sampler
-        assem_commods = [rnd.choice(commods)]
+        left = cp.copy(commods)
+        assem_commods = rnd.sample(left, 1)
+        left.remove(assem_commods[0])
         # other commodities for assemblies that can be satisfied by 
         # multiple commodities
-        assem_commods += rnd.sample(cp.copy(commods).remove(assem_commod[0]), 
-                                    s.req_multi_commods.sample())
+        assem_commods += rnd.sample(left, s.req_multi_commods.sample())
         return assem_commods
 
     def _assign_supply_commods(self, exchng_commods, suppliers):
@@ -415,23 +418,26 @@ class ReactorRequestBuilder(object):
         suppliers : list
             the suppliers
         """
-        if len(commods) > len(suppliers):
+        if len(exchng_commods) > len(suppliers):
             raise ValueError("There must be at least as many suppliers as commodities.")
 
         s = self.sampler
         commods = cp.copy(exchng_commods)
         rnd.shuffle(commods) # get a random ordering
+        c_list = list(commods)
         assign = {}
         i = 0
         # give each supplier a primary commodity, guaranteeing that all
         # commodities have at least one supplier, and some number of randomly
         # sampled secondary commodities if applicable
         for sup in suppliers:
-            primary = commods[i % len(commods)]
+            primary = c_list[i % len(commods)]
             i += 1
             n_extra = s.sup_multi_commods.sample() \
-                if s.sup_multi.sample() else 0 
-            secondaries = rnd.sample(cp.copy(commods).remove(primary), n_extra)
+                if s.sup_multi.sample() else 0
+            pool = cp.copy(commods)
+            pool.remove(primary)
+            secondaries = rnd.sample(pool, n_extra)
             assign[sup] = [primary] + secondaries
         return assign
 
@@ -449,7 +455,7 @@ class ReactorRequestBuilder(object):
         # include request values because ids are global
         n_ids = self.sup_n_ids = Incrementer(self.req_n_offset + 
                                              self.sup_n_offset + 
-                                             len(self.req_node_commods))
+                                             len(self.reqs_to_commods))
 
         supply = collections.defaultdict(list) # supplier group id to arcs
         possible_supply = collections.defaultdict(list) # req to supplier group id
@@ -515,7 +521,7 @@ class ReactorRequestBuilder(object):
         for that commodity.
         """
         commod_demand = collections.defaultdict(float)
-        for req, commod self.reqs_to_commods.items():
+        for req, commod in self.reqs_to_commods.items():
             commod_demand[commod] += 1 # need to change if assembly size != 1
         return commod_demand
 
@@ -535,8 +541,7 @@ class ReactorRequestBuilder(object):
         The maximum supply capacity is calculated as the maximum demand for all
         commodities that can be supplied.
         """
-        # basic assumption, TODO explain
-        return {sup: max([d if c in commods for c, d in commod_demand]) \
+        return {sup: max([d for c, d in commod_demand.items() if c in commods]) \
                     for sup, commods in supplier_commods.items()}
 
     def _sup_constr_vals(self, capacity, n_constr):
@@ -551,6 +556,7 @@ class ReactorRequestBuilder(object):
         """
         # assumes that all supplier constraint values are based of a baseline
         # constraint value
+        s = self.sampler
         return [s.sup_constr_val.sample() * capacity for i in range(n_constr)]            
 
 class ReactorSupplyBuilder(object):
