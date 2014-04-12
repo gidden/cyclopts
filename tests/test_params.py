@@ -1,4 +1,5 @@
-from cyclopts.params import Incrementer, Param, BoolParam, ReactorRequestSampler, ReactorRequestBuilder
+from cyclopts.params import Incrementer, Param, BoolParam, \
+    ReactorRequestSampler, ReactorRequestBuilder
 from cyclopts.execute import GraphParams
 from nose.tools import assert_equal, assert_almost_equal, assert_true, \
     assert_false, assert_raises

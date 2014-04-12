@@ -42,6 +42,7 @@ class Solution {
 /// Cyclus ExchangeSolver.
 class SolverParams {
  public:
+  SolverParams(std::string type = "cbc") : type(type) {};
   std::string type;
 };
 

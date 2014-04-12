@@ -150,12 +150,12 @@ cdef class SolverParams:
         # cached property defaults
 
 
-    def __init__(self, type=None, *args, **kwargs):
-        """__init__(self, type='None')
+    def __init__(self, type='cbc'):
+        """SolverParams(self, type='cbc')
         """
-        self._inst = new cpp_execute.SolverParams()
-        if type is not None:
-            self.type = type
+        cdef char * type_proxy
+        type_bytes = type.encode()
+        self._inst = new cpp_execute.SolverParams(std_string(<char *> type_bytes))
     
     
     def __dealloc__(self):

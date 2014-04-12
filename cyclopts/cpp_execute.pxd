@@ -75,6 +75,7 @@ cdef extern from "execute.h" :
     cdef cppclass SolverParams:
         # constructors
         SolverParams() except +
+        SolverParams(std_string) except +
 
         # attributes
         std_string type
