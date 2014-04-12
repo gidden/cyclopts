@@ -129,3 +129,16 @@ def test_rxtr_req_build_changes():
     s.assem_multi_commod = BoolParam(-1)
     s.req_multi_commods = Param(0)
     s.sup_multi = BoolParam(-1)
+
+    # n constraints
+    s.n_sup_constr = Param(3)
+    s.n_req_constr = Param(2)
+    p = ExecParams()
+    b = ReactorRequestBuilder(s, p)
+    b.build()
+    assert_equal(len(p.constr_vals[0]), 2)
+    assert_equal(len(p.constr_vals[1]), 3)
+    assert_equal(len(p.node_ucaps[0][0]), 2)
+    assert_equal(len(p.node_ucaps[1][0]), 3)
+    s.n_sup_constr = Param(1)
+    s.n_req_constr = Param(1)

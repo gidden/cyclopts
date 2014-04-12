@@ -560,36 +560,3 @@ class ReactorRequestBuilder(object):
         # constraint value
         s = self.sampler
         return [s.sup_constr_val.sample() * capacity for i in range(n_constr)]            
-
-class ReactorSupplyBuilder(object):
-    """A helper class to translate sampling parameters for a reactor supply
-    scenario into an instance of ExecParams used by the cyclopts.execute
-    module.
-    """
-    def __init__(self, *args, **kwargs):
-        """Parameters
-        ----------
-        n_commods : Param or similar, optional
-            the number of commodities in the exchange
-        """
-        self.n_commods = n_commods
-        self.n_supply = n_supply
-        self.n_request = n_request
-        self.assem_per_sup = assem_per_sup
-        self.commod_per_sup = commod_per_sup
-        self.assem_commod = assem_commod
-        self.p_excl = p_excl
-        self.p_connect = p_connect
-        self.u_caps = u_caps
-        self.prefs = prefs
-        self.sup_constr_val = sup_constr_val
-        self.sup_n_constr = sup_n_constr
-        self.dem_constr_val = dem_constr_val
-        self.dem_multi_frac = dem_multi_frac
-        self.dem_n_multi = dem_n_multi
-        self.dem_n_constr = dem_n_constr
-
-    def get():
-        """Returns a configured cyclopts.execute.ExecParams."""
-        params = ExecParams()
-        return params        
