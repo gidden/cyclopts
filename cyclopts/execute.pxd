@@ -27,7 +27,7 @@ cdef class ArcFlow:
 
 
 
-cdef class ExecParams:
+cdef class GraphParams:
     cdef void * _inst
     cdef public bint _free_inst
     cdef public stlcontainers._MapIntDouble _arc_pref
@@ -43,6 +43,25 @@ cdef class ExecParams:
     cdef public stlcontainers._MapIntDouble _req_qty
     cdef public stlcontainers._MapIntVectorInt _u_nodes_per_req
     cdef public stlcontainers._MapIntVectorInt _v_nodes_per_sup
+    pass
+
+
+
+
+
+cdef class SolverParams:
+    cdef void * _inst
+    cdef public bint _free_inst
+    pass
+
+
+
+
+
+cdef class Solution:
+    cdef void * _inst
+    cdef public bint _free_inst
+    cdef public np.ndarray _flows
     pass
 
 

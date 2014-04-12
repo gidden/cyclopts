@@ -5,24 +5,21 @@
 #include <map>
 #include <vector>
 
+/// A simple container class for an arc's id and its associated resource flow.
 class ArcFlow {
 public:
   ArcFlow() : id(-1), flow(0) { };
-
   ArcFlow(int id, double flow) : id(id), flow(flow) { };
-
   ArcFlow(const ArcFlow& other) : id(other.id), flow(other.flow) { };
-
+  
   inline ArcFlow& operator=(const ArcFlow& other) {
     id = other.id;
     flow = other.flow;
     return *this;
   }
-
   inline bool operator==(const ArcFlow& other) {
     return id == other.id && flow == other.flow;
   }
-
   inline bool operator!=(const ArcFlow& other) {
     return !(this->operator==(other));
   }
@@ -31,7 +28,23 @@ public:
   double flow;
 };
 
-class ExecParams {
+/// A simple container class for exchange solutions.
+class Solution {
+ public:
+  std::vector<ArcFlow> flows;
+  double time;
+};
+
+/// A container class for all parameters required to construct an instance of a
+/// Cyclus ExchangeSolver.
+class SolverParams {
+ public:
+  std::string type;
+};
+
+/// A container class for all parameters required to construct an instance of a
+/// Cyclus ExchangeGraph.
+class GraphParams {
  public:
   /// convenience function to populate entries for request groups
   void AddRequestGroup(int g);
@@ -99,10 +112,10 @@ class ExecParams {
 
 /// constructs and runs a resource exchange
 ///
-/// @param params all exchange parameters
-/// @param db_path the path to the output database to use
-std::vector<ArcFlow> execute_exchange(ExecParams& params, std::string db_path = "");
-/// void execute_exchange(ExecParams& params, std::string db_path = "");
+/// @param gparams all parameters required to construct the ExchangeGraph
+/// @param sparams all parameters required to configure the ExchangeSolver
+/// @return a Solution container
+Solution execute_exchange(GraphParams& gparams, SolverParams& sparams);
 
 /// std::vector<int> test();
 std::vector<ArcFlow> test();

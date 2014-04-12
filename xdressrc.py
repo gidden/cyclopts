@@ -29,9 +29,13 @@ includes = [
     ]
 
 classes = [
-    apiname('*', 'cpp/execute.*', incfiles='execute.h'),
+    apiname('ArcFlow', 'cpp/execute.*', incfiles='execute.h'),
+    apiname('Solution', 'cpp/execute.*', incfiles='execute.h'),
+    apiname('GraphParams', 'cpp/execute.*', incfiles='execute.h'),
+    apiname('SolverParams', 'cpp/execute.*', incfiles='execute.h'),
     ]
 
 functions = [
-    apiname('*', 'cpp/execute.*', incfiles='execute.h'),
+    apiname('execute_exchange', 'cpp/execute.*', incfiles='execute.h'),
+    apiname('test', 'cpp/execute.*', incfiles='execute.h'),
     ]

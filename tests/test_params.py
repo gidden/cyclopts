@@ -1,5 +1,5 @@
 from cyclopts.params import Incrementer, Param, BoolParam, ReactorRequestSampler, ReactorRequestBuilder
-from cyclopts.execute import ExecParams
+from cyclopts.execute import GraphParams
 from nose.tools import assert_equal, assert_almost_equal, assert_true, \
     assert_false, assert_raises
 
@@ -42,7 +42,7 @@ def test_def_rxtr_req_sample():
 
 def test_def_rxtr_req_build():
     s = ReactorRequestSampler()
-    p = ExecParams()
+    p = GraphParams()
     b = ReactorRequestBuilder(s, p)
     b.build()
     assert_equal(len(p.u_nodes_per_req), 1)
@@ -84,14 +84,14 @@ def test_rxtr_req_build_changes():
     
     # more than one commod without more than one supplier
     s.n_commods = Param(2)
-    p = ExecParams()
+    p = GraphParams()
     b = ReactorRequestBuilder(s, p)
     assert_raises(ValueError, b.build)
     s.n_commods = Param(1)
 
     # exclusive request node
     s.exclusive = BoolParam(1)
-    p = ExecParams()
+    p = GraphParams()
     b = ReactorRequestBuilder(s, p)
     b.build()
     assert_equal(len(p.excl_req_nodes[0]), 1)
@@ -102,7 +102,7 @@ def test_rxtr_req_build_changes():
     # 2 suppliers 0 connection prob
     s.connection = BoolParam(0)
     s.n_supply = Param(2)
-    p = ExecParams()
+    p = GraphParams()
     b = ReactorRequestBuilder(s, p)
     b.build()
     assert_equal(len(p.arc_pref), 1)
@@ -115,7 +115,7 @@ def test_rxtr_req_build_changes():
     s.assem_multi_commod = BoolParam(1)
     s.req_multi_commods = Param(1)
     s.sup_multi = BoolParam(1)
-    p = ExecParams()
+    p = GraphParams()
     b = ReactorRequestBuilder(s, p)
     b.build()
     assert_equal(len(p.arc_pref), 4)
@@ -133,7 +133,7 @@ def test_rxtr_req_build_changes():
     # n constraints
     s.n_sup_constr = Param(3)
     s.n_req_constr = Param(2)
-    p = ExecParams()
+    p = GraphParams()
     b = ReactorRequestBuilder(s, p)
     b.build()
     assert_equal(len(p.constr_vals[0]), 2)

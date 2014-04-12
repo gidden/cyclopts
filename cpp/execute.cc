@@ -13,14 +13,14 @@
 
 using namespace cyclus;
 
-void ExecParams::AddRequestGroup(int g) {
+void GraphParams::AddRequestGroup(int g) {
   u_nodes_per_req[g] = std::vector<int>();
   req_qty[g] = 0;
   excl_req_nodes[g] = std::vector<int>();
   constr_vals[g] = std::vector<double>();
 }
 
-void ExecParams::AddRequestNode(int n, int g) {
+void GraphParams::AddRequestNode(int n, int g) {
   node_qty[n] = 1;
   node_excl[n] = false;
   node_ucaps[n] = std::map<int, std::vector<double> >();
@@ -28,13 +28,13 @@ void ExecParams::AddRequestNode(int n, int g) {
   u_nodes_per_req[g].push_back(n);
 }
 
-void ExecParams::AddSupplyGroup(int g) {
+void GraphParams::AddSupplyGroup(int g) {
   v_nodes_per_sup[g] = std::vector<int>();
   excl_sup_nodes[g] = std::vector< std::vector<int> >();
   constr_vals[g] = std::vector<double>();
 }
 
-void ExecParams::AddSupplyNode(int n, int g) {
+void GraphParams::AddSupplyNode(int n, int g) {
   node_qty[n] = std::numeric_limits<double>::max(); // node flow upper bound
   node_excl[n] = false;
   node_ucaps[n] = std::map<int, std::vector<double> >();
@@ -49,7 +49,7 @@ struct ExecContext {
   std::map<Arc, int> arc_to_id;
 };
 
-void add_requests(ExecParams& params, ExchangeGraph& g, ExecContext& ctx) {
+void add_requests(GraphParams& params, ExchangeGraph& g, ExecContext& ctx) {
   
   std::map<int, std::vector<int> >& req_grps = params.u_nodes_per_req;
   std::map<int, std::vector<int> >::iterator rg_it;
@@ -94,7 +94,7 @@ void add_requests(ExecParams& params, ExchangeGraph& g, ExecContext& ctx) {
 
 /// adds all supply groups and nodes to the graph and populates supply-id
 /// mappings
-void add_supply(ExecParams& params, ExchangeGraph& g, ExecContext& ctx) {
+void add_supply(GraphParams& params, ExchangeGraph& g, ExecContext& ctx) {
   
   std::map<int, std::vector<int> >& sup_grps = params.v_nodes_per_sup;
   std::map<int, std::vector<int> >::iterator sg_it;
@@ -142,7 +142,7 @@ void add_supply(ExecParams& params, ExchangeGraph& g, ExecContext& ctx) {
 }
 
 /// adds all arcs to the exchange graph and populates id-arc mappings
-void add_arcs(ExecParams& params, ExchangeGraph& g, ExecContext& ctx) {
+void add_arcs(GraphParams& params, ExchangeGraph& g, ExecContext& ctx) {
   
   std::map<int, int>& arc_to_unode = params.arc_to_unode;
   std::map<int, int>::iterator it;
@@ -170,25 +170,25 @@ void add_arcs(ExecParams& params, ExchangeGraph& g, ExecContext& ctx) {
   }
 }
 
-std::vector<ArcFlow> execute_exchange(ExecParams& params, std::string db_path) {
-// void execute_exchange(ExecParams& params, std::string db_path) {
-  ProgSolver solver("cbc", true); 
+Solution execute_exchange(GraphParams& gparams, SolverParams& sparams) {
+  std::string type = sparams.type == "" ? "cbc" : sparams.type;
+  ProgSolver solver(type, true); 
   ExchangeGraph g;
   ExecContext ctx;
   
-  add_requests(params, g, ctx);
-  add_supply(params, g, ctx);
-  add_arcs(params, g, ctx);
+  add_requests(gparams, g, ctx);
+  add_supply(gparams, g, ctx);
+  add_arcs(gparams, g, ctx);
   
   solver.ExchangeSolver::Solve(&g);
   
   const std::vector<Match>& matches = g.matches();
-  std::vector<ArcFlow> flows;
+  Solution s;
   for (int i = 0; i != matches.size(); i++) {
-    flows.push_back(ArcFlow(ctx.arc_to_id[matches[i].first],
-                            matches[i].second));
+    s.flows.push_back(ArcFlow(ctx.arc_to_id[matches[i].first],
+                              matches[i].second));
   }
-  return flows;
+  return s;
 }
 
 // std::vector<int> test() {

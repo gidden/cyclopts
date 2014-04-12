@@ -22,7 +22,7 @@ import numpy as np
 import copy as cp
 import collections
 
-from execute import ExecParams
+from execute import GraphParams
 
 class Incrementer(object):
     """A simple helper class to increment a value"""
@@ -198,7 +198,7 @@ class ReactorRequestSampler(object):
 
 class ReactorRequestBuilder(object):
     """A helper class to translate sampling parameters for a reactor request
-    scenario into an instance of ExecParams used by the cyclopts.execute
+    scenario into an instance of GraphParams used by the cyclopts.execute
     module.
 
     The params member can be populated in a single step by the populate() member
@@ -218,7 +218,7 @@ class ReactorRequestBuilder(object):
         ----------
         sampler : ReactorRequestSampler
             a parameter sampling container
-        params : ExecParams, optional
+        params : GraphParams, optional
             a pre-populated ExecParam object to populate
         commod_offset : int, optional
             an offset for commodity ids
@@ -235,7 +235,7 @@ class ReactorRequestBuilder(object):
         """
         s = self.sampler = sampler
         self.commod_offset = commod_offset
-        self.params = params if params is not None else ExecParams()
+        self.params = params if params is not None else GraphParams()
 
         self.commods = set(range(self.commod_offset, 
                                  self.commod_offset + s.n_commods.sample()))
@@ -313,7 +313,7 @@ class ReactorRequestBuilder(object):
         return supply, commod_assign
 
     def populate_params(self, request, supply, supplier_commods):
-        """Populates params (the ExecParams structure) given known supply and
+        """Populates params (the GraphParams structure) given known supply and
         request
 
         Parameters
@@ -375,7 +375,7 @@ class ReactorRequestBuilder(object):
             p.arc_pref[arc] = s.pref_coeff.sample()
 
     def build(self, *args, **kwargs):
-        """Returns a configured cyclopts.execute.ExecParams.
+        """Returns a configured cyclopts.execute.GraphParams.
         """
         commods = self.commods
         requesters = self.requesters

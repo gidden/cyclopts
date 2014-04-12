@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from cyclopts.execute import ArcFlow, ExecParams, execute_exchange
+from cyclopts.execute import ArcFlow, GraphParams, SolverParams, execute_exchange
 from cyclopts.dtypes import xd_arcflow
 
 import numpy as np
@@ -10,8 +10,10 @@ import nose
 from nose.tools import assert_equal, assert_true
 
 def test_null():
-    params = ExecParams()
-    obs = execute_exchange(params)
+    params = GraphParams()
+    solver = SolverParams()
+    soln = execute_exchange(params, solver)
+    obs = soln.flows
     assert_true(np.empty(obs))
 
 # this is like test case 3 from exchange_test_cases in Cyclus
@@ -23,7 +25,7 @@ def test_null():
 # flow from s1 -> r := f1
 # flow from s2 -> r := f2
 def test_simple():
-    params = ExecParams()
+    params = GraphParams()
     reqs = [0]
     sups = [1, 2]
     u_nodes = [0]
@@ -60,7 +62,9 @@ def test_simple():
     # pref first to second
     params.arc_pref = {0: 0.75, 1: 0.25}
 
-    obs = execute_exchange(params)
+    solver = SolverParams()
+    soln = execute_exchange(params, solver)
+    obs = soln.flows
     exp = {0: params.constr_vals[1][0], 
            1: params.req_qty[0] - params.constr_vals[1][0]}    
     print("exp", exp)
@@ -75,7 +79,8 @@ def test_simple():
     # pref second to first
     params.arc_pref = {0: 0.25, 1: 0.75}
 
-    obs = execute_exchange(params)
+    soln = execute_exchange(params, solver)
+    obs = soln.flows
     exp = {1: params.constr_vals[2][0],
            0: params.req_qty[0] - params.constr_vals[2][0]}    
     print("exp", exp)
