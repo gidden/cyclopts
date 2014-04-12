@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #include <boost/math/special_functions/round.hpp>
+#include "boost/date_time/posix_time/posix_time.hpp"
 
 #include "exchange_graph.h"
 #include "prog_solver.h"
@@ -94,8 +95,7 @@ void add_requests(GraphParams& params, ExchangeGraph& g, ExecContext& ctx) {
 
 /// adds all supply groups and nodes to the graph and populates supply-id
 /// mappings
-void add_supply(GraphParams& params, ExchangeGraph& g, ExecContext& ctx) {
-  
+void add_supply(GraphParams& params, ExchangeGraph& g, ExecContext& ctx) {  
   std::map<int, std::vector<int> >& sup_grps = params.v_nodes_per_sup;
   std::map<int, std::vector<int> >::iterator sg_it;
   ExchangeNodeGroup::Ptr sg;
@@ -171,6 +171,7 @@ void add_arcs(GraphParams& params, ExchangeGraph& g, ExecContext& ctx) {
 }
 
 Solution execute_exchange(GraphParams& gparams, SolverParams& sparams) {
+  namespace time = boost::posix_time;
   std::string type = sparams.type == "" ? "cbc" : sparams.type;
   ProgSolver solver(type, true); 
   ExchangeGraph g;
@@ -179,8 +180,13 @@ Solution execute_exchange(GraphParams& gparams, SolverParams& sparams) {
   add_requests(gparams, g, ctx);
   add_supply(gparams, g, ctx);
   add_arcs(gparams, g, ctx);
-  
+
+  time::ptime start, stop;
+  start = time::microsec_clock::local_time();
   solver.ExchangeSolver::Solve(&g);
+  stop = time::microsec_clock::local_time();
+  time::time_duration dur = stop - start;
+  long us = dur.total_microseconds();
   
   const std::vector<Match>& matches = g.matches();
   Solution s;
@@ -188,6 +194,7 @@ Solution execute_exchange(GraphParams& gparams, SolverParams& sparams) {
     s.flows.push_back(ArcFlow(ctx.arc_to_id[matches[i].first],
                               matches[i].second));
   }
+  s.time = us;
   return s;
 }
 

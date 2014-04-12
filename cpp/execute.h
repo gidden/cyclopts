@@ -29,10 +29,13 @@ public:
 };
 
 /// A simple container class for exchange solutions.
+///
+/// ArcFlows are included for all arcs and the solution time is reported in
+/// microseconds.
 class Solution {
  public:
   std::vector<ArcFlow> flows;
-  double time;
+  long time; // in microseconds
 };
 
 /// A container class for all parameters required to construct an instance of a

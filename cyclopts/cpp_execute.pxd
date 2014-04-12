@@ -8,6 +8,7 @@
 ################################################
 
 
+cimport xdress_extra_types
 from cyclopts cimport cpp_execute
 from libcpp cimport bool as cpp_bool
 from libcpp.map cimport map as cpp_map
@@ -92,7 +93,7 @@ cdef extern from "execute.h" :
 
         # attributes
         cpp_vector[ArcFlow] flows
-        double time
+        xdress_extra_types.int64 time
 
         # methods
 

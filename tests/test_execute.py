@@ -85,6 +85,7 @@ def test_simple():
            0: params.req_qty[0] - params.constr_vals[2][0]}    
     print("exp", exp)
     print("nobs", len(obs))
+    print("soln time", soln.time)
     for i in range(len(obs)):
         ob = ArcFlow(obs[i:])
         print("obs id and flow", ob.id, ob.flow)

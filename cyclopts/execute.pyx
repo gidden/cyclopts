@@ -13,6 +13,7 @@ cimport dtypes
 cimport execute
 cimport numpy as np
 cimport stlcontainers
+cimport xdress_extra_types
 from cyclopts cimport cpp_execute
 from libc.stdlib cimport free
 from libc.stdlib cimport malloc
@@ -92,10 +93,10 @@ cdef class Solution:
     property time:
         """no docstring for time, please file a bug report!"""
         def __get__(self):
-            return float((<cpp_execute.Solution *> self._inst).time)
+            return int((<cpp_execute.Solution *> self._inst).time)
     
         def __set__(self, value):
-            (<cpp_execute.Solution *> self._inst).time = <double> value
+            (<cpp_execute.Solution *> self._inst).time = <long long> value
     
     
     # methods
