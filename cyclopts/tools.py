@@ -12,6 +12,10 @@ import numpy as np
 import cyclopts
 from cyclopts.execute import ArcFlow
 
+class SolverDesc(t.IsDescription):
+    sim_id = t.StringCol(36) # len(str(uuid.uuid4())) == 36
+    sol_type = t.StringCol(12)
+
 class FlowDesc(t.IsDescription):
     sim_id = t.StringCol(36) # len(str(uuid.uuid4())) == 36
     arc_id = t.Int64Col()
@@ -24,6 +28,10 @@ class SolnDesc(t.IsDescription):
     cyclopts_version = t.StringCol(12)
 
 class Reporter(object):
+    
+    def report_solver(self, row, sim_id, sparams):
+        row['sim_id'] = str(sim_id)
+        row['type'] = sparams.type
     
     def report_flows(self, row, sim_id, flows):
         for f in flows:
@@ -65,7 +73,7 @@ def report(gparams, sparams, soln, sim_id = None, db_path = None):
     flows = [ArcFlow(soln.flows[i:]) for i in range(len(soln.flows))]
     solnparams = [soln.time, soln.cyclus_version, cyclopts.__version__]
 
-    tables = [('solver', SolnDesc, 'Solver Params', sparams),
+    tables = [('solver', SolverDesc, 'Solver Params', sparams),
               ('graph', SolnDesc, 'Graph Params', gparams),
               ('flows', FlowDesc, 'Arc Flows', flows),
               ('solution', SolnDesc, 'Solution Params', solnparams),
