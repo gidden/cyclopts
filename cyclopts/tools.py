@@ -6,8 +6,9 @@ output.
 
 import os
 import tables as t
+import uuid
 
-def report(gparams, sparams, soln, simid = None, db_path = None):
+def report(gparams, sparams, soln, sim_id = None, db_path = None):
     """Dumps parameter and solution information to an HDF5 database.
     
     Parameters
@@ -27,6 +28,7 @@ def report(gparams, sparams, soln, simid = None, db_path = None):
     """
     db_path = os.path.join(os.getcwd(), 'cyclopts.h5') if db_path is None \
         else db_path
-        
+    sim_id = uuid.uuid4().int if sim_id is None else sim_id
+    
     h5file = t.open_file(db_path, mode = "w", title = "Cyclopts Output")
     
