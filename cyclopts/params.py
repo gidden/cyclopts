@@ -559,4 +559,4 @@ class ReactorRequestBuilder(object):
         # assumes that all supplier constraint values are based of a baseline
         # constraint value
         s = self.sampler
-        return [s.sup_constr_val.sample() * capacity for i in range(n_constr)]            
+        return [s.sup_constr_val.sample() * capacity for i in range(n_constr)]
