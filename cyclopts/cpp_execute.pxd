@@ -93,7 +93,6 @@ cdef extern from "execute.h" :
         Solution() except +
 
         # attributes
-        std_string cyclopts_version
         std_string cyclus_version
         cpp_vector[ArcFlow] flows
         xdress_extra_types.int64 time

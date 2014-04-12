@@ -44,12 +44,10 @@ cdef class Solution:
         # cached property defaults
         self._flows = None
 
-    def __init__(self, cyclopts_version=None, cyclus_version=None, flows=None, time=None, *args, **kwargs):
-        """__init__(self, cyclopts_version='None', cyclus_version='None', flows='None', time='None')
+    def __init__(self, cyclus_version=None, flows=None, time=None, *args, **kwargs):
+        """__init__(self, cyclus_version='None', flows='None', time='None')
         """
         self._inst = new cpp_execute.Solution()
-        if cyclopts_version is not None:
-            self.cyclopts_version = cyclopts_version
         if cyclus_version is not None:
             self.cyclus_version = cyclus_version
         if flows is not None:
@@ -63,17 +61,6 @@ cdef class Solution:
             free(self._inst)
 
     # attributes
-    property cyclopts_version:
-        """no docstring for cyclopts_version, please file a bug report!"""
-        def __get__(self):
-            return bytes(<char *> (<cpp_execute.Solution *> self._inst).cyclopts_version.c_str()).decode()
-    
-        def __set__(self, value):
-            cdef char * value_proxy
-            value_bytes = value.encode()
-            (<cpp_execute.Solution *> self._inst).cyclopts_version = std_string(<char *> value_bytes)
-    
-    
     property cyclus_version:
         """no docstring for cyclus_version, please file a bug report!"""
         def __get__(self):
