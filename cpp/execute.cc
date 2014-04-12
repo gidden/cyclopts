@@ -11,6 +11,7 @@
 
 #include "exchange_graph.h"
 #include "prog_solver.h"
+#include "version.h"
 
 using namespace cyclus;
 
@@ -195,6 +196,7 @@ Solution execute_exchange(GraphParams& gparams, SolverParams& sparams) {
                               matches[i].second));
   }
   s.time = us;
+  s.cyclus_version = cyclus::version::core();
   return s;
 }
 

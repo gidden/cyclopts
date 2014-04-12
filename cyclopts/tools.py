@@ -9,20 +9,33 @@ import uuid
 import tables as t
 import numpy as np
 
+import cyclopts
 from cyclopts.execute import ArcFlow
 
-class SolnDesc(t.IsDescription):
+class FlowDesc(t.IsDescription):
     sim_id = t.StringCol(36) # len(str(uuid.uuid4())) == 36
     arc_id = t.Int64Col()
     flow = t.Float64Col()
 
-class Describer(object):
+class SolnDesc(t.IsDescription):
+    sim_id = t.StringCol(36) # len(str(uuid.uuid4())) == 36
+    time = t.Int64Col() # in microseconds
+    cyclus_version = t.StringCol(12)
+    cyclopts_version = t.StringCol(12)
+
+class Reporter(object):
     
-    def describe_flows(self, row, sim_id, flows):
+    def report_flows(self, row, sim_id, flows):
         for f in flows:
             row['sim_id'] = str(sim_id)
             row['arc_id'] = f.id
             row['flow'] = f.flow
+
+    def report_solution(self, row, sim_id, soln):
+        row['sim_id'] = str(sim_id)
+        row['time'] = soln[0]
+        row['cyclus_version'] = soln[1]
+        row['cyclopts_version'] = soln[2]
             
 def report(gparams, sparams, soln, sim_id = None, db_path = None):
     """Dumps parameter and solution information to an HDF5 database.
@@ -50,21 +63,21 @@ def report(gparams, sparams, soln, sim_id = None, db_path = None):
     h5file = t.open_file(db_path, mode=mode, title="Cyclopts Output")
     
     flows = [ArcFlow(soln.flows[i:]) for i in range(len(soln.flows))]
-    solnparams = [soln.time]
+    solnparams = [soln.time, soln.cyclus_version, cyclopts.__version__]
 
     tables = [('solver', SolnDesc, 'Solver Params', sparams),
               ('graph', SolnDesc, 'Graph Params', gparams),
-              ('flows', SolnDesc, 'Arc Flows', flows),
+              ('flows', FlowDesc, 'Arc Flows', flows),
               ('solution', SolnDesc, 'Solution Params', solnparams),
               ]
     
-    d = Describer()
+    r = Reporter()
     for name, desc, title, data in tables:
         if not name in h5file.root._v_children:
             h5file.create_table("/", name, desc, title)
-        if hasattr(d, 'describe_' + name):
+        if hasattr(r, 'report_' + name):
             row = h5file.get_node('/' + name).row
-            meth = getattr(d, 'describe_' + name)
+            meth = getattr(r, 'report_' + name)
             meth(row, sim_id, data)
             row.append()
         

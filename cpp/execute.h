@@ -36,6 +36,8 @@ class Solution {
  public:
   std::vector<ArcFlow> flows;
   long time; // in microseconds
+  std::string cyclus_version;
+  std::string cyclopts_version;
 };
 
 /// A container class for all parameters required to construct an instance of a
