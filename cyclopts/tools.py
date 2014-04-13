@@ -10,22 +10,37 @@ import tables as t
 import numpy as np
 
 import cyclopts
+from cyclopts.params import ReactorRequestSampler #, ReactorSupplySampler
 from cyclopts.execute import ArcFlow
 
 class SolverDesc(t.IsDescription):
     sim_id = t.StringCol(36) # len(str(uuid.uuid4())) == 36
     type = t.StringCol(12)
 
-# 
-# TODO
-#
-# class GraphDesc(t.IsDescription):
-#     sim_id = t.StringCol(36) # len(str(uuid.uuid4())) == 36
-#     sol_type = t.StringCol(12)
+class GraphDesc(t.IsDescription):
+    sim_id = t.StringCol(36) # len(str(uuid.uuid4())) == 36
+    n_supply = t.Int32Col()
+    n_request = t.Int32Col()
+    n_sup_nodes = t.Int32Col()
+    n_req_nodes = t.Int32Col()
+    n_arcs = t.Int32Col()
+    hash = t.Int64Col()
 
-# class RRSamplerDesc(t.IsDescription):
-#     sim_id = t.StringCol(36) # len(str(uuid.uuid4())) == 36
-#     sol_type = t.StringCol(12)
+class RRSamplerDesc(t.IsDescription):
+    sim_id = t.StringCol(36) # len(str(uuid.uuid4())) == 36
+    n_commods = t.Int32Col() 
+    n_request = t.Int32Col()
+    assem_per_req = t.Int32Col()
+    assem_multi_commod = t.Float32Col()
+    req_multi_commods = t.Int32Col()
+    exclusive = t.Float32Col()
+    n_req_constr = t.Int32Col()
+    n_supply = t.Int32Col() 
+    sup_multi = t.Float32Col()
+    sup_multi_commods = t.Int32Col() 
+    n_sup_constr = t.Int32Col() 
+    sup_constr_val = t.Float32Col()
+    connection = t.Float32Col()
 
 # class RSSamplerDesc(t.IsDescription):
 #     sim_id = t.StringCol(36) # len(str(uuid.uuid4())) == 36
@@ -47,17 +62,55 @@ class Reporter(object):
     def report_solver(self, row, sim_id, sparams):
         row['sim_id'] = str(sim_id)
         row['type'] = sparams.type
+
+    def report_graph(self, row, sim_id, gparams):
+        row['sim_id'] = str(sim_id)
+        row['n_supply'] = len(gparams.v_nodes_per_sup)
+        row['n_request'] = len(gparams.u_nodes_per_req)
+        row['n_sup_nodes'] = len(gparams.node_excl) - \
+            len(gparams.def_constr_coeff)
+        row['n_req_nodes'] = len(gparams.def_constr_coeff)
+        row['n_arcs'] = len(gparams.arc_pref)
+        row['hash'] = hash(gparams)
+    
+    def report_rr_sampler(self, row, sim_id, sampler):
+        s = sampler
+
+        params = ['sup_multi_commods',
+                  'n_sup_constr',
+                  'n_commods', 
+                  'n_request',
+                  'assem_per_req',
+                  'req_multi_commods',
+                  'n_req_constr',
+                  'n_supply',
+                  ]
+
+        bool_params = ['connection',
+                       'assem_multi_commod',
+                       'exclusive',
+                       'sup_multi'
+                       ]
+
+        constr_params = ['sup_constr_val']
+
+        row['sim_id'] = str(sim_id)
+        for param in params:
+            if hasattr(s, param):
+                print(param, getattr(s, param).avg)
+                row[param] = getattr(s, param).avg
+        for param in bool_params:
+            if hasattr(s, param):
+                row[param] = getattr(s, param).cutoff
+        for param in constr_params:
+            if hasattr(s, param):
+                row[param] = getattr(s, param).cutoff
+
     #
     # TO DO
     #
-
-    # def report_graph(self, row, sim_id, gparams):
-    #     row['sim_id'] = str(sim_id)
-    
-    # def report_reactor_request(self, row, sim_id, sampler):
-    #     row['sim_id'] = str(sim_id)
         
-    # def report_reactor_supply(self, row, sim_id, sampler):
+    # def report_rs_sampler(self, row, sim_id, sampler):
     #     row['sim_id'] = str(sim_id)
     
     def report_flows(self, row, sim_id, flows):
@@ -105,11 +158,15 @@ def report(sampler, gparams, sparams, soln, sim_id = None, db_path = None):
     tables = [('solver', SolverDesc, 'Solver Params', sparams),
               ('flows', FlowDesc, 'Arc Flows', flows),
               ('solution', SolnDesc, 'Solution Params', solnparams),
-# TODO              ('graph', SolnDesc, 'Graph Params', gparams),
+              ('graph', GraphDesc, 'Graph Params', gparams),
               ]
-    
-# TODO  ('rrsample', RRSamplerDesc, 'Reactor Request Sampling', sampler),
-# TODO  ('rssample', SolnDesc, 'Graph Params', sampler,
+    if isinstance(sampler, ReactorRequestSampler):
+        tables += [('rr_sampler', RRSamplerDesc, 'Reactor Request Sampling', sampler)]
+# TODO
+#    elif isinstance(sampler, ReactorSupplySampler):
+#        tables += [('rssample', SolnDesc, 'Reactor Supply Params', sampler)]
+    else:
+        raise TypeError("Sampler is of an unknown type.")
 
     r = Reporter()
     for name, desc, title, data in tables:
