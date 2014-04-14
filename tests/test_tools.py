@@ -44,14 +44,38 @@ def test_combine():
     shutil.copyfile(db1, copy_file)
     
     combine([db1, db2], new_file=new_file)
+    f1 = t.open_file(db1, 'r')
+    f2 = t.open_file(db2, 'r')
     test = t.open_file(new_file, 'r')
-    assert_equal(len(test.root.flows), 2)
+    test_ids = [x['sim_id'] for x in test.root.solution.iterrows()]
+    f1_ids = [x['sim_id'] for x in f1.root.solution.iterrows()]
+    f2_ids = [x['sim_id'] for x in f2.root.solution.iterrows()]
+    assert_equal(test_ids[0], f1_ids[0])
+    assert_equal(test_ids[0], f1_ids[0])
+    assert_equal(test_ids[1], f2_ids[0])
+    assert_equal(len(test_ids), 2)
+    assert_equal(len(f1_ids), 1)
+    assert_equal(len(f2_ids), 1)
     test.close()
+    f2.close()
+    f1.close()
 
     combine([copy_file, db2])
+    f1 = t.open_file(db1, 'r')
+    f2 = t.open_file(db2, 'r')
     test = t.open_file(copy_file, 'r')
-    assert_equal(len(test.root.flows), 2)
+    test_ids = [x['sim_id'] for x in test.root.solution.iterrows()]
+    f1_ids = [x['sim_id'] for x in f1.root.solution.iterrows()]
+    f2_ids = [x['sim_id'] for x in f2.root.solution.iterrows()]
+    assert_equal(test_ids[0], f1_ids[0])
+    assert_equal(test_ids[0], f1_ids[0])
+    assert_equal(test_ids[1], f2_ids[0])
+    assert_equal(len(test_ids), 2)
+    assert_equal(len(f1_ids), 1)
+    assert_equal(len(f2_ids), 1)
     test.close()
+    f2.close()
+    f1.close()
     
     for tmp in tmps:
         if os.path.exists(tmp):
