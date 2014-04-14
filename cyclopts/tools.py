@@ -6,6 +6,7 @@ output.
 
 import os
 import uuid
+import shutil
 import tables as t
 import numpy as np
 
@@ -97,7 +98,6 @@ class Reporter(object):
         row['sim_id'] = str(sim_id)
         for param in params:
             if hasattr(s, param):
-                print(param, getattr(s, param).avg)
                 row[param] = getattr(s, param).avg
         for param in bool_params:
             if hasattr(s, param):
@@ -179,3 +179,43 @@ def report(sampler, gparams, sparams, soln, sim_id = None, db_path = None):
             row.append()
         
     h5file.close()
+            
+def combine(files, new_file = None):
+    """Combines two or more databases with identical layout, writing their
+    output into a new file or appending to the first in the list.
+    
+    Parameters
+    ----------
+    files : list
+        A list of all databases to combine
+    new_file : str, optional
+        The new database to write to. If None, all databases are appended to the
+        end of the first database in the list.
+    """ 
+    if new_file is not None and os.path.exists(new_file):
+        raise ValueError('Cannot write combined hdf5 files to an existing location.')
+
+    if new_file is not None:
+        shutil.copyfile(files[0], new_file)
+    fname = files[0] if new_file is None else new_file
+
+    f = t.open_file(fname, 'a')
+    dbs = [t.open_file(files[i], 'r') for i in range(1, len(files))]
+    for db in dbs:
+        tbls = [node._v_name for node in db.iter_nodes('/', classname='Table')]
+        for tbl in tbls:
+            src = db.get_node('/', name=tbl, classname='Table')
+            dest = f.get_node('/', name=tbl, classname='Table')
+            dtypes = src.dtype.names
+            
+            # this is a hack because appending rows throws an error
+            # see http://stackoverflow.com/questions/17847587/pytables-appending-recarray
+            # dest.append([row for row in src.iterrows()])
+            for src_row in src.iterrows():
+                dest_row = dest.row
+                for j in range(len(dtypes)):
+                    dest_row[dtypes[j]] = src_row[j]
+                dest_row.append()
+        db.close()
+    f.close()
+    
