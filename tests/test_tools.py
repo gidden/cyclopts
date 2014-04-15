@@ -1,4 +1,4 @@
-from cyclopts.tools import report, combine
+from cyclopts.tools import report, combine, SamplerBuilder
 
 from cyclopts.execute import GraphParams, SolverParams, Solution, \
     ArcFlow, execute_exchange
@@ -80,3 +80,14 @@ def test_combine():
     for tmp in tmps:
         if os.path.exists(tmp):
             os.remove(tmp)
+
+def test_simple_sampler_builder():
+    n = 10
+    params = [('n_commods', [Param(1), Param(2)])]
+    samplers = [ReactorRequestSampler() for i in range(n)]
+
+    b = SamplerBuilder()
+    b.add_subtree(samplers, params)
+    
+    
+    
