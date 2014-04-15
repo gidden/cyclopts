@@ -63,6 +63,11 @@ file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/cyclopts/"
                    PATTERN "lib" EXCLUDE
                    PATTERN "include" EXCLUDE)
 
+message("-- Copying scripts.")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/scripts/"
+    DESTINATION "${CMAKE_BINARY_DIR}/scripts/"
+    FILES_MATCHING PATTERN "*")
+
 # # Build cyclopts_unit_tests
 # ADD_EXECUTABLE( cyclopts_unit_tests ${CYCLOPTS_SRC} )
 # TARGET_LINK_LIBRARIES( cyclopts_unit_tests dl ${LIBS} )

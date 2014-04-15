@@ -52,6 +52,12 @@ def parse_args():
     return distutils_args, cmake, make
 
 def cyclopts_setup():
+    
+    scripts_dir = \
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), 'scripts')
+    scripts = [os.path.join(scripts_dir, f)
+               for f in os.listdir(scripts_dir)]
+
     packages = ['cyclopts']
     pack_dir = {
         'cyclopts': 'cyclopts',
@@ -70,6 +76,7 @@ def cyclopts_setup():
         "packages": packages,
         "package_dir": pack_dir,
         "package_data": pack_data,
+        "scripts": scripts,
         }
     rtn = setup(**setup_kwargs)
 
