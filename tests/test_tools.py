@@ -5,11 +5,14 @@ from cyclopts.execute import GraphParams, SolverParams, Solution, \
 from cyclopts.params import Incrementer, Param, BoolParam, \
     ReactorRequestSampler, ReactorRequestBuilder
 
+
+import operator
 import shutil
 import os
 import uuid
 import nose
 import tables as t
+from functools import reduce
 from nose.tools import assert_equal, assert_true, assert_false
 
 def test_report():
@@ -82,9 +85,11 @@ def test_combine():
             os.remove(tmp)
 
 def test_simple_sampler_builder():
-    n = 10
-    params = [('n_commods', [Param(1), Param(2)])]
-    samplers = [ReactorRequestSampler() for i in range(n)]
+    params = [('n_commods', [Param(1), Param(2)]),
+              ('n_request', [Param(1), Param(2)]),
+              ('n_supply', [Param(1), Param(2)])]
+    n_samplers = reduce(operator.mul, (len(l) for _, l in params), 1)
+    samplers = [ReactorRequestSampler() for i in range(n_samplers)]
 
     b = SamplerBuilder()
     b.add_subtree(samplers, params)
