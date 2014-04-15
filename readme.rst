@@ -9,6 +9,11 @@ Cyclus to instantiate and execute the exchange. The Python-C++ communication is
 made possible by using [xdress](xdress.org) to generate Cython wrappers from the
 C++ source code. Pretty neat!
 
+Important Links
+---------------
+
+* `Documentation <http://cnergdata.engr.wisc.edu/cyclus/cyclopts/index.html>`_
+
 Basic Workflow Strategy
 =======================
 
