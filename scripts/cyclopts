@@ -1,0 +1,6 @@
+#!/usr/bin/env python                                                                                                                                                                                              
+"""cyclopts entry point."""
+
+from cyclopts.main import main
+
+main()
