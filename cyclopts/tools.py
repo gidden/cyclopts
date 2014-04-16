@@ -14,7 +14,7 @@ from functools import reduce
 from itertools import product
 
 import cyclopts
-from cyclopts.params import Param, BoolParam, SupConstrParam, \
+from cyclopts.params import Param, BoolParam, SupConstrParam, CoeffParam, \
     ReactorRequestSampler #, ReactorSupplySampler
 from cyclopts.execute import ArcFlow
 
@@ -32,12 +32,14 @@ PARAM_OBJ = {
     'n_sup_constr': Param,
     'sup_constr_val': SupConstrParam,
     'connection': BoolParam,
+    'constr_coeff': CoeffParam,
+    'pref_coeff': CoeffParam,
 }
 
 class SamplerBuilder(object):
     """A helper class to build configure instances of parameter samplers
     """
-    def build(rc_params):
+    def build(self, rc_params):
         """Builds all permutations of samplers given run control parameters.
         
         Parameters
@@ -46,42 +48,29 @@ class SamplerBuilder(object):
             A dictionary whose keys are parameter names and values are lists of
             ranges of constructor arguments.
         """
-        params_list = {k: product(*v) for k, v in rc_params}    
-        params_list = (k, [PARAM_OBJ[k](args) for args in v] \
-                           for k, v in params_list.items())
+        params_list = self._constr_params(rc_params)
         n_samplers = reduce(operator.mul, (len(l) for _, l in params_list), 1)
-        samplers = [ReactorRequestSampler() for range(n_samplers)]
+        samplers = [ReactorRequestSampler() for i in range(n_samplers)]
         ## for supply implementation
         # samplers = [ReactorRequestSampler() if rc_params['request'] \
         #                 else ReactorSupplySampler() for range(n_samplers)]
-        self.add_subtree(samplers, params_list)
+        self._add_params(samplers, params_list)
         return samplers
         
-    
-    def add_subtree(self, samplers, params_list):
-        """Recursively adds a parameters to samplers to generate all possible
-        samplers. There must be a sampler for each possible combination of
-        parameters in the params_list.
+    def _constr_params(self, rc_params):
+        """Returns input for _add_subtree() given input for build()"""
+        params_dict = {k: [i for i in product(*v)] \
+                           for k, v in rc_params.items()}
+        return [(k, [PARAM_OBJ[k](*args) for args in v]) \
+                    for k, v in params_dict.items()]
 
-        Parameters
-        ----------
-        samplers : list of ReactorRequestSampler or similar
-            all samplers to add the param instances to
-        params_list : list of two-tuples 
-            a list of the parameter name and all Params or similar instances 
-            to add
-        """
-        if len(params_list) == 0:
-            return
-        name, params = params_list.pop()
-        nsamplers, nparams = len(samplers), len(params)
-        step = nsamplers / nparams
-        subsamplers = [samplers[i:i + step] for i in range(nsamplers, step)]
-        for subs, param in zip(subsamplers, params):
-            for sub in subs:
-                setattr(sub, name, param) # add each viable param
-            add_subtree(subs, params_list)
-        return
+    def _add_params(self, samplers, params_list):
+        """Configures samplers with all possible perturbations of parameters."""
+        pairings = [[(name, param) for param in params] for name, params in params_list]
+        perturbations = [p for p in product(*pairings)]
+        for i in range(len(perturbations)):
+            for name, param in perturbations[i]:
+                setattr(samplers[i], name, param)
 
 class SolverDesc(t.IsDescription):
     sim_id = t.StringCol(36) # len(str(uuid.uuid4())) == 36

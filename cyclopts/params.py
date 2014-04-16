@@ -42,7 +42,7 @@ class Incrementer(object):
 class Param(object):
     """A base class for sampled parameters.
     """
-    def __init__(self, avg, dist = None, *args, **kwargs):
+    def __init__(self, avg, dist = None):
         self.avg = avg
         self.dist = dist
 
@@ -51,14 +51,17 @@ class Param(object):
         #     return self.avg
         return self.avg
 
+    def __str__(self):
+        return "Param: {0}, {1}".format(self.avg, self.dist)
+
 class BoolParam(object):
     """A class to sample binary events
     """
-    def __init__(self, cutoff, dist = None, *args, **kwargs):
+    def __init__(self, cutoff, dist = None):
         """Parameters
         ----------
         cutoff : float
-            the probability cutoff
+            the probability cutoff, must be in (0, 1]
         """
         self.cutoff = cutoff
         self.dist = dist
@@ -70,7 +73,7 @@ class BoolParam(object):
 class CoeffParam(object):
     """A class to sample coefficient values
     """
-    def __init__(self, lb = 0, ub = 1, dist = None, *args, **kwargs):
+    def __init__(self, lb = 0, ub = 1, dist = None):
         """Parameters
         ----------
         lb : float
@@ -91,12 +94,12 @@ class CoeffParam(object):
 class SupConstrParam(object):
     """A base class for sampled supply constraint values.
     """
-    def __init__(self, cutoff, dist = False, fracs = None, *args, **kwargs):
+    def __init__(self, cutoff, rand = False, fracs = None):
         """Parameters
         ----------
         cutoff : float
             the lowest supply fraction
-        dist : bool
+        rand : bool
             if True, a random supply fraction greater than or equal to the 
             cutoff is provided during sampling; if False, the cutoff fraction 
             is used
@@ -105,17 +108,17 @@ class SupConstrParam(object):
             supply constraint value could take; default is [0.25, 0.5, 0.75, 1]
         """
         self.cutoff = cutoff
-        self.dist = dist
+        self.rand = rand
         # possible supply fractions
         fracs = fracs if fracs is not None else [0.25, 0.5, 0.75, 1] 
         self.fracs = [frac for frac in fracs if frac >= cutoff]
 
     def sample(self):
         """Returns a fractional supply constraint value for a commodity"""
-        if self.dist:
-            return self.cutoff
-        else:
+        if self.rand:
             return rnd.choice(self.fracs)
+        else:
+            return self.cutoff
 
 class ReactorRequestSampler(object):
     """A container class for holding all sampling objects for reactor request

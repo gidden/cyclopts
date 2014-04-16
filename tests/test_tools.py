@@ -85,14 +85,36 @@ def test_combine():
             os.remove(tmp)
 
 def test_simple_sampler_builder():
-    params = [('n_commods', [Param(1), Param(2)]),
-              ('n_request', [Param(1), Param(2)]),
-              ('n_supply', [Param(1), Param(2)])]
-    n_samplers = reduce(operator.mul, (len(l) for _, l in params), 1)
-    samplers = [ReactorRequestSampler() for i in range(n_samplers)]
+    rc_params = {
+        'n_commods': [[1], [True, False]],
+        'n_request': [[1, 3]],
+        'constr_coeff': [[0, 0.5], [1]],
+        }
 
     b = SamplerBuilder()
-    b.add_subtree(samplers, params)
-    
-    
-    
+
+    params_list = b._constr_params(rc_params)
+    for i in range(len(params_list[0][1])):
+        assert_equal(params_list[0][1][i].avg, i * 2 + 1)
+        assert_equal(params_list[0][1][i].dist, None)
+    for i in range(len(params_list[1][1])):
+        assert_equal(params_list[1][1][i].avg, 1)
+        assert_equal(params_list[1][1][i].dist, True if i == 0 else False)
+    for i in range(len(params_list[2][1])):
+        assert_equal(params_list[2][1][i].ub, 1)
+        assert_equal(params_list[2][1][i].lb, 0.5 * i)
+    print("lst:", params_list)
+
+    samplers = b.build(rc_params)    
+    assert_equal(len(samplers), 8)
+    req_exp = [1, 1, 1, 1, 3, 3, 3, 3]
+    commod_exp = [True, True, False, False, True, True, False, False]
+    constr_exp = [0, 0.5, 0, 0.5, 0, 0.5, 0, 0.5]
+    for i in range(len(samplers)):
+        print(samplers[i].n_request)
+        assert_equal(samplers[i].n_request.avg, req_exp[i])
+        assert_equal(samplers[i].n_request.dist, None)
+        assert_equal(samplers[i].n_commods.avg, 1)
+        assert_equal(samplers[i].n_commods.dist, commod_exp[i])
+        assert_equal(samplers[i].constr_coeff.lb, constr_exp[i])
+        assert_equal(samplers[i].constr_coeff.ub, 1)
