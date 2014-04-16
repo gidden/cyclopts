@@ -14,6 +14,34 @@ import cyclopts
 from cyclopts.params import ReactorRequestSampler #, ReactorSupplySampler
 from cyclopts.execute import ArcFlow
 
+class SamplerBuilder(object):
+    """A helper class to build configure instances of parameter samplers
+    """
+    def add_subtree(self, samplers, params_list):
+        """Recursively adds a parameters to samplers to generate all possible
+        samplers. There must be a sampler for each possible combination of
+        parameters in the params_list.
+
+        Parameters
+        ----------
+        samplers : list of ReactorRequestSampler or similar
+            all samplers to add the param instances to
+        params_list : list of two-tuples 
+            a list of the parameter name and all Params or similar instances 
+            to add
+        """
+        if len(params_list) == 0:
+            return
+        name, params = params_list.pop()
+        nsamplers, nparams = len(samplers), len(params)
+        step = nsamplers / nparams
+        subsamplers = [samplers[i:i + step] for i in range(nsamplers, step)]
+        for subs, param in zip(subsamplers, params):
+            for sub in subs:
+                setattr(sub, name, param) # add each viable param
+            add_subtree(subs, params_list)
+        return
+
 class SolverDesc(t.IsDescription):
     sim_id = t.StringCol(36) # len(str(uuid.uuid4())) == 36
     type = t.StringCol(12)
