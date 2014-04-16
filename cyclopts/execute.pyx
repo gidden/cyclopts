@@ -13,7 +13,6 @@ cimport dtypes
 cimport execute
 cimport numpy as np
 cimport stlcontainers
-cimport xdress_extra_types
 from cyclopts cimport cpp_execute
 from libc.stdlib cimport free
 from libc.stdlib cimport malloc
@@ -44,17 +43,47 @@ cdef class Solution:
         # cached property defaults
         self._flows = None
 
-    def __init__(self, cyclus_version=None, flows=None, time=None, *args, **kwargs):
-        """__init__(self, cyclus_version='None', flows='None', time='None')
+    def _solution_solution_0(self, ):
+        """Solution(self, )
         """
         self._inst = new cpp_execute.Solution()
-        if cyclus_version is not None:
-            self.cyclus_version = cyclus_version
-        if flows is not None:
-            self.flows = flows
-        if time is not None:
-            self.time = time
     
+    
+    def _solution_solution_1(self, other):
+        """Solution(self, other)
+        """
+        cdef Solution other_proxy
+        other_proxy = <Solution> other
+        self._inst = new cpp_execute.Solution((<cpp_execute.Solution *> other_proxy._inst)[0])
+    
+    
+    _solution_solution_0_argtypes = frozenset()
+    _solution_solution_1_argtypes = frozenset(((0, Solution), ("other", Solution)))
+    
+    def __init__(self, *args, **kwargs):
+        """Solution(self, other)
+        """
+        types = set([(i, type(a)) for i, a in enumerate(args)])
+        types.update([(k, type(v)) for k, v in kwargs.items()])
+        # vtable-like dispatch for exactly matching types
+        if types <= self._solution_solution_0_argtypes:
+            self._solution_solution_0(*args, **kwargs)
+            return
+        if types <= self._solution_solution_1_argtypes:
+            self._solution_solution_1(*args, **kwargs)
+            return
+        # duck-typed dispatch based on whatever works!
+        try:
+            self._solution_solution_0(*args, **kwargs)
+            return
+        except (RuntimeError, TypeError, NameError):
+            pass
+        try:
+            self._solution_solution_1(*args, **kwargs)
+            return
+        except (RuntimeError, TypeError, NameError):
+            pass
+        raise RuntimeError('method __init__() could not be dispatched')
     
     def __dealloc__(self):
         if self._free_inst:
@@ -106,10 +135,10 @@ cdef class Solution:
     property time:
         """no docstring for time, please file a bug report!"""
         def __get__(self):
-            return int((<cpp_execute.Solution *> self._inst).time)
+            return float((<cpp_execute.Solution *> self._inst).time)
     
         def __set__(self, value):
-            (<cpp_execute.Solution *> self._inst).time = <long long> value
+            (<cpp_execute.Solution *> self._inst).time = <double> value
     
     
     # methods

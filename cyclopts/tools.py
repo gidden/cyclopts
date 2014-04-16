@@ -112,7 +112,7 @@ class FlowDesc(t.IsDescription):
 
 class SolnDesc(t.IsDescription):
     sim_id = t.StringCol(36) # len(str(uuid.uuid4())) == 36
-    time = t.Int64Col() # in microseconds
+    time = t.Float64Col() # in seconds
     cyclus_version = t.StringCol(12)
     cyclopts_version = t.StringCol(12)
 
@@ -211,6 +211,7 @@ def report(sampler, gparams, sparams, soln, sim_id = None, db_path = None):
     h5file = t.open_file(db_path, mode=mode, title="Cyclopts Output")
     
     flows = [ArcFlow(soln.flows[i:]) for i in range(len(soln.flows))]
+    
     solnparams = [soln.time, soln.cyclus_version, cyclopts.__version__]
 
     tables = [('solver', SolverDesc, 'Solver Params', sparams),

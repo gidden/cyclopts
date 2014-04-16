@@ -5,13 +5,15 @@
 #include <math.h>
 #include <cassert>
 #include <algorithm>
+#include <time.h>
 
 #include <boost/math/special_functions/round.hpp>
-#include "boost/date_time/posix_time/posix_time.hpp"
 
 #include "exchange_graph.h"
 #include "prog_solver.h"
 #include "version.h"
+
+#include "cpu_time.h"
 
 using namespace cyclus;
 
@@ -171,8 +173,8 @@ void add_arcs(GraphParams& params, ExchangeGraph& g, ExecContext& ctx) {
   }
 }
 
+
 Solution execute_exchange(GraphParams& gparams, SolverParams& sparams) {
-  namespace time = boost::posix_time;
   std::string type = sparams.type == "" ? "cbc" : sparams.type;
   ProgSolver solver(type, true); 
   ExchangeGraph g;
@@ -182,12 +184,11 @@ Solution execute_exchange(GraphParams& gparams, SolverParams& sparams) {
   add_supply(gparams, g, ctx);
   add_arcs(gparams, g, ctx);
 
-  time::ptime start, stop;
-  start = time::microsec_clock::local_time();
+  double start, stop;
+  start = getCPUTime();
   solver.ExchangeSolver::Solve(&g);
-  stop = time::microsec_clock::local_time();
-  time::time_duration dur = stop - start;
-  long us = dur.total_microseconds();
+  stop = getCPUTime();
+  double dur = stop - start; // in seconds
   
   const std::vector<Match>& matches = g.matches();
   Solution s;
@@ -195,7 +196,7 @@ Solution execute_exchange(GraphParams& gparams, SolverParams& sparams) {
     s.flows.push_back(ArcFlow(ctx.arc_to_id[matches[i].first],
                               matches[i].second));
   }
-  s.time = us;
+  s.time = dur;
   s.cyclus_version = cyclus::version::core();
   return s;
 }

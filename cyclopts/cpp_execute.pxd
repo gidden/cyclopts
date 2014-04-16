@@ -8,7 +8,6 @@
 ################################################
 
 
-cimport xdress_extra_types
 from cyclopts cimport cpp_execute
 from libcpp cimport bool as cpp_bool
 from libcpp.map cimport map as cpp_map
@@ -53,6 +52,24 @@ cdef extern from "execute.h" :
 
 cdef extern from "execute.h" :
 
+    cdef cppclass Solution:
+        # constructors
+        Solution() except +
+        Solution(const Solution &) except +
+
+        # attributes
+        std_string cyclus_version
+        cpp_vector[ArcFlow] flows
+        double time
+
+        # methods
+
+        pass
+
+
+
+cdef extern from "execute.h" :
+
     cdef cppclass ArcFlow:
         # constructors
         ArcFlow() except +
@@ -79,23 +96,6 @@ cdef extern from "execute.h" :
 
         # attributes
         std_string type
-
-        # methods
-
-        pass
-
-
-
-cdef extern from "execute.h" :
-
-    cdef cppclass Solution:
-        # constructors
-        Solution() except +
-
-        # attributes
-        std_string cyclus_version
-        cpp_vector[ArcFlow] flows
-        xdress_extra_types.int64 time
 
         # methods
 

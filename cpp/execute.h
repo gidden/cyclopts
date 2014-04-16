@@ -35,8 +35,14 @@ public:
 class Solution {
  public:
   std::vector<ArcFlow> flows;
-  long time; // in microseconds
+  double time; // in s
   std::string cyclus_version;
+
+  Solution() { };
+  
+  Solution(const Solution& other) :
+      flows(other.flows), time(other.time), cyclus_version(other.cyclus_version)
+      { };
 };
 
 /// A container class for all parameters required to construct an instance of a
