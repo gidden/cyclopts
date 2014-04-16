@@ -7,16 +7,57 @@ output.
 import os
 import uuid
 import shutil
+import operator
 import tables as t
 import numpy as np
+from functools import reduce
+from itertools import product
 
 import cyclopts
-from cyclopts.params import ReactorRequestSampler #, ReactorSupplySampler
+from cyclopts.params import Param, BoolParam, SupConstrParam, \
+    ReactorRequestSampler #, ReactorSupplySampler
 from cyclopts.execute import ArcFlow
+
+PARAM_OBJ = {
+    'n_commods': Param,
+    'n_request': Param,
+    'assem_per_req': Param,
+    'assem_multi_commod': BoolParam,
+    'req_multi_commods': Param,
+    'exclusive': BoolParam,
+    'n_req_constr': Param,
+    'n_supply': Param,
+    'sup_multi': BoolParam,
+    'sup_multi_commods': Param,
+    'n_sup_constr': Param,
+    'sup_constr_val': SupConstrParam,
+    'connection': BoolParam,
+}
 
 class SamplerBuilder(object):
     """A helper class to build configure instances of parameter samplers
     """
+    def build(rc_params):
+        """Builds all permutations of samplers given run control parameters.
+        
+        Parameters
+        ----------
+        rc_params : dict
+            A dictionary whose keys are parameter names and values are lists of
+            ranges of constructor arguments.
+        """
+        params_list = {k: product(*v) for k, v in rc_params}    
+        params_list = (k, [PARAM_OBJ[k](args) for args in v] \
+                           for k, v in params_list.items())
+        n_samplers = reduce(operator.mul, (len(l) for _, l in params_list), 1)
+        samplers = [ReactorRequestSampler() for range(n_samplers)]
+        ## for supply implementation
+        # samplers = [ReactorRequestSampler() if rc_params['request'] \
+        #                 else ReactorSupplySampler() for range(n_samplers)]
+        self.add_subtree(samplers, params_list)
+        return samplers
+        
+    
     def add_subtree(self, samplers, params_list):
         """Recursively adds a parameters to samplers to generate all possible
         samplers. There must be a sampler for each possible combination of
