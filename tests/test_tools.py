@@ -1,4 +1,4 @@
-from cyclopts.tools import report, combine, SamplerBuilder, ParamParser
+from cyclopts.tools import report, combine, SamplerBuilder
 
 from cyclopts.execute import GraphParams, SolverParams, Solution, \
     ArcFlow, execute_exchange
@@ -104,7 +104,7 @@ def test_simple_sampler_builder():
         assert_equal(params_list[2][1][i].lb, 0.5 * i)
     print("lst:", params_list)
 
-    samplers = b.build(rc_params)    
+    samplers = b._build(rc_params)    
     assert_equal(len(samplers), 8)
     req_exp = [1, 1, 1, 1, 3, 3, 3, 3]
     commod_exp = [True, True, False, False, True, True, False, False]
@@ -129,8 +129,8 @@ def test_parser():
         'n_supply': [range(1, 5)],
         }
 
-    p = ParamParser()
+    b = SamplerBuilder()
     rc = TestRC()
-    obs_dict = p.parse(rc)
+    obs_dict = b._parse(rc)
 
     assert_equal(exp_dict, obs_dict)

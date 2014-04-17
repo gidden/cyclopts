@@ -6,7 +6,7 @@ from __future__ import print_function
 import argparse
 from cyclopts.run_control import RunControl, NotSpecified, parse_rc 
 
-from cyclopts.tools import ParamParser, SamplerBuilder, report
+from cyclopts.tools import SamplerBuilder, report
 from cyclopts.params import ReactorRequestBuilder
 from cyclopts.execute import GraphParams, SolverParams, execute_exchange
 
@@ -24,10 +24,8 @@ def main():
     db_path = 'cyclopts.h5' if not hasattr(rc, 'outfile') else rc.outfile
     solvers = ['cbc'] if not hasattr(rc, 'solver') else rc.solver
     
-    p = ParamParser()
-    params_dict = p.parse(rc)
     b = SamplerBuilder()
-    samplers = b.build(params_dict)
+    samplers = b.build(rc)
     
     for sampler in samplers:
         for solver in solvers:

@@ -17,47 +17,22 @@ import cyclopts
 from cyclopts.params import CONSTR_ARGS, Param, BoolParam, SupConstrParam, CoeffParam, \
     ReactorRequestSampler #, ReactorSupplySampler
 from cyclopts.execute import ArcFlow
-
-class ParamParser(object):
-    """A helper class to parse parameter-related information from a RunControl
-    object into information readable by a SamplerBuilder.
-    """
-    def parse(self, rc):
-        """Provides a dictionary of parameter names to all constructor arguments
-        for a resource exchange range of instances.
         
+class SamplerBuilder(object):
+    """A helper class to build configure instances of parameter samplers
+    """
+    def build(self, rc):
+        """Builds all permutations of samplers.
+
         Parameters
         ----------
         rc : RunControl
             A RunControl object defined by the user's parsed rc file.
         """
-        params_dict = {}
-        s = ReactorRequestSampler() # only works for reactor requests for now
-        for name in s.__dict__:
-            if hasattr(rc, name):
-                vals = []
-                args = CONSTR_ARGS[type(getattr(s, name))]
-                for arg in args:
-                    attr = getattr(rc, name)
-                    if arg in attr:
-                        vals += [attr[arg]]
-                if len(vals) > 0:
-                    params_dict[name] = vals
-        return params_dict
-        
-class SamplerBuilder(object):
-    """A helper class to build configure instances of parameter samplers
-    """
-    def build(self, params_dict):
-        """Builds all permutations of samplers given a dictionary of all
-        constructor arguments.
-        
-        Parameters
-        ----------
-        params_dict : dict
-            A dictionary whose keys are parameter names and values are lists of
-            ranges of constructor arguments.
-        """
+        params_dict = self._parse(rc)
+        return self._build(params_dict)
+    
+    def _build(self, params_dict):
         params_list = self._constr_params(params_dict)
         n_samplers = reduce(operator.mul, (len(l) for _, l in params_list), 1)
         samplers = [ReactorRequestSampler() for i in range(n_samplers)]
@@ -66,6 +41,35 @@ class SamplerBuilder(object):
         #                 else ReactorSupplySampler() for range(n_samplers)]
         self._add_params(samplers, params_list)
         return samplers
+
+    def _parse(self, rc):
+        """Provides a dictionary of parameter names to all constructor arguments
+        for a resource exchange range of instances.
+        
+        Parameters
+        ----------
+        rc : RunControl
+            A RunControl object defined by the user's parsed rc file.
+        
+        Returns
+        -------
+        params_dict : dict
+            A dictionary whose keys are parameter names and values are lists of
+            ranges of constructor arguments.
+        """
+        params_dict = {}
+        s = ReactorRequestSampler() # only works for reactor requests for now
+        for name in s.__dict__:
+            if hasattr(rc, name):
+                vals = []
+                args = CONSTR_ARGS[type(getattr(s, name))]
+                attr = getattr(rc, name)
+                for arg in args:
+                    if arg in attr:
+                        vals += [attr[arg]]
+                if len(vals) > 0:
+                    params_dict[name] = vals
+        return params_dict
         
     def _constr_params(self, params_dict):
         """Returns input for _add_subtree() given input for build()"""
