@@ -3,41 +3,31 @@
 
 from __future__ import print_function
 
-from cyclopts.tools import SamplerBuilder, report
+import argparse
+from cyclopts.run_control import RunControl, NotSpecified, parse_rc 
+
+from cyclopts.tools import ParamParser, SamplerBuilder, report
 from cyclopts.params import ReactorRequestBuilder
 from cyclopts.execute import GraphParams, SolverParams, execute_exchange
 
 import os
 
-def read_rcparams(lines):
-    return {
-        'n_request': [range(1, 5)],
-        'n_supply': [range(1, 5)],
-        }
-
 def main():
-    """
-    - read in the rc file
-    - construct rcparams for building
-    - build all samplers
-    - for each solver
-        - for each sampler
-            - execute exchange
-            - report
-    """
-    # argparser to get rc file 
-    
-    # read in rc file
+    """Entry point for Cyclopts runs."""
+    parser = argparse.ArgumentParser("Cyclopts", add_help=False)
+    parser.add_argument('--rc', default=NotSpecified, 
+                        help="path to run control file")
 
-    # get outpath and rcparams and solvers
+    args = parser.parse_args()
+    rc = parse_rc(args.rc)
+  
+    db_path = 'cyclopts.h5' if not hasattr(rc, 'outfile') else rc.outfile
+    solvers = ['cbc'] if not hasattr(rc, 'solver') else rc.solver
     
-    lines = [] # change to read rc
-    db_path = 'cyclopts.h5' # change to read rc
-    solvers = ['cbc'] # change to read rc
-    rcparams = read_rcparams(lines)
-
+    p = ParamParser()
+    params_dict = p.parse(rc)
     b = SamplerBuilder()
-    samplers = b.build(rcparams)
+    samplers = b.build(params_dict)
     
     for sampler in samplers:
         for solver in solvers:
@@ -48,7 +38,6 @@ def main():
             report(sampler, gparams, sparams, soln, db_path=db_path)
             
     
-    print("cwd:", os.getcwd())
 
 if __name__ == "__main__":
     main()

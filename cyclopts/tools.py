@@ -36,31 +36,66 @@ PARAM_OBJ = {
     'pref_coeff': CoeffParam,
 }
 
-class SamplerBuilder(object):
-    """A helper class to build configure instances of parameter samplers
+CONSTR_ARGS = {
+    Param: ['avg', 'dist'],
+    BoolParam: ['cutoff', 'dist'],
+    CoeffParam: ['lb', 'ub', 'dist'],
+    SupConstrParam: ['cutoff', 'rand', 'fracs'],
+}
+
+class ParamParser(object):
+    """A helper class to parse parameter-related information from a RunControl
+    object into information readable by a SamplerBuilder.
     """
-    def build(self, rc_params):
-        """Builds all permutations of samplers given run control parameters.
+    def parse(self, rc):
+        """Provides a dictionary of parameter names to all constructor arguments
+        for a resource exchange range of instances.
         
         Parameters
         ----------
-        rc_params : dict
+        rc : RunControl
+            A RunControl object defined by the user's parsed rc file.
+        """
+        params_dict = {}
+        param_names = [k for k in PARAM_OBJ]
+        for name in param_names:
+            if hasattr(rc, name):
+                vals = []
+                args = CONSTR_ARGS[PARAM_OBJ[name]]
+                for arg in args:
+                    attr = getattr(rc, name)
+                    if arg in attr:
+                        vals += [attr[arg]]
+                if len(vals) > 0:
+                    params_dict[name] = vals
+        return params_dict
+        
+class SamplerBuilder(object):
+    """A helper class to build configure instances of parameter samplers
+    """
+    def build(self, params_dict):
+        """Builds all permutations of samplers given a dictionary of all
+        constructor arguments.
+        
+        Parameters
+        ----------
+        params_dict : dict
             A dictionary whose keys are parameter names and values are lists of
             ranges of constructor arguments.
         """
-        params_list = self._constr_params(rc_params)
+        params_list = self._constr_params(params_dict)
         n_samplers = reduce(operator.mul, (len(l) for _, l in params_list), 1)
         samplers = [ReactorRequestSampler() for i in range(n_samplers)]
         ## for supply implementation
-        # samplers = [ReactorRequestSampler() if rc_params['request'] \
+        # samplers = [ReactorRequestSampler() if params_dict['request'] \
         #                 else ReactorSupplySampler() for range(n_samplers)]
         self._add_params(samplers, params_list)
         return samplers
         
-    def _constr_params(self, rc_params):
+    def _constr_params(self, params_dict):
         """Returns input for _add_subtree() given input for build()"""
         params_dict = {k: [i for i in product(*v)] \
-                           for k, v in rc_params.items()}
+                           for k, v in params_dict.items()}
         return [(k, [PARAM_OBJ[k](*args) for args in v]) \
                     for k, v in params_dict.items()]
 

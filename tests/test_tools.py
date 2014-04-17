@@ -1,10 +1,9 @@
-from cyclopts.tools import report, combine, SamplerBuilder
+from cyclopts.tools import report, combine, SamplerBuilder, ParamParser
 
 from cyclopts.execute import GraphParams, SolverParams, Solution, \
     ArcFlow, execute_exchange
 from cyclopts.params import Incrementer, Param, BoolParam, \
     ReactorRequestSampler, ReactorRequestBuilder
-
 
 import operator
 import shutil
@@ -118,3 +117,20 @@ def test_simple_sampler_builder():
         assert_equal(samplers[i].n_commods.dist, commod_exp[i])
         assert_equal(samplers[i].constr_coeff.lb, constr_exp[i])
         assert_equal(samplers[i].constr_coeff.ub, 1)
+
+def test_parser():
+    class TestRC():
+        def __init__(self):
+            self.n_request = {'avg': range(1, 5), 'dist': [True, False]}
+            self.n_supply = {'avg': range(1, 5)}
+
+    exp_dict = {
+        'n_request': [range(1, 5), [True, False]],
+        'n_supply': [range(1, 5)],
+        }
+
+    p = ParamParser()
+    rc = TestRC()
+    obs_dict = p.parse(rc)
+
+    assert_equal(exp_dict, obs_dict)
