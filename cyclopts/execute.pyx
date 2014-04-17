@@ -86,7 +86,7 @@ cdef class Solution:
         raise RuntimeError('method __init__() could not be dispatched')
     
     def __dealloc__(self):
-        if self._free_inst:
+        if self._free_inst and self._inst is not NULL:
             free(self._inst)
 
     # attributes
@@ -201,7 +201,7 @@ cdef class SolverParams:
     
     
     def __dealloc__(self):
-        if self._free_inst:
+        if self._free_inst and self._inst is not NULL:
             free(self._inst)
 
     # attributes
@@ -283,7 +283,7 @@ cdef class GraphParams:
     
     
     def __dealloc__(self):
-        if self._free_inst:
+        if self._free_inst and self._inst is not NULL:
             free(self._inst)
 
     # attributes
@@ -612,7 +612,7 @@ cdef class ArcFlow:
         raise RuntimeError('method __init__() could not be dispatched')
     
     def __dealloc__(self):
-        if self._free_inst:
+        if self._free_inst and self._inst is not NULL:
             free(self._inst)
 
     # attributes
