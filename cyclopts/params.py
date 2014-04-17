@@ -120,6 +120,13 @@ class SupConstrParam(object):
         else:
             return self.cutoff
 
+CONSTR_ARGS = {
+    Param: ['avg', 'dist'],
+    BoolParam: ['cutoff', 'dist'],
+    CoeffParam: ['lb', 'ub', 'dist'],
+    SupConstrParam: ['cutoff', 'rand', 'fracs'],
+}
+
 class ReactorRequestSampler(object):
     """A container class for holding all sampling objects for reactor request
     scenarios.

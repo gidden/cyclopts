@@ -14,34 +14,9 @@ from functools import reduce
 from itertools import product
 
 import cyclopts
-from cyclopts.params import Param, BoolParam, SupConstrParam, CoeffParam, \
+from cyclopts.params import CONSTR_ARGS, Param, BoolParam, SupConstrParam, CoeffParam, \
     ReactorRequestSampler #, ReactorSupplySampler
 from cyclopts.execute import ArcFlow
-
-PARAM_OBJ = {
-    'n_commods': Param,
-    'n_request': Param,
-    'assem_per_req': Param,
-    'assem_multi_commod': BoolParam,
-    'req_multi_commods': Param,
-    'exclusive': BoolParam,
-    'n_req_constr': Param,
-    'n_supply': Param,
-    'sup_multi': BoolParam,
-    'sup_multi_commods': Param,
-    'n_sup_constr': Param,
-    'sup_constr_val': SupConstrParam,
-    'connection': BoolParam,
-    'constr_coeff': CoeffParam,
-    'pref_coeff': CoeffParam,
-}
-
-CONSTR_ARGS = {
-    Param: ['avg', 'dist'],
-    BoolParam: ['cutoff', 'dist'],
-    CoeffParam: ['lb', 'ub', 'dist'],
-    SupConstrParam: ['cutoff', 'rand', 'fracs'],
-}
 
 class ParamParser(object):
     """A helper class to parse parameter-related information from a RunControl
@@ -57,11 +32,11 @@ class ParamParser(object):
             A RunControl object defined by the user's parsed rc file.
         """
         params_dict = {}
-        param_names = [k for k in PARAM_OBJ]
-        for name in param_names:
+        s = ReactorRequestSampler() # only works for reactor requests for now
+        for name in s.__dict__:
             if hasattr(rc, name):
                 vals = []
-                args = CONSTR_ARGS[PARAM_OBJ[name]]
+                args = CONSTR_ARGS[type(getattr(s, name))]
                 for arg in args:
                     attr = getattr(rc, name)
                     if arg in attr:
@@ -96,7 +71,8 @@ class SamplerBuilder(object):
         """Returns input for _add_subtree() given input for build()"""
         params_dict = {k: [i for i in product(*v)] \
                            for k, v in params_dict.items()}
-        return [(k, [PARAM_OBJ[k](*args) for args in v]) \
+        s = ReactorRequestSampler()
+        return [(k, [type(getattr(s, k))(*args) for args in v]) \
                     for k, v in params_dict.items()]
 
     def _add_params(self, samplers, params_list):
