@@ -1,5 +1,6 @@
 from cyclopts.execute import ArcFlow, GraphParams, SolverParams, execute_exchange
-from cyclopts.params import ReactorRequestBuilder, ReactorRequestSampler, Param
+from cyclopts.params import ReactorRequestBuilder, ReactorRequestSampler, \
+    Param, SupConstrParam
 from cyclopts.dtypes import xd_arcflow
 
 import numpy as np
@@ -7,7 +8,7 @@ import random as rnd
 import operator 
 
 import nose
-from nose.tools import assert_equal, assert_true
+from nose.tools import assert_equal, assert_almost_equal, assert_true
 
 def test_rr_sanity():
     solvers = ['greedy', 'cbc', 'clp']
@@ -22,22 +23,29 @@ def test_rr_sanity():
             s = ReactorRequestSampler()
             s.n_request = Param(nreq)
             s.n_supply = Param(nsup)
+            s.sup_constr_val = SupConstrParam(1.0 / nsup)
             b = ReactorRequestBuilder(s)
             gparams = b.build()
 
             solns = [execute_exchange(gparams, solver) for solver in sparams]
             all_flows = []
+            objs = []
+
             for soln in solns:
                 dic = {}
                 for i in range(len(soln.flows)):
                     f = ArcFlow(soln.flows[i:])
                     dic[f.id] = f.flow
                 all_flows.append(dic)
-            
+                
             max_flows = [sum(dic.values()) for dic in all_flows]
-
+            objs = [sum([flow / gparams.arc_pref[id] for id, flow in flows.items()]) \
+                        for flows in all_flows]
+            print(objs)
             for f in max_flows:
-                assert_equal(f, exp_total_flow)
+                assert_almost_equal(f, exp_total_flow)
             
-            for i in range(len(all_flows) - 1):
-                assert_equal(all_flows[i], all_flows[i+1])
+            max_obj = max(objs)
+            objs = [obj / max_obj for obj in objs]
+            for i in range(len(objs) - 1):
+                assert_almost_equal(objs[i], objs[i+1], places=2)
