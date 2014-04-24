@@ -1,6 +1,6 @@
 from cyclopts.execute import ArcFlow, GraphParams, SolverParams, execute_exchange
 from cyclopts.params import ReactorRequestBuilder, ReactorRequestSampler, \
-    Param, SupConstrParam
+    Param, SupConstrParam, BoolParam
 from cyclopts.dtypes import xd_arcflow
 
 import numpy as np
@@ -23,9 +23,12 @@ def test_rr_sanity():
             s = ReactorRequestSampler()
             s.n_request = Param(nreq)
             s.n_supply = Param(nsup)
-            s.sup_constr_val = SupConstrParam(1.0 / nsup)
+            s.connection = BoolParam(0)
+            #s.sup_constr_val = SupConstrParam(1.0 / nsup)
             b = ReactorRequestBuilder(s)
             gparams = b.build()
+            
+            assert_equal(len(gparams.arc_pref), nreq)
 
             solns = [execute_exchange(gparams, solver) for solver in sparams]
 
@@ -34,12 +37,12 @@ def test_rr_sanity():
             max_flows = [sum(dic.values()) for dic in all_flows]
             objs = [sum([flow / gparams.arc_pref[id] for id, flow in flows.items()]) \
                         for flows in all_flows]
-            max_obj = max(objs)
-            objs = [obj / max_obj for obj in objs]
-
             print("objectives:", objs)
+            ans = objs[1] # cbc
+            objs = [obj / ans for obj in objs]
+
             for f in max_flows:
                 assert_almost_equal(f, exp_total_flow)
             
             for i in range(len(objs) - 1):
-                assert_almost_equal(objs[i], objs[i+1], places=2)
+                assert_almost_equal(objs[i], objs[i+1])
