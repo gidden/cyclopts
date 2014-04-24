@@ -10,7 +10,7 @@ import operator
 import nose
 from nose.tools import assert_equal, assert_almost_equal, assert_true
 
-def test_rr_sanity():
+def test_rr_sanity_min():
     solvers = ['greedy', 'cbc', 'clp']
     sparams = [SolverParams(solver) for solver in solvers]
     n_req_max = 100
@@ -46,3 +46,39 @@ def test_rr_sanity():
             
             for i in range(len(objs) - 1):
                 assert_almost_equal(objs[i], objs[i+1])
+
+def test_rr_sanity_max():
+    solvers = ['greedy', 'cbc', 'clp']
+    sparams = [SolverParams(solver) for solver in solvers]
+    n_req_max = 100
+    n_sup_max = 100
+    
+    for nreq in range(1, n_req_max, 49):
+        for nsup in range(1, n_sup_max, 49):
+            print("testing", "nreq:", nreq, "nsup:", nsup)
+            exp_total_flow = nreq
+            s = ReactorRequestSampler()
+            s.n_request = Param(nreq)
+            s.n_supply = Param(nsup)
+            s.sup_constr_val = SupConstrParam(1.0 / nsup)
+            b = ReactorRequestBuilder(s)
+            gparams = b.build()
+            
+            assert_equal(len(gparams.arc_pref), nreq * nsup)
+
+            solns = [execute_exchange(gparams, solver) for solver in sparams]
+
+            all_flows = [{ArcFlow(soln.flows[i:]).id: ArcFlow(soln.flows[i:]).flow \
+                              for i in range(len(soln.flows))} for soln in solns]
+            max_flows = [sum(dic.values()) for dic in all_flows]
+            objs = [sum([flow / gparams.arc_pref[id] for id, flow in flows.items()]) \
+                        for flows in all_flows]
+            print("objectives:", objs)
+            ans = objs[1] # cbc
+            objs = [obj / ans for obj in objs]
+
+            for f in max_flows:
+                assert_almost_equal(f, exp_total_flow)
+            
+            for i in range(len(objs) - 1):
+                assert_almost_equal(objs[i], objs[i+1], places=2)
