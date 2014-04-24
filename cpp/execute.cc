@@ -10,6 +10,7 @@
 #include <boost/math/special_functions/round.hpp>
 
 #include "exchange_graph.h"
+#include "greedy_solver.h"
 #include "prog_solver.h"
 #include "version.h"
 
@@ -173,10 +174,21 @@ void add_arcs(GraphParams& params, ExchangeGraph& g, ExecContext& ctx) {
   }
 }
 
+/// factory method to provide an exchange solver
+ExchangeSolver* get_solver(SolverParams& sparams) {
+  std::string type = sparams.type == "" ? "cbc" : sparams.type;
+
+  ExchangeSolver* ret;
+  if (type == "cbc" || type == "clp") {
+    ret = new ProgSolver(type, true);
+  } else {
+    ret = new GreedySolver(true);
+  }
+  return ret;
+}
 
 Solution execute_exchange(GraphParams& gparams, SolverParams& sparams) {
-  std::string type = sparams.type == "" ? "cbc" : sparams.type;
-  ProgSolver solver(type, true); 
+  ExchangeSolver* solver = get_solver(sparams);
   ExchangeGraph g;
   ExecContext ctx;
   
@@ -186,7 +198,7 @@ Solution execute_exchange(GraphParams& gparams, SolverParams& sparams) {
 
   double start, stop;
   start = getCPUTime();
-  solver.ExchangeSolver::Solve(&g);
+  solver->ExchangeSolver::Solve(&g);
   stop = getCPUTime();
   double dur = stop - start; // in seconds
   
@@ -198,6 +210,9 @@ Solution execute_exchange(GraphParams& gparams, SolverParams& sparams) {
   }
   s.time = dur;
   s.cyclus_version = cyclus::version::core();
+
+  delete solver;
+  
   return s;
 }
 
