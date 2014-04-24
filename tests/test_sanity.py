@@ -34,10 +34,12 @@ def test_rr_sanity():
             max_flows = [sum(dic.values()) for dic in all_flows]
             objs = [sum([flow / gparams.arc_pref[id] for id, flow in flows.items()]) \
                         for flows in all_flows]
+            max_obj = max(objs)
+            objs = [obj / max_obj for obj in objs]
+
+            print("objectives:", objs)
             for f in max_flows:
                 assert_almost_equal(f, exp_total_flow)
             
-            max_obj = max(objs)
-            objs = [obj / max_obj for obj in objs]
             for i in range(len(objs) - 1):
                 assert_almost_equal(objs[i], objs[i+1], places=2)
