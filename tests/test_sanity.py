@@ -28,20 +28,12 @@ def test_rr_sanity():
             gparams = b.build()
 
             solns = [execute_exchange(gparams, solver) for solver in sparams]
-            all_flows = []
-            objs = []
 
-            for soln in solns:
-                dic = {}
-                for i in range(len(soln.flows)):
-                    f = ArcFlow(soln.flows[i:])
-                    dic[f.id] = f.flow
-                all_flows.append(dic)
-                
+            all_flows = [{ArcFlow(soln.flows[i:]).id: ArcFlow(soln.flows[i:]).flow \
+                              for i in range(len(soln.flows))} for soln in solns]
             max_flows = [sum(dic.values()) for dic in all_flows]
             objs = [sum([flow / gparams.arc_pref[id] for id, flow in flows.items()]) \
                         for flows in all_flows]
-            print(objs)
             for f in max_flows:
                 assert_almost_equal(f, exp_total_flow)
             
