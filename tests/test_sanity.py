@@ -81,4 +81,4 @@ def test_rr_sanity_max():
                 assert_almost_equal(f, exp_total_flow)
             
             for i in range(len(objs) - 1):
-                assert_almost_equal(objs[i], objs[i+1], places=2)
+                assert_almost_equal(objs[i], objs[i+1], places=1)
