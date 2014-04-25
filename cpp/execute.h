@@ -57,6 +57,8 @@ class SolverParams {
 /// Cyclus ExchangeGraph.
 class GraphParams {
  public:
+  GraphParams();
+
   /// convenience function to populate entries for request groups
   void AddRequestGroup(int g);
   
@@ -68,6 +70,9 @@ class GraphParams {
   
   /// convenience function to populate entries for supply nodes
   void AddSupplyNode(int n, int g);
+
+  /// a string of this graph's uuid
+  std::string id;
   
   /// requester : their request nodes
   /// gets filled by AddRequestNode

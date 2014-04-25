@@ -7,7 +7,11 @@
 #include <algorithm>
 #include <time.h>
 
+#include <boost/lexical_cast.hpp>
 #include <boost/math/special_functions/round.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 #include "exchange_graph.h"
 #include "greedy_solver.h"
@@ -17,6 +21,11 @@
 #include "cpu_time.h"
 
 using namespace cyclus;
+
+GraphParams::GraphParams() {
+  boost::uuids::uuid uuid = boost::uuids::random_generator()();
+  id = boost::lexical_cast<std::string>(uuid);
+}
 
 void GraphParams::AddRequestGroup(int g) {
   u_nodes_per_req[g] = std::vector<int>();

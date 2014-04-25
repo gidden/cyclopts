@@ -28,6 +28,7 @@ cdef extern from "execute.h" :
         cpp_map[int, double] def_constr_coeff
         cpp_map[int, cpp_vector[int]] excl_req_nodes
         cpp_map[int, cpp_vector[cpp_vector[int]]] excl_sup_nodes
+        std_string id
         cpp_map[int, cpp_bool] node_excl
         cpp_map[int, double] node_qty
         cpp_map[int, cpp_map[int, cpp_vector[double]]] node_ucaps

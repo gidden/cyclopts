@@ -92,16 +92,15 @@ class SolverDesc(t.IsDescription):
     type = t.StringCol(12)
 
 class GraphDesc(t.IsDescription):
-    sim_id = t.StringCol(36) # len(str(uuid.uuid4())) == 36
+    graph_id = t.StringCol(36)  # len(str(uuid.uuid4())) == 36
     n_supply = t.Int32Col()
     n_request = t.Int32Col()
     n_sup_nodes = t.Int32Col()
     n_req_nodes = t.Int32Col()
     n_arcs = t.Int32Col()
-    hash = t.Int64Col()
 
 class RRSamplerDesc(t.IsDescription):
-    sim_id = t.StringCol(36) # len(str(uuid.uuid4())) == 36
+    graph_id = t.StringCol(36) # len(str(uuid.uuid4())) == 36
     n_commods = t.Int32Col() 
     n_request = t.Int32Col()
     assem_per_req = t.Int32Col()
@@ -127,6 +126,7 @@ class FlowDesc(t.IsDescription):
 
 class SolnDesc(t.IsDescription):
     sim_id = t.StringCol(36) # len(str(uuid.uuid4())) == 36
+    graph_id = t.StringCol(36) # len(str(uuid.uuid4())) == 36
     time = t.Float64Col() # in seconds
     obj = t.Float64Col() 
     cyclus_version = t.StringCol(12)
@@ -134,21 +134,21 @@ class SolnDesc(t.IsDescription):
 
 class Reporter(object):
     
-    def report_solver(self, row, sim_id, sparams):
+    def report_solver(self, row, sim_id, graph_id, sparams):
         row['sim_id'] = str(sim_id)
         row['type'] = sparams.type
+        row.append()
 
-    def report_graph(self, row, sim_id, gparams):
-        row['sim_id'] = str(sim_id)
+    def report_graph(self, row, sim_id, graph_id, gparams):
+        row['graph_id'] = graph_id
         row['n_supply'] = len(gparams.v_nodes_per_sup)
         row['n_request'] = len(gparams.u_nodes_per_req)
-        row['n_sup_nodes'] = len(gparams.node_excl) - \
-            len(gparams.def_constr_coeff)
-        row['n_req_nodes'] = len(gparams.def_constr_coeff)
+        row['n_sup_nodes'] = sum([len(vec) for k, vec in gparams.v_nodes_per_sup.items()])
+        row['n_req_nodes'] = sum([len(vec) for k, vec in gparams.u_nodes_per_req.items()])
         row['n_arcs'] = len(gparams.arc_pref)
-        row['hash'] = hash(gparams)
+        row.append()
     
-    def report_rr_sampler(self, row, sim_id, sampler):
+    def report_rr_sampler(self, row, sim_id, graph_id, sampler):
         s = sampler
 
         params = ['sup_multi_commods',
@@ -169,7 +169,7 @@ class Reporter(object):
 
         constr_params = ['sup_constr_val']
 
-        row['sim_id'] = str(sim_id)
+        row['graph_id'] = graph_id
         for param in params:
             if hasattr(s, param):
                 row[param] = getattr(s, param).avg
@@ -179,26 +179,30 @@ class Reporter(object):
         for param in constr_params:
             if hasattr(s, param):
                 row[param] = getattr(s, param).cutoff
+        row.append()
 
     #
     # TO DO
     #
         
-    # def report_rs_sampler(self, row, sim_id, sampler):
+    # def report_rs_sampler(self, row, sim_id, graph_id, sampler):
     #     row['sim_id'] = str(sim_id)
     
-    def report_flows(self, row, sim_id, flows):
+    def report_flows(self, row, sim_id, graph_id, flows):
         for f in flows:
             row['sim_id'] = str(sim_id)
             row['arc_id'] = f.id
             row['flow'] = f.flow
+            row.append()
 
-    def report_solution(self, row, sim_id, soln):
-        row['sim_id'] = str(sim_id)
+    def report_solution(self, row, sim_id, graph_id, soln):
+        row['sim_id'] = sim_id
+        row['graph_id'] = graph_id
         row['time'] = soln[0]
         row['obj'] = soln[1]
         row['cyclus_version'] = soln[2]
         row['cyclopts_version'] = soln[3]
+        row.append()
             
 def report(sampler, gparams, sparams, soln, sim_id = None, db_path = None):
     """Dumps parameter and solution information to an HDF5 database.
@@ -223,11 +227,13 @@ def report(sampler, gparams, sparams, soln, sim_id = None, db_path = None):
     db_path = os.path.join(os.getcwd(), 'cyclopts.h5') if db_path is None \
         else db_path
     sim_id = uuid.uuid4().int if sim_id is None else sim_id
+    graph_id = str(gparams.id)
 
     mode = "a" if os.path.exists(db_path) else "w"
     h5file = t.open_file(db_path, mode=mode, title="Cyclopts Output")
     
     flows = [ArcFlow(soln.flows[i:]) for i in range(len(soln.flows))]
+    print("nflows:", len(flows))
     obj = sum([f.flow / gparams.arc_pref[f.id] for f in flows])
     solnparams = [soln.time, obj, soln.cyclus_version, cyclopts.__version__]
 
@@ -251,8 +257,7 @@ def report(sampler, gparams, sparams, soln, sim_id = None, db_path = None):
         if hasattr(r, 'report_' + name):
             row = h5file.get_node('/' + name).row
             meth = getattr(r, 'report_' + name)
-            meth(row, sim_id, data)
-            row.append()
+            meth(row, sim_id, graph_id, data)
         
     h5file.close()
             

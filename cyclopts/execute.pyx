@@ -15,7 +15,6 @@ cimport numpy as np
 cimport stlcontainers
 from cyclopts cimport cpp_execute
 from libc.stdlib cimport free
-from libc.stdlib cimport malloc
 from libcpp cimport bool as cpp_bool
 from libcpp.map cimport map as cpp_map
 from libcpp.string cimport string as std_string
@@ -250,36 +249,10 @@ cdef class GraphParams:
         self._u_nodes_per_req = None
         self._v_nodes_per_sup = None
 
-    def __init__(self, arc_pref=None, arc_to_unode=None, arc_to_vnode=None, constr_vals=None, def_constr_coeff=None, excl_req_nodes=None, excl_sup_nodes=None, node_excl=None, node_qty=None, node_ucaps=None, req_qty=None, u_nodes_per_req=None, v_nodes_per_sup=None, *args, **kwargs):
-        """__init__(self, arc_pref='None', arc_to_unode='None', arc_to_vnode='None', constr_vals='None', def_constr_coeff='None', excl_req_nodes='None', excl_sup_nodes='None', node_excl='None', node_qty='None', node_ucaps='None', req_qty='None', u_nodes_per_req='None', v_nodes_per_sup='None')
+    def __init__(self, ):
+        """GraphParams(self, )
         """
         self._inst = new cpp_execute.GraphParams()
-        if arc_pref is not None:
-            self.arc_pref = arc_pref
-        if arc_to_unode is not None:
-            self.arc_to_unode = arc_to_unode
-        if arc_to_vnode is not None:
-            self.arc_to_vnode = arc_to_vnode
-        if constr_vals is not None:
-            self.constr_vals = constr_vals
-        if def_constr_coeff is not None:
-            self.def_constr_coeff = def_constr_coeff
-        if excl_req_nodes is not None:
-            self.excl_req_nodes = excl_req_nodes
-        if excl_sup_nodes is not None:
-            self.excl_sup_nodes = excl_sup_nodes
-        if node_excl is not None:
-            self.node_excl = node_excl
-        if node_qty is not None:
-            self.node_qty = node_qty
-        if node_ucaps is not None:
-            self.node_ucaps = node_ucaps
-        if req_qty is not None:
-            self.req_qty = req_qty
-        if u_nodes_per_req is not None:
-            self.u_nodes_per_req = u_nodes_per_req
-        if v_nodes_per_sup is not None:
-            self.v_nodes_per_sup = v_nodes_per_sup
     
     
     def __dealloc__(self):
@@ -404,6 +377,17 @@ cdef class GraphParams:
             value_proxy = stlcontainers.MapIntVectorVectorInt(value, not isinstance(value, stlcontainers._MapIntVectorVectorInt))
             (<cpp_execute.GraphParams *> self._inst).excl_sup_nodes = value_proxy.map_ptr[0]
             self._excl_sup_nodes = None
+    
+    
+    property id:
+        """no docstring for id, please file a bug report!"""
+        def __get__(self):
+            return bytes(<char *> (<cpp_execute.GraphParams *> self._inst).id.c_str()).decode()
+    
+        def __set__(self, value):
+            cdef char * value_proxy
+            value_bytes = value.encode()
+            (<cpp_execute.GraphParams *> self._inst).id = std_string(<char *> value_bytes)
     
     
     property node_excl:
