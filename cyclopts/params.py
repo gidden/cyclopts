@@ -80,16 +80,19 @@ class CoeffParam(object):
             the coefficient lower bound
         ub : float
             the coefficient upper bound
-        dist : a distribution from the random module
+        dist :str
             the distribution to use, default is uniform
         """
         self.lb = lb
         self.ub = ub
-        self.dist = dist if dist is not None else rnd.uniform
+        self.dist = dist if dist is not None else "uniform"
 
     def sample(self):
         """Returns a sampled coefficient"""
-        return self.dist(self.lb, self.ub)
+        if self.dist == "uniform":
+            return rnd.uniform(self.lb, self.ub)
+        else:
+            raise ValueError("Unrecognized distribution: " + self.dist)
 
 class SupConstrParam(object):
     """A base class for sampled supply constraint values.
@@ -125,7 +128,7 @@ CONSTR_ARGS = {
     BoolParam: ['cutoff', 'dist'],
     CoeffParam: ['lb', 'ub', 'dist'],
     SupConstrParam: ['cutoff', 'rand', 'fracs'],
-}
+}        
 
 class ReactorRequestSampler(object):
     """A container class for holding all sampling objects for reactor request
@@ -137,8 +140,7 @@ class ReactorRequestSampler(object):
                  req_multi_commods = None, exclusive = None, n_req_constr = None, 
                  n_supply = None, sup_multi = None, sup_multi_commods = None, 
                  n_sup_constr = None, sup_constr_val = None, 
-                 connection = None, constr_coeff = None, pref_coeff = None,
-                 *args, **kwargs):
+                 connection = None, constr_coeff = None, pref_coeff = None):
         """Parameters
         ----------
         n_commods : Param or similar, optional
