@@ -25,7 +25,7 @@ def test_report():
     soln = execute_exchange(gp, sp)
     for i in range(len(soln.flows)):
         f = ArcFlow(soln.flows[i:])
-        print("obj:", f.id, gp.arc_pref[f.id] * f.flow)
+        print("obj:", f.id, f.flow / gp.arc_pref[f.id])
     report(sampler, gp, sp, soln, db_path=db_path)
 
     if os.path.exists(db_path):

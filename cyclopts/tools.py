@@ -128,6 +128,7 @@ class FlowDesc(t.IsDescription):
 class SolnDesc(t.IsDescription):
     sim_id = t.StringCol(36) # len(str(uuid.uuid4())) == 36
     time = t.Float64Col() # in seconds
+    obj = t.Float64Col() 
     cyclus_version = t.StringCol(12)
     cyclopts_version = t.StringCol(12)
 
@@ -195,8 +196,9 @@ class Reporter(object):
     def report_solution(self, row, sim_id, soln):
         row['sim_id'] = str(sim_id)
         row['time'] = soln[0]
-        row['cyclus_version'] = soln[1]
-        row['cyclopts_version'] = soln[2]
+        row['obj'] = soln[1]
+        row['cyclus_version'] = soln[2]
+        row['cyclopts_version'] = soln[3]
             
 def report(sampler, gparams, sparams, soln, sim_id = None, db_path = None):
     """Dumps parameter and solution information to an HDF5 database.
@@ -226,8 +228,8 @@ def report(sampler, gparams, sparams, soln, sim_id = None, db_path = None):
     h5file = t.open_file(db_path, mode=mode, title="Cyclopts Output")
     
     flows = [ArcFlow(soln.flows[i:]) for i in range(len(soln.flows))]
-    
-    solnparams = [soln.time, soln.cyclus_version, cyclopts.__version__]
+    obj = sum([f.flow / gparams.arc_pref[f.id] for f in flows])
+    solnparams = [soln.time, obj, soln.cyclus_version, cyclopts.__version__]
 
     tables = [('solver', SolverDesc, 'Solver Params', sparams),
               ('flows', FlowDesc, 'Arc Flows', flows),
