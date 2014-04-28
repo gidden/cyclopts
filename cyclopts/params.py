@@ -54,6 +54,9 @@ class Param(object):
     def __str__(self):
         return "Param: {0}, {1}".format(self.avg, self.dist)
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
 class BoolParam(object):
     """A class to sample binary events
     """
@@ -69,6 +72,9 @@ class BoolParam(object):
     def sample(self):
         """Returns True if sampled below the cutoff, False otherwise"""
         return self.cutoff >= rnd.uniform(0, 1)
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
 
 class CoeffParam(object):
     """A class to sample coefficient values
@@ -93,6 +99,9 @@ class CoeffParam(object):
             return rnd.uniform(self.lb, self.ub)
         else:
             raise ValueError("Unrecognized distribution: " + self.dist)
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
 
 class SupConstrParam(object):
     """A base class for sampled supply constraint values.
@@ -122,6 +131,9 @@ class SupConstrParam(object):
             return rnd.choice(self.fracs)
         else:
             return self.cutoff
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
 
 CONSTR_ARGS = {
     Param: ['avg', 'dist'],
@@ -207,6 +219,9 @@ class ReactorRequestSampler(object):
             if constr_coeff is not None else CoeffParam(np.nextafter(0, 1), 1)
         self.pref_coeff = pref_coeff \
             if pref_coeff is not None else CoeffParam(np.nextafter(0, 1), 1)
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
 
 class ReactorRequestBuilder(object):
     """A helper class to translate sampling parameters for a reactor request

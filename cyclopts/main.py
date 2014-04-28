@@ -4,6 +4,9 @@
 from __future__ import print_function
 
 import argparse
+import cPickle as pickle
+import uuid
+import io
 from cyclopts.run_control import RunControl, NotSpecified, parse_rc 
 
 from cyclopts.tools import SamplerBuilder, report
@@ -17,16 +20,33 @@ def main():
     parser = argparse.ArgumentParser("Cyclopts", add_help=False)
     parser.add_argument('--rc', default=NotSpecified, 
                         help="path to run control file")
-
+    parser.add_argument('-d', action='store_true', dest='dump',
+                        help="if declared, Cyclopts will read in the " + 
+                        "parameter space and dump out many other rc files " + 
+                        "as well as a listing of all files generated.")
+    parser.add_argument('--samplers-per-file', default=0, 
+                        help="if dumping samplers, how many to put in " + 
+                        "each generated file.")
+    
     args = parser.parse_args()
     rc = parse_rc(args.rc)
+    dump = args.dump
+    n_per_file = args.samplers_per_file
   
     db_path = 'cyclopts.h5' if not hasattr(rc, 'outfile') else rc.outfile
-    solvers = ['cbc'] if not hasattr(rc, 'solver') else rc.solver
+    solvers = ['cbc'] if not hasattr(rc, 'solvers') else rc.solvers
     
+    samplers = [pickle.loads(sampler) for sampler in rc.samplers] \
+        if hasattr(rc, 'samplers') else []
     b = SamplerBuilder()
-    samplers = b.build(rc)
+    samplers += b.build(rc)
     
+    if dump: 
+        dump_samplers(samplers, n_per_file, db_path, solvers)
+    else:
+        execute_cyclopts(samplers, solvers, db_path)
+
+def execute_cyclopts(samplers, solvers, db_path): 
     for sampler in samplers:
         for solver in solvers:
             rrb = ReactorRequestBuilder(sampler)
@@ -35,7 +55,28 @@ def main():
             soln = execute_exchange(gparams, sparams)
             report(sampler, gparams, sparams, soln, db_path=db_path)
             
-    
+def dump_samplers(samplers, n_per_file):
+    n_per_file = len(samplers) if n_per_file == 0 else n_per_file
+    fnames = []
+    while len(samplers) != 0:
+        fname = str(uuid.uuid4()) + '.rc'
+        while os.path.exists(fname):
+            fname = uuid.uuid4() + '.rc' # don't overwrite anyone
+        fnames.append(fname)
+        n = 0
+        with io.open(fname, 'w') as f:
+            lines = u'samplers = ['
+            while n != n_per_file: 
+                s = pickle.dumps(samplers.pop())
+                lines += '"' + s.replace('\n', '\\n') +  '",\n'
+                n += 1
+            lines += ']\n'
+            lines += 'solvers = ' + str(solvers)
+            lines += 'outfile = ' + db_path
+            f.write(lines)
+    with io.open('generated_rc_files', 'w') as f:
+        lines = u'/n'.join(fnames)
+        f.write(lines)
 
 if __name__ == "__main__":
     main()
