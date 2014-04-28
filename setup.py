@@ -77,7 +77,6 @@ def cyclopts_setup():
         "package_dir": pack_dir,
         "package_data": pack_data,
         "scripts": scripts,
-        "data_files": [("", ['LICENSE']),],
         "zip_safe": False,
         }
     rtn = setup(**setup_kwargs)
