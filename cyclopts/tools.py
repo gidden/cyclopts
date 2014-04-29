@@ -15,7 +15,7 @@ from itertools import product
 
 import cyclopts
 from cyclopts.params import CONSTR_ARGS, Param, BoolParam, SupConstrParam, CoeffParam, \
-    ReactorRequestSampler #, ReactorSupplySampler
+    ReactorRequestSampler, ReactorRequestBuilder #, ReactorSupplySampler
 from cyclopts.execute import ArcFlow
         
 class SamplerBuilder(object):
@@ -40,6 +40,8 @@ class SamplerBuilder(object):
         # samplers = [ReactorRequestSampler() if params_dict['request'] \
         #                 else ReactorSupplySampler() for range(n_samplers)]
         self._add_params(samplers, params_list)
+        samplers = [sampler for sampler in samplers \
+                        if ReactorRequestBuilder(sampler).valid()]
         return samplers
 
     def _parse(self, rc):

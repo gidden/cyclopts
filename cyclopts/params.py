@@ -287,6 +287,20 @@ class ReactorRequestBuilder(object):
         self.reqs_to_commods = {} # requests to their commodities
         self.commods_to_reqs = {} # commodities to all requests
         self.sup_node_commods = {} # supply to their commodities
+
+    def valid(self):
+        """Screens the provided sampler to determine if it provides a valid
+        point in solution space (e.g., if parameter C requires that the sum of
+        parameters A and B be less than some value, valid() will return false if
+        that condition is not met).
+
+        Returns
+        -------
+        bool
+            whether the sampler's parameters form a valid point in the 
+            sampler's parameter space
+        """
+        return len(self.commods) <= len(self.suppliers)
     
     def generate_request(self, commods, requesters, *args, **kwargs):
         """Returns all requests as a dictionary of requester ids to a list of

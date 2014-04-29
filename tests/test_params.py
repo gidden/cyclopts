@@ -11,6 +11,13 @@ def test_incr():
     assert_equal(i.next(), 5)
     assert_equal(i.next(), 6)
 
+def valid_rr_builder():
+    s = ReactorRequestSampler()
+    assert_equal(2, s.n_commods.sample())
+    assert_equal(1, s.n_supply.sample())
+    b = ReactorRequestBuilder(s, p)
+    assert_false(b.valid())
+
 def test_def_rxtr_req_sample():
     s = ReactorRequestSampler()
     assert_equal(1, s.n_commods.sample())
