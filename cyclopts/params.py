@@ -22,7 +22,12 @@ import numpy as np
 import copy as cp
 import collections
 
-from execute import GraphParams
+try:
+    from execute import GraphParams
+except ImportError as e:
+    print("Caught import error, "
+          "are you running from the root Cyclopts directory?")
+    raise e
 
 class Incrementer(object):
     """A simple helper class to increment a value"""
@@ -223,6 +228,32 @@ class ReactorRequestSampler(object):
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
+    def _dt_convert(self, obj):
+        """Converts a python object to its numpy dtype. Nones are converted to
+        strings, and all strings are set to size == 32.
+        """
+        if obj == None or isinstance(obj, basestring):
+            return np.dtype('|S32')
+        else:
+            return np.dtype(type(obj))
+
+    def h5describe(self):
+        """Returns a numpy dtype describing all composed objects."""
+        np.dtype([("{0}_{1}".format(name, subname), self._dt_convert(subobj)) \
+                      for subname, subobj in obj.__dict__.items() \
+                      for name, obj in self.__dict__.items()])
+
+    def h5import(self, row):
+        for name, obj in self.__dict__.items():
+            for subname, subobj in obj.__dict__.items():
+                setattr(subobj, subname, 
+                        row["{0}_{1}".format(name, subname)])
+
+    def h5export(self, row):
+        for name, obj in self.__dict__.items():
+            for subname, subobj in obj.__dict__.items():
+                row["{0}_{1}".format(name, subname)] = getattr(subobj, subname)
+        
 class ReactorRequestBuilder(object):
     """A helper class to translate sampling parameters for a reactor request
     scenario into an instance of GraphParams used by the cyclopts.execute

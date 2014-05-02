@@ -9,6 +9,7 @@ import uuid
 import io
 from cyclopts.run_control import RunControl, NotSpecified, parse_rc 
 
+import cyclopts.params
 from cyclopts.tools import SamplerBuilder, report
 from cyclopts.params import ReactorRequestBuilder
 from cyclopts.execute import GraphParams, SolverParams, execute_exchange
@@ -44,7 +45,41 @@ def main():
     if dump: 
         dump_samplers(samplers, n_per_file, db_path, solvers)
     else:
+        # run(args)
         execute_cyclopts(samplers, solvers, db_path)
+
+def run(args):
+    fin = args.infile
+    fout = args.outfile
+    solvers = params.solvers
+    samplers = []
+
+    fin = t.open_file(fin, mode='r')
+    tbls = fin.root._f_list_nodes(classname="Table")
+    for tbl in tbls:
+        if not hasattr(cyclopts.params, tbl._v_name):
+            continue
+        for row in tbl:
+            inst = getattr(cyclopts.params, tbl._v_name)()
+            inst.h5import(row)
+            samplers.append(inst)
+    fin.close()
+    execute_cyclopts(samplers, solvers, db_path)
+
+def convert(args):
+    fin = args.infile
+    fout = args.outfile
+    samplers = SamplerBuilder().build(fin)
+
+    fout = t.open_file(fout, mode='a')
+    for s in samplers:
+        name = s.__class__.__name__
+        if name not in fin.root._f_list_nodes(classname="Table"):
+            f.create_table(fin.root, name, s.h5describe(), name + " Table")
+        row = fin.root._f_get_child(name).row
+        s.h5export(row)
+        row.append()
+    fout.close()
 
 def execute_cyclopts(samplers, solvers, db_path): 
     for sampler in samplers:

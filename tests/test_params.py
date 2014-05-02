@@ -150,3 +150,6 @@ def test_rxtr_req_build_changes():
     assert_equal(len(p.node_ucaps[1][0]), 3)
     s.n_sup_constr = Param(1)
     s.n_req_constr = Param(1)
+
+def test_io():
+    pass
