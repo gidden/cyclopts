@@ -173,15 +173,18 @@ def test_sampler_validity():
 
     exp = []
     for i in range(1, 3):
-        for j in range(1, 3):
-            print(i, j)
-            if i > j: # more commods than suppliers
-                continue
-            print(i, j)
-            s = ReactorRequestSampler()
-            s.n_commods = Param(i)
-            s.n_supply = Param(j)
-            exp.append(s)
+        for req in range(1, 3):
+            for sup in range(1, 3):
+                if i > req: # more commods than suppliers
+                    continue
+                if i > sup: # more commods than requesters
+                    continue
+                print("n commods", i, "n supply", sup, "n request", req)
+                s = ReactorRequestSampler()
+                s.n_commods = Param(i)
+                s.n_supply = Param(sup)
+                s.n_request = Param(req)
+                exp.append(s)
 
     assert_equal(len(obs), len(exp))
     assert_equal(obs, exp)

@@ -127,7 +127,7 @@ def test_rxtr_req_build_changes():
     b = ReactorRequestBuilder(s, p)
     b.build()
     assert_equal(len(p.arc_pref), 4)
-    commods = b._assem_commods([0, 1])
+    commods = b._assem_commods(set([0, 1]))
     assert_true(0 in commods and 1 in commods)
     assign = b._assign_supply_commods([0, 1], [0, 1])
     assert_equal(assign[1][0], assign[0][1])

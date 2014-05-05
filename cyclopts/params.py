@@ -63,6 +63,9 @@ class Param(object):
     def __str__(self):
         return str(self.__dict__)
 
+    def __repr__(self):
+        return str(self.__dict__)
+
 class BoolParam(object):
     """A class to sample binary events
     """
@@ -83,6 +86,9 @@ class BoolParam(object):
         return self.__dict__ == other.__dict__
 
     def __str__(self):
+        return str(self.__dict__)
+
+    def __repr__(self):
         return str(self.__dict__)
 
 class CoeffParam(object):
@@ -113,6 +119,9 @@ class CoeffParam(object):
         return self.__dict__ == other.__dict__
 
     def __str__(self):
+        return str(self.__dict__)
+
+    def __repr__(self):
         return str(self.__dict__)
 
 class SupConstrParam(object):
@@ -148,6 +157,9 @@ class SupConstrParam(object):
         return self.__dict__ == other.__dict__
 
     def __str__(self):
+        return str(self.__dict__)
+
+    def __repr__(self):
         return str(self.__dict__)
 
 #
@@ -309,7 +321,11 @@ class ReactorRequestSampler(object):
             whether the sampler's parameters form a valid point in the 
             sampler's parameter space
         """
-        return self.n_commods.avg <= self.n_supply.avg
+        conditions = []
+        conditions.append(self.n_commods.avg <= self.n_supply.avg)
+        conditions.append(self.n_commods.avg <= \
+                              (1 + self.req_multi_commods.avg) * self.n_request.avg)
+        return all(c for c in conditions)
         
 class ReactorRequestBuilder(object):
     """A helper class to translate sampling parameters for a reactor request
@@ -405,10 +421,12 @@ class ReactorRequestBuilder(object):
         s = self.sampler
         n_ids = self.req_n_ids = Incrementer(self.req_n_offset)
         requests = collections.defaultdict(list)
-
+        
+        chosen_commods = set()
         for g_id in requesters:
             assems = s.assem_per_req.sample()
-            assem_commods = self._assem_commods(commods) # modeling assumption
+            assem_commods = self._assem_commods(commods, chosen_commods) # modeling assumption
+            chosen_commods.update(assem_commods)
             # add nodes
             for i in range(assems):
                 n_nodes = len(assem_commods) if s.assem_multi_commod.sample() \
@@ -519,20 +537,30 @@ class ReactorRequestBuilder(object):
     #
     # Encapsulated assumptions
     #
-    def _assem_commods(self, commods):
+    def _assem_commods(self, commods, chosen_commods = set()):
         """Returns a list of commodities that satisfy assembly requests with the
         primary commodity as the first element. This is a basic modeling
         assumption for reactor request exchange building.
 
         Parameters
         ----------
+        chosen_commods : set
+            a set of commodities that have already been chosen; this set is used 
+            to guarantee that there is at least one requester for each commodity
         commods : set
             the commodities
         """
         s = self.sampler
-        left = cp.copy(commods)
-        assem_commods = rnd.sample(left, 1)
-        left.remove(assem_commods[0])
+        left = cp.deepcopy(commods)
+        
+        # choose a new commodity if we need to, otherwise choose a random one
+        if len(chosen_commods) != len(commods):
+            pool = commods.difference(chosen_commods)
+            first_commod = rnd.sample(pool, 1)[0]
+        else:
+            first_commod = rnd.sample(left, 1)[0]
+        assem_commods = [first_commod]
+        left.remove(first_commod)
         # other commodities for assemblies that can be satisfied by 
         # multiple commodities
         assem_commods += rnd.sample(left, s.req_multi_commods.sample())
