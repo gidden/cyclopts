@@ -1,4 +1,4 @@
-from cyclopts.tools import report, combine, SamplerBuilder
+from cyclopts.tools import report, combine, SamplerBuilder, to_h5, from_h5
 
 from cyclopts.execute import GraphParams, SolverParams, Solution, \
     ArcFlow, execute_exchange
@@ -14,8 +14,9 @@ import tables as t
 from functools import reduce
 from nose.tools import assert_equal, assert_true, assert_false
 
-def test_report():
-    db_path = os.path.join(os.getcwd(), str(uuid.uuid4()) + '.h5')
+def test_report():    
+    base = os.path.dirname(os.path.abspath(__file__))
+    db_path = os.path.join(base, str(uuid.uuid4()) + '.h5')
     
     sampler = ReactorRequestSampler()
     sp = SolverParams()
@@ -32,13 +33,14 @@ def test_report():
         os.remove(db_path)
 
 def test_combine():    
+    base = os.path.dirname(os.path.abspath(__file__))
     db1 = '994c5721-311d-46f3-8b7d-742beeaa9ec1.h5'
     db2 = 'e5b781e6-fb86-4099-a46b-f36370bf8af4.h5'
-    db1 = os.path.join(os.getcwd(), 'dbs', db1)
-    db2 = os.path.join(os.getcwd(), 'dbs', db2)
+    db1 = os.path.join(base, 'dbs', db1)
+    db2 = os.path.join(base, 'dbs', db2)
     
-    new_file = os.path.join(os.getcwd(), 'dbs', 'combine.h5')
-    copy_file = os.path.join(os.getcwd(), 'dbs', 'copy.h5')
+    new_file = os.path.join(base, 'dbs', 'combine.h5')
+    copy_file = os.path.join(base, 'dbs', 'copy.h5')
     tmps = [new_file, copy_file]
     for tmp in tmps:
         if os.path.exists(tmp):
@@ -123,6 +125,8 @@ def test_parser():
         def __init__(self):
             self.n_request = {'avg': range(1, 5), 'dist': [True, False]}
             self.n_supply = {'avg': range(1, 5)}
+            self._dict = {'n_request': self.n_request, 
+                          'n_supply': self.n_supply,}
 
     exp_dict = {
         'n_request': [range(1, 5), [True, False]],
@@ -134,3 +138,55 @@ def test_parser():
     obs_dict = b._parse(rc)
 
     assert_equal(exp_dict, obs_dict)
+
+def test_sampler_converstion():
+    base = os.path.dirname(os.path.abspath(__file__))
+    fin = os.path.join(base, 'files', 'obs_conv.rc')
+    
+    fout = os.path.join(base, "tmp_{0}.h5".format(str(uuid.uuid4())))
+
+    to_h5(fin, fout)
+    obs = from_h5(fout)
+
+    exp = []
+    for i in range(1, 5):
+        for j in range(1, 5):
+            s = ReactorRequestSampler()
+            s.n_request = Param(i)
+            s.n_supply = Param(j)
+            exp.append(s)
+    
+    assert_equal(len(obs), len(exp))
+    assert_equal(obs, exp)
+
+    if (os.path.exists(fout)):
+        os.remove(fout)
+
+def test_sampler_validity():
+    base = os.path.dirname(os.path.abspath(__file__))
+    fin = os.path.join(base, 'files', 'obs_valid.rc')
+    
+    fout = os.path.join(base, "tmp_{0}.h5".format(str(uuid.uuid4())))
+
+    to_h5(fin, fout)
+    obs = from_h5(fout)
+
+    exp = []
+    for i in range(1, 3):
+        for j in range(1, 3):
+            print(i, j)
+            if i > j: # more commods than suppliers
+                continue
+            print(i, j)
+            s = ReactorRequestSampler()
+            s.n_commods = Param(i)
+            s.n_supply = Param(j)
+            exp.append(s)
+
+    assert_equal(len(obs), len(exp))
+    assert_equal(obs, exp)
+
+    if (os.path.exists(fout)):
+        os.remove(fout)
+        
+    

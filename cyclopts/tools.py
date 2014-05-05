@@ -12,11 +12,13 @@ import tables as t
 import numpy as np
 from functools import reduce
 from itertools import product
+from collections import defaultdict
 
 import cyclopts
 from cyclopts.params import CONSTR_ARGS, Param, BoolParam, SupConstrParam, CoeffParam, \
     ReactorRequestSampler, ReactorRequestBuilder #, ReactorSupplySampler
-from cyclopts.execute import ArcFlow
+from cyclopts.execute import ArcFlow, SolverParams, execute_exchange
+from cyclopts.run_control import parse_rc
         
 class SamplerBuilder(object):
     """A helper class to build configure instances of parameter samplers
@@ -40,9 +42,7 @@ class SamplerBuilder(object):
         # samplers = [ReactorRequestSampler() if params_dict['request'] \
         #                 else ReactorSupplySampler() for range(n_samplers)]
         self._add_params(samplers, params_list)
-        samplers = [sampler for sampler in samplers \
-                        if ReactorRequestBuilder(sampler).valid()]
-        return samplers
+        return [sampler for sampler in samplers if sampler.valid()]
 
     def _parse(self, rc):
         """Provides a dictionary of parameter names to all constructor arguments
@@ -61,16 +61,31 @@ class SamplerBuilder(object):
         """
         params_dict = {}
         s = ReactorRequestSampler() # only works for reactor requests for now
-        for name in s.__dict__:
-            if hasattr(rc, name):
+        for k, v in rc._dict.items():
+            name = k
+            attr = v
+            if hasattr(s, name):
                 vals = []
                 args = CONSTR_ARGS[type(getattr(s, name))]
-                attr = getattr(rc, name)
                 for arg in args:
                     if arg in attr:
                         vals += [attr[arg]]
                 if len(vals) > 0:
                     params_dict[name] = vals
+            else:
+                print("Found an entry named {0} that "
+                      "is unknown to the parser.".format(k))
+                
+        # for name in s.__dict__:
+        #     if hasattr(rc, name):
+        #         vals = []
+        #         args = CONSTR_ARGS[type(getattr(s, name))]
+        #         attr = getattr(rc, name)
+        #         for arg in args:
+        #             if arg in attr:
+        #                 vals += [attr[arg]]
+        #         if len(vals) > 0:
+        #             params_dict[name] = vals
         return params_dict
         
     def _constr_params(self, params_dict):
@@ -302,3 +317,86 @@ def combine(files, new_file = None):
         db.close()
     f.close()
     
+def from_h5(fin=None):
+    """Converts an input HDF5 database into a list of Sampler-type objects that
+    represent discrete, individual data points in a possibly non-contiguous
+    dataspace.
+    
+    Parameters
+    ----------
+    fin : str
+        the input file name (*.h5)
+    """
+    fin = "in.h5" if fin is None else fin
+    samplers = []
+    fin = t.open_file(fin, mode='r')
+    tbls = fin.root._f_list_nodes(classname="Table")
+    for tbl in tbls:
+        if not hasattr(cyclopts.params, tbl._v_name):
+            continue
+        for row in tbl.iterrows():
+            inst = getattr(cyclopts.params, tbl._v_name)()
+            inst.import_h5(row)
+            samplers.append(inst)
+    fin.close()
+    return samplers
+
+def to_h5(fin=None, fout=None):
+    """Converts a contiguous dataspace as defined by an input run control file
+    into an HDF5 database. Each discrete point, as represented by a Sampler-type
+    object is converted into a row in a table of the object's name.
+    
+    Parameters
+    ----------
+    fin : str
+        the input file name (*.py)
+    fout : str
+        the output file name (*.h5)
+    """
+    fin = "cycloptsrc.py" if fin is None else fin
+    fout = "in.h5" if fout is None else fout
+    samplers = SamplerBuilder().build(parse_rc(fin))
+    fout = t.open_file(fout, mode='a')
+
+    d = defaultdict(list)
+    for s in samplers:
+        d[s.__class__.__name__].append(s)
+
+    for name in d.keys():
+        if name not in fout.root._f_list_nodes(classname="Table"):
+            fout.create_table(fout.root, name, 
+                             d[name][0].describe_h5(), name + " Table")
+        tbl = fout.root._f_get_child(name)
+        row = tbl.row
+        for s in d[name]:
+            s.export_h5(row)
+            row.append()    
+        tbl.flush()
+    fout.close()
+
+def exec_from_h5(fin=None, fout=None, solvers=None):
+    """Runs an instance of Cyclopts.
+    
+    Parameters
+    ----------
+    fin : str
+        the input file name (*.h5)
+    fout : str
+        the output file name (*.h5)
+    solvers : list
+        the solvers to use on each generated instance
+    """
+    fin = "in.h5" if fin is None else fin
+    fout = "out.h5" if fout is None else fout
+    solvers = ["cbc"] if solvers is None else solvers
+    samplers = from_h5(fin)
+    execute_cyclopts(samplers, solvers, fout)
+
+def execute_cyclopts(samplers, solvers, db_path): 
+    for sampler in samplers:
+        for solver in solvers:
+            rrb = ReactorRequestBuilder(sampler)
+            gparams = rrb.build()
+            sparams = SolverParams(solver)
+            soln = execute_exchange(gparams, sparams)
+            report(sampler, gparams, sparams, soln, db_path=db_path)

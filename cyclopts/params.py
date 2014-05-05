@@ -20,6 +20,7 @@ separated into individual functions on the Builder's interface.
 import random as rnd
 import numpy as np
 import copy as cp
+import re
 import collections
 
 try:
@@ -56,11 +57,11 @@ class Param(object):
         #     return self.avg
         return self.avg
 
-    def __str__(self):
-        return "Param: {0}, {1}".format(self.avg, self.dist)
-
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
+
+    def __str__(self):
+        return str(self.__dict__)
 
 class BoolParam(object):
     """A class to sample binary events
@@ -80,6 +81,9 @@ class BoolParam(object):
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
+
+    def __str__(self):
+        return str(self.__dict__)
 
 class CoeffParam(object):
     """A class to sample coefficient values
@@ -107,6 +111,9 @@ class CoeffParam(object):
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
+
+    def __str__(self):
+        return str(self.__dict__)
 
 class SupConstrParam(object):
     """A base class for sampled supply constraint values.
@@ -140,6 +147,13 @@ class SupConstrParam(object):
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
+    def __str__(self):
+        return str(self.__dict__)
+
+#
+# we must build this container manually, rather than inspecting instances
+# see http://stackoverflow.com/questions/7628081/how-to-get-arguments-list-of-a-built-in-python-class-constructor
+#
 CONSTR_ARGS = {
     Param: ['avg', 'dist'],
     BoolParam: ['cutoff', 'dist'],
@@ -228,31 +242,74 @@ class ReactorRequestSampler(object):
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
+    def __str__(self):
+        ret = ["{0} = {1}".format(k, getattr(self, k).__str__()) \
+                   for k, v in self.__dict__.items()]
+        return "ReactorRequestSampler\n{0}".format("\n".join(ret))
+
     def _dt_convert(self, obj):
         """Converts a python object to its numpy dtype. Nones are converted to
         strings, and all strings are set to size == 32.
         """
         if obj == None or isinstance(obj, basestring):
             return np.dtype('|S32')
+        if isinstance(obj, collections.Sequence):
+            return np.dtype('|S32')
         else:
             return np.dtype(type(obj))
 
-    def h5describe(self):
+    def _convert_seq(self, val):
+        """converts a string representation of a sequence into a list"""
+        return [float(i) for i in \
+                    re.sub('[\]\[,]', '', str(val)).split()]
+
+    def describe_h5(self):
         """Returns a numpy dtype describing all composed objects."""
-        np.dtype([("{0}_{1}".format(name, subname), self._dt_convert(subobj)) \
-                      for subname, subobj in obj.__dict__.items() \
-                      for name, obj in self.__dict__.items()])
-
-    def h5import(self, row):
+        # np.dtype([("{0}_{1}".format(name, subname), self._dt_convert(subobj)) \
+        #               for subname, subobj in obj.__dict__.items() \
+        #               for name, obj in self.__dict__.items()])
+        ret = []
         for name, obj in self.__dict__.items():
             for subname, subobj in obj.__dict__.items():
-                setattr(subobj, subname, 
-                        row["{0}_{1}".format(name, subname)])
+                ret.append(("{0}_{1}".format(name, subname), 
+                            self._dt_convert(subobj)))
+        return np.dtype(ret)
 
-    def h5export(self, row):
+    def _is_seq_not_str(self, attr):
+        return isinstance(attr, collections.Sequence) \
+            and not isinstance(attr, basestring)
+    
+    def import_h5(self, row):
         for name, obj in self.__dict__.items():
             for subname, subobj in obj.__dict__.items():
-                row["{0}_{1}".format(name, subname)] = getattr(subobj, subname)
+                attr = getattr(obj, subname)
+                val = row["{0}_{1}".format(name, subname)]
+                if val == 'None':
+                    val = None
+                elif self._is_seq_not_str(attr):
+                    val = self._convert_seq(val)
+                #print("setting", "{0}.{1}".format(name, subname), "to", val)
+                setattr(obj, subname, val)
+
+    def export_h5(self, row):
+        for name, obj in self.__dict__.items():
+            for subname, subobj in obj.__dict__.items():
+                attr = getattr(obj, subname)
+                row["{0}_{1}".format(name, subname)] = \
+                    str(attr) if self._is_seq_not_str(attr) else attr
+
+    def valid(self):
+        """Provides a best-guess estimate as to whether or not a given data
+        point, as represented by this Sampler, is valid in the domain-defined
+        parameter space.
+
+        Returns
+        -------
+        bool
+            whether the sampler's parameters form a valid point in the 
+            sampler's parameter space
+        """
+        return self.n_commods.avg <= self.n_supply.avg
         
 class ReactorRequestBuilder(object):
     """A helper class to translate sampling parameters for a reactor request
