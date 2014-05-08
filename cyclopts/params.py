@@ -247,9 +247,10 @@ class ReactorRequestSampler(object):
         self.connection = connection \
             if connection is not None else BoolParam(1.0)
         self.constr_coeff = constr_coeff \
-            if constr_coeff is not None else CoeffParam(np.nextafter(0, 1), 1.0)
+            if constr_coeff is not None else CoeffParam(1e-10, 1.0)
+        # 1e-10 is 'sufficiently' low
         self.pref_coeff = pref_coeff \
-            if pref_coeff is not None else CoeffParam(np.nextafter(0, 1), 1.0)
+            if pref_coeff is not None else CoeffParam(1e-10, 1.0) 
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
