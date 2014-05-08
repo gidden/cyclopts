@@ -3,6 +3,7 @@ output.
 
 :author: Matthew Gidden <matthew.gidden@gmail.com>
 """
+from __future__ import print_function
 
 import os
 import uuid
@@ -361,9 +362,9 @@ def to_h5(fin=None, fout=None):
     d = defaultdict(list)
     for s in samplers:
         d[s.__class__.__name__].append(s)
-
     for name in d.keys():
         if name not in fout.root._f_list_nodes(classname="Table"):
+            print("creating table {0}".format(name))
             fout.create_table(fout.root, name, 
                              d[name][0].describe_h5(), name + " Table")
         tbl = fout.root._f_get_child(name)

@@ -75,7 +75,7 @@ class BoolParam(object):
         cutoff : float
             the probability cutoff, must be in (0, 1]
         """
-        self.cutoff = cutoff
+        self.cutoff = float(cutoff)
         self.dist = dist
 
     def sample(self):
@@ -104,8 +104,8 @@ class CoeffParam(object):
         dist :str
             the distribution to use, default is uniform
         """
-        self.lb = lb
-        self.ub = ub
+        self.lb = float(lb)
+        self.ub = float(ub)
         self.dist = dist if dist is not None else "uniform"
 
     def sample(self):
@@ -140,8 +140,8 @@ class SupConstrParam(object):
             a collection of fractional values of commodity demand that the 
             supply constraint value could take; default is [0.25, 0.5, 0.75, 1]
         """
-        self.cutoff = cutoff
-        self.rand = rand
+        self.cutoff = float(cutoff)
+        self.rand = bool(rand)
         # possible supply fractions
         fracs = fracs if fracs is not None else [0.25, 0.5, 0.75, 1] 
         self.fracs = [frac for frac in fracs if frac >= cutoff]
@@ -227,29 +227,29 @@ class ReactorRequestSampler(object):
         self.assem_per_req = assem_per_req \
             if assem_per_req is not None else Param(1)
         self.assem_multi_commod = assem_multi_commod \
-            if assem_multi_commod is not None else BoolParam(-1) # never true
+            if assem_multi_commod is not None else BoolParam(-1.0) # never true
         self.req_multi_commods = req_multi_commods \
             if req_multi_commods is not None else Param(0)
         self.exclusive = exclusive \
-            if exclusive is not None else BoolParam(-1) # never true
+            if exclusive is not None else BoolParam(-1.0) # never true
         self.n_req_constr = n_req_constr \
             if n_req_constr is not None else Param(0)
         self.n_supply = n_supply \
             if n_supply is not None else Param(1)
         self.sup_multi = sup_multi \
-            if sup_multi is not None else BoolParam(-1) # never true
+            if sup_multi is not None else BoolParam(-1.0) # never true
         self.sup_multi_commods = sup_multi_commods \
             if sup_multi_commods is not None else Param(1)
         self.n_sup_constr = n_sup_constr \
             if n_sup_constr is not None else Param(1)
         self.sup_constr_val = sup_constr_val \
-            if sup_constr_val is not None else SupConstrParam(1)
+            if sup_constr_val is not None else SupConstrParam(1.0)
         self.connection = connection \
-            if connection is not None else BoolParam(1)
+            if connection is not None else BoolParam(1.0)
         self.constr_coeff = constr_coeff \
-            if constr_coeff is not None else CoeffParam(np.nextafter(0, 1), 1)
+            if constr_coeff is not None else CoeffParam(np.nextafter(0, 1), 1.0)
         self.pref_coeff = pref_coeff \
-            if pref_coeff is not None else CoeffParam(np.nextafter(0, 1), 1)
+            if pref_coeff is not None else CoeffParam(np.nextafter(0, 1), 1.0)
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -285,6 +285,8 @@ class ReactorRequestSampler(object):
             for subname, subobj in obj.__dict__.items():
                 ret.append(("{0}_{1}".format(name, subname), 
                             self._dt_convert(subobj)))
+        print(ret)
+        print(np.dtype(ret))
         return np.dtype(ret)
 
     def _is_seq_not_str(self, attr):
