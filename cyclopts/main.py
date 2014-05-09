@@ -6,6 +6,10 @@ from __future__ import print_function
 import argparse
 
 from cyclopts.tools import to_h5, exec_from_h5
+from cyclopts.condor import condor
+
+def condor(args):
+    condor(args.user, args.host, args.dbname, args.dumpdir)
 
 def convert(args):
     to_h5(args.input, args.output)
@@ -42,6 +46,25 @@ def main():
     solversh = ("A list of which solvers to use..")
     exec_parser.add_argument('--solvers', nargs='*', default=['cbc'], dest='solvers', 
                              help=solversh)    
+    
+    # for condor
+    condorh = ("Submits a job to condor, retrieves output when it has completed, "
+             "and cleans up the condor user space after.")
+    condor_parser = sp.add_parser('condor', help=condorh)
+    condor_parser.set_defaults(func=condor)
+    
+    uh = ("The condor user name.")
+    condor_parser.add_argument('-u', '--user', dest='user', help=uh, 
+                               default='gidden')
+    hosth = ("The condor submit host.")
+    condor_parser.add_argument('-h', '--host', dest='host', help=hosth, 
+                               default='submit-1.chtc.wisc.edu')
+    indbh = ("The input database.")
+    condor_parser.add_argument('-i', '--input', dest='dbname', help=indbh
+                               default='in.h5')    
+    dumph = ("The directory in which to place output.")
+    condor_parser.add_argument('-d', '--dumpdir', dest='dumpdir', help=dumph
+                               default='tmp')    
     
     # and away we go!
     args = parser.parse_args()
