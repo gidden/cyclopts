@@ -140,7 +140,7 @@ def cleanup(user, host, pw, dirname, dumpdir):
 
     ssh.close()
 
-def condor(user, host, dbname, dumpdir):
+def condor(user, host, dbname, dumpdir, clean):
     pw = getpass.getpass()
 
     dirname = "run_{0}".format(
@@ -159,10 +159,11 @@ def condor(user, host, dbname, dumpdir):
 
     done = False
     while not done:
-        done = check_finish(user, host, pw, dirname, subfile):
+        done = check_finish(user, host, pw, dirname, subfile)
         time.sleep(300)
 
-    cleanup(user, host, pw, dirname, dumpdir)
+    if clean:
+        cleanup(user, host, pw, dirname, dumpdir)
 
 if __name__ == "__main__":
     condor()

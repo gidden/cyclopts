@@ -9,7 +9,7 @@ from cyclopts.tools import to_h5, exec_from_h5
 from cyclopts.condor import condor
 
 def condor(args):
-    condor(args.user, args.host, args.dbname, args.dumpdir)
+    condor(args.user, args.host, args.dbname, args.dumpdir, args.cleanup)
 
 def convert(args):
     to_h5(args.input, args.output)
@@ -60,11 +60,14 @@ def main():
     condor_parser.add_argument('-h', '--host', dest='host', help=hosth, 
                                default='submit-1.chtc.wisc.edu')
     indbh = ("The input database.")
-    condor_parser.add_argument('-i', '--input', dest='dbname', help=indbh
+    condor_parser.add_argument('-i', '--input', dest='dbname', help=indbh,
                                default='in.h5')    
     dumph = ("The directory in which to place output.")
-    condor_parser.add_argument('-d', '--dumpdir', dest='dumpdir', help=dumph
-                               default='tmp')    
+    condor_parser.add_argument('-d', '--dumpdir', dest='dumpdir', help=dumph,
+                               default='tmp')      
+    nocleanh = ("Do *not* clean up the submit node after.")
+    condor_parser.add_argument('--no-clean', dest='cleanup', help=nocleanh,
+                               action='store_false', default=True)    
     
     # and away we go!
     args = parser.parse_args()
