@@ -286,8 +286,6 @@ class ReactorRequestSampler(object):
             for subname, subobj in obj.__dict__.items():
                 ret.append(("{0}_{1}".format(name, subname), 
                             self._dt_convert(subobj)))
-        print(ret)
-        print(np.dtype(ret))
         return np.dtype(ret)
 
     def _is_seq_not_str(self, attr):

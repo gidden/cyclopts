@@ -248,10 +248,11 @@ def report(sampler, gparams, sparams, soln, sim_id = None, db_path = None):
     graph_id = str(gparams.id)
 
     mode = "a" if os.path.exists(db_path) else "w"
-    h5file = t.open_file(db_path, mode=mode, title="Cyclopts Output")
+    filters = t.Filters(complevel=4)
+    h5file = t.open_file(db_path, mode=mode, title="Cyclopts Output", filters=filters)
     
     flows = [ArcFlow(soln.flows[i:]) for i in range(len(soln.flows))]
-    print("nflows:", len(flows))
+    #print("nflows:", len(flows))
     obj = sum([f.flow / gparams.arc_pref[f.id] for f in flows])
     solnparams = [soln.time, obj, soln.cyclus_version, cyclopts.__version__]
 
@@ -271,7 +272,7 @@ def report(sampler, gparams, sparams, soln, sim_id = None, db_path = None):
     r = Reporter()
     for name, desc, title, data in tables:
         if not name in h5file.root._v_children:
-            h5file.create_table("/", name, desc, title)
+            h5file.create_table("/", name, desc, title, filters=filters)
         if hasattr(r, 'report_' + name):
             row = h5file.get_node('/' + name).row
             meth = getattr(r, 'report_' + name)
@@ -357,7 +358,8 @@ def to_h5(fin=None, fout=None):
     fin = "cycloptsrc.py" if fin is None else fin
     fout = "in.h5" if fout is None else fout
     samplers = SamplerBuilder().build(parse_rc(fin))
-    fout = t.open_file(fout, mode='a')
+    filters = t.Filters(complevel=4)
+    fout = t.open_file(fout, mode='a', filters=filters)
 
     d = defaultdict(list)
     for s in samplers:
@@ -366,7 +368,8 @@ def to_h5(fin=None, fout=None):
         if name not in fout.root._f_list_nodes(classname="Table"):
             print("creating table {0}".format(name))
             fout.create_table(fout.root, name, 
-                             d[name][0].describe_h5(), name + " Table")
+                              d[name][0].describe_h5(), name + " Table", 
+                              filters=filters)
         tbl = fout.root._f_get_child(name)
         row = tbl.row
         for s in d[name]:
