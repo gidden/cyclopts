@@ -7,13 +7,15 @@ import shutil
 from datetime import datetime
 import getpass
 import time
+import os
+import io
 
-rc_template = """
+rc_template = u"""
 path = {0} 
 rows = range({1}, {2})
 """
 
-sub_template = """
+sub_template = u"""
 universe = vanilla
 executable = run.sh
 arguments = {0}
@@ -30,7 +32,7 @@ request_disk = 10242880
 notification = never
 """
 
-run_template = """
+run_template = u"""
 tar -xf cyclopts-build.tar.gz
 tar -xf cyclus-install.tar.gz
 tar -xf cyclus-deps.tar.gz
@@ -47,7 +49,7 @@ cyclopts exec -i {0} -o $1_out.h5 --rc=$1.rc
 rm *.tar.gz
 """
 
-dag_template = """JOB J_{0} {0}.sub\n"""
+dag_template = u"""JOB J_{0} {0}.sub\n"""
 
 def gen_files(prefix=".", db="in.h5", tbl="ReactorRequestSampler", subfile = "dag.sub"):
     """Generates all files needed to run a DAGMan instance of the given input
@@ -58,20 +60,18 @@ def gen_files(prefix=".", db="in.h5", tbl="ReactorRequestSampler", subfile = "da
         tbl = getattr(h5file.root, tbl)
     else:
         raise IOError("Can't find table with name {0}.".format(tbl))
-    nrows = tbl.nrows()
+    nrows = tbl.nrows
     h5file.close()
     
     print("generating files for {0} runs".format(nrows))
     dag_lines = ""
-    for i in range(len(nrows)):
+    for i in range(nrows):
         rcname = os.path.join(prefix, "{0}.rc".format(i))
         with io.open(rcname, 'w') as f:
             f.write(rc_template.format(tbl, i, i+1))
-        rcfiles.append(rcname)
         subname = os.path.join(prefix, "{0}.sub".format(i))
         with io.open(subname, 'w') as f:
             f.write(sub_template.format(i, db))
-        subfiles.append(subname)
         dag_lines += dag_template.format(i)
     
     runfile = os.path.join(prefix, "run.sh")
@@ -140,20 +140,20 @@ def cleanup(user, host, pw, dirname, dumpdir):
 
     ssh.close()
 
-def condor(user, host, dbname, dumpdir, clean):
+def submit_dag(user, host, dbname, dumpdir, clean):
     pw = getpass.getpass()
 
     dirname = "run_{0}".format(
-        "_".join([str(t) for t in datetime.now().timetuple()][:-4]))
+        "_".join([str(t) for t in datetime.now().timetuple()][:-3]))
 
     os.mkdir(dirname)
-    shutil.copyfile(dbname, dirname)
+    shutil.copy(dbname, dirname)
     subfile = "dag.sub"
     gen_files(prefix=dirname, db=dbname, subfile=subfile)
     tarname = "{0}.tar.gz".format(dirname)
     with tarfile.open(tarname, 'w:gz') as f:
         f.add(dirname)
-    os.removedirs(dirname)
+    shutil.rmtree(dirname)
     
     submit(user, host, pw, tarname, subfile)
 

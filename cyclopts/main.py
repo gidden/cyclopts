@@ -6,10 +6,10 @@ from __future__ import print_function
 import argparse
 
 from cyclopts.tools import to_h5, exec_from_h5
-from cyclopts.condor import condor
+from cyclopts.condor import submit_dag
 
 def condor(args):
-    condor(args.user, args.host, args.dbname, args.dumpdir, args.cleanup)
+    submit_dag(args.user, args.host, args.dbname, args.dumpdir, args.cleanup)
 
 def convert(args):
     to_h5(args.input, args.output)
@@ -57,7 +57,7 @@ def main():
     condor_parser.add_argument('-u', '--user', dest='user', help=uh, 
                                default='gidden')
     hosth = ("The condor submit host.")
-    condor_parser.add_argument('-h', '--host', dest='host', help=hosth, 
+    condor_parser.add_argument('-t', '--host', dest='host', help=hosth, 
                                default='submit-1.chtc.wisc.edu')
     indbh = ("The input database.")
     condor_parser.add_argument('-i', '--input', dest='dbname', help=indbh,
