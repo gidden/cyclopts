@@ -1,15 +1,20 @@
 from __future__ import print_function
 
-import paramiko as pm
-import tables as t
-import tarfile
-import shutil
-from datetime import datetime
-import getpass
-import time
-import os
-import io
-import glob
+try:
+    import tables as t
+    import paramiko as pm
+    import tarfile
+    import shutil
+    from datetime import datetime
+    import getpass
+    import time
+    import os
+    import io
+    import glob
+except ImportError:
+    import warnings
+    warnings.warn(("The Condor module was not able to "
+                   "import its necessary modules"), ImportWarning)
 
 from cyclopts.tools import combine
 
@@ -36,7 +41,7 @@ notification = never
 queue
 """
 
-run_template = u"""
+run_template = u"""#!/bin/bash
 tar -xf cyclopts-build.tar.gz
 tar -xf cyclus-install.tar.gz
 tar -xf cyclus-deps.tar.gz
@@ -53,21 +58,22 @@ cyclopts exec -i {0} -o $1_out.h5 --rc=$1.rc
 rm *.tar.gz
 """
 
-test_run_template = u"""
-touch 1_out.h5;
-touch 2_out.h5;
+test_run_template = u"""#!/bin/bash
+echo $1
+touch $1_out.h5
+touch 2_out.h5
 touch 3_out.h5
 """
 
 dag_template = u"""JOB J_{0} {0}.sub\n"""
 
-def gen_files(prefix=".", db="in.h5", tbl="ReactorRequestSampler", subfile = "dag.sub"):
+def gen_files(prefix=".", db="in.h5", tblname="ReactorRequestSampler", subfile = "dag.sub"):
     """Generates all files needed to run a DAGMan instance of the given input
     database.
     """
     h5file = t.open_file(db, mode='r')
-    if hasattr(h5file.root, tbl):
-        tbl = getattr(h5file.root, tbl)
+    if hasattr(h5file.root, tblname):
+        tbl = getattr(h5file.root, tblname)
     else:
         raise IOError("Can't find table with name {0}.".format(tbl))
     nrows = tbl.nrows
@@ -78,7 +84,7 @@ def gen_files(prefix=".", db="in.h5", tbl="ReactorRequestSampler", subfile = "da
     for i in range(nrows):
         rcname = os.path.join(prefix, "{0}.rc".format(i))
         with io.open(rcname, 'w') as f:
-            f.write(rc_template.format(tbl, i, i+1))
+            f.write(rc_template.format(tblname, i, i+1))
         subname = os.path.join(prefix, "{0}.sub".format(i))
         with io.open(subname, 'w') as f:
             f.write(sub_template.format(i, db.split("/")[-1]))
@@ -86,14 +92,15 @@ def gen_files(prefix=".", db="in.h5", tbl="ReactorRequestSampler", subfile = "da
     
     runfile = os.path.join(prefix, "run.sh")
     with io.open(runfile, 'w') as f:
-        # f.write(run_template.format(db))
-        f.write(test_run_template)
+        f.write(run_template.format(db))
+        #f.write(test_run_template)
 
     dagfile = os.path.join(prefix, "dag.sub")
     with io.open(dagfile, 'w') as f:
         f.write(dag_lines)
 
 def wait_till_found(client, path, t_sleep=5):
+    print('Waiting for existence of {0}'.format(path))
     found = False
     while not found:
         cmd = "find {0}".format(path)
@@ -119,7 +126,7 @@ def submit(client, rundir, tarname, subfile):
     
     checkfile = "{rundir}/{0}/{1}.dagman.out".format(
         dirname, subfile, rundir=rundir)
-    wait_till_Found(client, checkfile)
+    wait_till_found(client, checkfile)
 
     cmd = "head {0}".format(checkfile)
     print("Remotely executing '{0}'".format(cmd))
@@ -135,7 +142,8 @@ def check_finish(client, pid):
     cmd = "condor_q {0}".format(pid)
     print("Remotely executing '{0}'".format(cmd))
     stdin, stdout, stderr = client.exec_command(cmd)
-    done = stdout.readlines()[-1].split()[0] == 'ID'
+    outlines = stdout.readlines()
+    done = False if len(outlines) == 0 else outlines[-1].split()[0] == 'ID'
     return done
 
 def aggregate(client, remotedir, localdir, outdb):
@@ -180,7 +188,7 @@ def submit_dag(user, host, dbname, dumpdir, clean):
     ssh.set_missing_host_key_policy(pm.AutoAddPolicy())
 
     outdb = 'out.h5'    
-    run_dir = "run_{1}".format(timestamp)
+    run_dir = "run_{0}".format(timestamp)
     sub_dir = "/home/{0}/cyclopts-runs".format(user)
     remote_dir = "{0}/{1}".format(sub_dir, run_dir)
 
