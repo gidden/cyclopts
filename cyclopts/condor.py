@@ -208,7 +208,7 @@ def submit_dag(user, host, dbname, solvers, dumpdir, clean):
         ssh.connect(host, username=user, password=pw)
         done = check_finish(ssh, pid)
         ssh.close()
-        time.sleep(20)
+        time.sleep(300)
 
     print("{0} has completed.".format(run_dir))
 
