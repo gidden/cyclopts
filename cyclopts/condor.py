@@ -58,13 +58,6 @@ cyclopts exec -i {0} -o $1_out.h5 --solvers={solvers} --rc=$1.rc
 rm *.tar.gz
 """
 
-test_run_template = u"""#!/bin/bash
-echo $1
-touch $1_out.h5
-touch 2_out.h5
-touch 3_out.h5
-"""
-
 dag_template = u"""JOB J_{0} {0}.sub\n"""
 
 def gen_files(prefix=".", db="in.h5", solvers=['cbc'], tblname="ReactorRequestSampler", subfile = "dag.sub"):
@@ -91,9 +84,9 @@ def gen_files(prefix=".", db="in.h5", solvers=['cbc'], tblname="ReactorRequestSa
         dag_lines += dag_template.format(i)
     
     runfile = os.path.join(prefix, "run.sh")
+    solvers = ",".join(solvers)
     with io.open(runfile, 'w') as f:
-        f.write(run_template.format(db))
-        #f.write(test_run_template)
+        f.write(run_template.format(db, solvers=solvers))
 
     dagfile = os.path.join(prefix, "dag.sub")
     with io.open(dagfile, 'w') as f:
