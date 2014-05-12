@@ -292,15 +292,16 @@ def combine(files, new_file = None):
         The new database to write to. If None, all databases are appended to the
         end of the first database in the list.
     """ 
+    if len(files) == 0:
+        raise ValueError("Must have at least one file to combine.")
+
     if new_file is not None and os.path.exists(new_file):
         raise ValueError('Cannot write combined hdf5 files to an existing location.')
 
     if new_file is not None:
         shutil.copyfile(files[0], new_file)
-    fname = files[0] if new_file is None else new_file
 
-    if len(files) == 0:
-        raise ValueError("0 files found to be combined.")
+    fname = files[0] if new_file is None else new_file
 
     f = t.open_file(fname, 'a')
     dbs = [t.open_file(files[i], 'r') for i in range(1, len(files))]

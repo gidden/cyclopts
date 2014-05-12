@@ -54,7 +54,7 @@ git clone https://github.com/gidden/cyclopts
 cd cyclopts
 ./setup.py install --user
 cd ..;
-cyclopts exec -i {0} -o $1_out.h5 --rc=$1.rc
+cyclopts exec -i {0} -o $1_out.h5 --solvers={solvers} --rc=$1.rc 
 rm *.tar.gz
 """
 
@@ -67,7 +67,7 @@ touch 3_out.h5
 
 dag_template = u"""JOB J_{0} {0}.sub\n"""
 
-def gen_files(prefix=".", db="in.h5", tblname="ReactorRequestSampler", subfile = "dag.sub"):
+def gen_files(prefix=".", db="in.h5", solvers=['cbc'], tblname="ReactorRequestSampler", subfile = "dag.sub"):
     """Generates all files needed to run a DAGMan instance of the given input
     database.
     """
@@ -179,7 +179,7 @@ def cleanup(client, remotedir):
     print("Remotely executing '{0}'".format(cmd))
     stdin, stdout, stderr = client.exec_command(cmd)
     
-def submit_dag(user, host, dbname, dumpdir, clean):
+def submit_dag(user, host, dbname, solvers, dumpdir, clean):
     timestamp = "_".join([str(t) for t in datetime.now().timetuple()][:-3])
 
     prompt = "Password for {0}@{1}:".format(user, host)
@@ -197,7 +197,7 @@ def submit_dag(user, host, dbname, dumpdir, clean):
     shutil.copy(dbname, run_dir)
 
     subfile = "dag.sub"
-    gen_files(prefix=run_dir, db=dbname, subfile=subfile)
+    gen_files(prefix=run_dir, solvers=solvers, db=dbname, subfile=subfile)
     tarname = "{0}.tar.gz".format(run_dir)
     with tarfile.open(tarname, 'w:gz') as f:
         f.add(run_dir)
