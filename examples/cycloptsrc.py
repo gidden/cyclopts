@@ -1,1 +1,1 @@
-n_request = {'avg': range(1, 2)}
+n_request = {'avg': range(1, 3)}

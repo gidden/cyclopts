@@ -299,6 +299,9 @@ def combine(files, new_file = None):
         shutil.copyfile(files[0], new_file)
     fname = files[0] if new_file is None else new_file
 
+    if len(files) == 0:
+        raise ValueError("0 files found to be combined.")
+
     f = t.open_file(fname, 'a')
     dbs = [t.open_file(files[i], 'r') for i in range(1, len(files))]
     for db in dbs:
