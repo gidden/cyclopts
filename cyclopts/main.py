@@ -9,7 +9,8 @@ from cyclopts.tools import to_h5, exec_from_h5
 from cyclopts.condor import submit_dag
 
 def condor(args):
-    submit_dag(args.user, args.host, args.dbname, args.solvers, args.dumpdir, args.cleanup)
+    submit_dag(args.user, args.host, args.dbname, args.solvers, 
+               args.dumpdir, args.clean)
 
 def convert(args):
     to_h5(args.input, args.output)
