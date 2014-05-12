@@ -86,7 +86,7 @@ def gen_files(prefix=".", db="in.h5", solvers=['cbc'], tblname="ReactorRequestSa
     runfile = os.path.join(prefix, "run.sh")
     solvers = ",".join(solvers)
     with io.open(runfile, 'w') as f:
-        f.write(run_template.format(db, solvers=solvers))
+        f.write(run_template.format(db.split('/')[-1], solvers=solvers))
 
     dagfile = os.path.join(prefix, "dag.sub")
     with io.open(dagfile, 'w') as f:
