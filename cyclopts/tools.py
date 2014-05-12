@@ -351,7 +351,7 @@ def from_h5(fin=None, subinput=None):
         if not hasattr(cyclopts.params, tblname):
             continue
         start = subinput[tblname][0] if subinput is not None else 0
-        stop = subinput[tblname][-1] + 1 if subinput is not None else tbl.nrows()
+        stop = subinput[tblname][-1] + 1 if subinput is not None else tbl.nrows
         for row in tbl.iterrows(start=start, stop=stop):
             inst = getattr(cyclopts.params, tblname)()
             inst.import_h5(row)
