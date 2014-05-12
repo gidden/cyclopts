@@ -19,8 +19,8 @@ except ImportError:
 from cyclopts.tools import combine
 
 rc_template = u"""
-path = {0} 
-rows = range({1}, {2})
+path='{0}' 
+rows=range({1}, {2})
 """
 
 sub_template = u"""
