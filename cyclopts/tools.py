@@ -323,25 +323,37 @@ def combine(files, new_file = None):
         db.close()
     f.close()
     
-def from_h5(fin=None):
+def from_h5(fin=None, subinput=None):
     """Converts an input HDF5 database into a list of Sampler-type objects that
     represent discrete, individual data points in a possibly non-contiguous
     dataspace.
+
+    If subinput is provided, it is read directly. If not, the entire database
+    converted.
     
     Parameters
     ----------
     fin : str
         the input file name (*.h5)
+    subinput : dict
+        a subset of input to read int
     """
     fin = "in.h5" if fin is None else fin
     samplers = []
     fin = t.open_file(fin, mode='r')
-    tbls = fin.root._f_list_nodes(classname="Table")
+    tbls = fin.root._f_list_nodes(classname="Table") \
+        if subinput is None else \
+        [fin.root._f_get_child(k) for k in subinput.keys()]
+    
     for tbl in tbls:
-        if not hasattr(cyclopts.params, tbl._v_name):
+        tblname = tbl._v_name
+        print("adding", tblname)
+        if not hasattr(cyclopts.params, tblname):
             continue
-        for row in tbl.iterrows():
-            inst = getattr(cyclopts.params, tbl._v_name)()
+        start = subinput[tblname][0] if subinput is not None else 0
+        stop = subinput[tblname][-1] + 1 if subinput is not None else tbl.nrows()
+        for row in tbl.iterrows(start=start, stop=stop):
+            inst = getattr(cyclopts.params, tblname)()
             inst.import_h5(row)
             samplers.append(inst)
     fin.close()
@@ -382,22 +394,30 @@ def to_h5(fin=None, fout=None):
         tbl.flush()
     fout.close()
 
-def exec_from_h5(fin=None, fout=None, solvers=None):
+def exec_from_h5(fin=None, fout=None, rc=None, solvers=None):
     """Runs an instance of Cyclopts.
     
     Parameters
     ----------
-    fin : str
+    fin : str, optional
         the input file name (*.h5)
-    fout : str
+    fout : str, optional
         the output file name (*.h5)
-    solvers : list
+    rc : str, optional
+        the run control file
+    solvers : list, optional
         the solvers to use on each generated instance
     """
     fin = "in.h5" if fin is None else fin
     fout = "out.h5" if fout is None else fout
     solvers = ["cbc"] if solvers is None else solvers
-    samplers = from_h5(fin)
+    
+    subinput = None
+    if rc is not None:
+        rcdict = parse_rc(rc)
+        subinput = {rcdict.path: rcdict.rows}
+        
+    samplers = from_h5(fin, subinput)
     execute_cyclopts(samplers, solvers, fout)
 
 def execute_cyclopts(samplers, solvers, db_path): 

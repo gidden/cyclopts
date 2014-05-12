@@ -15,7 +15,7 @@ def convert(args):
     to_h5(args.input, args.output)
 
 def execute(args):
-    exec_from_h5(args.input, args.output, args.solvers)
+    exec_from_h5(args.input, args.output, args.rc, args.solvers)
 
 def main():
     """Entry point for Cyclopts runs."""
@@ -46,6 +46,8 @@ def main():
     solversh = ("A list of which solvers to use..")
     exec_parser.add_argument('--solvers', nargs='*', default=['cbc'], dest='solvers', 
                              help=solversh)    
+    rch = ("The run control file, which allows idetification of a subset of input to run.")
+    exec_parser.add_argument('--rc', default=None, dest='rc', help=rch)    
     
     # for condor
     condorh = ("Submits a job to condor, retrieves output when it has completed, "
