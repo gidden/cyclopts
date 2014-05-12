@@ -25,11 +25,12 @@ log = {0}.log
 requirements = (OpSysAndVer =?= "SL6") && Arch == "X86_64"
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
-transfer_input_files = ../cyclopts-build.tar.gz, {1}, {0}.rc
+transfer_input_files = ../../cyclopts-build.tar.gz, {1}, {0}.rc
 request_cpus = 1
 request_memory = 2500
 request_disk = 10242880
 notification = never
+queue
 """
 
 run_template = u"""
@@ -77,8 +78,9 @@ def gen_files(prefix=".", db="in.h5", tbl="ReactorRequestSampler", subfile = "da
     runfile = os.path.join(prefix, "run.sh")
     with io.open(runfile, 'w') as f:
         f.write(run_template.format(db))
+
     dagfile = os.path.join(prefix, "dag.sub")
-    with io.open("dag.sub", 'w') as f:
+    with io.open(dagfile, 'w') as f:
         f.write(dag_lines)
 
 def submit(user, host, pw, tarname, subfile):
@@ -91,16 +93,40 @@ def submit(user, host, pw, tarname, subfile):
     ssh.connect(host, username=user, password=pw)
 
     ftp = ssh.open_sftp()
-    ftp.put(tarname, ".")
+    print("Copying {0} to condor submit node.".format(tarname))
+    ftp.put(tarname, "/home/{0}/cyclopts-runs/{1}".format(user, tarname))
     ftp.close()
 
-    cmd = "tar -xf {0}; cd {1}; condor_sumbit_dag {2};".format(
-        tarname, tarname.split(".tar.gz")[0], subfile)
-    ssh.exec_command(cmd)
+    dirname = tarname.split(".tar.gz")[0]
+    cmd = ("cd /home/{user}/cyclopts-runs; "
+           "tar -xf {0}; "
+           "cd {1}; "
+           "condor_submit_dag {submit};")
+    cmd = cmd.format(tarname, dirname, submit=subfile, user=user)
+    print("Remotely executing '{0}'".format(cmd))
+    stdin, stdout, stderr = ssh.exec_command(cmd)
+    
+    checkfile = "{0}.dagman.out".format(subfile)
+    found = False
+    while not found:
+        cmd = "find /home/{user}/cyclopts-runs/{0}/{1}".format(dirname, checkfile, user=user)
+        print("Remotely executing '{0}'".format(cmd))
+        stdin, stdout, stderr = ssh.exec_command(cmd)
+        found = len(stdout.readlines()) > 0
+        time.sleep(5)
+
+    cmd = "head /home/{user}/cyclopts-runs/{0}/{1}".format(dirname, checkfile, user=user)
+    print("Remotely executing '{0}'".format(cmd))
+    stdin, stdout, stderr = ssh.exec_command(cmd)
+    err = stderr.readlines()
+    if len(err) > 0:
+        raise IOError(" ".join(err))
+    pid = stdout.readlines()[1].split('condor_scheduniv_exec.')[1].split()[0]
 
     ssh.close()
+    return pid
 
-def check_finish(user, host, pw, dirname, subfile):
+def check_finish(user, host, pw, pid):
     user = user
     host = host
     pw = pw
@@ -109,13 +135,11 @@ def check_finish(user, host, pw, dirname, subfile):
     print("connecting to {0}@{1}".format(user, host))
     ssh.connect(host, username=user, password=pw)
 
-    checkfile = "{0}.dagman.out".format(subfile)
-    cmd = "head {0}/{1}".format(dirname, subfile)
-    stdin, stdout, stderr = ssh.exec_command(cmd)
-    pid = std.out.readlines()[1].split('condor_scheduniv_exec.').split()[0]
     cmd = "condor_q {0}".format(pid)
+    print("Remotely executing '{0}'".format(cmd))
     stdin, stdout, stderr = ssh.exec_command(cmd)
     done = stdout.readlines()[-1].split()[0] == 'ID'
+
     ssh.close()
     return done
 
@@ -127,21 +151,16 @@ def cleanup(user, host, pw, dirname, dumpdir):
     ssh.set_missing_host_key_policy(pm.AutoAddPolicy())
     print("connecting to {0}@{1}".format(user, host))
     ssh.connect(host, username=user, password=pw)
-    
-    if not os.path.exists(dumpdir):
-        os.mkdir(dumpdir)
 
-    ftp = ssh.open_sftp()
-    ftp.get("{0}/{1}".format(dirname, "*_out.h5"), dumpdir)
-    ftp.close()
     
-    cmd = "rm -rf {0}".format(dirname)
-    stdin, stdout, stderr = ssh.exec_command(cmd)
+    # print("Remotely executing '{0}'".format(cmd))
+    # stdin, stdout, stderr = ssh.exec_command(cmd)
 
     ssh.close()
 
 def submit_dag(user, host, dbname, dumpdir, clean):
-    pw = getpass.getpass()
+    prompt = "Password for {0}@{1}:".format(user, host)
+    pw = getpass.getpass(prompt)
 
     dirname = "run_{0}".format(
         "_".join([str(t) for t in datetime.now().timetuple()][:-3]))
@@ -155,15 +174,15 @@ def submit_dag(user, host, dbname, dumpdir, clean):
         f.add(dirname)
     shutil.rmtree(dirname)
     
-    submit(user, host, pw, tarname, subfile)
+    pid = submit(user, host, pw, tarname, subfile)
 
     done = False
     while not done:
-        done = check_finish(user, host, pw, dirname, subfile)
-        time.sleep(300)
+        print("Querying status of {0}".format(dirname))
+        done = check_finish(user, host, pw, pid)
+        time.sleep(20)
+
+    print("{0} has completed.".format(dirname))
 
     if clean:
         cleanup(user, host, pw, dirname, dumpdir)
-
-if __name__ == "__main__":
-    condor()
