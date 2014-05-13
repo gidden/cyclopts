@@ -83,7 +83,8 @@ def gen_files(prefix=".", db="in.h5", solvers=['cbc'], tblname="ReactorRequestSa
         with io.open(subname, 'w') as f:
             f.write(sub_template.format(i, db.split("/")[-1]))
         dag_lines += dag_template.format(i)
-    
+    dag_lines += "DAGMAN_MAX_JOBS_IDLE = 1000\n"
+
     runfile = os.path.join(prefix, "run.sh")
     solvers = " ".join(solvers)
     with io.open(runfile, 'w') as f:
