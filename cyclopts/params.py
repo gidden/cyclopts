@@ -323,9 +323,18 @@ class ReactorRequestSampler(object):
             sampler's parameter space
         """
         conditions = []
+        # there must be at least as many suppliers as commodities
         conditions.append(self.n_commods.avg <= self.n_supply.avg)
+        # there must be at least as many requesters as commodities
         conditions.append(self.n_commods.avg <= \
                               (1 + self.req_multi_commods.avg) * self.n_request.avg)
+        # there must be at least as many commodities as possible commodities
+        # requestable
+        conditions.append(self.n_commods.avg > s.req_multi_commods.avg)
+        
+        # there must be at least as many commodities as possible commodities
+        # suppliable
+        conditions.append(self.n_commods.avg > s.sup_multi_commods.avg)
         return all(c for c in conditions)
         
 class ReactorRequestBuilder(object):
@@ -391,7 +400,7 @@ class ReactorRequestBuilder(object):
 
         self.reqs_to_commods = {} # requests to their commodities
         self.commods_to_reqs = {} # commodities to all requests
-        self.sup_node_commods = {} # supply to their commodities
+        self.sups_to_commods = {} # supply to their commodities
 
     def valid(self):
         """Screens the provided sampler to determine if it provides a valid
@@ -531,6 +540,13 @@ class ReactorRequestBuilder(object):
 
         request = self.generate_request(commods, requesters)
         supply, supplier_commods = self.generate_supply(commods, suppliers)
+
+        requested_commods = set(v for k, v in reqs_to_commods.items())
+        supplied_commods = set(v for k, v in sups_to_commods.items())
+        if (requested_commods != set(commods)):
+            raise ValueError("All commmodities are not requested.")
+        if (supplied_commods != set(commods)):
+            raise ValueError("All commmodities are not supplied.")
         self.populate_params(request, supply, supplier_commods)
 
         return self.params
@@ -627,10 +643,14 @@ class ReactorRequestBuilder(object):
         for req, g_ids in possible_supply.items():
             rnd.shuffle(g_ids)
             # guarantees all reqs are connected to at least 1 supplier
-            supply[g_ids[0]].append((n_ids.next(), req))
+            s_id = n_ids.next()
+            supply[g_ids[0]].append((s_id, req))
+            sups_to_commods[s_id] = reqs_to_commods[req]
             for i in range(1, len(g_ids)):
                 if s.connection.sample():
-                    supply[g_ids[i]].append((n_ids.next(), req))
+                    s_id = n_ids.next()
+                    supply[g_ids[i]].append((s_id, req))
+                    sups_to_commods[s_id] = reqs_to_commods[req]
         return supply
 
     def _req_qty(self, reqs):
