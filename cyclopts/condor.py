@@ -173,11 +173,16 @@ def cleanup(client, remotedir):
     print("Remotely executing '{0}'".format(cmd))
     stdin, stdout, stderr = client.exec_command(cmd)
     
-def submit_dag(user, host, dbname, solvers, dumpdir, clean):
+def submit_dag(user, host, dbname, solvers, dumpdir, clean, keyfile):
     timestamp = "_".join([str(t) for t in datetime.now().timetuple()][:-3])
-
-    prompt = "Password for {0}@{1}:".format(user, host)
-    pw = getpass.getpass(prompt)
+    
+    if keyfile is None:
+        prompt = "Password for {0}@{1}:".format(user, host)
+        pw = getpass.getpass(prompt)
+        pkey = None
+    else:
+        pw = None
+        pkey = pm.RSAKey.from_private_key_file(keyfile)
     ssh = pm.SSHClient()
     ssh.set_missing_host_key_policy(pm.AutoAddPolicy())
 
@@ -198,7 +203,7 @@ def submit_dag(user, host, dbname, solvers, dumpdir, clean):
     shutil.rmtree(run_dir)
     
     print("connecting to {0}@{1}".format(user, host))
-    ssh.connect(host, username=user, password=pw)
+    ssh.connect(host, username=user, password=pw, pkey=pkey)
     pid = submit(ssh, sub_dir, tarname, subfile)
     ssh.close()
 
@@ -206,7 +211,7 @@ def submit_dag(user, host, dbname, solvers, dumpdir, clean):
     while not done:
         print("Querying status of {0}".format(run_dir))
         print("connecting to {0}@{1}".format(user, host))
-        ssh.connect(host, username=user, password=pw)
+        ssh.connect(host, username=user, password=pw, pkey=pkey)
         done = check_finish(ssh, pid)
         ssh.close()
         time.sleep(300)
@@ -225,7 +230,7 @@ def submit_dag(user, host, dbname, solvers, dumpdir, clean):
         shutil.copy(dbname, dumpdir)
     
     # aggregate and dump output
-    ssh.connect(host, username=user, password=pw)
+    ssh.connect(host, username=user, password=pw, pkey=pkey)
     print("connecting to {0}@{1}".format(user, host))
     aggregate(ssh, remote_dir, dumpdir, outdb)
     if clean:
