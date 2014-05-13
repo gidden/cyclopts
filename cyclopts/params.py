@@ -330,11 +330,11 @@ class ReactorRequestSampler(object):
                               (1 + self.req_multi_commods.avg) * self.n_request.avg)
         # there must be at least as many commodities as possible commodities
         # requestable
-        conditions.append(self.n_commods.avg > s.req_multi_commods.avg)
+        conditions.append(self.n_commods.avg > self.req_multi_commods.avg)
         
         # there must be at least as many commodities as possible commodities
         # suppliable
-        conditions.append(self.n_commods.avg > s.sup_multi_commods.avg)
+        conditions.append(self.n_commods.avg > self.sup_multi_commods.avg)
         return all(c for c in conditions)
         
 class ReactorRequestBuilder(object):
@@ -541,8 +541,8 @@ class ReactorRequestBuilder(object):
         request = self.generate_request(commods, requesters)
         supply, supplier_commods = self.generate_supply(commods, suppliers)
 
-        requested_commods = set(v for k, v in reqs_to_commods.items())
-        supplied_commods = set(v for k, v in sups_to_commods.items())
+        requested_commods = set(v for k, v in self.reqs_to_commods.items())
+        supplied_commods = set(v for k, v in self.sups_to_commods.items())
         if (requested_commods != set(commods)):
             raise ValueError("All commmodities are not requested.")
         if (supplied_commods != set(commods)):
@@ -645,12 +645,12 @@ class ReactorRequestBuilder(object):
             # guarantees all reqs are connected to at least 1 supplier
             s_id = n_ids.next()
             supply[g_ids[0]].append((s_id, req))
-            sups_to_commods[s_id] = reqs_to_commods[req]
+            self.sups_to_commods[s_id] = self.reqs_to_commods[req]
             for i in range(1, len(g_ids)):
                 if s.connection.sample():
                     s_id = n_ids.next()
                     supply[g_ids[i]].append((s_id, req))
-                    sups_to_commods[s_id] = reqs_to_commods[req]
+                    self.sups_to_commods[s_id] = self.reqs_to_commods[req]
         return supply
 
     def _req_qty(self, reqs):
