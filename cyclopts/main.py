@@ -16,6 +16,7 @@ def convert(args):
     to_h5(args.input, args.output)
 
 def execute(args):
+    print("solvers:", args.solvers)
     exec_from_h5(args.input, args.output, args.rc, args.solvers)
 
 def main():

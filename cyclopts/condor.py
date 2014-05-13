@@ -55,7 +55,7 @@ git clone https://github.com/gidden/cyclopts
 cd cyclopts
 ./setup.py install --user
 cd ..;
-cyclopts exec -i {0} -o $1_out.h5 --solvers={solvers} --rc=$1.rc 
+cyclopts exec -i {0} -o $1_out.h5 --solvers {solvers} --rc=$1.rc 
 rm *.tar.gz
 """
 
@@ -85,7 +85,7 @@ def gen_files(prefix=".", db="in.h5", solvers=['cbc'], tblname="ReactorRequestSa
         dag_lines += dag_template.format(i)
     
     runfile = os.path.join(prefix, "run.sh")
-    solvers = ",".join(solvers)
+    solvers = " ".join(solvers)
     with io.open(runfile, 'w') as f:
         f.write(run_template.format(db.split('/')[-1], solvers=solvers))
 

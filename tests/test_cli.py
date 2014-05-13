@@ -3,6 +3,8 @@ import subprocess
 import os
 import uuid
 
+import tables as t
+
 from nose.tools import assert_equal
 
 def test_cli():
@@ -20,9 +22,17 @@ def test_cli():
     if os.path.exists(fout):
         os.remove(fout)
 
-    cmd = "cyclopts exec --input={0} --output={1} --solvers={2}".format(
-        fin, fout, "clp,greedy")
+    nvalid = 5 # visual confirmation of obs_valid.rc
+    solvers = "clp greedy"
+    cmd = "cyclopts exec --input={0} --output={1} --solvers {2}".format(
+        fin, fout, solvers)
     assert_equal(0, subprocess.call(cmd.split(), shell=(os.name == 'nt')))
+
+    f = t.open_file(fout, 'r')
+    for tbl in f.root._f_walknodes(classname='Table'):
+        if tbl._v_name == 'solver':
+            assert_equal(nvalid * len(solvers.split()), tbl.nrows)
+    f.close()
 
     if os.path.exists(fout):
         os.remove(fout)
