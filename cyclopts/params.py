@@ -436,7 +436,6 @@ class ReactorRequestBuilder(object):
         for g_id in requesters:
             assems = s.assem_per_req.sample()
             assem_commods = self._assem_commods(commods, chosen_commods) # modeling assumption
-            chosen_commods.update(assem_commods)
             # add nodes
             for i in range(assems):
                 n_nodes = len(assem_commods) if s.assem_multi_commod.sample() \
@@ -446,6 +445,7 @@ class ReactorRequestBuilder(object):
                     commod = assem_commods[j]
                     n_id = n_ids.next()
                     mutual_reqs.append((n_id, commod))
+                    chosen_commods.add(commod)
                     self.reqs_to_commods[n_id] = commod
                     self.commods_to_reqs[commod] = n_id
                 requests[g_id].append(mutual_reqs)
@@ -544,9 +544,15 @@ class ReactorRequestBuilder(object):
         requested_commods = set(v for k, v in self.reqs_to_commods.items())
         supplied_commods = set(v for k, v in self.sups_to_commods.items())
         if (requested_commods != set(commods)):
-            raise ValueError("All commmodities are not requested.")
+            raise ValueError(("All commmodities are not requested; "
+                              "Commodities: {0}, "
+                              "requested commodities {1}.".format(
+                        set(commods), requested_commods)))
         if (supplied_commods != set(commods)):
-            raise ValueError("All commmodities are not supplied.")
+            raise ValueError(("All commmodities are not supplied; "
+                              "Commodities: {0}, "
+                              "supplied commodities {1}.".format(
+                        set(commods), supplied_commods)))
         self.populate_params(request, supply, supplier_commods)
 
         return self.params
