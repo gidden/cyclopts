@@ -1,18 +1,19 @@
 from __future__ import print_function
 
+import warnings
+import tables as t
+import shutil
+import time
+import os
+import io
+
 try:
-    import tables as t
     import paramiko as pm
     import tarfile
-    import shutil
     from datetime import datetime
     import getpass
-    import time
-    import os
-    import io
     import glob
 except ImportError:
-    import warnings
     warnings.warn(("The Condor module was not able to "
                    "import its necessary modules"), ImportWarning)
 
@@ -213,9 +214,15 @@ def submit_dag(user, host, dbname, solvers, dumpdir, clean):
     print("{0} has completed.".format(run_dir))
 
     # create dump directory with aggregate input
+    final_in_path = os.path.join(dumpdir, dbname)
     if not os.path.exists(dumpdir):
         os.mkdir(dumpdir)
-    shutil.copy(dbname, dumpdir)
+    if not os.path.exists(final_in_path):
+        shutil.copy(dbname, dumpdir)
+    elif not shutil._samefile(dbname, final_in_path):
+        warnings.warn("Carefull! Overwriting file at {0} with {1}".format(
+                final_in_path, dbname), RuntimeWarning)
+        shutil.copy(dbname, dumpdir)
     
     # aggregate and dump output
     ssh.connect(host, username=user, password=pw)
@@ -224,4 +231,3 @@ def submit_dag(user, host, dbname, solvers, dumpdir, clean):
     if clean:
         cleanup(ssh, remote_dir)
     ssh.close()
-
