@@ -239,7 +239,7 @@ class ReactorRequestSampler(object):
         self.sup_multi = sup_multi \
             if sup_multi is not None else BoolParam(-1.0) # never true
         self.sup_multi_commods = sup_multi_commods \
-            if sup_multi_commods is not None else Param(1)
+            if sup_multi_commods is not None else Param(0)
         self.n_sup_constr = n_sup_constr \
             if n_sup_constr is not None else Param(1)
         self.sup_constr_val = sup_constr_val \
