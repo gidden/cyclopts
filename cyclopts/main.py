@@ -10,7 +10,7 @@ from cyclopts.condor import submit_dag
 
 def condor(args):
     submit_dag(args.user, args.host, args.indb, args.solvers, 
-               args.dumpdir, args.outdb, args.clean, args.keyfile)
+               args.dumpdir, args.outdb, args.clean, args.auth)
 
 def convert(args):
     to_h5(args.input, args.output)
@@ -78,8 +78,9 @@ def main():
     solversh = ("A list of which solvers to use on each run.")
     condor_parser.add_argument('--solvers', nargs='*', default=['cbc'], dest='solvers', 
                              help=solversh)
-    kfh = ("The location of your RSA private key file.")
-    condor_parser.add_argument('--keyfile', default=None, dest='keyfile', help=kfh)    
+    noauthh = ("Do not ask for a password for authorization.")
+    condor_parser.add_argument('--no-auth', action='store_false', dest='auth', 
+                               default=True, help=noauthh)    
     
     # and away we go!
     args = parser.parse_args()
