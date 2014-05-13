@@ -173,7 +173,7 @@ def cleanup(client, remotedir):
     print("Remotely executing '{0}'".format(cmd))
     stdin, stdout, stderr = client.exec_command(cmd)
     
-def submit_dag(user, host, dbname, solvers, dumpdir, clean, keyfile):
+def submit_dag(user, host, indb, solvers, dumpdir, outdb, clean, keyfile):
     timestamp = "_".join([str(t) for t in datetime.now().timetuple()][:-3])
     
     if keyfile is None:
@@ -186,17 +186,16 @@ def submit_dag(user, host, dbname, solvers, dumpdir, clean, keyfile):
     ssh = pm.SSHClient()
     ssh.set_missing_host_key_policy(pm.AutoAddPolicy())
 
-    outdb = 'out.h5'    
     run_dir = "run_{0}".format(timestamp)
     sub_dir = "/home/{0}/cyclopts-runs".format(user)
     remote_dir = "{0}/{1}".format(sub_dir, run_dir)
 
     if not os.path.exists(run_dir):
         os.mkdir(run_dir)
-    shutil.copy(dbname, run_dir)
+    shutil.copy(indb, run_dir)
 
     subfile = "dag.sub"
-    gen_files(prefix=run_dir, solvers=solvers, db=dbname, subfile=subfile)
+    gen_files(prefix=run_dir, solvers=solvers, db=indb, subfile=subfile)
     tarname = "{0}.tar.gz".format(run_dir)
     with tarfile.open(tarname, 'w:gz') as f:
         f.add(run_dir)
@@ -219,15 +218,15 @@ def submit_dag(user, host, dbname, solvers, dumpdir, clean, keyfile):
     print("{0} has completed.".format(run_dir))
 
     # create dump directory with aggregate input
-    final_in_path = os.path.join(dumpdir, dbname)
+    final_in_path = os.path.join(dumpdir, indb)
     if not os.path.exists(dumpdir):
         os.mkdir(dumpdir)
     if not os.path.exists(final_in_path):
-        shutil.copy(dbname, dumpdir)
-    elif not shutil._samefile(dbname, final_in_path):
+        shutil.copy(indb, dumpdir)
+    elif not shutil._samefile(indb, final_in_path):
         warnings.warn("Carefull! Overwriting file at {0} with {1}".format(
-                final_in_path, dbname), RuntimeWarning)
-        shutil.copy(dbname, dumpdir)
+                final_in_path, indb), RuntimeWarning)
+        shutil.copy(indb, dumpdir)
     
     # aggregate and dump output
     ssh.connect(host, username=user, password=pw, pkey=pkey)

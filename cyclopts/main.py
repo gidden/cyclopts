@@ -9,8 +9,8 @@ from cyclopts.tools import to_h5, exec_from_h5
 from cyclopts.condor import submit_dag
 
 def condor(args):
-    submit_dag(args.user, args.host, args.dbname, args.solvers, 
-               args.dumpdir, args.clean, args.keyfile)
+    submit_dag(args.user, args.host, args.indb, args.solvers, 
+               args.dumpdir, args.outdb, args.clean, args.keyfile)
 
 def convert(args):
     to_h5(args.input, args.output)
@@ -64,11 +64,14 @@ def main():
     condor_parser.add_argument('-t', '--host', dest='host', help=hosth, 
                                default='submit-1.chtc.wisc.edu')
     indbh = ("The input database.")
-    condor_parser.add_argument('-i', '--input', dest='dbname', help=indbh,
+    condor_parser.add_argument('-i', '--input', dest='indb', help=indbh,
                                default='in.h5')    
     dumph = ("The directory in which to place output.")
     condor_parser.add_argument('-d', '--dumpdir', dest='dumpdir', help=dumph,
                                default='run_results')      
+    outdbh = ("The output database.")
+    condor_parser.add_argument('-o', '--output', dest='outdb', help=outdbh,
+                               default='out.h5')    
     nocleanh = ("Do *not* clean up the submit node after.")
     condor_parser.add_argument('--no-clean', dest='clean', help=nocleanh,
                                action='store_false', default=True)    
@@ -76,7 +79,7 @@ def main():
     condor_parser.add_argument('--solvers', nargs='*', default=['cbc'], dest='solvers', 
                              help=solversh)
     kfh = ("The location of your RSA private key file.")
-    exec_parser.add_argument('--keyfile', default=None, dest='keyfile', help=kfh)    
+    condor_parser.add_argument('--keyfile', default=None, dest='keyfile', help=kfh)    
     
     # and away we go!
     args = parser.parse_args()
