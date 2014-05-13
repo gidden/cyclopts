@@ -721,7 +721,7 @@ class ReactorRequestBuilder(object):
         The maximum supply capacity is calculated as the maximum demand for all
         commodities that can be supplied.
         """
-        return {sup: max([d for c, d in commod_demand.items() if c in commods]) \
+        return {sup: max([commod_demand[c] for c in commods]) \
                     for sup, commods in supplier_commods.items()}
 
     def _sup_constr_vals(self, capacity, n_constr):
