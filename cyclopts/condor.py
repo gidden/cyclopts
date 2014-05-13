@@ -177,10 +177,8 @@ def cleanup(client, remotedir):
 def submit_dag(user, host, indb, solvers, dumpdir, outdb, clean, auth):
     timestamp = "_".join([str(t) for t in datetime.now().timetuple()][:-3])
     
-    pw = None
-    if auth:
-        prompt = "Password for {0}@{1}:".format(user, host)
-        pw = getpass.getpass(prompt)
+    prompt = "Password for {0}@{1}:".format(user, host)
+    pw = getpass.getpass(prompt) if auth else None
     ssh = pm.SSHClient()
     ssh.set_missing_host_key_policy(pm.AutoAddPolicy())
 
