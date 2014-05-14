@@ -188,11 +188,12 @@ ExchangeSolver* get_solver(SolverParams& sparams) {
   std::string type = sparams.type == "" ? "cbc" : sparams.type;
 
   ExchangeSolver* ret;
-  if (type == "cbc" || type == "clp") {
+  if (type == "cbc")
     ret = new ProgSolver(type, true);
-  } else {
+  else if (type == "clp")
+    ret = new ProgSolver(type, false);
+  else
     ret = new GreedySolver(true);
-  }
   return ret;
 }
 
