@@ -61,7 +61,8 @@ rm *.tar.gz
 
 dag_template = u"""JOB J_{0} {0}.sub\n"""
 
-def gen_files(prefix=".", db="in.h5", solvers=['cbc'], tblname="ReactorRequestSampler", subfile = "dag.sub"):
+def gen_files(prefix=".", db="in.h5", solvers=['cbc'], 
+              tblname="ReactorRequestSampler", subfile = "dag.sub"):
     """Generates all files needed to run a DAGMan instance of the given input
     database.
     """
@@ -95,6 +96,7 @@ def gen_files(prefix=".", db="in.h5", solvers=['cbc'], tblname="ReactorRequestSa
         f.write(dag_lines)
 
 def wait_till_found(client, path, t_sleep=5):
+    """Queries a client if a an expected file exists until it does."""
     print('Waiting for existence of {0}'.format(path))
     found = False
     while not found:
@@ -105,6 +107,20 @@ def wait_till_found(client, path, t_sleep=5):
         time.sleep(t_sleep)
 
 def submit(client, rundir, tarname, subfile):
+    """Performs a condor DAG sumbission on a client using a tarball of all
+    submission-related data.
+
+    Parameters
+    ----------
+    client : paramiko SSHClient
+        the client
+    rundir : str
+        the run directory on the client
+    tarname : str
+        data tarball name
+    subfile : str
+        the name of the submit file
+    """
     ftp = client.open_sftp()
     print("Copying {0} to condor submit node.".format(tarname))
     ftp.put(tarname, "{0}/{1}".format(rundir, tarname))
@@ -134,6 +150,8 @@ def submit(client, rundir, tarname, subfile):
     return pid
 
 def check_finish(client, pid):
+    """Checks the status of a condor run on the client.
+    """
     cmd = "condor_q {0}".format(pid)
     print("Remotely executing '{0}'".format(cmd))
     stdin, stdout, stderr = client.exec_command(cmd)
@@ -142,6 +160,20 @@ def check_finish(client, pid):
     return done
 
 def aggregate(client, remotedir, localdir, outdb):
+    """After a DAG run has completed, brings all resulting output back to the
+    local machine and aggregates them into a single file.
+
+    Parameters
+    ----------
+    client : paramiko SSHClient
+        the client
+    remotedir : str
+        the landing directory on the client machine
+    localdir : str
+        the landing directory on the local macine
+    outdb : str
+        the name of the aggregated output file
+    """
     outdir = 'outfiles'
     outtar = '{0}.tar.gz'.format(outdir)
     cmd = ("cd {0}; "
@@ -170,11 +202,35 @@ def aggregate(client, remotedir, localdir, outdb):
     shutil.rmtree('{0}/{1}'.format(localdir, outdir))    
 
 def cleanup(client, remotedir):
+    """Removes all files in the remote directory."""
     cmd = "rm -rf {0}".format(remotedir)
     print("Remotely executing '{0}'".format(cmd))
     stdin, stdout, stderr = client.exec_command(cmd)
     
 def submit_dag(user, host, indb, solvers, dumpdir, outdb, clean, auth):
+    """Connects via SSH to a condor submit node, and executes a Cyclopts DAG
+    run.
+    
+    Parameters
+    ----------
+    user : str
+        the user on the condor submit host
+    host : str
+        the condor submit node host (e.g. submit-1.chtc.wisc.edu)
+    indb : str
+        the input database location
+    solvers : list
+        the solvers to use
+    dumpdir : str
+        the final run directory (where the input and output database files 
+        will be located)
+    outdb : str
+        the output database location
+    clean : bool
+        if true, removes the working directory on the submit node
+    auth : bool
+        if true, query a password authentication
+    """
     timestamp = "_".join([str(t) for t in datetime.now().timetuple()][:-3])
     
     prompt = "Password for {0}@{1}:".format(user, host)
