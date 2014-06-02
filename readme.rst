@@ -1,7 +1,8 @@
 Cyclopts
 ========
 
-A full, stochastic analysis of the Generic Fuel Cycle Resource Exchange formulation.
+A stochastic analysis framework for the Generic Fuel Cycle Resource Exchange
+formulation in `Cyclus <http://fuelcycle.org>`_.
 
 Cyclopts utilizes its Python layer to generate the run-control parameters for a
 given Cyclus resource exchange. It's C++ layer makes the corresponding calls to
