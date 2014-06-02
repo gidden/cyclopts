@@ -9,9 +9,10 @@ Welcome to Cyclopts's documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 2
-
-
+    :maxdepth: 2
+   
+    params
+   
 
 Indices and tables
 ==================
