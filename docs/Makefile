@@ -184,6 +184,8 @@ pseudoxml:
 	@echo "Build finished. The pseudo-XML files are in $(BUILDDIR)/pseudoxml."
 
 publish:
+	@echo
+	@echo "Updating $(DOCHTMLDIR) with current documentation."
 	test -d $(DOCREPODIR) || git clone $(DOCREPOURL) $(DOCREPONAME) && \
 	test ! -d $(TMPDOCDIR) || rm -r $(TMPDOCDIR) && \
 	mkdir -p $(TMPDOCDIR) && \
@@ -196,3 +198,9 @@ publish:
 	if [ -n "$$(git status $(DOCHTMLDIR) --porcelain)" ]; \
 	then git commit -m "updated $(DOCUPDATENAME) html" && git push origin master; \
 	fi
+	@echo
+	@echo "$(DOCHTMLDIR) updated and pushed to $(DOCREPOURL)."
+.PHONY: publish
+
+html-publish: html publish
+.PHONY: html-publish
