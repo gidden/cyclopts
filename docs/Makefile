@@ -19,10 +19,12 @@ ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 # the i18n builder cannot share the environment and doctrees with the others
 I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
-# # Uncomment when doc repo exists
-# #
-# DOCREPONAME = cyclopts.github.com
-# DOCREPOURL  = git@github.com:gidden/cyclopts.github.com.git
+# doc publishing variables
+DOCREPOURL      = git@github.com:gidden/gidden.github.io
+DOCREPODIR      = ~/personal/site
+DOCUPDATENAME   = cyclopts-docs
+DOCHTMLDIR      = ~/personal/site/cyclopts
+TMPDOCDIR       = $(DOCREPODIR)/.$(DOCUPDATENAME)tmpdocs
 
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext
 
@@ -181,40 +183,16 @@ pseudoxml:
 	@echo
 	@echo "Build finished. The pseudo-XML files are in $(BUILDDIR)/pseudoxml."
 
-
-# # Uncomment when doc repo exists
-# #
-# push-latest:
-# 	cd $(BUILDDIR) && \
-# 	test -d $(DOCREPONAME) || git clone $(DOCREPOURL) $(DOCREPONAME) && \
-# 	cd $(DOCREPONAME) && \
-# 	git pull origin master && \
-# 	test -d latest || mkdir latest && touch latest/_ && \
-# 	rm -r latest/* && \
-# 	cp -r ../html/* latest/ && \
-# 	git add latest/ && \
-# 	git commit -am "Pushed latest docs at $(date)" && \
-# 	git push
-
-# push-release:
-# 	cd $(BUILDDIR) && \
-# 	test -d $(DOCREPONAME) || git clone $(DOCREPOURL) $(DOCREPONAME) && \
-# 	cd $(DOCREPONAME) && \
-# 	git pull origin master && \
-# 	test -d $(RELEASE) || mkdir $(RELEASE) && touch $(RELEASE)/_ && \
-# 	rm -r $(RELEASE)/* && \
-# 	cp -r ../html/* $(RELEASE)/ && \
-# 	git add $(RELEASE)/ && \
-# 	git commit -am "Pushed $(RELEASE) docs at $(date)" && \
-# 	git push
-
-# push-root:
-# 	cd $(BUILDDIR) && \
-# 	test -d $(DOCREPONAME) || git clone $(DOCREPOURL) $(DOCREPONAME) && \
-# 	cd $(DOCREPONAME) && \
-# 	git pull origin master && \
-# 	rm -rf libref previous _sources _static *.html *.js *.inv  && \
-# 	cp -r ../html/* . && \
-# 	git add . && \
-# 	git commit -am "Pushed root-level docs at $(date)" && \
-# 	git push
+publish:
+	test -d $(DOCREPODIR) || git clone $(DOCREPOURL) $(DOCREPONAME) && \
+	test ! -d $(TMPDOCDIR) || rm -r $(TMPDOCDIR) && \
+	mkdir -p $(TMPDOCDIR) && \
+	cp -r $(BUILDDIR)/html/* $(TMPDOCDIR) && \
+	cd $(DOCREPODIR) && git pull origin master && \
+	test ! -d $(DOCHTMLDIR) || rm -r $(DOCHTMLDIR) && \
+	mkdir -p $(DOCHTMLDIR) && mv $(TMPDOCDIR)/* $(DOCHTMLDIR) && \
+	rm -r $(TMPDOCDIR)/ && \
+	cd $(DOCREPODIR) && git add $(DOCHTMLDIR) && \
+	if [ -n "$$(git status $(DOCHTMLDIR) --porcelain)" ]; \
+	then git commit -m "updated $(DOCUPDATENAME) html" && git push origin master; \
+	fi

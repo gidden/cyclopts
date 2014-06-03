@@ -7,8 +7,12 @@ formulation in `Cyclus <http://fuelcycle.org>`_.
 Cyclopts utilizes its Python layer to generate the run-control parameters for a
 given Cyclus resource exchange. It's C++ layer makes the corresponding calls to
 Cyclus to instantiate and execute the exchange. The Python-C++ communication is
-made possible by using [xdress](xdress.org) to generate Cython wrappers from the
-C++ source code. Pretty neat!
+made possible by using `xdress <xdress.org>`_ to generate Cython wrappers from
+the C++ source code. Pretty neat!
+
+You can find the full documentation at `mattgidden.com/cyclopts
+<http://mattgidden.com/cyclopts/index.html>`_.
+
 
 .. _install:
 
@@ -56,10 +60,18 @@ For installing in user space:
 
 .. install-end
 
-Important Links
-===============
+Documentation
+==============
 
-* `Documentation <http://mattgidden.com/cyclopts/index.html>`_
+To build the docs, you must have a local copy of `gidden.github.io
+<https://github.com/gidden/gidden.github.io>`_ and push rights to the repo on
+github. It's likely that you don't! 
+
+If you do, however, its as easy as
+
+.. code-block:: bash
+
+  $ cd docs && make html && make publish
 
 Basic Workflow Strategy
 =======================
