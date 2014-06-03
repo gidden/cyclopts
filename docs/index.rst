@@ -12,8 +12,10 @@ Cyclus kernel optimization problems. Because Cyclus only defines a C++ API,
 `Cython <http://cython.org/>`_ wrappings are automatically generated via `XDress
 <http://xdress.org/>`_.
 
-Cyclopts is currently under heavy development and purely experimental! With
-great power comes great responsibility!
+.. warning::
+
+  Cyclopts is currently under heavy development and purely experimental! With
+  great power comes great responsibility!
 
 --------
 Contents
