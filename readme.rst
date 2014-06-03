@@ -70,7 +70,7 @@ Building the documentation is easy
   $ cd docs && make html
 
 You can then view them by pointing your favorite browser at
-`docs/build/html/index.html`.
+``docs/build/html/index.html``.
 
 Publishing Documentation
 ------------------------
