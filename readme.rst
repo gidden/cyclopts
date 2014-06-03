@@ -60,8 +60,8 @@ For installing in user space:
 
 .. install-end
 
-Documentation
-==============
+Building Documentation
+----------------------
 
 To build the docs, you must have a local copy of `gidden.github.io
 <https://github.com/gidden/gidden.github.io>`_ and push rights to the repo on
