@@ -23,7 +23,7 @@ I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 DOCREPOURL      = git@github.com:gidden/gidden.github.io
 DOCREPODIR      = ~/personal/site
 DOCUPDATENAME   = cyclopts-docs
-DOCHTMLDIR      = ~/personal/site/cyclopts
+DOCHTMLDIR      = $(DOCREPODIR)/cyclopts
 TMPDOCDIR       = $(DOCREPODIR)/.$(DOCUPDATENAME)tmpdocs
 
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext

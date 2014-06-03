@@ -60,12 +60,24 @@ For installing in user space:
 
 .. install-end
 
-Building Documentation
-----------------------
+Building the Docsumentation
+---------------------------
 
-To build the docs, you must have a local copy of `gidden.github.io
+Building the documentation is easy
+
+.. code-block:: bash
+
+  $ cd docs && make html
+
+You can then view them by pointing your favorite browser at
+`docs/build/html/index.html`.
+
+Publishing Documentation
+------------------------
+
+To publish updated the docs, you must have a local copy of `gidden.github.io
 <https://github.com/gidden/gidden.github.io>`_ and push rights to the repo on
-github. It's likely that you don't! 
+github. It's likely that you don't!
 
 If you do, however, its as easy as
 
