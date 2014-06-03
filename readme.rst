@@ -10,10 +10,56 @@ Cyclus to instantiate and execute the exchange. The Python-C++ communication is
 made possible by using [xdress](xdress.org) to generate Cython wrappers from the
 C++ source code. Pretty neat!
 
-Important Links
+.. _install:
+
+Installation
+============
+
+.. install-start
+
+Dependencies
+------------
+
+Cyclopts has the following dependencies:
+
+   #. `CMake <http://www.cmake.org/>`_ (>= 2.8.5)
+   #. `HDF5 <http://www.hdfgroup.org/HDF5/>`_
+   #. `Cyclus <https://github.com/cyclus/cyclus>`_ (1.0)
+   #. `Python 2.7 <http://www.python.org/>`_
+   #. `NumPy <http://www.numpy.org/>`_ (>= 1.8.0)
+   #. `SciPy <http://www.scipy.org/>`_
+   #. `Cython <http://cython.org/>`_ (>= 0.19.1)
+   #. `PyTables <http://www.pytables.org/>`_
+
+Additionally, building the documentation requires:
+
+   #. `Sphinx <http://sphinx-doc.org/>`_
+   #. `SciSphinx <https://github.com/numfocus/scisphinx/>`_
+
+Install Command
 ---------------
 
-* `Documentation <http://cnergdata.engr.wisc.edu/cyclus/cyclopts/index.html>`_
+With its dependencies installed, Cyclopts can be installed as any other python
+package.
+
+For installing in system space:
+
+.. code-block:: bash
+
+  $ python setup.py install
+
+For installing in user space:
+
+.. code-block:: bash
+
+  $ python setup.py install --user
+
+.. install-end
+
+Important Links
+===============
+
+* `Documentation <http://mattgidden.com/cyclopts/index.html>`_
 
 Basic Workflow Strategy
 =======================
@@ -76,4 +122,3 @@ of the ``CMakeLists.txt`` file in ``cyclopts/cyclopts``.
     from cyclopts.mycpp import MyClass
     
     inst = MyClass()
-

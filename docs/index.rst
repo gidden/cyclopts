@@ -1,21 +1,22 @@
-.. Cyclopts documentation master file, created by
-   sphinx-quickstart on Mon Jun  2 14:15:20 2014.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
-Welcome to Cyclopts's documentation!
-====================================
+====================================================
+Cyclopts: Optimization Analysis Framework for Cyclus
+====================================================
 
-Contents:
+--------
+Contents
+--------
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
    
-    params
+    install
+    cli
+    pyapi/main
    
-
-Indices and tables
-==================
+------------
+Search Links
+------------
 
 * :ref:`genindex`
 * :ref:`modindex`
