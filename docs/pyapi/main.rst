@@ -1,6 +1,6 @@
 .. _pyapi:
 
-Cyclopts Python API
+Python API
 ===================
 
 This section covers the Python API in Cyclopts.

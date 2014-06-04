@@ -1,7 +1,7 @@
 .. _cli:
 
 =====================================================
-Cyclopts Command Line Interface (CLI)
+Command Line Interface (CLI)
 =====================================================
 
 Running ``cyclopts -h`` results in
