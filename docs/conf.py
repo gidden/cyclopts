@@ -14,7 +14,7 @@
 
 import sys
 import os
-import cloud_sptheme as csp
+#import cloud_sptheme as csp
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -112,10 +112,12 @@ html_theme = "cloud"
 # NOTE: there is also a red-colored version named "redcloud"
 
 # set the theme path to point to cloud's theme data
-html_theme_path = [csp.get_theme_dir()]
+html_theme_path = ["_theme"]
 
 # [optional] set some of the options listed above...
-html_theme_options = { "roottarget": "index" }
+# you can set any cloud conf option here, see
+# https://pythonhosted.org/cloud_sptheme/cloud_theme.html#list-of-options
+html_theme_options = { "roottarget": "index", "popuptoc": "false" }
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".

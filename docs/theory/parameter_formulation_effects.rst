@@ -1,5 +1,5 @@
-Overview
-========
+Formulation Effects
+===================
 
 Each parameter has a theoretical basis in the real-life problem that is being
 modeled and an effect on the underlying formulation. This section describes the
@@ -18,7 +18,7 @@ Reactor Request
 ---------------
 
 Number of Request Nodes
-~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^
 
 * number of requesters
 * assemblies per request
@@ -26,26 +26,26 @@ Number of Request Nodes
 * commodities in multicommodity zone
 
 Number of Supply Nodes
-~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^
 
 * number of suppliers
 * fraction of multi-commodities suppliers
 * number of commodities per supplier
 
 Number of Arcs
-~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^
 
 * number of request nodes
 * number of supply nodes
 * connection probability
 
 Number of Exclusive Arcs
-~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 * exclusion probability
 
 Number of Constraints
-~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^
 
 * number of supply constraints
 * number of suppliers
@@ -56,32 +56,32 @@ Reactor Supply
 --------------
 
 Number of Request Nodes
-~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^
 
 * number of requesters
 * fraction of multicommodity requesters
 * number of commodities per requester
 
 Number of Supply Nodes
-~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^
 
 * number of suppliers
 * assemblies per supplier
 
 Number of Arcs
-~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^
 
 * number of request nodes
 * number of supply nodes
 * connection probability
 
 Number of Exclusive Arcs
-~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 * exclusion probability
 
 Number of Constraints
-~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^
 
 * number of assemblies
 * number of requesters

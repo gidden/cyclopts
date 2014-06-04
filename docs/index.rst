@@ -27,6 +27,7 @@ Contents
     install
     cli
     pyapi/main
+    theory/main
    
 ------------
 Search Links
