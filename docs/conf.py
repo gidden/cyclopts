@@ -120,7 +120,7 @@ html_theme_path = ["_theme"]
 html_theme_options = { "roottarget": "index", 
                        "popuptoc": "false", 
                        "sidebar_localtoc_title": "Table of Contents", 
-                       }
+                      } 
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -131,7 +131,7 @@ html_theme_options = { "roottarget": "index",
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-#html_logo = None
+html_logo = '_static/uni_logo.png'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
