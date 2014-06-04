@@ -117,7 +117,10 @@ html_theme_path = ["_theme"]
 # [optional] set some of the options listed above...
 # you can set any cloud conf option here, see
 # https://pythonhosted.org/cloud_sptheme/cloud_theme.html#list-of-options
-html_theme_options = { "roottarget": "index", "popuptoc": "false" }
+html_theme_options = { "roottarget": "index", 
+                       "popuptoc": "false", 
+                       "sidebar_localtoc_title": "Table of Contents", 
+                       }
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
