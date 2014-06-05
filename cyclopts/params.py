@@ -14,7 +14,7 @@ instance.
 Key modeling assumptions regarding how exchange instances are built are
 separated into individual functions on the Builder's interface.  
 
-:author: Matthew Gidden <matthew.gidden@gmail.com>
+:author: Matthew Gidden <matthew.gidden _at_ gmail.com>
 """
 
 import random as rnd

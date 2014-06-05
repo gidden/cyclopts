@@ -1,7 +1,7 @@
 """Provides some useful tools for working with Cyclopts, including reporting
 output.
 
-:author: Matthew Gidden <matthew.gidden@gmail.com>
+:author: Matthew Gidden <matthew.gidden _at_ gmail.com>
 """
 from __future__ import print_function
 
