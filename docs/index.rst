@@ -39,7 +39,6 @@ kernel. Cyclopts provides
 
 * a utility to view and compare results
 
-
 ********
 Contents
 ********
