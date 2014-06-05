@@ -35,9 +35,9 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
     'sphinx.ext.pngmath',
-    'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',  # autosummary doesn't work with numpydoc...
-    'scisphinx.numpydoc',          
+    'sphinx.ext.viewcode', 
+    'scisphinx.numpydoc', 
     'sphinxcontrib.programoutput',
 ]
 
@@ -117,10 +117,11 @@ html_theme_path = ["_theme"]
 # [optional] set some of the options listed above...
 # you can set any cloud conf option here, see
 # https://pythonhosted.org/cloud_sptheme/cloud_theme.html#list-of-options
-html_theme_options = { "roottarget": "index", 
-                       "popuptoc": "false", 
-                       "sidebar_localtoc_title": "Table of Contents", 
-                      } 
+html_theme_options = { 
+    "roottarget": "index", 
+    "popuptoc": "false", 
+    "sidebar_localtoc_title": "Table of Contents", 
+    } 
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -340,3 +341,11 @@ epub_exclude_files = ['search.html']
 
 # If false, no index is generated.
 #epub_use_index = True
+
+# Autodocumentation Flags
+autodoc_member_order = "groupwise"
+autoclass_content = "both"
+autosummary_generate = []
+
+# Prevent numpy from making silly tables 
+numpydoc_show_class_members = False

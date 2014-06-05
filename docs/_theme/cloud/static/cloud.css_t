@@ -817,7 +817,15 @@ table.docutils .double-right-divider:last-child { border-right-width: 6px; borde
 /*****************************************************
  * document - field-list tables & contents
  *****************************************************/
-table.docutils th.field-name { background: none; }
+
+/* altered MJG */
+
+table.docutils th.field-name {    
+   background: {{ theme_sidebarbgcolor }};
+   border-top: 0;
+   color: {{ theme_linkcolor }};
+   white-space: nowrap;
+}
 
 .field-list p { margin-bottom: 16px; }
 

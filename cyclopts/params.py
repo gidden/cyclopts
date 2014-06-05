@@ -410,7 +410,7 @@ class ReactorRequestBuilder(object):
 
         Returns
         -------
-        bool
+        b : bool
             whether the sampler's parameters form a valid point in the 
             sampler's parameter space
         """
