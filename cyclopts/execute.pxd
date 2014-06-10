@@ -27,6 +27,15 @@ cdef class ArcFlow:
 
 
 
+cdef class ExArc:
+    cdef void * _inst
+    cdef public bint _free_inst
+    pass
+
+
+
+
+
 cdef class GraphParams:
     cdef void * _inst
     cdef public bint _free_inst
@@ -58,10 +67,30 @@ cdef class SolverParams:
 
 
 
+cdef class ExGroup:
+    cdef void * _inst
+    cdef public bint _free_inst
+    cdef public np.ndarray _caps
+    pass
+
+
+
+
+
 cdef class Solution:
     cdef void * _inst
     cdef public bint _free_inst
     cdef public np.ndarray _flows
+    pass
+
+
+
+
+
+cdef class ExNode:
+    cdef void * _inst
+    cdef public bint _free_inst
+    cdef public np.ndarray _ucaps
     pass
 
 

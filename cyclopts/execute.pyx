@@ -29,6 +29,130 @@ np.import_array()
 
 
 
+cdef class ExNode:
+    """no docstring for {'tarbase': 'execute', 'tarname': 'ExNode', 'language': 'c++', 'srcname': 'ExNode', 'sidecars': (), 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
+
+
+
+    # constuctors
+    def __cinit__(self, *args, **kwargs):
+        self._inst = NULL
+        self._free_inst = True
+
+        # cached property defaults
+        self._ucaps = None
+
+    def __init__(self, id, kind, gid, ucaps, excl=False, qty=0):
+        """ExNode(self, id, kind, gid, ucaps, excl=False, qty=0)
+        """
+        cdef cpp_vector[double] ucaps_proxy
+        cdef int iucaps
+        cdef int ucaps_size
+        cdef double * ucaps_data
+        # ucaps is a (('vector', 'float64', 0), '&')
+        ucaps_size = len(ucaps)
+        if isinstance(ucaps, np.ndarray) and (<np.ndarray> ucaps).descr.type_num == np.NPY_FLOAT64:
+            ucaps_data = <double *> np.PyArray_DATA(<np.ndarray> ucaps)
+            ucaps_proxy = cpp_vector[double](<size_t> ucaps_size)
+            for iucaps in range(ucaps_size):
+                ucaps_proxy[iucaps] = ucaps_data[iucaps]
+        else:
+            ucaps_proxy = cpp_vector[double](<size_t> ucaps_size)
+            for iucaps in range(ucaps_size):
+                ucaps_proxy[iucaps] = <double> ucaps[iucaps]
+        self._inst = new cpp_execute.ExNode(<int> id, <bint> kind, <int> gid, ucaps_proxy, <bint> excl, <double> qty)
+    
+    
+    def __dealloc__(self):
+        if self._free_inst:
+            free(self._inst)
+
+    # attributes
+    property excl:
+        """no docstring for excl, please file a bug report!"""
+        def __get__(self):
+            return bool((<cpp_execute.ExNode *> self._inst).excl)
+    
+        def __set__(self, value):
+            (<cpp_execute.ExNode *> self._inst).excl = <bint> value
+    
+    
+    property gid:
+        """no docstring for gid, please file a bug report!"""
+        def __get__(self):
+            return int((<cpp_execute.ExNode *> self._inst).gid)
+    
+        def __set__(self, value):
+            (<cpp_execute.ExNode *> self._inst).gid = <int> value
+    
+    
+    property id:
+        """no docstring for id, please file a bug report!"""
+        def __get__(self):
+            return int((<cpp_execute.ExNode *> self._inst).id)
+    
+        def __set__(self, value):
+            (<cpp_execute.ExNode *> self._inst).id = <int> value
+    
+    
+    property kind:
+        """no docstring for kind, please file a bug report!"""
+        def __get__(self):
+            return bool((<cpp_execute.ExNode *> self._inst).kind)
+    
+        def __set__(self, value):
+            (<cpp_execute.ExNode *> self._inst).kind = <bint> value
+    
+    
+    property qty:
+        """no docstring for qty, please file a bug report!"""
+        def __get__(self):
+            return float((<cpp_execute.ExNode *> self._inst).qty)
+    
+        def __set__(self, value):
+            (<cpp_execute.ExNode *> self._inst).qty = <double> value
+    
+    
+    property ucaps:
+        """no docstring for ucaps, please file a bug report!"""
+        def __get__(self):
+            cdef np.ndarray ucaps_proxy
+            cdef np.npy_intp ucaps_proxy_shape[1]
+            if self._ucaps is None:
+                ucaps_proxy_shape[0] = <np.npy_intp> (<cpp_execute.ExNode *> self._inst).ucaps.size()
+                ucaps_proxy = np.PyArray_SimpleNewFromData(1, ucaps_proxy_shape, np.NPY_FLOAT64, &(<cpp_execute.ExNode *> self._inst).ucaps[0])
+                self._ucaps = ucaps_proxy
+            return self._ucaps
+    
+        def __set__(self, value):
+            cdef cpp_vector[double] value_proxy
+            cdef int ivalue
+            cdef int value_size
+            cdef double * value_data
+            # value is a ('vector', 'float64', 0)
+            value_size = len(value)
+            if isinstance(value, np.ndarray) and (<np.ndarray> value).descr.type_num == np.NPY_FLOAT64:
+                value_data = <double *> np.PyArray_DATA(<np.ndarray> value)
+                value_proxy = cpp_vector[double](<size_t> value_size)
+                for ivalue in range(value_size):
+                    value_proxy[ivalue] = value_data[ivalue]
+            else:
+                value_proxy = cpp_vector[double](<size_t> value_size)
+                for ivalue in range(value_size):
+                    value_proxy[ivalue] = <double> value[ivalue]
+            (<cpp_execute.ExNode *> self._inst).ucaps = value_proxy
+            self._ucaps = None
+    
+    
+    # methods
+    
+
+    pass
+
+
+
+
+
 cdef class Solution:
     """no docstring for {'tarbase': 'execute', 'tarname': 'Solution', 'language': 'c++', 'srcname': 'Solution', 'sidecars': (), 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
 
@@ -85,7 +209,7 @@ cdef class Solution:
         raise RuntimeError('method __init__() could not be dispatched')
     
     def __dealloc__(self):
-        if self._free_inst and self._inst is not NULL:
+        if self._free_inst:
             free(self._inst)
 
     # attributes
@@ -153,6 +277,7 @@ def execute_exchange(gparams, sparams):
     cdef GraphParams gparams_proxy
     cdef SolverParams sparams_proxy
     cdef cpp_execute.Solution rtnval
+    cdef Solution rtnval_proxy
     gparams_proxy = <GraphParams> gparams
     sparams_proxy = <SolverParams> sparams
     rtnval = cpp_execute.execute_exchange((<cpp_execute.GraphParams *> gparams_proxy._inst)[0], (<cpp_execute.SolverParams *> sparams_proxy._inst)[0])
@@ -162,16 +287,121 @@ def execute_exchange(gparams, sparams):
 
 
 
+
+
+cdef class ExGroup:
+    """no docstring for {'tarbase': 'execute', 'tarname': 'ExGroup', 'language': 'c++', 'srcname': 'ExGroup', 'sidecars': (), 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
+
+
+
+    # constuctors
+    def __cinit__(self, *args, **kwargs):
+        self._inst = NULL
+        self._free_inst = True
+
+        # cached property defaults
+        self._caps = None
+
+    def __init__(self, id, kind, ucaps, qty=0):
+        """ExGroup(self, id, kind, ucaps, qty=0)
+        """
+        cdef cpp_vector[double] ucaps_proxy
+        cdef int iucaps
+        cdef int ucaps_size
+        cdef double * ucaps_data
+        # ucaps is a (('vector', 'float64', 0), '&')
+        ucaps_size = len(ucaps)
+        if isinstance(ucaps, np.ndarray) and (<np.ndarray> ucaps).descr.type_num == np.NPY_FLOAT64:
+            ucaps_data = <double *> np.PyArray_DATA(<np.ndarray> ucaps)
+            ucaps_proxy = cpp_vector[double](<size_t> ucaps_size)
+            for iucaps in range(ucaps_size):
+                ucaps_proxy[iucaps] = ucaps_data[iucaps]
+        else:
+            ucaps_proxy = cpp_vector[double](<size_t> ucaps_size)
+            for iucaps in range(ucaps_size):
+                ucaps_proxy[iucaps] = <double> ucaps[iucaps]
+        self._inst = new cpp_execute.ExGroup(<int> id, <bint> kind, ucaps_proxy, <double> qty)
+    
+    
+    def __dealloc__(self):
+        if self._free_inst:
+            free(self._inst)
+
+    # attributes
+    property caps:
+        """no docstring for caps, please file a bug report!"""
+        def __get__(self):
+            cdef np.ndarray caps_proxy
+            cdef np.npy_intp caps_proxy_shape[1]
+            if self._caps is None:
+                caps_proxy_shape[0] = <np.npy_intp> (<cpp_execute.ExGroup *> self._inst).caps.size()
+                caps_proxy = np.PyArray_SimpleNewFromData(1, caps_proxy_shape, np.NPY_FLOAT64, &(<cpp_execute.ExGroup *> self._inst).caps[0])
+                self._caps = caps_proxy
+            return self._caps
+    
+        def __set__(self, value):
+            cdef cpp_vector[double] value_proxy
+            cdef int ivalue
+            cdef int value_size
+            cdef double * value_data
+            # value is a ('vector', 'float64', 0)
+            value_size = len(value)
+            if isinstance(value, np.ndarray) and (<np.ndarray> value).descr.type_num == np.NPY_FLOAT64:
+                value_data = <double *> np.PyArray_DATA(<np.ndarray> value)
+                value_proxy = cpp_vector[double](<size_t> value_size)
+                for ivalue in range(value_size):
+                    value_proxy[ivalue] = value_data[ivalue]
+            else:
+                value_proxy = cpp_vector[double](<size_t> value_size)
+                for ivalue in range(value_size):
+                    value_proxy[ivalue] = <double> value[ivalue]
+            (<cpp_execute.ExGroup *> self._inst).caps = value_proxy
+            self._caps = None
+    
+    
+    property id:
+        """no docstring for id, please file a bug report!"""
+        def __get__(self):
+            return int((<cpp_execute.ExGroup *> self._inst).id)
+    
+        def __set__(self, value):
+            (<cpp_execute.ExGroup *> self._inst).id = <int> value
+    
+    
+    property kind:
+        """no docstring for kind, please file a bug report!"""
+        def __get__(self):
+            return bool((<cpp_execute.ExGroup *> self._inst).kind)
+    
+        def __set__(self, value):
+            (<cpp_execute.ExGroup *> self._inst).kind = <bint> value
+    
+    
+    property qty:
+        """no docstring for qty, please file a bug report!"""
+        def __get__(self):
+            return float((<cpp_execute.ExGroup *> self._inst).qty)
+    
+        def __set__(self, value):
+            (<cpp_execute.ExGroup *> self._inst).qty = <double> value
+    
+    
+    # methods
+    
+
+    pass
+
+
+
 def test():
     """test()
     no docstring for test, please file a bug report!"""
     cdef cpp_vector[cpp_execute.ArcFlow] rtnval
-    
+    cdef np.ndarray rtnval_proxy
     cdef np.npy_intp rtnval_proxy_shape[1]
     rtnval = cpp_execute.test()
     rtnval_proxy_shape[0] = <np.npy_intp> rtnval.size()
     rtnval_proxy = np.PyArray_SimpleNewFromData(1, rtnval_proxy_shape, dtypes.xd_arcflow.num, &rtnval[0])
-    rtnval_proxy = np.PyArray_Copy(rtnval_proxy)
     return rtnval_proxy
 
 
@@ -200,7 +430,7 @@ cdef class SolverParams:
     
     
     def __dealloc__(self):
-        if self._free_inst and self._inst is not NULL:
+        if self._free_inst:
             free(self._inst)
 
     # attributes
@@ -256,7 +486,7 @@ cdef class GraphParams:
     
     
     def __dealloc__(self):
-        if self._free_inst and self._inst is not NULL:
+        if self._free_inst:
             free(self._inst)
 
     # attributes
@@ -525,6 +755,75 @@ cdef class GraphParams:
 
 
 
+cdef class ExArc:
+    """no docstring for {'tarbase': 'execute', 'tarname': 'ExArc', 'language': 'c++', 'srcname': 'ExArc', 'sidecars': (), 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
+
+
+
+    # constuctors
+    def __cinit__(self, *args, **kwargs):
+        self._inst = NULL
+        self._free_inst = True
+
+        # cached property defaults
+
+
+    def __init__(self, uid, vid, pref):
+        """ExArc(self, uid, vid, pref)
+        """
+        self._inst = new cpp_execute.ExArc(<int> uid, <int> vid, <double> pref)
+    
+    
+    def __dealloc__(self):
+        if self._free_inst:
+            free(self._inst)
+
+    # attributes
+    property flow:
+        """no docstring for flow, please file a bug report!"""
+        def __get__(self):
+            return float((<cpp_execute.ExArc *> self._inst).flow)
+    
+        def __set__(self, value):
+            (<cpp_execute.ExArc *> self._inst).flow = <double> value
+    
+    
+    property pref:
+        """no docstring for pref, please file a bug report!"""
+        def __get__(self):
+            return float((<cpp_execute.ExArc *> self._inst).pref)
+    
+        def __set__(self, value):
+            (<cpp_execute.ExArc *> self._inst).pref = <double> value
+    
+    
+    property uid:
+        """no docstring for uid, please file a bug report!"""
+        def __get__(self):
+            return int((<cpp_execute.ExArc *> self._inst).uid)
+    
+        def __set__(self, value):
+            (<cpp_execute.ExArc *> self._inst).uid = <int> value
+    
+    
+    property vid:
+        """no docstring for vid, please file a bug report!"""
+        def __get__(self):
+            return int((<cpp_execute.ExArc *> self._inst).vid)
+    
+        def __set__(self, value):
+            (<cpp_execute.ExArc *> self._inst).vid = <int> value
+    
+    
+    # methods
+    
+
+    pass
+
+
+
+
+
 cdef class ArcFlow:
     """no docstring for {'tarbase': 'execute', 'tarname': 'ArcFlow', 'language': 'c++', 'srcname': 'ArcFlow', 'sidecars': (), 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
 
@@ -596,7 +895,7 @@ cdef class ArcFlow:
         raise RuntimeError('method __init__() could not be dispatched')
     
     def __dealloc__(self):
-        if self._free_inst and self._inst is not NULL:
+        if self._free_inst:
             free(self._inst)
 
     # attributes

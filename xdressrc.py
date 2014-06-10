@@ -33,9 +33,15 @@ classes = [
     apiname('Solution', 'cpp/execute.*', incfiles='execute.h'),
     apiname('GraphParams', 'cpp/execute.*', incfiles='execute.h'),
     apiname('SolverParams', 'cpp/execute.*', incfiles='execute.h'),
+    apiname('ExGroup', 'cpp/instance.*', incfiles='instance.h'),
+    apiname('ExNode', 'cpp/instance.*', incfiles='instance.h'),
+    apiname('ExArc', 'cpp/instance.*', incfiles='instance.h'),
+    apiname('ExSolver', 'cpp/instance.*', incfiles='instance.h'),
+    apiname('ExSolution', 'cpp/instance.*', incfiles='instance.h'),
     ]
 
 functions = [
     apiname('execute_exchange', 'cpp/execute.*', incfiles='execute.h'),
     apiname('test', 'cpp/execute.*', incfiles='execute.h'),
+    apiname('run', 'cpp/instance.*', incfiles='instance.h'),
     ]
