@@ -16,21 +16,37 @@ from libcpp.vector cimport vector as cpp_vector
 
 cdef extern from "execute.h" :
 
-    cdef cppclass ExArc:
+    cdef cppclass GraphParams:
         # constructors
-        ExArc() except +
-        ExArc(int) except +
-        ExArc(int, int) except +
-        ExArc(int, int, double) except +
+        GraphParams() except +
 
         # attributes
-        double flow
-        double pref
-        int uid
-        int vid
+        cpp_map[int, double] arc_pref
+        cpp_map[int, int] arc_to_unode
+        cpp_map[int, int] arc_to_vnode
+        cpp_map[int, cpp_vector[double]] constr_vals
+        cpp_map[int, double] def_constr_coeff
+        cpp_map[int, cpp_vector[int]] excl_req_nodes
+        cpp_map[int, cpp_vector[cpp_vector[int]]] excl_sup_nodes
+        std_string id
+        cpp_map[int, cpp_bool] node_excl
+        cpp_map[int, double] node_qty
+        cpp_map[int, cpp_map[int, cpp_vector[double]]] node_ucaps
+        cpp_map[int, double] req_qty
+        cpp_map[int, cpp_vector[int]] u_nodes_per_req
+        cpp_map[int, cpp_vector[int]] v_nodes_per_sup
 
         # methods
-
+        void AddRequestGroup() except +
+        void AddRequestGroup(int) except +
+        void AddRequestNode() except +
+        void AddRequestNode(int) except +
+        void AddRequestNode(int, int) except +
+        void AddSupplyGroup() except +
+        void AddSupplyGroup(int) except +
+        void AddSupplyNode() except +
+        void AddSupplyNode(int) except +
+        void AddSupplyNode(int, int) except +
         pass
 
 
@@ -81,91 +97,6 @@ cdef extern from "execute.h" :
 
         # attributes
         std_string type
-
-        # methods
-
-        pass
-
-
-
-cdef extern from "execute.h" :
-
-    cdef cppclass GraphParams:
-        # constructors
-        GraphParams() except +
-
-        # attributes
-        cpp_map[int, double] arc_pref
-        cpp_map[int, int] arc_to_unode
-        cpp_map[int, int] arc_to_vnode
-        cpp_map[int, cpp_vector[double]] constr_vals
-        cpp_map[int, double] def_constr_coeff
-        cpp_map[int, cpp_vector[int]] excl_req_nodes
-        cpp_map[int, cpp_vector[cpp_vector[int]]] excl_sup_nodes
-        std_string id
-        cpp_map[int, cpp_bool] node_excl
-        cpp_map[int, double] node_qty
-        cpp_map[int, cpp_map[int, cpp_vector[double]]] node_ucaps
-        cpp_map[int, double] req_qty
-        cpp_map[int, cpp_vector[int]] u_nodes_per_req
-        cpp_map[int, cpp_vector[int]] v_nodes_per_sup
-
-        # methods
-        void AddRequestGroup() except +
-        void AddRequestGroup(int) except +
-        void AddRequestNode() except +
-        void AddRequestNode(int) except +
-        void AddRequestNode(int, int) except +
-        void AddSupplyGroup() except +
-        void AddSupplyGroup(int) except +
-        void AddSupplyNode() except +
-        void AddSupplyNode(int) except +
-        void AddSupplyNode(int, int) except +
-        pass
-
-
-
-cdef extern from "execute.h" :
-
-    cdef cppclass ExNode:
-        # constructors
-        ExNode() except +
-        ExNode(int) except +
-        ExNode(int, cpp_bool) except +
-        ExNode(int, cpp_bool, int) except +
-        ExNode(int, cpp_bool, int, cpp_vector[double] &) except +
-        ExNode(int, cpp_bool, int, cpp_vector[double] &, cpp_bool) except +
-        ExNode(int, cpp_bool, int, cpp_vector[double] &, cpp_bool, double) except +
-
-        # attributes
-        cpp_bool excl
-        int gid
-        int id
-        cpp_bool kind
-        double qty
-        cpp_vector[double] ucaps
-
-        # methods
-
-        pass
-
-
-
-cdef extern from "execute.h" :
-
-    cdef cppclass ExGroup:
-        # constructors
-        ExGroup() except +
-        ExGroup(int) except +
-        ExGroup(int, cpp_bool) except +
-        ExGroup(int, cpp_bool, cpp_vector[double] &) except +
-        ExGroup(int, cpp_bool, cpp_vector[double] &, double) except +
-
-        # attributes
-        cpp_vector[double] caps
-        int id
-        cpp_bool kind
-        double qty
 
         # methods
 

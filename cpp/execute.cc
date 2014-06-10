@@ -86,11 +86,12 @@ void add_requests(GraphParams& params, ExchangeGraph& g, ExecContext& ctx) {
       ctx.id_to_node[n_id] = n;
     }
 
-    // add exclusive request groups
-    std::vector<int>& ids = params.excl_req_nodes[g_id];
-    for (i = 0; i != ids.size(); i++) {
-      rg->AddExclNode(ctx.id_to_node[ids[i]]);
-    }  
+    //// this is not needed because AddExclNode is called internally by the request group's AddExchangeNode
+    // // add exclusive request groups
+    // std::vector<int>& ids = params.excl_req_nodes[g_id];
+    // for (i = 0; i != ids.size(); i++) {
+    //   rg->AddExclNode(ctx.id_to_node[ids[i]]);
+    // }  
 
     // add constraint rhs
     std::vector<double>& vals = params.constr_vals[g_id];

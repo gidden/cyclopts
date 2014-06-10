@@ -1,3 +1,5 @@
+#ifndef CYCLOPTS_CPU_TIME_H_
+#define CYCLOPTS_CPU_TIME_H_
 
 /*
  * Author:  David Robert Nadeau
@@ -105,3 +107,5 @@ double getCPUTime( )
 
   return -1;/* Failed. */
 }
+
+#endif // CYCLOPTS_CPU_TIME_H_
