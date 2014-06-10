@@ -31,6 +31,8 @@ from libcpp.map cimport map as cpp_map
 from cyclopts cimport cpp_execute
 from libcpp cimport bool as cpp_bool
 cimport dtypes
+from cyclopts cimport cpp_instance
+cimport instance
 cimport execute
 from libcpp.vector cimport vector as cpp_vector
 cimport numpy as np
@@ -38,6 +40,7 @@ cimport numpy as np
 # Imports For Types
 import execute
 import numpy as np
+import instance
 import collections
 import dtypes
 
@@ -59,6 +62,15 @@ cdef extern from *:
 
 
 # cpp_execute.ArcFlow vector
+
+
+# cpp_instance.ExGroup vector
+
+
+# cpp_instance.ExNode vector
+
+
+# cpp_instance.ExArc vector
 
 
 # cpp_vector[int] vector

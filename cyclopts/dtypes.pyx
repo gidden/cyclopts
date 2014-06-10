@@ -24,13 +24,16 @@ cimport xdress_extra_types
 
 # Cython imports for types
 from cyclopts cimport cpp_execute
+cimport numpy as np
+from cyclopts cimport cpp_instance
+cimport instance
 cimport execute
 from libcpp.vector cimport vector as cpp_vector
-cimport numpy as np
 
 # imports for types
 import execute
 import numpy as np
+import instance
 
 dtypes = {}
 
@@ -768,6 +771,738 @@ cdef int xd_arcflow_num = PyArray_RegisterDataType(c_xd_arcflow_descr)
 dtypes['arcflow'] = xd_arcflow
 dtypes['xd_arcflow'] = xd_arcflow
 dtypes[xd_arcflow_num] = xd_arcflow
+
+
+
+# cpp_instance.ExGroup dtype
+cdef MemoryKnight[cpp_instance.ExGroup] mk_exgroup = MemoryKnight[cpp_instance.ExGroup]()
+cdef MemoryKnight[PyXDExGroup_Type] mk_exgroup_type = MemoryKnight[PyXDExGroup_Type]()
+
+cdef object pyxd_exgroup_getitem(void * data, void * arr):
+    cdef instance.ExGroup data_proxy
+    data_proxy = instance.ExGroup()
+    (<cpp_instance.ExGroup *> data_proxy._inst)[0] = (<cpp_instance.ExGroup *> data)[0]
+    pyval = data_proxy
+    return pyval
+
+cdef int pyxd_exgroup_setitem(object value, void * data, void * arr):
+    cdef cpp_instance.ExGroup * new_data
+    cdef instance.ExGroup value_proxy
+    if isinstance(value, instance.ExGroup):
+        value_proxy = <instance.ExGroup> value
+        new_data = mk_exgroup.renew(data)
+        new_data[0] = (<cpp_instance.ExGroup *> value_proxy._inst)[0]
+        return 0
+    else:
+        return -1
+
+cdef void pyxd_exgroup_copyswapn(void * dest, np.npy_intp dstride, void * src, np.npy_intp sstride, np.npy_intp n, int swap, void * arr):
+    cdef np.npy_intp i
+    cdef char * a 
+    cdef char * b 
+    cdef char c = 0
+    cdef int j
+    cdef int m
+    cdef cpp_instance.ExGroup * new_dest
+
+    if src != NULL:
+        if (sstride == sizeof(cpp_instance.ExGroup) and dstride == sizeof(cpp_instance.ExGroup)):
+            new_dest = mk_exgroup.renew(dest)
+            new_dest[0] = deref(<cpp_instance.ExGroup *> src)
+        else:
+            a = <char *> dest
+            b = <char *> src
+            for i in range(n):
+                new_dest = mk_exgroup.renew(<void *> a)
+                new_dest[0] = deref(<cpp_instance.ExGroup *> b)
+                a += dstride
+                b += sstride
+    if swap: 
+        m = sizeof(cpp_instance.ExGroup) / 2
+        a = <char *> dest
+        for i in range(n, 0, -1):
+            b = a + (sizeof(cpp_instance.ExGroup) - 1);
+            for j in range(m):
+                c = a[0]
+                a[0] = b[0]
+                a += 1
+                b[0] = c
+                b -= 1
+            a += dstride - m
+
+cdef void pyxd_exgroup_copyswap(void * dest, void * src, int swap, void * arr):
+    cdef char * a 
+    cdef char * b 
+    cdef char c = 0
+    cdef int j
+    cdef int m
+    cdef cpp_instance.ExGroup * new_dest
+    if src != NULL:
+        new_dest = mk_exgroup.renew(dest)
+        new_dest[0] = (<cpp_instance.ExGroup *> src)[0]
+    if swap:
+        m = sizeof(cpp_instance.ExGroup) / 2
+        a = <char *> dest
+        b = a + (sizeof(cpp_instance.ExGroup) - 1);
+        for j in range(m):
+            c = a[0]
+            a[0] = b[0]
+            a += 1
+            b[0] = c
+            b -= 1
+
+cdef np.npy_bool pyxd_exgroup_nonzero(void * data, void * arr):
+    return (data != NULL)
+    # FIXME comparisons not defined for arbitrary types
+    #cdef cpp_instance.ExGroup zero = cpp_instance.ExGroup()
+    #return ((<cpp_instance.ExGroup *> data)[0] != zero)
+
+cdef int pyxd_exgroup_compare(const void * d1, const void * d2, void * arr):
+    return (d1 == d2) - 1
+    # FIXME comparisons not defined for arbitrary types
+    #if deref(<cpp_instance.ExGroup *> d1) == deref(<cpp_instance.ExGroup *> d2):
+    #    return 0
+    #else:
+    #    return -1
+
+cdef PyArray_ArrFuncs PyXD_ExGroup_ArrFuncs 
+PyArray_InitArrFuncs(&PyXD_ExGroup_ArrFuncs)
+PyXD_ExGroup_ArrFuncs.getitem = <PyArray_GetItemFunc *> (&pyxd_exgroup_getitem)
+PyXD_ExGroup_ArrFuncs.setitem = <PyArray_SetItemFunc *> (&pyxd_exgroup_setitem)
+PyXD_ExGroup_ArrFuncs.copyswapn = <PyArray_CopySwapNFunc *> (&pyxd_exgroup_copyswapn)
+PyXD_ExGroup_ArrFuncs.copyswap = <PyArray_CopySwapFunc *> (&pyxd_exgroup_copyswap)
+PyXD_ExGroup_ArrFuncs.nonzero = <PyArray_NonzeroFunc *> (&pyxd_exgroup_nonzero)
+PyXD_ExGroup_ArrFuncs.compare = <PyArray_CompareFunc *> (&pyxd_exgroup_compare)
+
+cdef object pyxd_exgroup_type_alloc(PyTypeObject * self, Py_ssize_t nitems):
+    cdef PyXDExGroup_Type * cval
+    cdef object pyval
+    cval = mk_exgroup_type.defnew()
+    cval.ob_typ = self
+    pyval = <object> cval
+    return pyval
+
+cdef void pyxd_exgroup_type_dealloc(object self):
+    cdef PyXDExGroup_Type * cself = <PyXDExGroup_Type *> self
+    mk_exgroup_type.deall(cself)
+    return
+
+cdef object pyxd_exgroup_type_new(PyTypeObject * subtype, object args, object kwds):
+    return pyxd_exgroup_type_alloc(subtype, 0)
+
+cdef void pyxd_exgroup_type_free(void * self):
+    return
+
+cdef object pyxd_exgroup_type_str(object self):
+    cdef PyXDExGroup_Type * cself = <PyXDExGroup_Type *> self
+    cdef instance.ExGroup val_proxy
+    val_proxy = instance.ExGroup()
+    (<cpp_instance.ExGroup *> val_proxy._inst)[0] = (cself.obval)
+    pyval = val_proxy
+    s = str(pyval)
+    return s
+
+cdef object pyxd_exgroup_type_repr(object self):
+    cdef PyXDExGroup_Type * cself = <PyXDExGroup_Type *> self
+    cdef instance.ExGroup val_proxy
+    val_proxy = instance.ExGroup()
+    (<cpp_instance.ExGroup *> val_proxy._inst)[0] = (cself.obval)
+    pyval = val_proxy
+    s = repr(pyval)
+    return s
+
+cdef int pyxd_exgroup_type_compare(object a, object b):
+    return (a is b) - 1
+    # FIXME comparisons not defined for arbitrary types
+    #cdef PyXDExGroup_Type * x
+    #cdef PyXDExGroup_Type * y
+    #if type(a) is not type(b):
+    #    raise NotImplementedError
+    #x = <PyXDExGroup_Type *> a
+    #y = <PyXDExGroup_Type *> b
+    #if (x.obval == y.obval):
+    #    return 0
+    #elif (x.obval < y.obval):
+    #    return -1
+    #elif (x.obval > y.obval):
+    #    return 1
+    #else:
+    #    raise NotImplementedError
+
+cdef object pyxd_exgroup_type_richcompare(object a, object b, int op):
+    if op == Py_EQ:
+        return (a is b)
+    elif op == Py_NE:
+        return (a is not b)
+    else:
+        return NotImplemented
+    # FIXME comparisons not defined for arbitrary types
+    #cdef PyXDExGroup_Type * x
+    #cdef PyXDExGroup_Type * y
+    #if type(a) is not type(b):
+    #    return NotImplemented
+    #x = <PyXDExGroup_Type *> a
+    #y = <PyXDExGroup_Type *> b
+    #if op == Py_LT:
+    #    return (x.obval < y.obval)
+    #elif op == Py_LE:
+    #    return (x.obval <= y.obval)
+    #elif op == Py_EQ:
+    #    return (x.obval == y.obval)
+    #elif op == Py_NE:
+    #    return (x.obval != y.obval)
+    #elif op == Py_GT:
+    #    return (x.obval > y.obval)
+    #elif op == Py_GE:
+    #    return (x.obval >= y.obval)
+    #else:
+    #    return NotImplemented    
+
+cdef long pyxd_exgroup_type_hash(object self):
+    return id(self)
+
+cdef PyMemberDef pyxd_exgroup_type_members[1]
+pyxd_exgroup_type_members[0] = PyMemberDef(NULL, 0, 0, 0, NULL)
+
+cdef PyGetSetDef pyxd_exgroup_type_getset[1]
+pyxd_exgroup_type_getset[0] = PyGetSetDef(NULL)
+
+cdef bint pyxd_exgroup_is_ready
+cdef type PyXD_ExGroup = type("xd_exgroup", ((<object> PyArray_API[10]),), {})
+pyxd_exgroup_is_ready = PyType_Ready(<object> PyXD_ExGroup)
+(<PyTypeObject *> PyXD_ExGroup).tp_basicsize = sizeof(PyXDExGroup_Type)
+(<PyTypeObject *> PyXD_ExGroup).tp_itemsize = 0
+(<PyTypeObject *> PyXD_ExGroup).tp_doc = "Python scalar type for cpp_instance.ExGroup"
+(<PyTypeObject *> PyXD_ExGroup).tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_CHECKTYPES | Py_TPFLAGS_HEAPTYPE
+(<PyTypeObject *> PyXD_ExGroup).tp_alloc = pyxd_exgroup_type_alloc
+(<PyTypeObject *> PyXD_ExGroup).tp_dealloc = pyxd_exgroup_type_dealloc
+(<PyTypeObject *> PyXD_ExGroup).tp_new = pyxd_exgroup_type_new
+(<PyTypeObject *> PyXD_ExGroup).tp_free = pyxd_exgroup_type_free
+(<PyTypeObject *> PyXD_ExGroup).tp_str = pyxd_exgroup_type_str
+(<PyTypeObject *> PyXD_ExGroup).tp_repr = pyxd_exgroup_type_repr
+(<PyTypeObject *> PyXD_ExGroup).tp_base = (<PyTypeObject *> PyArray_API[10])  # PyGenericArrType_Type
+(<PyTypeObject *> PyXD_ExGroup).tp_hash = pyxd_exgroup_type_hash
+emit_ifpy2k()
+(<PyTypeObject *> PyXD_ExGroup).tp_compare = &pyxd_exgroup_type_compare
+emit_endif()
+(<PyTypeObject *> PyXD_ExGroup).tp_richcompare = pyxd_exgroup_type_richcompare
+(<PyTypeObject *> PyXD_ExGroup).tp_members = pyxd_exgroup_type_members
+(<PyTypeObject *> PyXD_ExGroup).tp_getset = pyxd_exgroup_type_getset
+pyxd_exgroup_is_ready = PyType_Ready(<object> PyXD_ExGroup)
+Py_INCREF(PyXD_ExGroup)
+XDExGroup = PyXD_ExGroup
+
+cdef PyArray_Descr * c_xd_exgroup_descr = <PyArray_Descr *> malloc(sizeof(PyArray_Descr))
+(<PyObject *> c_xd_exgroup_descr).ob_refcnt = 0 # ob_refcnt
+(<PyObject *> c_xd_exgroup_descr).ob_type = <PyTypeObject *> PyArray_API[3]
+c_xd_exgroup_descr.typeobj = <PyTypeObject *> PyXD_ExGroup # typeobj
+c_xd_exgroup_descr.kind = 'x'  # kind, for xdress
+c_xd_exgroup_descr.type = 'x'  # type
+c_xd_exgroup_descr.byteorder = '='  # byteorder
+c_xd_exgroup_descr.flags = 0    # flags
+c_xd_exgroup_descr.type_num = 0    # type_num, assigned at registration
+c_xd_exgroup_descr.elsize = sizeof(cpp_instance.ExGroup)  # elsize, 
+c_xd_exgroup_descr.alignment = 8  # alignment
+c_xd_exgroup_descr.subarray = NULL  # subarray
+c_xd_exgroup_descr.fields = NULL  # fields
+c_xd_exgroup_descr.names = NULL
+(<PyArray_Descr *> c_xd_exgroup_descr).f = <PyArray_ArrFuncs *> &PyXD_ExGroup_ArrFuncs  # f == PyArray_ArrFuncs
+
+cdef object xd_exgroup_descr = <object> (<void *> c_xd_exgroup_descr)
+Py_INCREF(<object> xd_exgroup_descr)
+xd_exgroup = xd_exgroup_descr
+cdef int xd_exgroup_num = PyArray_RegisterDataType(c_xd_exgroup_descr)
+dtypes['exgroup'] = xd_exgroup
+dtypes['xd_exgroup'] = xd_exgroup
+dtypes[xd_exgroup_num] = xd_exgroup
+
+
+
+# cpp_instance.ExNode dtype
+cdef MemoryKnight[cpp_instance.ExNode] mk_exnode = MemoryKnight[cpp_instance.ExNode]()
+cdef MemoryKnight[PyXDExNode_Type] mk_exnode_type = MemoryKnight[PyXDExNode_Type]()
+
+cdef object pyxd_exnode_getitem(void * data, void * arr):
+    cdef instance.ExNode data_proxy
+    data_proxy = instance.ExNode()
+    (<cpp_instance.ExNode *> data_proxy._inst)[0] = (<cpp_instance.ExNode *> data)[0]
+    pyval = data_proxy
+    return pyval
+
+cdef int pyxd_exnode_setitem(object value, void * data, void * arr):
+    cdef cpp_instance.ExNode * new_data
+    cdef instance.ExNode value_proxy
+    if isinstance(value, instance.ExNode):
+        value_proxy = <instance.ExNode> value
+        new_data = mk_exnode.renew(data)
+        new_data[0] = (<cpp_instance.ExNode *> value_proxy._inst)[0]
+        return 0
+    else:
+        return -1
+
+cdef void pyxd_exnode_copyswapn(void * dest, np.npy_intp dstride, void * src, np.npy_intp sstride, np.npy_intp n, int swap, void * arr):
+    cdef np.npy_intp i
+    cdef char * a 
+    cdef char * b 
+    cdef char c = 0
+    cdef int j
+    cdef int m
+    cdef cpp_instance.ExNode * new_dest
+
+    if src != NULL:
+        if (sstride == sizeof(cpp_instance.ExNode) and dstride == sizeof(cpp_instance.ExNode)):
+            new_dest = mk_exnode.renew(dest)
+            new_dest[0] = deref(<cpp_instance.ExNode *> src)
+        else:
+            a = <char *> dest
+            b = <char *> src
+            for i in range(n):
+                new_dest = mk_exnode.renew(<void *> a)
+                new_dest[0] = deref(<cpp_instance.ExNode *> b)
+                a += dstride
+                b += sstride
+    if swap: 
+        m = sizeof(cpp_instance.ExNode) / 2
+        a = <char *> dest
+        for i in range(n, 0, -1):
+            b = a + (sizeof(cpp_instance.ExNode) - 1);
+            for j in range(m):
+                c = a[0]
+                a[0] = b[0]
+                a += 1
+                b[0] = c
+                b -= 1
+            a += dstride - m
+
+cdef void pyxd_exnode_copyswap(void * dest, void * src, int swap, void * arr):
+    cdef char * a 
+    cdef char * b 
+    cdef char c = 0
+    cdef int j
+    cdef int m
+    cdef cpp_instance.ExNode * new_dest
+    if src != NULL:
+        new_dest = mk_exnode.renew(dest)
+        new_dest[0] = (<cpp_instance.ExNode *> src)[0]
+    if swap:
+        m = sizeof(cpp_instance.ExNode) / 2
+        a = <char *> dest
+        b = a + (sizeof(cpp_instance.ExNode) - 1);
+        for j in range(m):
+            c = a[0]
+            a[0] = b[0]
+            a += 1
+            b[0] = c
+            b -= 1
+
+cdef np.npy_bool pyxd_exnode_nonzero(void * data, void * arr):
+    return (data != NULL)
+    # FIXME comparisons not defined for arbitrary types
+    #cdef cpp_instance.ExNode zero = cpp_instance.ExNode()
+    #return ((<cpp_instance.ExNode *> data)[0] != zero)
+
+cdef int pyxd_exnode_compare(const void * d1, const void * d2, void * arr):
+    return (d1 == d2) - 1
+    # FIXME comparisons not defined for arbitrary types
+    #if deref(<cpp_instance.ExNode *> d1) == deref(<cpp_instance.ExNode *> d2):
+    #    return 0
+    #else:
+    #    return -1
+
+cdef PyArray_ArrFuncs PyXD_ExNode_ArrFuncs 
+PyArray_InitArrFuncs(&PyXD_ExNode_ArrFuncs)
+PyXD_ExNode_ArrFuncs.getitem = <PyArray_GetItemFunc *> (&pyxd_exnode_getitem)
+PyXD_ExNode_ArrFuncs.setitem = <PyArray_SetItemFunc *> (&pyxd_exnode_setitem)
+PyXD_ExNode_ArrFuncs.copyswapn = <PyArray_CopySwapNFunc *> (&pyxd_exnode_copyswapn)
+PyXD_ExNode_ArrFuncs.copyswap = <PyArray_CopySwapFunc *> (&pyxd_exnode_copyswap)
+PyXD_ExNode_ArrFuncs.nonzero = <PyArray_NonzeroFunc *> (&pyxd_exnode_nonzero)
+PyXD_ExNode_ArrFuncs.compare = <PyArray_CompareFunc *> (&pyxd_exnode_compare)
+
+cdef object pyxd_exnode_type_alloc(PyTypeObject * self, Py_ssize_t nitems):
+    cdef PyXDExNode_Type * cval
+    cdef object pyval
+    cval = mk_exnode_type.defnew()
+    cval.ob_typ = self
+    pyval = <object> cval
+    return pyval
+
+cdef void pyxd_exnode_type_dealloc(object self):
+    cdef PyXDExNode_Type * cself = <PyXDExNode_Type *> self
+    mk_exnode_type.deall(cself)
+    return
+
+cdef object pyxd_exnode_type_new(PyTypeObject * subtype, object args, object kwds):
+    return pyxd_exnode_type_alloc(subtype, 0)
+
+cdef void pyxd_exnode_type_free(void * self):
+    return
+
+cdef object pyxd_exnode_type_str(object self):
+    cdef PyXDExNode_Type * cself = <PyXDExNode_Type *> self
+    cdef instance.ExNode val_proxy
+    val_proxy = instance.ExNode()
+    (<cpp_instance.ExNode *> val_proxy._inst)[0] = (cself.obval)
+    pyval = val_proxy
+    s = str(pyval)
+    return s
+
+cdef object pyxd_exnode_type_repr(object self):
+    cdef PyXDExNode_Type * cself = <PyXDExNode_Type *> self
+    cdef instance.ExNode val_proxy
+    val_proxy = instance.ExNode()
+    (<cpp_instance.ExNode *> val_proxy._inst)[0] = (cself.obval)
+    pyval = val_proxy
+    s = repr(pyval)
+    return s
+
+cdef int pyxd_exnode_type_compare(object a, object b):
+    return (a is b) - 1
+    # FIXME comparisons not defined for arbitrary types
+    #cdef PyXDExNode_Type * x
+    #cdef PyXDExNode_Type * y
+    #if type(a) is not type(b):
+    #    raise NotImplementedError
+    #x = <PyXDExNode_Type *> a
+    #y = <PyXDExNode_Type *> b
+    #if (x.obval == y.obval):
+    #    return 0
+    #elif (x.obval < y.obval):
+    #    return -1
+    #elif (x.obval > y.obval):
+    #    return 1
+    #else:
+    #    raise NotImplementedError
+
+cdef object pyxd_exnode_type_richcompare(object a, object b, int op):
+    if op == Py_EQ:
+        return (a is b)
+    elif op == Py_NE:
+        return (a is not b)
+    else:
+        return NotImplemented
+    # FIXME comparisons not defined for arbitrary types
+    #cdef PyXDExNode_Type * x
+    #cdef PyXDExNode_Type * y
+    #if type(a) is not type(b):
+    #    return NotImplemented
+    #x = <PyXDExNode_Type *> a
+    #y = <PyXDExNode_Type *> b
+    #if op == Py_LT:
+    #    return (x.obval < y.obval)
+    #elif op == Py_LE:
+    #    return (x.obval <= y.obval)
+    #elif op == Py_EQ:
+    #    return (x.obval == y.obval)
+    #elif op == Py_NE:
+    #    return (x.obval != y.obval)
+    #elif op == Py_GT:
+    #    return (x.obval > y.obval)
+    #elif op == Py_GE:
+    #    return (x.obval >= y.obval)
+    #else:
+    #    return NotImplemented    
+
+cdef long pyxd_exnode_type_hash(object self):
+    return id(self)
+
+cdef PyMemberDef pyxd_exnode_type_members[1]
+pyxd_exnode_type_members[0] = PyMemberDef(NULL, 0, 0, 0, NULL)
+
+cdef PyGetSetDef pyxd_exnode_type_getset[1]
+pyxd_exnode_type_getset[0] = PyGetSetDef(NULL)
+
+cdef bint pyxd_exnode_is_ready
+cdef type PyXD_ExNode = type("xd_exnode", ((<object> PyArray_API[10]),), {})
+pyxd_exnode_is_ready = PyType_Ready(<object> PyXD_ExNode)
+(<PyTypeObject *> PyXD_ExNode).tp_basicsize = sizeof(PyXDExNode_Type)
+(<PyTypeObject *> PyXD_ExNode).tp_itemsize = 0
+(<PyTypeObject *> PyXD_ExNode).tp_doc = "Python scalar type for cpp_instance.ExNode"
+(<PyTypeObject *> PyXD_ExNode).tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_CHECKTYPES | Py_TPFLAGS_HEAPTYPE
+(<PyTypeObject *> PyXD_ExNode).tp_alloc = pyxd_exnode_type_alloc
+(<PyTypeObject *> PyXD_ExNode).tp_dealloc = pyxd_exnode_type_dealloc
+(<PyTypeObject *> PyXD_ExNode).tp_new = pyxd_exnode_type_new
+(<PyTypeObject *> PyXD_ExNode).tp_free = pyxd_exnode_type_free
+(<PyTypeObject *> PyXD_ExNode).tp_str = pyxd_exnode_type_str
+(<PyTypeObject *> PyXD_ExNode).tp_repr = pyxd_exnode_type_repr
+(<PyTypeObject *> PyXD_ExNode).tp_base = (<PyTypeObject *> PyArray_API[10])  # PyGenericArrType_Type
+(<PyTypeObject *> PyXD_ExNode).tp_hash = pyxd_exnode_type_hash
+emit_ifpy2k()
+(<PyTypeObject *> PyXD_ExNode).tp_compare = &pyxd_exnode_type_compare
+emit_endif()
+(<PyTypeObject *> PyXD_ExNode).tp_richcompare = pyxd_exnode_type_richcompare
+(<PyTypeObject *> PyXD_ExNode).tp_members = pyxd_exnode_type_members
+(<PyTypeObject *> PyXD_ExNode).tp_getset = pyxd_exnode_type_getset
+pyxd_exnode_is_ready = PyType_Ready(<object> PyXD_ExNode)
+Py_INCREF(PyXD_ExNode)
+XDExNode = PyXD_ExNode
+
+cdef PyArray_Descr * c_xd_exnode_descr = <PyArray_Descr *> malloc(sizeof(PyArray_Descr))
+(<PyObject *> c_xd_exnode_descr).ob_refcnt = 0 # ob_refcnt
+(<PyObject *> c_xd_exnode_descr).ob_type = <PyTypeObject *> PyArray_API[3]
+c_xd_exnode_descr.typeobj = <PyTypeObject *> PyXD_ExNode # typeobj
+c_xd_exnode_descr.kind = 'x'  # kind, for xdress
+c_xd_exnode_descr.type = 'x'  # type
+c_xd_exnode_descr.byteorder = '='  # byteorder
+c_xd_exnode_descr.flags = 0    # flags
+c_xd_exnode_descr.type_num = 0    # type_num, assigned at registration
+c_xd_exnode_descr.elsize = sizeof(cpp_instance.ExNode)  # elsize, 
+c_xd_exnode_descr.alignment = 8  # alignment
+c_xd_exnode_descr.subarray = NULL  # subarray
+c_xd_exnode_descr.fields = NULL  # fields
+c_xd_exnode_descr.names = NULL
+(<PyArray_Descr *> c_xd_exnode_descr).f = <PyArray_ArrFuncs *> &PyXD_ExNode_ArrFuncs  # f == PyArray_ArrFuncs
+
+cdef object xd_exnode_descr = <object> (<void *> c_xd_exnode_descr)
+Py_INCREF(<object> xd_exnode_descr)
+xd_exnode = xd_exnode_descr
+cdef int xd_exnode_num = PyArray_RegisterDataType(c_xd_exnode_descr)
+dtypes['exnode'] = xd_exnode
+dtypes['xd_exnode'] = xd_exnode
+dtypes[xd_exnode_num] = xd_exnode
+
+
+
+# cpp_instance.ExArc dtype
+cdef MemoryKnight[cpp_instance.ExArc] mk_exarc = MemoryKnight[cpp_instance.ExArc]()
+cdef MemoryKnight[PyXDExArc_Type] mk_exarc_type = MemoryKnight[PyXDExArc_Type]()
+
+cdef object pyxd_exarc_getitem(void * data, void * arr):
+    cdef instance.ExArc data_proxy
+    data_proxy = instance.ExArc()
+    (<cpp_instance.ExArc *> data_proxy._inst)[0] = (<cpp_instance.ExArc *> data)[0]
+    pyval = data_proxy
+    return pyval
+
+cdef int pyxd_exarc_setitem(object value, void * data, void * arr):
+    cdef cpp_instance.ExArc * new_data
+    cdef instance.ExArc value_proxy
+    if isinstance(value, instance.ExArc):
+        value_proxy = <instance.ExArc> value
+        new_data = mk_exarc.renew(data)
+        new_data[0] = (<cpp_instance.ExArc *> value_proxy._inst)[0]
+        return 0
+    else:
+        return -1
+
+cdef void pyxd_exarc_copyswapn(void * dest, np.npy_intp dstride, void * src, np.npy_intp sstride, np.npy_intp n, int swap, void * arr):
+    cdef np.npy_intp i
+    cdef char * a 
+    cdef char * b 
+    cdef char c = 0
+    cdef int j
+    cdef int m
+    cdef cpp_instance.ExArc * new_dest
+
+    if src != NULL:
+        if (sstride == sizeof(cpp_instance.ExArc) and dstride == sizeof(cpp_instance.ExArc)):
+            new_dest = mk_exarc.renew(dest)
+            new_dest[0] = deref(<cpp_instance.ExArc *> src)
+        else:
+            a = <char *> dest
+            b = <char *> src
+            for i in range(n):
+                new_dest = mk_exarc.renew(<void *> a)
+                new_dest[0] = deref(<cpp_instance.ExArc *> b)
+                a += dstride
+                b += sstride
+    if swap: 
+        m = sizeof(cpp_instance.ExArc) / 2
+        a = <char *> dest
+        for i in range(n, 0, -1):
+            b = a + (sizeof(cpp_instance.ExArc) - 1);
+            for j in range(m):
+                c = a[0]
+                a[0] = b[0]
+                a += 1
+                b[0] = c
+                b -= 1
+            a += dstride - m
+
+cdef void pyxd_exarc_copyswap(void * dest, void * src, int swap, void * arr):
+    cdef char * a 
+    cdef char * b 
+    cdef char c = 0
+    cdef int j
+    cdef int m
+    cdef cpp_instance.ExArc * new_dest
+    if src != NULL:
+        new_dest = mk_exarc.renew(dest)
+        new_dest[0] = (<cpp_instance.ExArc *> src)[0]
+    if swap:
+        m = sizeof(cpp_instance.ExArc) / 2
+        a = <char *> dest
+        b = a + (sizeof(cpp_instance.ExArc) - 1);
+        for j in range(m):
+            c = a[0]
+            a[0] = b[0]
+            a += 1
+            b[0] = c
+            b -= 1
+
+cdef np.npy_bool pyxd_exarc_nonzero(void * data, void * arr):
+    return (data != NULL)
+    # FIXME comparisons not defined for arbitrary types
+    #cdef cpp_instance.ExArc zero = cpp_instance.ExArc()
+    #return ((<cpp_instance.ExArc *> data)[0] != zero)
+
+cdef int pyxd_exarc_compare(const void * d1, const void * d2, void * arr):
+    return (d1 == d2) - 1
+    # FIXME comparisons not defined for arbitrary types
+    #if deref(<cpp_instance.ExArc *> d1) == deref(<cpp_instance.ExArc *> d2):
+    #    return 0
+    #else:
+    #    return -1
+
+cdef PyArray_ArrFuncs PyXD_ExArc_ArrFuncs 
+PyArray_InitArrFuncs(&PyXD_ExArc_ArrFuncs)
+PyXD_ExArc_ArrFuncs.getitem = <PyArray_GetItemFunc *> (&pyxd_exarc_getitem)
+PyXD_ExArc_ArrFuncs.setitem = <PyArray_SetItemFunc *> (&pyxd_exarc_setitem)
+PyXD_ExArc_ArrFuncs.copyswapn = <PyArray_CopySwapNFunc *> (&pyxd_exarc_copyswapn)
+PyXD_ExArc_ArrFuncs.copyswap = <PyArray_CopySwapFunc *> (&pyxd_exarc_copyswap)
+PyXD_ExArc_ArrFuncs.nonzero = <PyArray_NonzeroFunc *> (&pyxd_exarc_nonzero)
+PyXD_ExArc_ArrFuncs.compare = <PyArray_CompareFunc *> (&pyxd_exarc_compare)
+
+cdef object pyxd_exarc_type_alloc(PyTypeObject * self, Py_ssize_t nitems):
+    cdef PyXDExArc_Type * cval
+    cdef object pyval
+    cval = mk_exarc_type.defnew()
+    cval.ob_typ = self
+    pyval = <object> cval
+    return pyval
+
+cdef void pyxd_exarc_type_dealloc(object self):
+    cdef PyXDExArc_Type * cself = <PyXDExArc_Type *> self
+    mk_exarc_type.deall(cself)
+    return
+
+cdef object pyxd_exarc_type_new(PyTypeObject * subtype, object args, object kwds):
+    return pyxd_exarc_type_alloc(subtype, 0)
+
+cdef void pyxd_exarc_type_free(void * self):
+    return
+
+cdef object pyxd_exarc_type_str(object self):
+    cdef PyXDExArc_Type * cself = <PyXDExArc_Type *> self
+    cdef instance.ExArc val_proxy
+    val_proxy = instance.ExArc()
+    (<cpp_instance.ExArc *> val_proxy._inst)[0] = (cself.obval)
+    pyval = val_proxy
+    s = str(pyval)
+    return s
+
+cdef object pyxd_exarc_type_repr(object self):
+    cdef PyXDExArc_Type * cself = <PyXDExArc_Type *> self
+    cdef instance.ExArc val_proxy
+    val_proxy = instance.ExArc()
+    (<cpp_instance.ExArc *> val_proxy._inst)[0] = (cself.obval)
+    pyval = val_proxy
+    s = repr(pyval)
+    return s
+
+cdef int pyxd_exarc_type_compare(object a, object b):
+    return (a is b) - 1
+    # FIXME comparisons not defined for arbitrary types
+    #cdef PyXDExArc_Type * x
+    #cdef PyXDExArc_Type * y
+    #if type(a) is not type(b):
+    #    raise NotImplementedError
+    #x = <PyXDExArc_Type *> a
+    #y = <PyXDExArc_Type *> b
+    #if (x.obval == y.obval):
+    #    return 0
+    #elif (x.obval < y.obval):
+    #    return -1
+    #elif (x.obval > y.obval):
+    #    return 1
+    #else:
+    #    raise NotImplementedError
+
+cdef object pyxd_exarc_type_richcompare(object a, object b, int op):
+    if op == Py_EQ:
+        return (a is b)
+    elif op == Py_NE:
+        return (a is not b)
+    else:
+        return NotImplemented
+    # FIXME comparisons not defined for arbitrary types
+    #cdef PyXDExArc_Type * x
+    #cdef PyXDExArc_Type * y
+    #if type(a) is not type(b):
+    #    return NotImplemented
+    #x = <PyXDExArc_Type *> a
+    #y = <PyXDExArc_Type *> b
+    #if op == Py_LT:
+    #    return (x.obval < y.obval)
+    #elif op == Py_LE:
+    #    return (x.obval <= y.obval)
+    #elif op == Py_EQ:
+    #    return (x.obval == y.obval)
+    #elif op == Py_NE:
+    #    return (x.obval != y.obval)
+    #elif op == Py_GT:
+    #    return (x.obval > y.obval)
+    #elif op == Py_GE:
+    #    return (x.obval >= y.obval)
+    #else:
+    #    return NotImplemented    
+
+cdef long pyxd_exarc_type_hash(object self):
+    return id(self)
+
+cdef PyMemberDef pyxd_exarc_type_members[1]
+pyxd_exarc_type_members[0] = PyMemberDef(NULL, 0, 0, 0, NULL)
+
+cdef PyGetSetDef pyxd_exarc_type_getset[1]
+pyxd_exarc_type_getset[0] = PyGetSetDef(NULL)
+
+cdef bint pyxd_exarc_is_ready
+cdef type PyXD_ExArc = type("xd_exarc", ((<object> PyArray_API[10]),), {})
+pyxd_exarc_is_ready = PyType_Ready(<object> PyXD_ExArc)
+(<PyTypeObject *> PyXD_ExArc).tp_basicsize = sizeof(PyXDExArc_Type)
+(<PyTypeObject *> PyXD_ExArc).tp_itemsize = 0
+(<PyTypeObject *> PyXD_ExArc).tp_doc = "Python scalar type for cpp_instance.ExArc"
+(<PyTypeObject *> PyXD_ExArc).tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_CHECKTYPES | Py_TPFLAGS_HEAPTYPE
+(<PyTypeObject *> PyXD_ExArc).tp_alloc = pyxd_exarc_type_alloc
+(<PyTypeObject *> PyXD_ExArc).tp_dealloc = pyxd_exarc_type_dealloc
+(<PyTypeObject *> PyXD_ExArc).tp_new = pyxd_exarc_type_new
+(<PyTypeObject *> PyXD_ExArc).tp_free = pyxd_exarc_type_free
+(<PyTypeObject *> PyXD_ExArc).tp_str = pyxd_exarc_type_str
+(<PyTypeObject *> PyXD_ExArc).tp_repr = pyxd_exarc_type_repr
+(<PyTypeObject *> PyXD_ExArc).tp_base = (<PyTypeObject *> PyArray_API[10])  # PyGenericArrType_Type
+(<PyTypeObject *> PyXD_ExArc).tp_hash = pyxd_exarc_type_hash
+emit_ifpy2k()
+(<PyTypeObject *> PyXD_ExArc).tp_compare = &pyxd_exarc_type_compare
+emit_endif()
+(<PyTypeObject *> PyXD_ExArc).tp_richcompare = pyxd_exarc_type_richcompare
+(<PyTypeObject *> PyXD_ExArc).tp_members = pyxd_exarc_type_members
+(<PyTypeObject *> PyXD_ExArc).tp_getset = pyxd_exarc_type_getset
+pyxd_exarc_is_ready = PyType_Ready(<object> PyXD_ExArc)
+Py_INCREF(PyXD_ExArc)
+XDExArc = PyXD_ExArc
+
+cdef PyArray_Descr * c_xd_exarc_descr = <PyArray_Descr *> malloc(sizeof(PyArray_Descr))
+(<PyObject *> c_xd_exarc_descr).ob_refcnt = 0 # ob_refcnt
+(<PyObject *> c_xd_exarc_descr).ob_type = <PyTypeObject *> PyArray_API[3]
+c_xd_exarc_descr.typeobj = <PyTypeObject *> PyXD_ExArc # typeobj
+c_xd_exarc_descr.kind = 'x'  # kind, for xdress
+c_xd_exarc_descr.type = 'x'  # type
+c_xd_exarc_descr.byteorder = '='  # byteorder
+c_xd_exarc_descr.flags = 0    # flags
+c_xd_exarc_descr.type_num = 0    # type_num, assigned at registration
+c_xd_exarc_descr.elsize = sizeof(cpp_instance.ExArc)  # elsize, 
+c_xd_exarc_descr.alignment = 8  # alignment
+c_xd_exarc_descr.subarray = NULL  # subarray
+c_xd_exarc_descr.fields = NULL  # fields
+c_xd_exarc_descr.names = NULL
+(<PyArray_Descr *> c_xd_exarc_descr).f = <PyArray_ArrFuncs *> &PyXD_ExArc_ArrFuncs  # f == PyArray_ArrFuncs
+
+cdef object xd_exarc_descr = <object> (<void *> c_xd_exarc_descr)
+Py_INCREF(<object> xd_exarc_descr)
+xd_exarc = xd_exarc_descr
+cdef int xd_exarc_num = PyArray_RegisterDataType(c_xd_exarc_descr)
+dtypes['exarc'] = xd_exarc
+dtypes['xd_exarc'] = xd_exarc
+dtypes[xd_exarc_num] = xd_exarc
 
 
 

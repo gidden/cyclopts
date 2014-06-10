@@ -21,6 +21,7 @@ cimport xdress_extra_types
 
 # Cython imports for types
 from cyclopts cimport cpp_execute
+from cyclopts cimport cpp_instance
 from libcpp.vector cimport vector as cpp_vector
 
 cdef extern from "Python.h":
@@ -178,6 +179,45 @@ cdef int pyxd_arcflow_setitem(object value, void * data, void * arr)
 cdef void pyxd_arcflow_copyswapn(void * dest, np.npy_intp dstride, void * src, np.npy_intp sstride, np.npy_intp n, int swap, void * arr)
 cdef void pyxd_arcflow_copyswap(void * dest, void * src, int swap, void * arr)
 cdef np.npy_bool pyxd_arcflow_nonzero(void * data, void * arr)
+
+
+# cpp_instance.ExGroup dtype
+ctypedef struct PyXDExGroup_Type:
+    Py_ssize_t ob_refcnt
+    PyTypeObject *ob_typ
+    cpp_instance.ExGroup obval
+
+cdef object pyxd_exgroup_getitem(void * data, void * arr)
+cdef int pyxd_exgroup_setitem(object value, void * data, void * arr)
+cdef void pyxd_exgroup_copyswapn(void * dest, np.npy_intp dstride, void * src, np.npy_intp sstride, np.npy_intp n, int swap, void * arr)
+cdef void pyxd_exgroup_copyswap(void * dest, void * src, int swap, void * arr)
+cdef np.npy_bool pyxd_exgroup_nonzero(void * data, void * arr)
+
+
+# cpp_instance.ExNode dtype
+ctypedef struct PyXDExNode_Type:
+    Py_ssize_t ob_refcnt
+    PyTypeObject *ob_typ
+    cpp_instance.ExNode obval
+
+cdef object pyxd_exnode_getitem(void * data, void * arr)
+cdef int pyxd_exnode_setitem(object value, void * data, void * arr)
+cdef void pyxd_exnode_copyswapn(void * dest, np.npy_intp dstride, void * src, np.npy_intp sstride, np.npy_intp n, int swap, void * arr)
+cdef void pyxd_exnode_copyswap(void * dest, void * src, int swap, void * arr)
+cdef np.npy_bool pyxd_exnode_nonzero(void * data, void * arr)
+
+
+# cpp_instance.ExArc dtype
+ctypedef struct PyXDExArc_Type:
+    Py_ssize_t ob_refcnt
+    PyTypeObject *ob_typ
+    cpp_instance.ExArc obval
+
+cdef object pyxd_exarc_getitem(void * data, void * arr)
+cdef int pyxd_exarc_setitem(object value, void * data, void * arr)
+cdef void pyxd_exarc_copyswapn(void * dest, np.npy_intp dstride, void * src, np.npy_intp sstride, np.npy_intp n, int swap, void * arr)
+cdef void pyxd_exarc_copyswap(void * dest, void * src, int swap, void * arr)
+cdef np.npy_bool pyxd_exarc_nonzero(void * data, void * arr)
 
 
 # cpp_vector[int] dtype

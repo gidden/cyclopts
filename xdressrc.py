@@ -13,6 +13,9 @@ stlcontainers = [
     ('vector', 'int'),
     ('vector', 'float'),
     ('vector', 'ArcFlow'),
+    ('vector', 'ExGroup'),
+    ('vector', 'ExNode'),
+    ('vector', 'ExArc'),
     ('vector', ('vector', 'int')),
     ('map', 'int', 'float'),
     ('map', 'int', 'int'),
@@ -39,7 +42,6 @@ classes = [
     apiname('ExSolver', 'cpp/instance.*', incfiles='instance.h'),
     apiname('ExSolution', 'cpp/instance.*', incfiles='instance.h'),
     ]
-
 functions = [
     apiname('execute_exchange', 'cpp/execute.*', incfiles='execute.h'),
     apiname('test', 'cpp/execute.*', incfiles='execute.h'),

@@ -9,11 +9,17 @@ namespace cyclopts {
 /// A struct of POD and STL of PODs representation of a Cyclus ExchangeNodeGroup
 class ExGroup {
  public:
+  ExGroup() {};
   ExGroup(int id, bool kind, std::vector<double>& ucaps, double qty = 0)
     : id(id),
       kind(kind),
       caps(caps),
       qty(qty) { };
+  ExGroup(const ExGroup& other)
+    : id(other.id),
+      kind(other.kind),
+      caps(other.caps),
+      qty(other.qty) { };
 
   int id;  
   bool kind; // true == request, false == bid
@@ -24,6 +30,7 @@ class ExGroup {
 /// A struct of POD and STL of PODs representation of a Cyclus ExchangeNode
 class ExNode {
  public:
+  ExNode() {};
   ExNode(int id, int gid, bool kind, double qty = 0,
          bool excl=false, int excl_id = 0)
     : id(id),
@@ -32,6 +39,13 @@ class ExNode {
       qty(qty),
       excl(excl),
       excl_id(excl_id)  { };
+  ExNode(const ExNode& other)
+    : id(other.id),
+      gid(other.gid),
+      kind(other.kind),
+      qty(other.qty),
+      excl(other.excl),
+      excl_id(other.excl_id)  { };
   
   int id;
   int gid; // group id
@@ -49,6 +63,7 @@ class ExNode {
 /// A struct of POD and STL of PODs representation of a Cyclus Arc
 class ExArc {
  public:
+  ExArc() {};
   ExArc(int uid, std::vector<double>& ucaps,
         int vid, std::vector<double>& vcaps,
         double pref)
@@ -58,6 +73,13 @@ class ExArc {
       vcaps(vcaps),
       pref(pref),
       flow(0) { };
+  ExArc(const ExArc& other)
+    : uid(other.uid),
+      ucaps(other.ucaps),
+      vid(other.vid),
+      vcaps(other.vcaps),
+      pref(other.pref),
+      flow(other.flow) { };
 
   inline bool operator<(const ExArc& other) const {
     return uid < other.uid && vid < other.vid;

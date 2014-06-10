@@ -30,7 +30,7 @@ np.import_array()
 
 
 cdef class Solution:
-    """no docstring for {'sidecars': (), 'tarbase': 'execute', 'tarname': 'Solution', 'language': 'c++', 'srcname': 'Solution', 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'execute', 'tarname': 'Solution', 'language': 'c++', 'srcname': 'Solution', 'sidecars': (), 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
 
 
 
@@ -179,7 +179,7 @@ def test():
 
 
 cdef class SolverParams:
-    """no docstring for {'sidecars': (), 'tarbase': 'execute', 'tarname': 'SolverParams', 'language': 'c++', 'srcname': 'SolverParams', 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'execute', 'tarname': 'SolverParams', 'language': 'c++', 'srcname': 'SolverParams', 'sidecars': (), 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
 
 
 
@@ -225,7 +225,7 @@ cdef class SolverParams:
 
 
 cdef class GraphParams:
-    """no docstring for {'sidecars': (), 'tarbase': 'execute', 'tarname': 'GraphParams', 'language': 'c++', 'srcname': 'GraphParams', 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'execute', 'tarname': 'GraphParams', 'language': 'c++', 'srcname': 'GraphParams', 'sidecars': (), 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
 
 
 
@@ -526,7 +526,7 @@ cdef class GraphParams:
 
 
 cdef class ArcFlow:
-    """no docstring for {'sidecars': (), 'tarbase': 'execute', 'tarname': 'ArcFlow', 'language': 'c++', 'srcname': 'ArcFlow', 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'execute', 'tarname': 'ArcFlow', 'language': 'c++', 'srcname': 'ArcFlow', 'sidecars': (), 'incfiles': ('execute.h',), 'srcfiles': ('cpp/execute.cc', 'cpp/execute.h')}, please file a bug report!"""
 
 
 
