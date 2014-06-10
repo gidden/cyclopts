@@ -46,4 +46,6 @@ functions = [
     apiname('execute_exchange', 'cpp/execute.*', incfiles='execute.h'),
     apiname('test', 'cpp/execute.*', incfiles='execute.h'),
     apiname('Run', 'cpp/instance.*', incfiles='instance.h'),
+    apiname('Incr', 'cpp/instance.*', incfiles='instance.h'),
+    apiname('IncrOne', 'cpp/instance.*', incfiles='instance.h'),
     ]

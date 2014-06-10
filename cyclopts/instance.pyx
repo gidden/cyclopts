@@ -23,6 +23,28 @@ import numpy as np
 
 np.import_array()
 
+def Incr(arcs):
+    """Incr(arcs)
+    no docstring for Incr, please file a bug report!"""
+    cdef cpp_vector[cpp_instance.ExArc] arcs_proxy
+    cdef int iarcs
+    cdef int arcs_size
+    cdef cpp_instance.ExArc * arcs_data
+    # arcs is a ('vector', 'ExArc', 0)
+    arcs_size = len(arcs)
+    if isinstance(arcs, np.ndarray) and (<np.ndarray> arcs).descr.type_num == dtypes.xd_exarc.num:
+        arcs_data = <cpp_instance.ExArc *> np.PyArray_DATA(<np.ndarray> arcs)
+        arcs_proxy = cpp_vector[cpp_instance.ExArc](<size_t> arcs_size)
+        for iarcs in range(arcs_size):
+            arcs_proxy[iarcs] = arcs_data[iarcs]
+    else:
+        arcs_proxy = cpp_vector[cpp_instance.ExArc](<size_t> arcs_size)
+        for iarcs in range(arcs_size):
+            arcs_proxy[iarcs] = (<cpp_instance.ExArc *> (<ExArc> arcs[iarcs])._inst)[0]
+    cpp_instance.Incr(arcs_proxy)
+
+
+
 def Run(groups, nodes, arcs, solver):
     """Run(groups, nodes, arcs, solver)
     no docstring for Run, please file a bug report!"""
@@ -234,13 +256,47 @@ cdef class ExSolution:
         # cached property defaults
 
 
-    def __init__(self, time, cyclus_version):
+    def _exsolution_exsolution_0(self, ):
+        """ExSolution(self, )
+        """
+        self._inst = new cpp_instance.ExSolution()
+    
+    
+    def _exsolution_exsolution_1(self, time, cyclus_version):
         """ExSolution(self, time, cyclus_version)
         """
         cdef char * cyclus_version_proxy
         cyclus_version_bytes = cyclus_version.encode()
         self._inst = new cpp_instance.ExSolution(<double> time, std_string(<char *> cyclus_version_bytes))
     
+    
+    _exsolution_exsolution_0_argtypes = frozenset()
+    _exsolution_exsolution_1_argtypes = frozenset(((0, float), (1, str), ("time", float), ("cyclus_version", str)))
+    
+    def __init__(self, *args, **kwargs):
+        """ExSolution(self, time, cyclus_version)
+        """
+        types = set([(i, type(a)) for i, a in enumerate(args)])
+        types.update([(k, type(v)) for k, v in kwargs.items()])
+        # vtable-like dispatch for exactly matching types
+        if types <= self._exsolution_exsolution_0_argtypes:
+            self._exsolution_exsolution_0(*args, **kwargs)
+            return
+        if types <= self._exsolution_exsolution_1_argtypes:
+            self._exsolution_exsolution_1(*args, **kwargs)
+            return
+        # duck-typed dispatch based on whatever works!
+        try:
+            self._exsolution_exsolution_0(*args, **kwargs)
+            return
+        except (RuntimeError, TypeError, NameError):
+            pass
+        try:
+            self._exsolution_exsolution_1(*args, **kwargs)
+            return
+        except (RuntimeError, TypeError, NameError):
+            pass
+        raise RuntimeError('method __init__() could not be dispatched')
     
     def __dealloc__(self):
         if self._free_inst and self._inst is not NULL:
@@ -295,25 +351,25 @@ cdef class ExGroup:
         self._inst = new cpp_instance.ExGroup()
     
     
-    def _exgroup_exgroup_1(self, id, kind, ucaps, qty=0):
-        """ExGroup(self, id, kind, ucaps, qty=0)
+    def _exgroup_exgroup_1(self, id, kind, caps, qty=0):
+        """ExGroup(self, id, kind, caps, qty=0)
         """
-        cdef cpp_vector[double] ucaps_proxy
-        cdef int iucaps
-        cdef int ucaps_size
-        cdef double * ucaps_data
-        # ucaps is a (('vector', 'float64', 0), '&')
-        ucaps_size = len(ucaps)
-        if isinstance(ucaps, np.ndarray) and (<np.ndarray> ucaps).descr.type_num == np.NPY_FLOAT64:
-            ucaps_data = <double *> np.PyArray_DATA(<np.ndarray> ucaps)
-            ucaps_proxy = cpp_vector[double](<size_t> ucaps_size)
-            for iucaps in range(ucaps_size):
-                ucaps_proxy[iucaps] = ucaps_data[iucaps]
+        cdef cpp_vector[double] caps_proxy
+        cdef int icaps
+        cdef int caps_size
+        cdef double * caps_data
+        # caps is a (('vector', 'float64', 0), '&')
+        caps_size = len(caps)
+        if isinstance(caps, np.ndarray) and (<np.ndarray> caps).descr.type_num == np.NPY_FLOAT64:
+            caps_data = <double *> np.PyArray_DATA(<np.ndarray> caps)
+            caps_proxy = cpp_vector[double](<size_t> caps_size)
+            for icaps in range(caps_size):
+                caps_proxy[icaps] = caps_data[icaps]
         else:
-            ucaps_proxy = cpp_vector[double](<size_t> ucaps_size)
-            for iucaps in range(ucaps_size):
-                ucaps_proxy[iucaps] = <double> ucaps[iucaps]
-        self._inst = new cpp_instance.ExGroup(<int> id, <bint> kind, ucaps_proxy, <double> qty)
+            caps_proxy = cpp_vector[double](<size_t> caps_size)
+            for icaps in range(caps_size):
+                caps_proxy[icaps] = <double> caps[icaps]
+        self._inst = new cpp_instance.ExGroup(<int> id, <bint> kind, caps_proxy, <double> qty)
     
     
     def _exgroup_exgroup_2(self, other):
@@ -325,7 +381,7 @@ cdef class ExGroup:
     
     
     _exgroup_exgroup_0_argtypes = frozenset()
-    _exgroup_exgroup_1_argtypes = frozenset(((0, int), (1, bool), (2, np.ndarray), (3, float), ("id", int), ("kind", bool), ("ucaps", np.ndarray), ("qty", float)))
+    _exgroup_exgroup_1_argtypes = frozenset(((0, int), (1, bool), (2, np.ndarray), (3, float), ("id", int), ("kind", bool), ("caps", np.ndarray), ("qty", float)))
     _exgroup_exgroup_2_argtypes = frozenset(((0, ExGroup), ("other", ExGroup)))
     
     def __init__(self, *args, **kwargs):
@@ -428,6 +484,15 @@ cdef class ExGroup:
     
 
     pass
+
+
+
+def IncrOne(a):
+    """IncrOne(a)
+    no docstring for IncrOne, please file a bug report!"""
+    cdef ExArc a_proxy
+    a_proxy = <ExArc> a
+    cpp_instance.IncrOne((<cpp_instance.ExArc *> a_proxy._inst)[0])
 
 
 

@@ -96,7 +96,6 @@ class ExArc {
 /// Cyclus ExchangeSolver.
 class ExSolver {
  public:
-  ExSolver() { };
   explicit ExSolver(std::string type = "cbc") : type(type) { };
   std::string type;
 };
@@ -106,7 +105,7 @@ class ExSolution {
  public:
   ExSolution() { };
   ExSolution(double time, std::string cyclus_version)
-      : time(time), cyclus_version(cyclus_version) { };
+    : time(time), cyclus_version(cyclus_version) { };
   
   double time; // unit: s
   std::string cyclus_version;
@@ -116,6 +115,8 @@ class ExSolution {
 ExSolution Run(std::vector<ExGroup>& groups, std::vector<ExNode>& nodes,
                std::vector<ExArc>& arcs, ExSolver& solver);
 
+void Incr(std::vector<ExArc> arcs);
+void IncrOne(ExArc& a);
 } // namespace cyclopts
 
 #endif // CYCLOPTS_INSTANCE_H_

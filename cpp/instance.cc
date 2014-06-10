@@ -121,16 +121,33 @@ ExSolution Run(std::vector<ExGroup>& groups, std::vector<ExNode>& nodes,
   // update flows on ExArcs
   const std::vector<cyclus::Match>& matches = g.matches();
   std::map<cyclus::Arc, double> flows;
+  std::cout << "Solution with " << matches.size() << " matches.\n";
   for (int i = 0; i != matches.size(); i++) {
+    std::cout << "match with flow" << matches[i].second << "\n";
     flows.insert(matches[i]);
   }
   std::vector<ExArc>::iterator ait;
   for (ait = arcs.begin(); ait != arcs.end(); ++ait) {
-    ait->flow = flows[ctx.arc_map[*ait]];
+    ait->flow = 1;
+    // ait->flow = flows[ctx.arc_map[*ait]];
+  }
+  for (ait = arcs.begin(); ait != arcs.end(); ++ait) {
+    std::cout << "arc with uid " << ait->uid
+              << " vid " << ait->vid
+              << " flow " << ait->flow << "\n";
   }
 
   
   return ExSolution(dur, cyclus::version::core());
 }
+
+
+void Incr(std::vector<ExArc> arcs) {
+  std::vector<ExArc>::iterator ait;
+  for (ait = arcs.begin(); ait != arcs.end(); ++ait) {
+    ait->flow = 1;
+  }
+}
+void IncrOne(ExArc& a) {a.flow = 2;}
 
 } // namespace cyclopts
