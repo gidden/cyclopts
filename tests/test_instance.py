@@ -27,9 +27,9 @@ def test_inst():
     bg1 = ExGroup(gid.next(), bid, np.array([2], dtype='float'))
     bg2 = ExGroup(gid.next(), bid, np.array([1], dtype='float'))
     bg3 = ExGroup(gid.next(), bid, np.array([2], dtype='float'))
-    grps = np.array([rg1, rg2, bg1, bg2, bg3], dtype=xd_exgroup)
-    for i in range(len(grps)):
-        gprint(ExGroup(grps[i:]))
+    grps = np.array([rg1, rg2, bg1, bg2, bg3], dtype=ExGroup)
+    for g in grps:
+        gprint(g)
     
     nid = Incrementer()
     ex_grp_id = Incrementer(1)
@@ -40,7 +40,7 @@ def test_inst():
     b21 = ExNode(nid.next(), bg2.id, bid, 1, excl, ex_grp_id.next())
     b22 = ExNode(nid.next(), bg2.id, bid, 1, excl, b21.excl_id)
     b31 = ExNode(nid.next(), bg3.id, bid, 2)
-    nodes = np.array([r11, r21, r22, b11, b21, b22, b31], dtype=xd_exnode)
+    nodes = np.array([r11, r21, r22, b11, b21, b22, b31], dtype=ExNode)
 
     # p1 > p2, p3 > p4
     p1 = 2 

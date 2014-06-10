@@ -106,7 +106,7 @@ def Run(groups, nodes, arcs, solver):
 
 
 cdef class ExNode:
-    """no docstring for {'tarbase': 'instance', 'tarname': 'ExNode', 'language': 'c++', 'srcname': 'ExNode', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExNode', 'language': 'c++', 'srcname': 'ExNode', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
@@ -244,7 +244,7 @@ cdef class ExNode:
 
 
 cdef class ExSolution:
-    """no docstring for {'tarbase': 'instance', 'tarname': 'ExSolution', 'language': 'c++', 'srcname': 'ExSolution', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExSolution', 'language': 'c++', 'srcname': 'ExSolution', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
@@ -333,7 +333,7 @@ cdef class ExSolution:
 
 
 cdef class ExGroup:
-    """no docstring for {'tarbase': 'instance', 'tarname': 'ExGroup', 'language': 'c++', 'srcname': 'ExGroup', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExGroup', 'language': 'c++', 'srcname': 'ExGroup', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
@@ -499,7 +499,7 @@ def IncrOne(a):
 
 
 cdef class ExSolver:
-    """no docstring for {'tarbase': 'instance', 'tarname': 'ExSolver', 'language': 'c++', 'srcname': 'ExSolver', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExSolver', 'language': 'c++', 'srcname': 'ExSolver', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
@@ -545,7 +545,7 @@ cdef class ExSolver:
 
 
 cdef class ExArc:
-    """no docstring for {'tarbase': 'instance', 'tarname': 'ExArc', 'language': 'c++', 'srcname': 'ExArc', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExArc', 'language': 'c++', 'srcname': 'ExArc', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 

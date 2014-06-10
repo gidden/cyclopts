@@ -128,12 +128,13 @@ ExSolution Run(std::vector<ExGroup>& groups, std::vector<ExNode>& nodes,
   }
   std::vector<ExArc>::iterator ait;
   for (ait = arcs.begin(); ait != arcs.end(); ++ait) {
-    ait->flow = 1;
-    // ait->flow = flows[ctx.arc_map[*ait]];
+    ait->flow = flows[ctx.arc_map[*ait]];
+    ait->flow = 1; // remove this
   }
   for (ait = arcs.begin(); ait != arcs.end(); ++ait) {
     std::cout << "arc with uid " << ait->uid
               << " vid " << ait->vid
+              << " pref " << ait->pref
               << " flow " << ait->flow << "\n";
   }
 
