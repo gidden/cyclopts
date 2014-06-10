@@ -85,7 +85,7 @@ cdef class Solution:
         raise RuntimeError('method __init__() could not be dispatched')
     
     def __dealloc__(self):
-        if self._free_inst:
+        if self._free_inst and self._inst is not NULL:
             free(self._inst)
 
     # attributes
@@ -153,7 +153,6 @@ def execute_exchange(gparams, sparams):
     cdef GraphParams gparams_proxy
     cdef SolverParams sparams_proxy
     cdef cpp_execute.Solution rtnval
-    cdef Solution rtnval_proxy
     gparams_proxy = <GraphParams> gparams
     sparams_proxy = <SolverParams> sparams
     rtnval = cpp_execute.execute_exchange((<cpp_execute.GraphParams *> gparams_proxy._inst)[0], (<cpp_execute.SolverParams *> sparams_proxy._inst)[0])
@@ -167,11 +166,12 @@ def test():
     """test()
     no docstring for test, please file a bug report!"""
     cdef cpp_vector[cpp_execute.ArcFlow] rtnval
-    cdef np.ndarray rtnval_proxy
+    
     cdef np.npy_intp rtnval_proxy_shape[1]
     rtnval = cpp_execute.test()
     rtnval_proxy_shape[0] = <np.npy_intp> rtnval.size()
     rtnval_proxy = np.PyArray_SimpleNewFromData(1, rtnval_proxy_shape, dtypes.xd_arcflow.num, &rtnval[0])
+    rtnval_proxy = np.PyArray_Copy(rtnval_proxy)
     return rtnval_proxy
 
 
@@ -200,7 +200,7 @@ cdef class SolverParams:
     
     
     def __dealloc__(self):
-        if self._free_inst:
+        if self._free_inst and self._inst is not NULL:
             free(self._inst)
 
     # attributes
@@ -256,7 +256,7 @@ cdef class GraphParams:
     
     
     def __dealloc__(self):
-        if self._free_inst:
+        if self._free_inst and self._inst is not NULL:
             free(self._inst)
 
     # attributes
@@ -596,7 +596,7 @@ cdef class ArcFlow:
         raise RuntimeError('method __init__() could not be dispatched')
     
     def __dealloc__(self):
-        if self._free_inst:
+        if self._free_inst and self._inst is not NULL:
             free(self._inst)
 
     # attributes

@@ -45,5 +45,5 @@ classes = [
 functions = [
     apiname('execute_exchange', 'cpp/execute.*', incfiles='execute.h'),
     apiname('test', 'cpp/execute.*', incfiles='execute.h'),
-    apiname('run', 'cpp/instance.*', incfiles='instance.h'),
+    apiname('Run', 'cpp/instance.*', incfiles='instance.h'),
     ]

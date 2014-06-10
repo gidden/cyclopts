@@ -10,21 +10,81 @@
 """
 cimport cpp_instance
 cimport dtypes
+cimport instance
 cimport numpy as np
+from cyclopts cimport cpp_instance
 from libc.stdlib cimport free
 from libcpp cimport bool as cpp_bool
 from libcpp.string cimport string as std_string
 from libcpp.vector cimport vector as cpp_vector
 
+import dtypes
 import numpy as np
 
 np.import_array()
+
+def Run(groups, nodes, arcs, solver):
+    """Run(groups, nodes, arcs, solver)
+    no docstring for Run, please file a bug report!"""
+    cdef cpp_vector[cpp_instance.ExGroup] groups_proxy
+    cdef int igroups
+    cdef int groups_size
+    cdef cpp_instance.ExGroup * groups_data
+    cdef cpp_vector[cpp_instance.ExNode] nodes_proxy
+    cdef int inodes
+    cdef int nodes_size
+    cdef cpp_instance.ExNode * nodes_data
+    cdef cpp_vector[cpp_instance.ExArc] arcs_proxy
+    cdef int iarcs
+    cdef int arcs_size
+    cdef cpp_instance.ExArc * arcs_data
+    cdef ExSolver solver_proxy
+    cdef cpp_instance.ExSolution rtnval
+    # groups is a (('vector', 'ExGroup', 0), '&')
+    groups_size = len(groups)
+    if isinstance(groups, np.ndarray) and (<np.ndarray> groups).descr.type_num == dtypes.xd_exgroup.num:
+        groups_data = <cpp_instance.ExGroup *> np.PyArray_DATA(<np.ndarray> groups)
+        groups_proxy = cpp_vector[cpp_instance.ExGroup](<size_t> groups_size)
+        for igroups in range(groups_size):
+            groups_proxy[igroups] = groups_data[igroups]
+    else:
+        groups_proxy = cpp_vector[cpp_instance.ExGroup](<size_t> groups_size)
+        for igroups in range(groups_size):
+            groups_proxy[igroups] = (<cpp_instance.ExGroup *> (<ExGroup> groups[igroups])._inst)[0]
+    # nodes is a (('vector', 'ExNode', 0), '&')
+    nodes_size = len(nodes)
+    if isinstance(nodes, np.ndarray) and (<np.ndarray> nodes).descr.type_num == dtypes.xd_exnode.num:
+        nodes_data = <cpp_instance.ExNode *> np.PyArray_DATA(<np.ndarray> nodes)
+        nodes_proxy = cpp_vector[cpp_instance.ExNode](<size_t> nodes_size)
+        for inodes in range(nodes_size):
+            nodes_proxy[inodes] = nodes_data[inodes]
+    else:
+        nodes_proxy = cpp_vector[cpp_instance.ExNode](<size_t> nodes_size)
+        for inodes in range(nodes_size):
+            nodes_proxy[inodes] = (<cpp_instance.ExNode *> (<ExNode> nodes[inodes])._inst)[0]
+    # arcs is a (('vector', 'ExArc', 0), '&')
+    arcs_size = len(arcs)
+    if isinstance(arcs, np.ndarray) and (<np.ndarray> arcs).descr.type_num == dtypes.xd_exarc.num:
+        arcs_data = <cpp_instance.ExArc *> np.PyArray_DATA(<np.ndarray> arcs)
+        arcs_proxy = cpp_vector[cpp_instance.ExArc](<size_t> arcs_size)
+        for iarcs in range(arcs_size):
+            arcs_proxy[iarcs] = arcs_data[iarcs]
+    else:
+        arcs_proxy = cpp_vector[cpp_instance.ExArc](<size_t> arcs_size)
+        for iarcs in range(arcs_size):
+            arcs_proxy[iarcs] = (<cpp_instance.ExArc *> (<ExArc> arcs[iarcs])._inst)[0]
+    solver_proxy = <ExSolver> solver
+    rtnval = cpp_instance.Run(groups_proxy, nodes_proxy, arcs_proxy, (<cpp_instance.ExSolver *> solver_proxy._inst)[0])
+    rtnval_proxy = ExSolution()
+    (<cpp_instance.ExSolution *> rtnval_proxy._inst)[0] = rtnval
+    return rtnval_proxy
+
 
 
 
 
 cdef class ExNode:
-    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExNode', 'language': 'c++', 'srcname': 'ExNode', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'instance', 'tarname': 'ExNode', 'language': 'c++', 'srcname': 'ExNode', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
@@ -36,14 +96,65 @@ cdef class ExNode:
         # cached property defaults
 
 
-    def __init__(self, id, gid, kind, qty=0, excl=False, excl_id=0):
+    def _exnode_exnode_0(self, ):
+        """ExNode(self, )
+        """
+        self._inst = new cpp_instance.ExNode()
+    
+    
+    def _exnode_exnode_1(self, id, gid, kind, qty=0, excl=False, excl_id=0):
         """ExNode(self, id, gid, kind, qty=0, excl=False, excl_id=0)
         """
         self._inst = new cpp_instance.ExNode(<int> id, <int> gid, <bint> kind, <double> qty, <bint> excl, <int> excl_id)
     
     
+    def _exnode_exnode_2(self, other):
+        """ExNode(self, other)
+        """
+        cdef ExNode other_proxy
+        other_proxy = <ExNode> other
+        self._inst = new cpp_instance.ExNode((<cpp_instance.ExNode *> other_proxy._inst)[0])
+    
+    
+    _exnode_exnode_0_argtypes = frozenset()
+    _exnode_exnode_1_argtypes = frozenset(((0, int), (1, int), (2, bool), (3, float), (4, bool), (5, int), ("id", int), ("gid", int), ("kind", bool), ("qty", float), ("excl", bool), ("excl_id", int)))
+    _exnode_exnode_2_argtypes = frozenset(((0, ExNode), ("other", ExNode)))
+    
+    def __init__(self, *args, **kwargs):
+        """ExNode(self, other)
+        """
+        types = set([(i, type(a)) for i, a in enumerate(args)])
+        types.update([(k, type(v)) for k, v in kwargs.items()])
+        # vtable-like dispatch for exactly matching types
+        if types <= self._exnode_exnode_0_argtypes:
+            self._exnode_exnode_0(*args, **kwargs)
+            return
+        if types <= self._exnode_exnode_2_argtypes:
+            self._exnode_exnode_2(*args, **kwargs)
+            return
+        if types <= self._exnode_exnode_1_argtypes:
+            self._exnode_exnode_1(*args, **kwargs)
+            return
+        # duck-typed dispatch based on whatever works!
+        try:
+            self._exnode_exnode_0(*args, **kwargs)
+            return
+        except (RuntimeError, TypeError, NameError):
+            pass
+        try:
+            self._exnode_exnode_2(*args, **kwargs)
+            return
+        except (RuntimeError, TypeError, NameError):
+            pass
+        try:
+            self._exnode_exnode_1(*args, **kwargs)
+            return
+        except (RuntimeError, TypeError, NameError):
+            pass
+        raise RuntimeError('method __init__() could not be dispatched')
+    
     def __dealloc__(self):
-        if self._free_inst:
+        if self._free_inst and self._inst is not NULL:
             free(self._inst)
 
     # attributes
@@ -111,7 +222,7 @@ cdef class ExNode:
 
 
 cdef class ExSolution:
-    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExSolution', 'language': 'c++', 'srcname': 'ExSolution', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'instance', 'tarname': 'ExSolution', 'language': 'c++', 'srcname': 'ExSolution', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
@@ -132,7 +243,7 @@ cdef class ExSolution:
     
     
     def __dealloc__(self):
-        if self._free_inst:
+        if self._free_inst and self._inst is not NULL:
             free(self._inst)
 
     # attributes
@@ -166,7 +277,7 @@ cdef class ExSolution:
 
 
 cdef class ExGroup:
-    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExGroup', 'language': 'c++', 'srcname': 'ExGroup', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'instance', 'tarname': 'ExGroup', 'language': 'c++', 'srcname': 'ExGroup', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
@@ -178,7 +289,13 @@ cdef class ExGroup:
         # cached property defaults
         self._caps = None
 
-    def __init__(self, id, kind, ucaps, qty=0):
+    def _exgroup_exgroup_0(self, ):
+        """ExGroup(self, )
+        """
+        self._inst = new cpp_instance.ExGroup()
+    
+    
+    def _exgroup_exgroup_1(self, id, kind, ucaps, qty=0):
         """ExGroup(self, id, kind, ucaps, qty=0)
         """
         cdef cpp_vector[double] ucaps_proxy
@@ -199,8 +316,53 @@ cdef class ExGroup:
         self._inst = new cpp_instance.ExGroup(<int> id, <bint> kind, ucaps_proxy, <double> qty)
     
     
+    def _exgroup_exgroup_2(self, other):
+        """ExGroup(self, other)
+        """
+        cdef ExGroup other_proxy
+        other_proxy = <ExGroup> other
+        self._inst = new cpp_instance.ExGroup((<cpp_instance.ExGroup *> other_proxy._inst)[0])
+    
+    
+    _exgroup_exgroup_0_argtypes = frozenset()
+    _exgroup_exgroup_1_argtypes = frozenset(((0, int), (1, bool), (2, np.ndarray), (3, float), ("id", int), ("kind", bool), ("ucaps", np.ndarray), ("qty", float)))
+    _exgroup_exgroup_2_argtypes = frozenset(((0, ExGroup), ("other", ExGroup)))
+    
+    def __init__(self, *args, **kwargs):
+        """ExGroup(self, other)
+        """
+        types = set([(i, type(a)) for i, a in enumerate(args)])
+        types.update([(k, type(v)) for k, v in kwargs.items()])
+        # vtable-like dispatch for exactly matching types
+        if types <= self._exgroup_exgroup_0_argtypes:
+            self._exgroup_exgroup_0(*args, **kwargs)
+            return
+        if types <= self._exgroup_exgroup_2_argtypes:
+            self._exgroup_exgroup_2(*args, **kwargs)
+            return
+        if types <= self._exgroup_exgroup_1_argtypes:
+            self._exgroup_exgroup_1(*args, **kwargs)
+            return
+        # duck-typed dispatch based on whatever works!
+        try:
+            self._exgroup_exgroup_0(*args, **kwargs)
+            return
+        except (RuntimeError, TypeError, NameError):
+            pass
+        try:
+            self._exgroup_exgroup_2(*args, **kwargs)
+            return
+        except (RuntimeError, TypeError, NameError):
+            pass
+        try:
+            self._exgroup_exgroup_1(*args, **kwargs)
+            return
+        except (RuntimeError, TypeError, NameError):
+            pass
+        raise RuntimeError('method __init__() could not be dispatched')
+    
     def __dealloc__(self):
-        if self._free_inst:
+        if self._free_inst and self._inst is not NULL:
             free(self._inst)
 
     # attributes
@@ -272,7 +434,7 @@ cdef class ExGroup:
 
 
 cdef class ExSolver:
-    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExSolver', 'language': 'c++', 'srcname': 'ExSolver', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'instance', 'tarname': 'ExSolver', 'language': 'c++', 'srcname': 'ExSolver', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
@@ -293,7 +455,7 @@ cdef class ExSolver:
     
     
     def __dealloc__(self):
-        if self._free_inst:
+        if self._free_inst and self._inst is not NULL:
             free(self._inst)
 
     # attributes
@@ -318,7 +480,7 @@ cdef class ExSolver:
 
 
 cdef class ExArc:
-    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExArc', 'language': 'c++', 'srcname': 'ExArc', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'instance', 'tarname': 'ExArc', 'language': 'c++', 'srcname': 'ExArc', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
@@ -331,7 +493,21 @@ cdef class ExArc:
         self._ucaps = None
         self._vcaps = None
 
-    def __init__(self, uid, ucaps, vid, vcaps, pref):
+    def _exarc_exarc_0(self, ):
+        """ExArc(self, )
+        """
+        self._inst = new cpp_instance.ExArc()
+    
+    
+    def _exarc_exarc_1(self, other):
+        """ExArc(self, other)
+        """
+        cdef ExArc other_proxy
+        other_proxy = <ExArc> other
+        self._inst = new cpp_instance.ExArc((<cpp_instance.ExArc *> other_proxy._inst)[0])
+    
+    
+    def _exarc_exarc_2(self, uid, ucaps, vid, vcaps, pref):
         """ExArc(self, uid, ucaps, vid, vcaps, pref)
         """
         cdef cpp_vector[double] ucaps_proxy
@@ -367,8 +543,45 @@ cdef class ExArc:
         self._inst = new cpp_instance.ExArc(<int> uid, ucaps_proxy, <int> vid, vcaps_proxy, <double> pref)
     
     
+    _exarc_exarc_0_argtypes = frozenset()
+    _exarc_exarc_1_argtypes = frozenset(((0, ExArc), ("other", ExArc)))
+    _exarc_exarc_2_argtypes = frozenset(((0, int), (1, np.ndarray), (2, int), (3, np.ndarray), (4, float), ("uid", int), ("ucaps", np.ndarray), ("vid", int), ("vcaps", np.ndarray), ("pref", float)))
+    
+    def __init__(self, *args, **kwargs):
+        """ExArc(self, uid, ucaps, vid, vcaps, pref)
+        """
+        types = set([(i, type(a)) for i, a in enumerate(args)])
+        types.update([(k, type(v)) for k, v in kwargs.items()])
+        # vtable-like dispatch for exactly matching types
+        if types <= self._exarc_exarc_0_argtypes:
+            self._exarc_exarc_0(*args, **kwargs)
+            return
+        if types <= self._exarc_exarc_1_argtypes:
+            self._exarc_exarc_1(*args, **kwargs)
+            return
+        if types <= self._exarc_exarc_2_argtypes:
+            self._exarc_exarc_2(*args, **kwargs)
+            return
+        # duck-typed dispatch based on whatever works!
+        try:
+            self._exarc_exarc_0(*args, **kwargs)
+            return
+        except (RuntimeError, TypeError, NameError):
+            pass
+        try:
+            self._exarc_exarc_1(*args, **kwargs)
+            return
+        except (RuntimeError, TypeError, NameError):
+            pass
+        try:
+            self._exarc_exarc_2(*args, **kwargs)
+            return
+        except (RuntimeError, TypeError, NameError):
+            pass
+        raise RuntimeError('method __init__() could not be dispatched')
+    
     def __dealloc__(self):
-        if self._free_inst:
+        if self._free_inst and self._inst is not NULL:
             free(self._inst)
 
     # attributes

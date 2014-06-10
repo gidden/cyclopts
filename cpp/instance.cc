@@ -128,6 +128,7 @@ ExSolution Run(std::vector<ExGroup>& groups, std::vector<ExNode>& nodes,
   for (ait = arcs.begin(); ait != arcs.end(); ++ait) {
     ait->flow = flows[ctx.arc_map[*ait]];
   }
+
   
   return ExSolution(dur, cyclus::version::core());
 }

@@ -10,7 +10,7 @@ namespace cyclopts {
 class ExGroup {
  public:
   ExGroup() {};
-  ExGroup(int id, bool kind, std::vector<double>& ucaps, double qty = 0)
+  ExGroup(int id, bool kind, std::vector<double>& caps, double qty = 0)
     : id(id),
       kind(kind),
       caps(caps),
@@ -96,6 +96,7 @@ class ExArc {
 /// Cyclus ExchangeSolver.
 class ExSolver {
  public:
+  ExSolver() { };
   explicit ExSolver(std::string type = "cbc") : type(type) { };
   std::string type;
 };
@@ -103,6 +104,7 @@ class ExSolver {
 /// A simple container class for exchange solutions.
 class ExSolution {
  public:
+  ExSolution() { };
   ExSolution(double time, std::string cyclus_version)
       : time(time), cyclus_version(cyclus_version) { };
   

@@ -8,15 +8,85 @@
 ################################################
 
 
+from cyclopts cimport cpp_instance
 from libcpp cimport bool as cpp_bool
 from libcpp.string cimport string as std_string
 from libcpp.vector cimport vector as cpp_vector
 
 cdef extern from "instance.h" namespace "cyclopts":
 
+    cdef cppclass ExSolution:
+        # constructors
+        ExSolution() except +
+        ExSolution(double) except +
+        ExSolution(double, std_string) except +
+
+        # attributes
+        std_string cyclus_version
+        double time
+
+        # methods
+
+        pass
+
+
+
+cdef extern from "instance.h" namespace "cyclopts":
+
+    cdef cppclass ExNode:
+        # constructors
+        ExNode() except +
+        ExNode(int) except +
+        ExNode(int, int) except +
+        ExNode(int, int, cpp_bool) except +
+        ExNode(int, int, cpp_bool, double) except +
+        ExNode(int, int, cpp_bool, double, cpp_bool) except +
+        ExNode(int, int, cpp_bool, double, cpp_bool, int) except +
+        ExNode(const ExNode &) except +
+
+        # attributes
+        cpp_bool excl
+        int excl_id
+        int gid
+        int id
+        cpp_bool kind
+        double qty
+
+        # methods
+
+        pass
+
+
+
+cdef extern from "instance.h" namespace "cyclopts":
+
+    cdef cppclass ExGroup:
+        # constructors
+        ExGroup() except +
+        ExGroup(int) except +
+        ExGroup(int, cpp_bool) except +
+        ExGroup(int, cpp_bool, cpp_vector[double] &) except +
+        ExGroup(int, cpp_bool, cpp_vector[double] &, double) except +
+        ExGroup(const ExGroup &) except +
+
+        # attributes
+        cpp_vector[double] caps
+        int id
+        cpp_bool kind
+        double qty
+
+        # methods
+
+        pass
+
+
+
+cdef extern from "instance.h" namespace "cyclopts":
+
     cdef cppclass ExArc:
         # constructors
         ExArc() except +
+        ExArc(const ExArc &) except +
         ExArc(int) except +
         ExArc(int, cpp_vector[double] &) except +
         ExArc(int, cpp_vector[double] &, int) except +
@@ -53,70 +123,14 @@ cdef extern from "instance.h" namespace "cyclopts":
 
 
 
+# function signatures
 cdef extern from "instance.h" namespace "cyclopts":
 
-    cdef cppclass ExSolution:
-        # constructors
-        ExSolution() except +
-        ExSolution(double) except +
-        ExSolution(double, std_string) except +
-
-        # attributes
-        std_string cyclus_version
-        double time
-
-        # methods
-
-        pass
-
-
-
-cdef extern from "instance.h" namespace "cyclopts":
-
-    cdef cppclass ExNode:
-        # constructors
-        ExNode() except +
-        ExNode(int) except +
-        ExNode(int, int) except +
-        ExNode(int, int, cpp_bool) except +
-        ExNode(int, int, cpp_bool, double) except +
-        ExNode(int, int, cpp_bool, double, cpp_bool) except +
-        ExNode(int, int, cpp_bool, double, cpp_bool, int) except +
-
-        # attributes
-        cpp_bool excl
-        int excl_id
-        int gid
-        int id
-        cpp_bool kind
-        double qty
-
-        # methods
-
-        pass
-
-
-
-cdef extern from "instance.h" namespace "cyclopts":
-
-    cdef cppclass ExGroup:
-        # constructors
-        ExGroup() except +
-        ExGroup(int) except +
-        ExGroup(int, cpp_bool) except +
-        ExGroup(int, cpp_bool, cpp_vector[double] &) except +
-        ExGroup(int, cpp_bool, cpp_vector[double] &, double) except +
-
-        # attributes
-        cpp_vector[double] caps
-        int id
-        cpp_bool kind
-        double qty
-
-        # methods
-
-        pass
-
+    ExSolution Run() except +
+    ExSolution Run(cpp_vector[ExGroup] &) except +
+    ExSolution Run(cpp_vector[ExGroup] &, cpp_vector[ExNode] &) except +
+    ExSolution Run(cpp_vector[ExGroup] &, cpp_vector[ExNode] &, cpp_vector[ExArc] &) except +
+    ExSolution Run(cpp_vector[ExGroup] &, cpp_vector[ExNode] &, cpp_vector[ExArc] &, ExSolver &) except +
 
 
 

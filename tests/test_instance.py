@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from cyclopts.instance import ExGroup, ExNode, ExArc, ExSolution, ExSolver
+from cyclopts.instance import ExGroup, ExNode, ExArc, ExSolution, ExSolver, Run
 from cyclopts.dtypes import xd_exgroup, xd_exnode, xd_exarc
 from cyclopts.params import Incrementer
 
@@ -8,6 +8,10 @@ import numpy as np
 
 import nose
 from nose.tools import assert_equal, assert_true
+
+def gprint(g):
+    print(g.id, g.kind, g.caps, g.qty)
+    
 
 def test_inst():
     req = True
@@ -21,8 +25,8 @@ def test_inst():
     bg2 = ExGroup(gid.next(), bid, np.array([1], dtype='float'))
     bg3 = ExGroup(gid.next(), bid, np.array([2], dtype='float'))
     grps = np.array([rg1, rg2, bg1, bg2, bg3], dtype=xd_exgroup)
-    obs = ExGroup(grps[1:])
-    print(obs.id)
+    for i in range(len(grps)):
+        gprint(ExGroup(grps[i:]))
     
     nid = Incrementer()
     ex_grp_id = Incrementer(1)
@@ -53,3 +57,7 @@ def test_inst():
                b31.id, np.array([2], dtype='float'),
                p4)
     arcs = [a1, a2, a3, a4]
+    
+    solver = ExSolver()
+    # soln = Run(grps, nodes, arcs, solver)
+    # print(soln.time, soln.cyclus_version)
