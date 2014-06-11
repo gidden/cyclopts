@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <string>
+#include <utility>
+#include <map>
 
 namespace cyclopts {
 
@@ -106,16 +108,17 @@ class ExSolution {
   ExSolution() { };
   ExSolution(double time, std::string cyclus_version)
     : time(time), cyclus_version(cyclus_version) { };
-  
+
   double time; // unit: s
   std::string cyclus_version;
+  std::map<std::pair<int, int>, double> flows;
 };
 
 /// constructs and runs a resource exchange
 ExSolution Run(std::vector<ExGroup>& groups, std::vector<ExNode>& nodes,
                std::vector<ExArc>& arcs, ExSolver& solver);
 
-void Incr(std::vector<ExArc> arcs);
+void Incr(std::vector<ExArc>& arcs);
 void IncrOne(ExArc& a);
 } // namespace cyclopts
 

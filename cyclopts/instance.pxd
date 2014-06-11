@@ -10,7 +10,10 @@
 
 cimport dtypes
 cimport numpy as np
+cimport stlcontainers
 from cyclopts cimport cpp_instance
+from libcpp.map cimport map as cpp_map
+from libcpp.utility cimport pair as cpp_pair
 from libcpp.vector cimport vector as cpp_vector
 
 
@@ -48,6 +51,8 @@ cdef class ExGroup:
 cdef class ExSolution:
     cdef void * _inst
     cdef public bint _free_inst
+    cdef public stlcontainers._MapPairIntIntDouble _flows
+    cdef public stlcontainers._PairIntInt _test
     pass
 
 

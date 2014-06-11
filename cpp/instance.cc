@@ -1,8 +1,5 @@
 #include "instance.h"
 
-#include <utility>
-#include <map>
-
 #include "exchange_graph.h"
 #include "greedy_solver.h"
 #include "prog_solver.h"
@@ -117,6 +114,7 @@ ExSolution Run(std::vector<ExGroup>& groups, std::vector<ExNode>& nodes,
   stop = getCPUTime();
   double dur = stop - start; // in seconds
   delete  s;
+  ExSolution soln(dur, cyclus::version::core());
 
   // update flows on ExArcs
   const std::vector<cyclus::Match>& matches = g.matches();
@@ -128,8 +126,10 @@ ExSolution Run(std::vector<ExGroup>& groups, std::vector<ExNode>& nodes,
   }
   std::vector<ExArc>::iterator ait;
   for (ait = arcs.begin(); ait != arcs.end(); ++ait) {
-    ait->flow = flows[ctx.arc_map[*ait]];
-    ait->flow = 1; // remove this
+    ExArc& exa = *ait;
+    double flow = flows[ctx.arc_map[exa]];
+    ait->flow = flow;
+    soln.flows[std::make_pair(exa.uid, exa.vid)] = flow;
   }
   for (ait = arcs.begin(); ait != arcs.end(); ++ait) {
     std::cout << "arc with uid " << ait->uid
@@ -137,13 +137,11 @@ ExSolution Run(std::vector<ExGroup>& groups, std::vector<ExNode>& nodes,
               << " pref " << ait->pref
               << " flow " << ait->flow << "\n";
   }
-
   
-  return ExSolution(dur, cyclus::version::core());
+  return soln;
 }
 
-
-void Incr(std::vector<ExArc> arcs) {
+void Incr(std::vector<ExArc>& arcs) {
   std::vector<ExArc>::iterator ait;
   for (ait = arcs.begin(); ait != arcs.end(); ++ait) {
     ait->flow = 1;

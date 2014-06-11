@@ -10,7 +10,9 @@
 
 from cyclopts cimport cpp_instance
 from libcpp cimport bool as cpp_bool
+from libcpp.map cimport map as cpp_map
 from libcpp.string cimport string as std_string
+from libcpp.utility cimport pair as cpp_pair
 from libcpp.vector cimport vector as cpp_vector
 
 cdef extern from "instance.h" namespace "cyclopts":
@@ -23,6 +25,8 @@ cdef extern from "instance.h" namespace "cyclopts":
 
         # attributes
         std_string cyclus_version
+        cpp_map[cpp_pair[int, int], double] flows
+        cpp_pair[int, int] test
         double time
 
         # methods
@@ -127,7 +131,7 @@ cdef extern from "instance.h" namespace "cyclopts":
 cdef extern from "instance.h" namespace "cyclopts":
 
     void Incr() except +
-    void Incr(cpp_vector[ExArc]) except +
+    void Incr(cpp_vector[ExArc] &) except +
 
 
 

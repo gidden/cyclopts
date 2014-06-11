@@ -12,14 +12,19 @@ cimport cpp_instance
 cimport dtypes
 cimport instance
 cimport numpy as np
+cimport stlcontainers
 from cyclopts cimport cpp_instance
 from libc.stdlib cimport free
 from libcpp cimport bool as cpp_bool
+from libcpp.map cimport map as cpp_map
 from libcpp.string cimport string as std_string
+from libcpp.utility cimport pair as cpp_pair
 from libcpp.vector cimport vector as cpp_vector
 
+import collections
 import dtypes
 import numpy as np
+import stlcontainers
 
 np.import_array()
 
@@ -30,7 +35,7 @@ def Incr(arcs):
     cdef int iarcs
     cdef int arcs_size
     cdef cpp_instance.ExArc * arcs_data
-    # arcs is a ('vector', 'ExArc', 0)
+    # arcs is a (('vector', 'ExArc', 0), '&')
     arcs_size = len(arcs)
     if isinstance(arcs, np.ndarray) and (<np.ndarray> arcs).descr.type_num == dtypes.xd_exarc.num:
         arcs_data = <cpp_instance.ExArc *> np.PyArray_DATA(<np.ndarray> arcs)
@@ -106,7 +111,7 @@ def Run(groups, nodes, arcs, solver):
 
 
 cdef class ExNode:
-    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExNode', 'language': 'c++', 'srcname': 'ExNode', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'instance', 'tarname': 'ExNode', 'language': 'c++', 'srcname': 'ExNode', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
@@ -244,7 +249,7 @@ cdef class ExNode:
 
 
 cdef class ExSolution:
-    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExSolution', 'language': 'c++', 'srcname': 'ExSolution', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'instance', 'tarname': 'ExSolution', 'language': 'c++', 'srcname': 'ExSolution', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
@@ -254,7 +259,8 @@ cdef class ExSolution:
         self._free_inst = True
 
         # cached property defaults
-
+        self._flows = None
+        self._test = None
 
     def _exsolution_exsolution_0(self, ):
         """ExSolution(self, )
@@ -314,6 +320,40 @@ cdef class ExSolution:
             (<cpp_instance.ExSolution *> self._inst).cyclus_version = std_string(<char *> value_bytes)
     
     
+    property flows:
+        """no docstring for flows, please file a bug report!"""
+        def __get__(self):
+            cdef stlcontainers._MapPairIntIntDouble flows_proxy
+            if self._flows is None:
+                flows_proxy = stlcontainers.MapPairIntIntDouble(False, False)
+                flows_proxy.map_ptr = &(<cpp_instance.ExSolution *> self._inst).flows
+                self._flows = flows_proxy
+            return self._flows
+    
+        def __set__(self, value):
+            cdef stlcontainers._MapPairIntIntDouble value_proxy
+            value_proxy = stlcontainers.MapPairIntIntDouble(value, not isinstance(value, stlcontainers._MapPairIntIntDouble))
+            (<cpp_instance.ExSolution *> self._inst).flows = value_proxy.map_ptr[0]
+            self._flows = None
+    
+    
+    property test:
+        """no docstring for test, please file a bug report!"""
+        def __get__(self):
+            cdef stlcontainers._PairIntInt test_proxy
+            if self._test is None:
+                test_proxy = stlcontainers.PairIntInt(False, False)
+                test_proxy.pair_ptr = &(<cpp_instance.ExSolution *> self._inst).test
+                self._test = test_proxy
+            return self._test
+    
+        def __set__(self, value):
+            cdef stlcontainers._PairIntInt value_proxy
+            value_proxy = stlcontainers.PairIntInt(value, not isinstance(value, stlcontainers._PairIntInt))
+            (<cpp_instance.ExSolution *> self._inst).test = value_proxy.pair_ptr[0]
+            self._test = None
+    
+    
     property time:
         """no docstring for time, please file a bug report!"""
         def __get__(self):
@@ -333,7 +373,7 @@ cdef class ExSolution:
 
 
 cdef class ExGroup:
-    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExGroup', 'language': 'c++', 'srcname': 'ExGroup', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'instance', 'tarname': 'ExGroup', 'language': 'c++', 'srcname': 'ExGroup', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
@@ -499,7 +539,7 @@ def IncrOne(a):
 
 
 cdef class ExSolver:
-    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExSolver', 'language': 'c++', 'srcname': 'ExSolver', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'instance', 'tarname': 'ExSolver', 'language': 'c++', 'srcname': 'ExSolver', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
@@ -545,7 +585,7 @@ cdef class ExSolver:
 
 
 cdef class ExArc:
-    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExArc', 'language': 'c++', 'srcname': 'ExArc', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'instance', 'tarname': 'ExArc', 'language': 'c++', 'srcname': 'ExArc', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
