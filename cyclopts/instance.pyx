@@ -27,27 +27,6 @@ import stlcontainers
 
 np.import_array()
 
-def Incr(arcs):
-    """Incr(arcs)
-    no docstring for Incr, please file a bug report!"""
-    cdef cpp_vector[cpp_instance.ExArc] arcs_proxy
-    cdef int iarcs
-    cdef int arcs_size
-    cdef cpp_instance.ExArc * arcs_data
-    # arcs is a (('vector', 'ExArc', 0), '&')
-    arcs_size = len(arcs)
-    if isinstance(arcs, np.ndarray) and (<np.ndarray> arcs).descr.type_num == dtypes.xd_exarc.num:
-        arcs_data = <cpp_instance.ExArc *> np.PyArray_DATA(<np.ndarray> arcs)
-        arcs_proxy = cpp_vector[cpp_instance.ExArc](<size_t> arcs_size)
-        for iarcs in range(arcs_size):
-            arcs_proxy[iarcs] = arcs_data[iarcs]
-    else:
-        arcs_proxy = cpp_vector[cpp_instance.ExArc](<size_t> arcs_size)
-        for iarcs in range(arcs_size):
-            arcs_proxy[iarcs] = (<cpp_instance.ExArc *> (<ExArc> arcs[iarcs])._inst)[0]
-    cpp_instance.Incr(arcs_proxy)
-
-
 
 def Run(groups, nodes, arcs, solver):
     """Run(groups, nodes, arcs, solver)
@@ -508,14 +487,6 @@ cdef class ExGroup:
 
 
 
-def IncrOne(a):
-    """IncrOne(a)
-    no docstring for IncrOne, please file a bug report!"""
-    cdef ExArc a_proxy
-    a_proxy = <ExArc> a
-    cpp_instance.IncrOne((<cpp_instance.ExArc *> a_proxy._inst)[0])
-
-
 
 
 
@@ -671,15 +642,6 @@ cdef class ExArc:
             free(self._inst)
 
     # attributes
-    property flow:
-        """no docstring for flow, please file a bug report!"""
-        def __get__(self):
-            return float((<cpp_instance.ExArc *> self._inst).flow)
-    
-        def __set__(self, value):
-            (<cpp_instance.ExArc *> self._inst).flow = <double> value
-    
-    
     property id:
         """no docstring for id, please file a bug report!"""
         def __get__(self):

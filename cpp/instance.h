@@ -75,16 +75,14 @@ class ExArc {
       ucaps(ucaps),
       vid(vid),
       vcaps(vcaps),
-      pref(pref),
-      flow(0) { };
+      pref(pref) { };
   ExArc(const ExArc& other)
     : id(other.id),
       uid(other.uid),
       ucaps(other.ucaps),
       vid(other.vid),
       vcaps(other.vcaps),
-      pref(other.pref),
-      flow(other.flow) { };
+      pref(other.pref) { };
 
   inline bool operator<(const ExArc& other) const {
     return id < other.id;
@@ -95,7 +93,7 @@ class ExArc {
   std::vector<double> ucaps;
   int vid; // v == bid
   std::vector<double> vcaps;
-  double pref, flow;
+  double pref;
 };
 
 /// A container class for all parameters required to construct an instance of a
@@ -118,12 +116,9 @@ class ExSolution {
   std::map<int, double> flows;
 };
 
-/// constructs and runs a resource exchange
 ExSolution Run(std::vector<ExGroup>& groups, std::vector<ExNode>& nodes,
                std::vector<ExArc>& arcs, ExSolver& solver);
 
-void Incr(std::vector<ExArc>& arcs);
-void IncrOne(ExArc& a);
 } // namespace cyclopts
 
 #endif // CYCLOPTS_INSTANCE_H_

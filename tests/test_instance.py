@@ -1,7 +1,6 @@
 from __future__ import print_function
 
-from cyclopts.instance import ExGroup, ExNode, ExArc, ExSolution, ExSolver, Run, Incr, IncrOne
-from cyclopts.dtypes import xd_exgroup, xd_exnode, xd_exarc
+from cyclopts.instance import ExGroup, ExNode, ExArc, ExSolution, ExSolver, Run
 from cyclopts.params import Incrementer
 
 import numpy as np
@@ -128,12 +127,4 @@ def test_inst():
         solver = ExSolver(t)
         soln = Run(grps, nodes, arcs, solver)
         for id, flow in soln.flows.iteritems():
-            assert_equal(exp_flows[id], flow)
-
-    print("incrementing arcs")
-    Incr(arcs)
-    for a in arcs:
-        aprint(a)
-        IncrOne(a)
-        aprint(a)
-                
+            assert_equal(exp_flows[id], flow)                

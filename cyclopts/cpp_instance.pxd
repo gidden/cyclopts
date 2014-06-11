@@ -97,7 +97,6 @@ cdef extern from "instance.h" namespace "cyclopts":
         ExArc(const ExArc &) except +
 
         # attributes
-        double flow
         int id
         double pref
         cpp_vector[double] ucaps
@@ -126,20 +125,6 @@ cdef extern from "instance.h" namespace "cyclopts":
         pass
 
 
-
-# function signatures
-cdef extern from "instance.h" namespace "cyclopts":
-
-    void Incr() except +
-    void Incr(cpp_vector[ExArc] &) except +
-
-
-
-# function signatures
-cdef extern from "instance.h" namespace "cyclopts":
-
-    void IncrOne() except +
-    void IncrOne(ExArc &) except +
 
 
 
