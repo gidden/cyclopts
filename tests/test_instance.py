@@ -13,9 +13,63 @@ def gprint(g):
     print(g.id, g.kind, g.caps, g.qty)
 
 def aprint(a):
-    print("unode: {0}, vnode: {1}\npref: {2}, flow: {3}".format(
-            a.uid, a.vid, a.pref, a.flow))
-    
+    print("id: {id}, unode: {0}, vnode: {1}\npref: {2}, flow: {3}".format(
+            a.uid, a.vid, a.pref, a.flow, id=a.id))
+
+"""This tests all possible features of a resource exchange graph generated using
+a Cyclopts instance:
+
+#. request groups with one and more than one request
+#. bid groups with one and more than one bid
+#. exclusive and non-exclusive bids to an exclusive request
+#. exclusive bid groupings
+#. multiple bids for a single request
+#. single bid to multiple requests
+
+The graph structure tested is
+
+.. image:: ../test_inst.svg
+
+Each node group has a single constraint, and all unit capacities are equal to 1.
+
+=======  ========
+Group Constraints
+-----------------
+GId      Value
+=======  ========
+1        1
+2        1.5
+3        1
+4        2
+5        1
+6        1
+=======  ========
+        
+Each node has an associated maximum quantity
+
+=======  ========
+Node Quantities
+-----------------
+NId      Value
+=======  ========
+1        1
+2        1.5
+3        1.5
+4        1
+5        2
+6        1
+7        1
+8        1
+=======  ========
+
+Nodes 1, 6, and 7 are exclusive with nodes 6 and 7 forming an exclusive bid
+group (ie., only one can be matched).
+
+Finally, preferences for arcs are ranked in the following order: 3, 2, 1, 4,
+5. This ordering guarantees that the exclusive bid grouping capability is
+tested, because arcs 3 and 2 correspond to nodes 6 and 7, and are of highest
+rank.
+"""   
 def test_inst():
     req = True
     bid = False
@@ -30,8 +84,6 @@ def test_inst():
     bg2 = ExGroup(gid.next(), bid, np.array([1], dtype='float'))
     bg3 = ExGroup(gid.next(), bid, np.array([1], dtype='float'))
     grps = np.array([rg1, rg2, rg3, bg1, bg2, bg3], dtype=ExGroup)
-    for g in grps:
-        gprint(g)
     
     nid = Incrementer()
     ex_grp_id = Incrementer(1)
@@ -45,42 +97,39 @@ def test_inst():
     b31 = ExNode(nid.next(), bg3.id, bid, 1)
     nodes = np.array([r11, r21, r22, r31, b11, b21, b22, b31], dtype=ExNode)
 
-    # p1 > p2 > p3 > p4 > p5
-    p1 = 1.0 
-    p2 = p1 / 2 
-    p3 = p2 / 2
-    p4 = p3 / 2
-    p5 = p4 / 2
-    a1 = ExArc(r11.id, np.array([1], dtype='float'), 
+    # p3 > p2 > p1 > p4 > p5
+    prefs = [1.0 / 2**i for i in range(5)]
+    aid = Incrementer()
+    a1 = ExArc(aid.next(), 
+               r11.id, np.array([1], dtype='float'), 
                b11.id, np.array([1], dtype='float'),
-               p1)
-    a2 = ExArc(r11.id, np.array([1], dtype='float'), 
+               prefs[2])
+    a2 = ExArc(aid.next(), 
+               r11.id, np.array([1], dtype='float'), 
                b21.id, np.array([1], dtype='float'),
-               p2)
-    a3 = ExArc(r21.id, np.array([1], dtype='float'), 
+               prefs[1])
+    a3 = ExArc(aid.next(), 
+               r21.id, np.array([1], dtype='float'), 
                b22.id, np.array([1], dtype='float'),
-               p3)
-    a4 = ExArc(r22.id, np.array([1], dtype='float'), 
+               prefs[0])
+    a4 = ExArc(aid.next(), 
+               r22.id, np.array([1], dtype='float'), 
                b31.id, np.array([1], dtype='float'),
-               p4)
-    a5 = ExArc(r31.id, np.array([1], dtype='float'), 
+               prefs[3])
+    a5 = ExArc(aid.next(), 
+               r31.id, np.array([1], dtype='float'), 
                b31.id, np.array([1], dtype='float'),
-               p5)
+               prefs[4])
     arcs = np.array([a1, a2, a3, a4, a5], dtype=ExArc)
-
-    vaprint = np.vectorize(aprint)
-    for a in arcs:
-        aprint(a)
         
     stypes = ["cbc", "clp", "greedy"]
+    exp_flows = {0: 1, 1: 0, 2: 1, 3: 0.5, 4: 0.5}
     for t in stypes:
         solver = ExSolver(t)
         soln = Run(grps, nodes, arcs, solver)
+        for id, flow in soln.flows.iteritems():
+            assert_equal(exp_flows[id], flow)
 
-    print("time: {0}, version {1}".format(soln.time, soln.cyclus_version))
-    for a in arcs:
-        aprint(a)
-            
     print("incrementing arcs")
     Incr(arcs)
     for a in arcs:

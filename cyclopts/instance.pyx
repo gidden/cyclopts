@@ -18,7 +18,6 @@ from libc.stdlib cimport free
 from libcpp cimport bool as cpp_bool
 from libcpp.map cimport map as cpp_map
 from libcpp.string cimport string as std_string
-from libcpp.utility cimport pair as cpp_pair
 from libcpp.vector cimport vector as cpp_vector
 
 import collections
@@ -260,7 +259,6 @@ cdef class ExSolution:
 
         # cached property defaults
         self._flows = None
-        self._test = None
 
     def _exsolution_exsolution_0(self, ):
         """ExSolution(self, )
@@ -323,35 +321,18 @@ cdef class ExSolution:
     property flows:
         """no docstring for flows, please file a bug report!"""
         def __get__(self):
-            cdef stlcontainers._MapPairIntIntDouble flows_proxy
+            cdef stlcontainers._MapIntDouble flows_proxy
             if self._flows is None:
-                flows_proxy = stlcontainers.MapPairIntIntDouble(False, False)
+                flows_proxy = stlcontainers.MapIntDouble(False, False)
                 flows_proxy.map_ptr = &(<cpp_instance.ExSolution *> self._inst).flows
                 self._flows = flows_proxy
             return self._flows
     
         def __set__(self, value):
-            cdef stlcontainers._MapPairIntIntDouble value_proxy
-            value_proxy = stlcontainers.MapPairIntIntDouble(value, not isinstance(value, stlcontainers._MapPairIntIntDouble))
+            cdef stlcontainers._MapIntDouble value_proxy
+            value_proxy = stlcontainers.MapIntDouble(value, not isinstance(value, stlcontainers._MapIntDouble))
             (<cpp_instance.ExSolution *> self._inst).flows = value_proxy.map_ptr[0]
             self._flows = None
-    
-    
-    property test:
-        """no docstring for test, please file a bug report!"""
-        def __get__(self):
-            cdef stlcontainers._PairIntInt test_proxy
-            if self._test is None:
-                test_proxy = stlcontainers.PairIntInt(False, False)
-                test_proxy.pair_ptr = &(<cpp_instance.ExSolution *> self._inst).test
-                self._test = test_proxy
-            return self._test
-    
-        def __set__(self, value):
-            cdef stlcontainers._PairIntInt value_proxy
-            value_proxy = stlcontainers.PairIntInt(value, not isinstance(value, stlcontainers._PairIntInt))
-            (<cpp_instance.ExSolution *> self._inst).test = value_proxy.pair_ptr[0]
-            self._test = None
     
     
     property time:
@@ -604,16 +585,8 @@ cdef class ExArc:
         self._inst = new cpp_instance.ExArc()
     
     
-    def _exarc_exarc_1(self, other):
-        """ExArc(self, other)
-        """
-        cdef ExArc other_proxy
-        other_proxy = <ExArc> other
-        self._inst = new cpp_instance.ExArc((<cpp_instance.ExArc *> other_proxy._inst)[0])
-    
-    
-    def _exarc_exarc_2(self, uid, ucaps, vid, vcaps, pref):
-        """ExArc(self, uid, ucaps, vid, vcaps, pref)
+    def _exarc_exarc_1(self, id, uid, ucaps, vid, vcaps, pref):
+        """ExArc(self, id, uid, ucaps, vid, vcaps, pref)
         """
         cdef cpp_vector[double] ucaps_proxy
         cdef int iucaps
@@ -645,15 +618,23 @@ cdef class ExArc:
             vcaps_proxy = cpp_vector[double](<size_t> vcaps_size)
             for ivcaps in range(vcaps_size):
                 vcaps_proxy[ivcaps] = <double> vcaps[ivcaps]
-        self._inst = new cpp_instance.ExArc(<int> uid, ucaps_proxy, <int> vid, vcaps_proxy, <double> pref)
+        self._inst = new cpp_instance.ExArc(<int> id, <int> uid, ucaps_proxy, <int> vid, vcaps_proxy, <double> pref)
+    
+    
+    def _exarc_exarc_2(self, other):
+        """ExArc(self, other)
+        """
+        cdef ExArc other_proxy
+        other_proxy = <ExArc> other
+        self._inst = new cpp_instance.ExArc((<cpp_instance.ExArc *> other_proxy._inst)[0])
     
     
     _exarc_exarc_0_argtypes = frozenset()
-    _exarc_exarc_1_argtypes = frozenset(((0, ExArc), ("other", ExArc)))
-    _exarc_exarc_2_argtypes = frozenset(((0, int), (1, np.ndarray), (2, int), (3, np.ndarray), (4, float), ("uid", int), ("ucaps", np.ndarray), ("vid", int), ("vcaps", np.ndarray), ("pref", float)))
+    _exarc_exarc_1_argtypes = frozenset(((0, int), (1, int), (2, np.ndarray), (3, int), (4, np.ndarray), (5, float), ("id", int), ("uid", int), ("ucaps", np.ndarray), ("vid", int), ("vcaps", np.ndarray), ("pref", float)))
+    _exarc_exarc_2_argtypes = frozenset(((0, ExArc), ("other", ExArc)))
     
     def __init__(self, *args, **kwargs):
-        """ExArc(self, uid, ucaps, vid, vcaps, pref)
+        """ExArc(self, other)
         """
         types = set([(i, type(a)) for i, a in enumerate(args)])
         types.update([(k, type(v)) for k, v in kwargs.items()])
@@ -661,11 +642,11 @@ cdef class ExArc:
         if types <= self._exarc_exarc_0_argtypes:
             self._exarc_exarc_0(*args, **kwargs)
             return
-        if types <= self._exarc_exarc_1_argtypes:
-            self._exarc_exarc_1(*args, **kwargs)
-            return
         if types <= self._exarc_exarc_2_argtypes:
             self._exarc_exarc_2(*args, **kwargs)
+            return
+        if types <= self._exarc_exarc_1_argtypes:
+            self._exarc_exarc_1(*args, **kwargs)
             return
         # duck-typed dispatch based on whatever works!
         try:
@@ -674,12 +655,12 @@ cdef class ExArc:
         except (RuntimeError, TypeError, NameError):
             pass
         try:
-            self._exarc_exarc_1(*args, **kwargs)
+            self._exarc_exarc_2(*args, **kwargs)
             return
         except (RuntimeError, TypeError, NameError):
             pass
         try:
-            self._exarc_exarc_2(*args, **kwargs)
+            self._exarc_exarc_1(*args, **kwargs)
             return
         except (RuntimeError, TypeError, NameError):
             pass
@@ -697,6 +678,15 @@ cdef class ExArc:
     
         def __set__(self, value):
             (<cpp_instance.ExArc *> self._inst).flow = <double> value
+    
+    
+    property id:
+        """no docstring for id, please file a bug report!"""
+        def __get__(self):
+            return int((<cpp_instance.ExArc *> self._inst).id)
+    
+        def __set__(self, value):
+            (<cpp_instance.ExArc *> self._inst).id = <int> value
     
     
     property pref:

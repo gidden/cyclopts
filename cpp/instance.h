@@ -66,17 +66,20 @@ class ExNode {
 class ExArc {
  public:
   ExArc() {};
-  ExArc(int uid, std::vector<double>& ucaps,
+  ExArc(int id,
+        int uid, std::vector<double>& ucaps,
         int vid, std::vector<double>& vcaps,
         double pref)
-    : uid(uid),
+    : id(id),
+      uid(uid),
       ucaps(ucaps),
       vid(vid),
       vcaps(vcaps),
       pref(pref),
       flow(0) { };
   ExArc(const ExArc& other)
-    : uid(other.uid),
+    : id(other.id),
+      uid(other.uid),
       ucaps(other.ucaps),
       vid(other.vid),
       vcaps(other.vcaps),
@@ -84,9 +87,10 @@ class ExArc {
       flow(other.flow) { };
 
   inline bool operator<(const ExArc& other) const {
-    return uid < other.uid && vid < other.vid;
+    return id < other.id;
   }
-  
+
+  int id;
   int uid; // u == request
   std::vector<double> ucaps;
   int vid; // v == bid
@@ -111,7 +115,7 @@ class ExSolution {
 
   double time; // unit: s
   std::string cyclus_version;
-  std::map<std::pair<int, int>, double> flows;
+  std::map<int, double> flows;
 };
 
 /// constructs and runs a resource exchange

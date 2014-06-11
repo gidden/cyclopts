@@ -12,7 +12,6 @@ from cyclopts cimport cpp_instance
 from libcpp cimport bool as cpp_bool
 from libcpp.map cimport map as cpp_map
 from libcpp.string cimport string as std_string
-from libcpp.utility cimport pair as cpp_pair
 from libcpp.vector cimport vector as cpp_vector
 
 cdef extern from "instance.h" namespace "cyclopts":
@@ -25,8 +24,7 @@ cdef extern from "instance.h" namespace "cyclopts":
 
         # attributes
         std_string cyclus_version
-        cpp_map[cpp_pair[int, int], double] flows
-        cpp_pair[int, int] test
+        cpp_map[int, double] flows
         double time
 
         # methods
@@ -90,15 +88,17 @@ cdef extern from "instance.h" namespace "cyclopts":
     cdef cppclass ExArc:
         # constructors
         ExArc() except +
-        ExArc(const ExArc &) except +
         ExArc(int) except +
-        ExArc(int, cpp_vector[double] &) except +
-        ExArc(int, cpp_vector[double] &, int) except +
-        ExArc(int, cpp_vector[double] &, int, cpp_vector[double] &) except +
-        ExArc(int, cpp_vector[double] &, int, cpp_vector[double] &, double) except +
+        ExArc(int, int) except +
+        ExArc(int, int, cpp_vector[double] &) except +
+        ExArc(int, int, cpp_vector[double] &, int) except +
+        ExArc(int, int, cpp_vector[double] &, int, cpp_vector[double] &) except +
+        ExArc(int, int, cpp_vector[double] &, int, cpp_vector[double] &, double) except +
+        ExArc(const ExArc &) except +
 
         # attributes
         double flow
+        int id
         double pref
         cpp_vector[double] ucaps
         int uid

@@ -129,7 +129,7 @@ ExSolution Run(std::vector<ExGroup>& groups, std::vector<ExNode>& nodes,
     ExArc& exa = *ait;
     double flow = flows[ctx.arc_map[exa]];
     ait->flow = flow;
-    soln.flows[std::make_pair(exa.uid, exa.vid)] = flow;
+    soln.flows[exa.id] = flow;
   }
   for (ait = arcs.begin(); ait != arcs.end(); ++ait) {
     std::cout << "arc with uid " << ait->uid
