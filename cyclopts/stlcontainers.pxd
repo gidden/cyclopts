@@ -32,6 +32,12 @@ from libcpp cimport bool as cpp_bool
 from libcpp.vector cimport vector as cpp_vector
 from cyclopts cimport cpp_execute
 
+# PairIntInt
+cdef class _PairIntInt:
+    cdef pair[int, int] * pair_ptr
+    cdef public bint _free_pair
+
+
 # int vector
 
 

@@ -10,7 +10,6 @@ testdir = '.'            # location of root dir for tests, i.e., root/tests
 extra_types = 'xdress_extra_types'
 
 stlcontainers = [
-#    ('pair', 'int', 'int'),
     ('vector', 'int'),
     ('vector', 'float'),
     ('vector', 'ArcFlow'),
@@ -25,8 +24,8 @@ stlcontainers = [
     ('map', 'int', ('vector', 'float')),
     ('map', 'int', ('vector', ('vector', 'int'))),
     ('map', 'int', ('map', 'int', ('vector', 'float'))),
-#    ('map', ('pair', 'int', 'int'), 'float'),
-    ]
+    ('pair', 'int', 'int'),
+     ]
 
 includes = [
     os.path.expanduser('~/.local/include/cyclus'),

@@ -2,6 +2,7 @@ from __future__ import print_function
 
 from cyclopts.instance import ExGroup, ExNode, ExArc, ExSolution, ExSolver, Run
 from cyclopts.params import Incrementer
+from cyclopts.dtypes import xd_exgroup, xd_exnode, xd_exarc
 
 import numpy as np
 
@@ -82,8 +83,8 @@ def test_inst():
     bg1 = ExGroup(gid.next(), bid, np.array([2], dtype='float'))
     bg2 = ExGroup(gid.next(), bid, np.array([1], dtype='float'))
     bg3 = ExGroup(gid.next(), bid, np.array([1], dtype='float'))
-    grps = np.array([rg1, rg2, rg3, bg1, bg2, bg3], dtype=ExGroup)
-    
+    grps = np.array([rg1, rg2, rg3, bg1, bg2, bg3], dtype=xd_exgroup)
+ 
     nid = Incrementer()
     ex_grp_id = Incrementer(1)
     r11 = ExNode(nid.next(), rg1.id, req, 1, excl, ex_grp_id.next())
@@ -94,7 +95,7 @@ def test_inst():
     b21 = ExNode(nid.next(), bg2.id, bid, 1, excl, ex_grp_id.next())
     b22 = ExNode(nid.next(), bg2.id, bid, 1, excl, b21.excl_id)
     b31 = ExNode(nid.next(), bg3.id, bid, 1)
-    nodes = np.array([r11, r21, r22, r31, b11, b21, b22, b31], dtype=ExNode)
+    nodes = np.array([r11, r21, r22, r31, b11, b21, b22, b31], dtype=xd_exnode)
 
     # p3 > p2 > p1 > p4 > p5
     prefs = [1.0 / 2**i for i in range(5)]
@@ -119,7 +120,7 @@ def test_inst():
                r31.id, np.array([1], dtype='float'), 
                b31.id, np.array([1], dtype='float'),
                prefs[4])
-    arcs = np.array([a1, a2, a3, a4, a5], dtype=ExArc)
+    arcs = np.array([a1, a2, a3, a4, a5], dtype=xd_exarc)
         
     stypes = ["cbc", "clp", "greedy"]
     exp_flows = {0: 1, 1: 0, 2: 1, 3: 0.5, 4: 0.5}
