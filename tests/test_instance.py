@@ -81,7 +81,7 @@ def test_inst():
     rg2 = ExGroup(gid.next(), req, np.array([1.5], dtype='float'), 1.5)
     rg3 = ExGroup(gid.next(), req, np.array([1], dtype='float'), 1)
     bg1 = ExGroup(gid.next(), bid, np.array([2], dtype='float'))
-    bg2 = ExGroup(gid.next(), bid, np.array([1], dtype='float'))
+    bg2 = ExGroup(gid.next(), bid, np.array([1.5], dtype='float'))
     bg3 = ExGroup(gid.next(), bid, np.array([1], dtype='float'))
     grps = np.array([rg1, rg2, rg3, bg1, bg2, bg3], dtype=xd_exgroup)
  
@@ -128,4 +128,4 @@ def test_inst():
         solver = ExSolver(t)
         soln = Run(grps, nodes, arcs, solver)
         for id, flow in soln.flows.iteritems():
-            assert_equal(exp_flows[id], flow)                
+            assert_equal(exp_flows[id], flow)
