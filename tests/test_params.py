@@ -1,7 +1,12 @@
 from cyclopts.params import Incrementer, Param, BoolParam, \
     ReactorRequestSampler, ReactorRequestBuilder
+from cyclopts.instance import ExGroup, ExNode, ExArc
+
+from test_inst_io import assert_xd_equal
+
 from nose.tools import assert_equal, assert_almost_equal, assert_true, \
     assert_false, assert_raises
+import numpy as np
 
 def test_incr():
     i = Incrementer()
@@ -51,39 +56,35 @@ def test_def_rxtr_req_build():
     s = ReactorRequestSampler()
     b = ReactorRequestBuilder(s)
     groups, nodes, arcs = b.build()
-    # assert_equal(len(p.u_nodes_per_req), 1)
-    # assert_equal(len(p.v_nodes_per_sup), 1)
-    # assert_equal(p.u_nodes_per_req[0][0], 0)
-    # assert_equal(p.v_nodes_per_sup[1][0], 1)
-    # assert_equal(len(p.req_qty), 1)
-    # assert_equal(p.req_qty[0], 1)
-    # assert_equal(len(p.constr_vals), 2)
-    # assert_equal(len(p.constr_vals[0]), 0)
-    # assert_equal(len(p.constr_vals[1]), 1)
-    # assert_equal(p.constr_vals[1], 1)
-    # assert_equal(len(p.def_constr_coeff), 1)
-    # assert_equal(p.def_constr_coeff[0], 1)
-    # assert_equal(len(p.node_qty), 2)
-    # assert_equal(p.node_qty[0], 1)
-    # assert_true(p.node_qty[1] > 1e100)
-    # assert_equal(len(p.node_excl), 2)
-    # assert_false(p.node_excl[0])
-    # assert_false(p.node_excl[1])
-    # assert_equal(len(p.excl_req_nodes), 1)
-    # assert_equal(len(p.excl_req_nodes[0]), 0)
-    # assert_equal(len(p.excl_sup_nodes), 1)
-    # assert_equal(len(p.excl_sup_nodes[1]), 0)
-    # assert_equal(len(p.node_ucaps), 2)
-    # assert_equal(len(p.node_ucaps[0]), 1)
-    # assert_equal(len(p.node_ucaps[1]), 1)
-    # assert_equal(len(p.node_ucaps[0][0]), 0)
-    # assert_equal(len(p.node_ucaps[1][0]), 1)
-    # assert_equal(len(p.arc_to_unode), 1)
-    # assert_equal(p.arc_to_unode[0], 0)
-    # assert_equal(len(p.arc_to_vnode), 1)
-    # assert_equal(p.arc_to_vnode[0], 1)
-    # assert_equal(len(p.arc_pref), 1)
-    # assert_true(p.arc_pref[0] > 0 and p.arc_pref[0] <= 1)
+    req = True
+    bid = False
+    assert_equal(len(groups), 2)
+    assert_equal(len(nodes), 2)
+    assert_equal(len(arcs), 1)
+    assert_equal(groups[0].id, nodes[0].gid)
+    assert_equal(groups[1].id, nodes[1].gid)
+    exp = ExGroup(0, req, np.array([1], dtype='float'), 1)
+    assert_xd_equal(exp, groups[0])
+    exp = ExGroup(1, bid, np.array([1], dtype='float'))
+    assert_xd_equal(exp, groups[1])
+    exp = ExNode(0, 0, req, 1)
+    assert_xd_equal(exp, nodes[0])
+    exp = ExNode(1, 1, bid)
+    assert_xd_equal(exp, nodes[1])
+    # arcs are separate because values are stochastic
+    exp = ExArc(0, 0, np.array([1], dtype='float'), 
+                1, np.array([1], dtype='float'), 1)
+    assert_equal(exp.id, arcs[0].id)
+    assert_equal(exp.uid, arcs[0].uid)
+    assert_equal(exp.vid, arcs[0].vid)
+    assert_equal(len(arcs[0].ucaps), 1)
+    assert_true(arcs[0].ucaps > 0)
+    assert_true(arcs[0].ucaps <= 1)
+    assert_equal(len(arcs[0].vcaps), 1)
+    assert_true(arcs[0].vcaps > 0)
+    assert_true(arcs[0].vcaps <= 1)
+    assert_true(arcs[0].pref > 0)
+    assert_true(arcs[0].pref <= 1)
 
 def test_rxtr_req_build_changes():
     s = ReactorRequestSampler()

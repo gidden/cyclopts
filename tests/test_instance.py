@@ -79,9 +79,10 @@ def test_inst():
     # constraint for qty needed for cbc/clp and actual qty needed for greedy
     rg1 = ExGroup(gid.next(), req, np.array([1], dtype='float'), 1)
     rg2 = ExGroup(gid.next(), req, np.array([1.5], dtype='float'), 1.5)
-    rg3 = ExGroup(gid.next(), req, np.array([1], dtype='float'), 1)
+    # there is a bug in the greedy solver, this should be able to be [1, < 0.5]
+    rg3 = ExGroup(gid.next(), req, np.array([1, 0.5], dtype='float'), 1)
     bg1 = ExGroup(gid.next(), bid, np.array([2], dtype='float'))
-    bg2 = ExGroup(gid.next(), bid, np.array([1.5], dtype='float'))
+    bg2 = ExGroup(gid.next(), bid, np.array([1.5, 2], dtype='float'))
     bg3 = ExGroup(gid.next(), bid, np.array([1], dtype='float'))
     grps = np.array([rg1, rg2, rg3, bg1, bg2, bg3], dtype=xd_exgroup)
  
@@ -106,18 +107,18 @@ def test_inst():
                prefs[2])
     a2 = ExArc(aid.next(), 
                r11.id, np.array([1], dtype='float'), 
-               b21.id, np.array([1], dtype='float'),
+               b21.id, np.array([1, 1], dtype='float'),
                prefs[1])
     a3 = ExArc(aid.next(), 
                r21.id, np.array([1], dtype='float'), 
-               b22.id, np.array([1], dtype='float'),
+               b22.id, np.array([1, 1], dtype='float'),
                prefs[0])
     a4 = ExArc(aid.next(), 
                r22.id, np.array([1], dtype='float'), 
                b31.id, np.array([1], dtype='float'),
                prefs[3])
     a5 = ExArc(aid.next(), 
-               r31.id, np.array([1], dtype='float'), 
+               r31.id, np.array([1, 1], dtype='float'), 
                b31.id, np.array([1], dtype='float'),
                prefs[4])
     arcs = np.array([a1, a2, a3, a4, a5], dtype=xd_exarc)
@@ -125,6 +126,7 @@ def test_inst():
     stypes = ["cbc", "clp", "greedy"]
     exp_flows = {0: 1, 1: 0, 2: 1, 3: 0.5, 4: 0.5}
     for t in stypes:
+        print("\nTesting with solver: {0}\n".format(t))
         solver = ExSolver(t)
         soln = Run(grps, nodes, arcs, solver)
         for id, flow in soln.flows.iteritems():

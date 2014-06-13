@@ -107,8 +107,8 @@ cdef class ExNode:
         self._inst = new cpp_instance.ExNode()
     
     
-    def _exnode_exnode_1(self, id, gid, kind, qty=0, excl=False, excl_id=0):
-        """ExNode(self, id, gid, kind, qty=0, excl=False, excl_id=0)
+    def _exnode_exnode_1(self, id, gid, kind, qty=0, excl=False, excl_id=-1):
+        """ExNode(self, id, gid, kind, qty=0, excl=False, excl_id=-1)
         """
         self._inst = new cpp_instance.ExNode(<int> id, <int> gid, <bint> kind, <double> qty, <bint> excl, <int> excl_id)
     

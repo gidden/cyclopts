@@ -20,6 +20,8 @@ def assert_xd_equal(exp, obs):
     for var in xdvars(exp):
         vexp = getattr(exp, var)
         vobs = getattr(obs, var)
+        print("exp {0}: {1}".format(var, vexp))
+        print("obs {0}: {1}".format(var, vobs))
         if isinstance(vexp, Iterable):
             assert_array_equal(vexp, vobs)
         else:
