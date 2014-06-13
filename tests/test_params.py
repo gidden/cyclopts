@@ -98,9 +98,9 @@ def test_rxtr_req_build_changes():
     s.exclusive = BoolParam(1)
     b = ReactorRequestBuilder(s)
     groups, nodes, arcs = b.build()
-    # assert_equal(len(p.excl_req_nodes[0]), 1)
-    # assert_equal(p.excl_req_nodes[0][0], 0)
-    # assert_true(p.node_excl[0])
+    excls = [n.id for n in nodes if n.excl]
+    assert_equal(len(excls), 1)
+    assert_equal(excls[0], 0)
     s.exclusive = BoolParam(-1)
 
     # 2 suppliers 0 connection prob
@@ -108,7 +108,7 @@ def test_rxtr_req_build_changes():
     s.n_supply = Param(2)
     b = ReactorRequestBuilder(s)
     groups, nodes, arcs = b.build()
-    # assert_equal(len(p.arc_pref), 1)
+    assert_equal(len(arcs), 1)
     s.connection = BoolParam(1)
     s.n_supply = Param(1)
 
@@ -121,7 +121,7 @@ def test_rxtr_req_build_changes():
     s.sup_multi_commods = Param(1)
     b = ReactorRequestBuilder(s)
     groups, nodes, arcs = b.build()
-    # assert_equal(len(p.arc_pref), 4)
+    assert_equal(len(arcs), 4)
     commods = b._assem_commods(set([0, 1]))
     assert_true(0 in commods and 1 in commods)
     assign = b._assign_supply_commods([0, 1], [0, 1])
@@ -134,14 +134,14 @@ def test_rxtr_req_build_changes():
     s.sup_multi = BoolParam(-1)
 
     # n constraints
-    s.n_sup_constr = Param(3)
     s.n_req_constr = Param(2)
+    s.n_sup_constr = Param(3)
     b = ReactorRequestBuilder(s)
     groups, nodes, arcs = b.build()
-    # assert_equal(len(p.constr_vals[0]), 2)
-    # assert_equal(len(p.constr_vals[1]), 3)
-    # assert_equal(len(p.node_ucaps[0][0]), 2)
-    # assert_equal(len(p.node_ucaps[1][0]), 3)
+    assert_equal(len(groups[0].caps), 2 + 1) # +1 for default constraint
+    assert_equal(len(groups[1].caps), 3)
+    assert_equal(len(arcs[0].ucaps), 2 + 1)
+    assert_equal(len(arcs[0].vcaps), 3)
     s.n_sup_constr = Param(1)
     s.n_req_constr = Param(1)
 

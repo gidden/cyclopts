@@ -516,7 +516,7 @@ class ReactorRequestBuilder(object):
                                          s.n_sup_constr.sample())
             groups.append(inst.ExGroup(g_id, bid, caps))
             for v_id, u_id in sups:
-                n_node_ucaps[v_id] = n_constr
+                n_node_ucaps[v_id] = len(caps)
                 nodes.append(inst.ExNode(v_id, g_id, bid))
                 # arc from u-v node
                 # add qty as first constraint -- required for clp/cbc
