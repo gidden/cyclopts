@@ -25,30 +25,43 @@ def assert_xd_equal(exp, obs):
         else:
             assert_equal(vexp, vobs)
 
-def test_exgroup():
-    instid = uuid.uuid4()
-    tmp = "tmp_{0}".format(instid)
-    h5file = t.open_file(tmp, mode='w',)
-    h5node = h5file.root
-    iio.check_extables(h5file, h5node)
-    exp = [ExGroup(1, True, np.array([1], dtype='float'), 3), 
-           ExGroup(6, False, np.array([2, 3.5], dtype='float'))]
-    iio.write_exgroups(h5node, instid, exp)
-    obs = iio.read_exgroups(h5node, instid)
-    assert_equal(len(exp), len(obs))
-    for i in range(len(exp)):
-        assert_xd_equal(exp[i], obs[i])
-    h5file.close()
-    os.remove(tmp)
+class TestExchangeIO:
+    def setUp(self):
+        self.instid = uuid.uuid4()
+        self.tmp = "tmp_{0}".format(self.instid)
+        self.h5file = t.open_file(self.tmp, mode='w',)
+        self.h5node = self.h5file.root
+        iio.check_extables(self.h5file, self.h5node)
+        
+    def tearDown(self):
+        self.h5file.close()
+        os.remove(self.tmp)
 
-def test_exnode():
-    exp = ExNode(1, 2, False, 3)
-    obs = ExNode(1, 2, False, 3)
-    assert_xd_equal(exp, obs)
+    def test_exgroup(self):
+        exp = [ExGroup(1, True, np.array([1], dtype='float'), 3), 
+               ExGroup(6, False, np.array([2, 3.5], dtype='float'))]
+        iio.write_exobjs(self.h5node, self.instid, exp)
+        obs = iio.read_exobjs(self.h5node, self.instid, ExGroup)
+        assert_equal(len(exp), len(obs))
+        for i in range(len(exp)):
+            assert_xd_equal(exp[i], obs[i])
 
-def test_exarc():
-    exp = ExArc(1, 2, np.array([1], dtype='float'), 
-                3, np.array([1], dtype='float'), 0.5)
-    obs = ExArc(1, 2, np.array([1], dtype='float'), 
-                3, np.array([1], dtype='float'), 0.5)
-    assert_xd_equal(exp, obs)
+    def test_exnode(self):
+        exp = [ExNode(1, 2, True, 3), 
+               ExNode(6, 7, False, 0, True, 1)]
+        iio.write_exobjs(self.h5node, self.instid, exp)
+        obs = iio.read_exobjs(self.h5node, self.instid, ExNode)
+        assert_equal(len(exp), len(obs))
+        for i in range(len(exp)):
+            assert_xd_equal(exp[i], obs[i])
+
+    def test_exarc(self):
+        exp = [ExArc(2, 1, np.array([1, 0.9, 4], dtype='float'), 
+                     16, np.array([.295e-9], dtype='float'), 0.5e-10),
+               ExArc(1, 32, np.array([8.1, 5.3e6], dtype='float'), 
+                     5, np.array([0.1, 77, 47], dtype='float'), 0.5e10)]
+        iio.write_exobjs(self.h5node, self.instid, exp)
+        obs = iio.read_exobjs(self.h5node, self.instid, ExArc)
+        assert_equal(len(exp), len(obs))
+        for i in range(len(exp)):
+            assert_xd_equal(exp[i], obs[i])
