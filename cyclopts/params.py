@@ -24,7 +24,7 @@ import re
 import collections
 
 try:
-    from execute import GraphParams
+    import cyclopts.instance as inst
 except ImportError as e:
     print("Caught import error, "
           "are you running from the root Cyclopts directory?")
@@ -350,8 +350,7 @@ class ReactorRequestBuilder(object):
     This builder can be incorporated with other builders by providing the
     appropriate offsets.
     """
-    def __init__(self, sampler, params = None, commod_offset = 0, 
-                 req_g_offset = 0, 
+    def __init__(self, sampler, commod_offset = 0, req_g_offset = 0, 
                  sup_g_offset = 0, req_n_offset = 0, sup_n_offset = 0, 
                  arc_offset = 0,
                  *args, **kwargs):
@@ -376,7 +375,6 @@ class ReactorRequestBuilder(object):
         """
         s = self.sampler = sampler
         self.commod_offset = commod_offset
-        self.params = params if params is not None else GraphParams()
 
         self.commods = set(range(self.commod_offset, 
                                  self.commod_offset + s.n_commods.sample()))
@@ -481,58 +479,60 @@ class ReactorRequestBuilder(object):
             generate_supply
         """
         s = self.sampler
-        p = self.params
-        
+
         n_node_ucaps = {} # number of capacities per node
+        req_qtys = {} # req node id to req qty 
+        groups = []
+        nodes = []
+        arcs = []
+        req = True
+        bid = False
+
         # populate request params
         for g_id, multi_reqs in request.items():
-            p.AddRequestGroup(g_id)
-            p.req_qty[g_id] = self._req_qty(multi_reqs)
+            qty = self._req_qty(multi_reqs)
             n_constr = s.n_req_constr.sample()
-            p.constr_vals[g_id] = self._req_constr_vals(n_constr, multi_reqs)
-            excl_nodes = []
+            # add qty as first constraint -- required for clp/cbc
+            caps = np.append(qty, self._req_constr_vals(n_constr, multi_reqs))
+            groups.append(inst.ExGroup(g_id, req, caps, qty))
+            
+            exid = Incrementer()
             for reqs in multi_reqs: # mutually satisfying requests
                 for n_id, commod in reqs:
                     n_node_ucaps[n_id] = n_constr
-                    p.AddRequestNode(n_id, g_id)
                     qty = self._req_node_qty()
-                    p.node_qty[n_id] = qty
-                    p.def_constr_coeff[n_id] = self._req_def_constr(qty)
                     excl = s.exclusive.sample() # exclusive or not
-                    p.node_excl[n_id] = excl
-                    if excl:
-                        excl_nodes.append(n_id)
-            p.excl_req_nodes[g_id] = excl_nodes
+                    excl_id = exid.next() if excl else -1 # need unique exclusive id
+                    nodes.append(
+                        inst.ExNode(n_id, g_id, req, qty, excl, excl_id))
     
         # populate supply params and arc relations
-        arcs = {} # arc: (request id, supply id)
         a_ids = Incrementer(self.arc_offset)
         commod_demand = self._commod_demand()
         supplier_capacity = \
             self._supplier_capacity(commod_demand, supplier_commods)
         for g_id, sups in supply.items():
-            p.AddSupplyGroup(g_id)
-            n_constr = s.n_sup_constr.sample()
-            p.constr_vals[g_id] = \
-                self._sup_constr_vals(supplier_capacity[g_id], n_constr)
-            for s_id, r_id in sups:
-                p.AddSupplyNode(s_id, g_id)
-                n_node_ucaps[s_id] = n_constr
-                arcs[a_ids.next()] = (r_id, s_id)
+            caps = self._sup_constr_vals(supplier_capacity[g_id], 
+                                         s.n_sup_constr.sample())
+            groups.append(inst.ExGroup(g_id, bid, caps))
+            for v_id, u_id in sups:
+                n_node_ucaps[v_id] = n_constr
+                nodes.append(inst.ExNode(v_id, g_id, bid))
+                # arc from u-v node
+                # add qty as first constraint -- required for clp/cbc
+                ucaps = np.append(
+                    [self._req_def_constr(qty)], 
+                    [s.constr_coeff.sample() for i in range(n_node_ucaps[u_id])])
+                vcaps = [s.constr_coeff.sample() for i in range(n_node_ucaps[v_id])]
+                arcs.append(
+                    inst.ExArc(a_ids.next(), u_id, ucaps, 
+                               v_id, vcaps, s.pref_coeff.sample()))
 
-        # populate arc params
-        for arc, ids in arcs.items():
-            req, sup = ids
-            p.arc_to_unode[arc] = req
-            p.arc_to_vnode[arc] = sup
-            p.node_ucaps[req][arc] = \
-                [s.constr_coeff.sample() for i in range(n_node_ucaps[req])]
-            p.node_ucaps[sup][arc] = \
-                [s.constr_coeff.sample() for i in range(n_node_ucaps[sup])]
-            p.arc_pref[arc] = s.pref_coeff.sample()
+        return groups, nodes, arcs
 
     def build(self, *args, **kwargs):
-        """Returns a configured cyclopts.execute.GraphParams.
+        """Builds Group, Node, and Arc components of a Reactor-Request based
+        Resource Exchange
         """
         commods = self.commods
         requesters = self.requesters
@@ -553,9 +553,8 @@ class ReactorRequestBuilder(object):
                               "Commodities: {0}, "
                               "supplied commodities {1}.".format(
                         set(commods), supplied_commods)))
-        self.populate_params(request, supply, supplier_commods)
+        return self.populate_params(request, supply, supplier_commods)
 
-        return self.params
     
     #
     # Encapsulated assumptions
@@ -684,7 +683,7 @@ class ReactorRequestBuilder(object):
         # note that reqs = [ [satisfying commods] ], so one entry per actual
         # request
         constr_val = len(reqs)
-        return [constr_val for i in range(n_constr)]
+        return np.array([constr_val for i in range(n_constr)])
     
     def _req_node_qty(self):
         """Returns the quantity for an individual request."""
@@ -743,4 +742,5 @@ class ReactorRequestBuilder(object):
         # assumes that all supplier constraint values are based of a baseline
         # constraint value
         s = self.sampler
-        return [s.sup_constr_val.sample() * capacity for i in range(n_constr)]
+        return np.array([s.sup_constr_val.sample() * capacity \
+                             for i in range(n_constr)])
