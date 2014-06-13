@@ -34,7 +34,7 @@ class ExNode {
  public:
   ExNode() {};
   ExNode(int id, int gid, bool kind, double qty = 0,
-         bool excl=false, int excl_id = 0)
+         bool excl=false, int excl_id = -1)
     : id(id),
       gid(gid),
       kind(kind),

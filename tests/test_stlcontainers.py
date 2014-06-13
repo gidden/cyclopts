@@ -19,33 +19,6 @@ from collections import Container, Mapping
 from cyclopts import stlcontainers
 
 
-# PairIntInt
-def test_pair_int_int():
-    from numpy.testing import assert_array_equal
-    p = stlcontainers.PairIntInt()
-    p[0] = 18
-    p[1] = -65
-    assert_array_equal(p[0], p.first)
-    assert_array_equal(p[1], p.second)
-    import pprint
-    pprint.pprint(p)
-    pprint.pprint(p[0])
-    pprint.pprint(p[1])
-    q = p
-    assert_array_equal(p, q)
-    
-    import copy
-    r = copy.copy(p)
-    pprint.pprint(r)
-    pprint.pprint(r[0])
-    pprint.pprint(r.first)
-    pprint.pprint(r[1])
-    pprint.pprint(r.second)
-    assert_array_equal(p.first, r.first)
-    assert_array_equal(p.second, r.second)
-
-
-
 # Vector Int
 
 
@@ -391,6 +364,33 @@ def test_map_int_map_int_vector_double():
                 assert_equal(value, {1: [1.0, 42.42, -65.5555, 18], -65: [1.0, -65.5555, 1.0, -65.5555]}[key])
     else:
         assert_array_almost_equal(m[42], {1: [1.0, 42.42, -65.5555, 18], -65: [1.0, -65.5555, 1.0, -65.5555]})
+
+
+
+# PairIntInt
+def test_pair_int_int():
+    from numpy.testing import assert_array_equal
+    p = stlcontainers.PairIntInt()
+    p[0] = 18
+    p[1] = -65
+    assert_array_equal(p[0], p.first)
+    assert_array_equal(p[1], p.second)
+    import pprint
+    pprint.pprint(p)
+    pprint.pprint(p[0])
+    pprint.pprint(p[1])
+    q = p
+    assert_array_equal(p, q)
+    
+    import copy
+    r = copy.copy(p)
+    pprint.pprint(r)
+    pprint.pprint(r[0])
+    pprint.pprint(r.first)
+    pprint.pprint(r[1])
+    pprint.pprint(r.second)
+    assert_array_equal(p.first, r.first)
+    assert_array_equal(p.second, r.second)
 
 
 
