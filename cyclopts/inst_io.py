@@ -46,8 +46,12 @@ _dtypes = {
         ]),
     "properties": np.dtype([
         ("instid", ('str', 16)), # 16 bytes for uuid
-        ("nvar", np.int64),
-        ("nconstr", np.int64),
+        ("n_arcs", np.int64),
+        ("n_u_grps", np.int64),
+        ("n_v_grps", np.int64),
+        ("n_u_nodes", np.int64),
+        ("n_v_nodes", np.int64),
+        ("n_constrs", np.int64),
         ]),
     }
 
@@ -65,10 +69,9 @@ def xdvars(obj):
 def check_extables(h5node):
     for objname, tname in _tbl_names.items():
         if tname in h5node._v_children:
-            pass
+            continue
         h5node._v_file.create_table(h5node, tname, _dtypes[objname], 
-                                    filters=_filters)
-    
+                                    filters=_filters)    
 
 def write_exobjs(h5node, instid, objs):
     cname = objs[0].__class__.__name__
@@ -87,15 +90,31 @@ def write_exobjs(h5node, instid, objs):
     tbl.flush()
 
 def write_exprops(h5node, instid, groups, nodes, arcs):
-    tname = _tbl_names[cname]
-    tbl = getattr(h5node, tname)
+    tbl = getattr(h5node, _tbl_names['properties'])
     row = tbl.row
     row['instid'] = instid.bytes
-    row['nvar'] = len(arcs)
+    row['n_arcs'] = len(arcs)
     nconstr = 0
+    nv = 0
+    nu = 0
     for g in groups:
+        if g.kind:
+            nu += 1
+        else:
+            nv += 1
         nconstr += len(g.caps)
-    row['nconstr'] = nconstr
+    row['n_constrs'] = nconstr
+    row['n_u_grps'] = nu
+    row['n_v_grps'] = nv
+    nv = 0
+    nu = 0
+    for n in nodes:
+        if n.kind:
+            nu += 1
+        else:
+            nv += 1
+    row['n_u_nodes'] = nu
+    row['n_v_nodes'] = nv
     row.append()
     tbl.flush()
 

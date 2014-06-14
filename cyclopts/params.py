@@ -22,6 +22,7 @@ import numpy as np
 import copy as cp
 import re
 import collections
+import uuid
 
 try:
     import cyclopts.instance as inst
@@ -339,7 +340,7 @@ class ReactorRequestSampler(object):
         conditions.append(self.n_commods.avg > self.sup_multi_commods.avg)
         return all(c for c in conditions)
 
-    def inst_builder_ctor():
+    def inst_builder_ctor(self):
         """Returns a constructor to an object that builds problem instances from
         the parameter space defined by this object."""
         return ReactorRequestBuilder

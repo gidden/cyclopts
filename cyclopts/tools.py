@@ -377,43 +377,47 @@ def report(sampler, gparams, sparams, soln, sim_id = None, db_path = None):
         The database to dump information to. The default is cyclopts.h5 
         file placed in the current working directory.
     """
-    db_path = os.path.join(os.getcwd(), 'cyclopts.h5') if db_path is None \
-        else db_path
-    sim_id = uuid.uuid4().int if sim_id is None else sim_id
-    graph_id = str(gparams.id)
+    pass
+##
+## commented out so that execute removal can be updated
+## 
+#     db_path = os.path.join(os.getcwd(), 'cyclopts.h5') if db_path is None \
+#         else db_path
+#     sim_id = uuid.uuid4().int if sim_id is None else sim_id
+#     graph_id = str(gparams.id)
 
-    mode = "a" if os.path.exists(db_path) else "w"
-    filters = t.Filters(complevel=4)
-    h5file = t.open_file(db_path, mode=mode, title="Cyclopts Output", filters=filters)
+#     mode = "a" if os.path.exists(db_path) else "w"
+#     filters = t.Filters(complevel=4)
+#     h5file = t.open_file(db_path, mode=mode, title="Cyclopts Output", filters=filters)
     
-    flows = [ArcFlow(soln.flows[i:]) for i in range(len(soln.flows))]
-    #print("nflows:", len(flows))
-    obj = sum([f.flow / gparams.arc_pref[f.id] for f in flows])
-    solnparams = [soln.time, obj, soln.cyclus_version, cyclopts.__version__]
+#     flows = [ArcFlow(soln.flows[i:]) for i in range(len(soln.flows))]
+#     #print("nflows:", len(flows))
+#     obj = sum([f.flow / gparams.arc_pref[f.id] for f in flows])
+#     solnparams = [soln.time, obj, soln.cyclus_version, cyclopts.__version__]
 
-    tables = [('solver', SolverDesc, 'Solver Params', sparams),
-              ('flows', FlowDesc, 'Arc Flows', flows),
-              ('solution', SolnDesc, 'Solution Params', solnparams),
-              ('graph', GraphDesc, 'Graph Params', gparams),
-              ]
-    if isinstance(sampler, ReactorRequestSampler):
-        tables += [('rr_sampler', RRSamplerDesc, 'Reactor Request Sampling', sampler)]
-# TODO
-#    elif isinstance(sampler, ReactorSupplySampler):
-#        tables += [('rssample', SolnDesc, 'Reactor Supply Params', sampler)]
-    else:
-        raise TypeError("Sampler is of an unknown type.")
+#     tables = [('solver', SolverDesc, 'Solver Params', sparams),
+#               ('flows', FlowDesc, 'Arc Flows', flows),
+#               ('solution', SolnDesc, 'Solution Params', solnparams),
+#               ('graph', GraphDesc, 'Graph Params', gparams),
+#               ]
+#     if isinstance(sampler, ReactorRequestSampler):
+#         tables += [('rr_sampler', RRSamplerDesc, 'Reactor Request Sampling', sampler)]
+# # TODO
+# #    elif isinstance(sampler, ReactorSupplySampler):
+# #        tables += [('rssample', SolnDesc, 'Reactor Supply Params', sampler)]
+#     else:
+#         raise TypeError("Sampler is of an unknown type.")
 
-    r = Reporter()
-    for name, desc, title, data in tables:
-        if not name in h5file.root._v_children:
-            h5file.create_table("/", name, desc, title, filters=filters)
-        if hasattr(r, 'report_' + name):
-            row = h5file.get_node('/' + name).row
-            meth = getattr(r, 'report_' + name)
-            meth(row, sim_id, graph_id, data)
+#     r = Reporter()
+#     for name, desc, title, data in tables:
+#         if not name in h5file.root._v_children:
+#             h5file.create_table("/", name, desc, title, filters=filters)
+#         if hasattr(r, 'report_' + name):
+#             row = h5file.get_node('/' + name).row
+#             meth = getattr(r, 'report_' + name)
+#             meth(row, sim_id, graph_id, data)
         
-    h5file.close()
+#     h5file.close()
             
 def combine(files, new_file = None):
     """Combines two or more databases with identical layout, writing their
