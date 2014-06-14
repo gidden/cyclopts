@@ -497,39 +497,3 @@ def from_h5(fin=None, subinput=None):
             samplers.append(inst)
     fin.close()
     return samplers
-
-
-def exec_from_h5(fin=None, fout=None, rc=None, solvers=None):
-    """Runs an instance of Cyclopts.
-    
-    Parameters
-    ----------
-    fin : str, optional
-        the input file name (*.h5)
-    fout : str, optional
-        the output file name (*.h5)
-    rc : str, optional
-        the run control file
-    solvers : list, optional
-        the solvers to use on each generated instance
-    """
-    fin = "in.h5" if fin is None else fin
-    fout = "out.h5" if fout is None else fout
-    solvers = ["cbc"] if solvers is None else solvers
-    
-    subinput = None
-    if rc is not None:
-        rcdict = parse_rc(rc)
-        subinput = {rcdict.path: rcdict.rows}
-        
-    samplers = from_h5(fin, subinput)
-    execute_cyclopts(samplers, solvers, fout)
-
-def execute_cyclopts(samplers, solvers, db_path): 
-    for sampler in samplers:
-        for solver in solvers:
-            rrb = ReactorRequestBuilder(sampler)
-            gparams = rrb.build()
-            sparams = SolverParams(solver)
-            soln = execute_exchange(gparams, sparams)
-            report(sampler, gparams, sparams, soln, db_path=db_path)

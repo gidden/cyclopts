@@ -146,3 +146,9 @@ def read_exobjs(h5node, instid, ctor):
             setattr(obj, var, attr)
         objs.append(obj)
     return objs
+
+def read_exinst(h5node, instid):
+    groups = read_exobjs(h5node, instid, ExGroup)
+    nodes = read_exobjs(h5node, instid, ExNode)
+    arcs = read_exobjs(h5node, instid, ExArc)
+    return groups nodes, arcs

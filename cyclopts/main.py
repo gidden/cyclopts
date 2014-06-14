@@ -11,6 +11,9 @@ from cyclopts.condor import submit_dag
 import cyclopts.params as params
 import cyclopts.tools as tools
 
+_inst_grp_name = 'Instances'
+_filters = t.Filters(complevel=4)
+
 def condor(args):
     submit_dag(args.user, args.host, args.indb, args.solvers, 
                args.dumpdir, args.outdb, args.clean, args.auth)
@@ -26,15 +29,13 @@ def convert(args):
     fout = args.output
     ninst = args.ninst
     samplers = tools.SamplerBuilder().build(tools.parse_rc(fin))
-    filters = t.Filters(complevel=4)
-    h5file = t.open_file(fout, mode='a', filters=filters)
+    h5file = t.open_file(fout, mode='a', filters=_filters)
     root = h5file.root
 
     d = defaultdict(list)
     for s in samplers:
         d[s.__class__.__name__].append(s)
     tbl_names = d.keys()
-    grp_name = 'Instances'
     
     # create leaves
     for name in tbl_names:
@@ -44,10 +45,10 @@ def convert(args):
         inst = d[name][0]
         h5file.create_table(root, name, 
                             description=inst.describe_h5(), 
-                            filters=filters)
-    if not root.__contains__(grp_name):
-        print("creating group {0}".format(grp_name))
-        h5file.create_group(root, grp_name, filters=filters)
+                            filters=_filters)
+    if not root.__contains__(_inst_grp_name):
+        print("creating group {0}".format(_inst_grp_name))
+        h5file.create_group(root, _inst_grp_name, filters=_filters)
     
     # populate leaves
     for name in tbl_names:
@@ -58,7 +59,7 @@ def convert(args):
             row.append()
             inst_builder_ctor = s.inst_builder_ctor()
             builder = inst_builder_ctor(s)
-            h5node = root._f_get_child(grp_name)
+            h5node = root._f_get_child(_inst_grp_name)
             for i in range(ninst):
                 builder.build()
                 builder.write(h5node)
@@ -66,9 +67,21 @@ def convert(args):
     h5file.close()
 
 def execute(args):
-    pass
-    # print("solvers:", args.solvers)
-    # exec_from_h5(args.input, args.output, args.rc, args.solvers)
+    db = args.db
+    rc = parse_rc(args.rc)
+    solvers = args.solvers
+    instids = rc['instids'] if 'instids' in rc.keys() else []
+    # need to add queryability
+
+    h5file = t.open_file(db, mode='r', filters=_filters)
+    h5node = h5file.root._f_get_child(_inst_grp_name)
+    for id in instids:
+        groups, nodes, arcs = iio.read_exinst(h5node, id)
+        for s in solvers:
+            solver = ExSolver(s)
+            soln = Run(groups, nodes, arcs, solver)
+            # need to add reporting
+            # report(sampler, gparams, sparams, soln, db_path=db_path)
 
 def main():
     """Entry point for Cyclopts runs."""
@@ -98,15 +111,14 @@ def main():
              "by the input database and other command line arguments.")
     exec_parser = sp.add_parser('exec', help=exech)
     exec_parser.set_defaults(func=execute)
-    inh = ("An HDF5 file that defines points in the parameter space to be run.")
-    exec_parser.add_argument('-i', '--input', dest='input', help=inh)
-    outh = ("An HDF5 file to which output will be provided.")
-    exec_parser.add_argument('-o', '--output', dest='output', help=outh)
-    solversh = ("A list of which solvers to use..")
+    db = ("An HDF5 Cyclopts database (e.g., the result of 'cyclopts convert').")
+    exec_parser.add_argument('--db', dest='db', help=db)
+    solversh = ("A list of which solvers to use.")
     exec_parser.add_argument('--solvers', nargs='*', default=['cbc'], dest='solvers', 
                              help=solversh)    
-    rch = ("The run control file, which allows idetification of a subset of input to run.")
-    exec_parser.add_argument('--rc', default=None, dest='rc', help=rch)    
+    rch = ("The run control file, which allows idetification of a subset "
+           "of input to run.")
+    exec_parser.add_argument('--rc', dest='rc', help=rch)
     
     # for condor
     condorh = ("Submits a job to condor, retrieves output when it has completed, "
