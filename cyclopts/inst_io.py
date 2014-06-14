@@ -14,6 +14,7 @@ _tbl_names = {
     "ExGroup": "ExchangeGroups",
     "ExNode": "ExchangeNodes",
     "ExArc": "ExchangeArcs",
+    "properties": "ExchangeInstProperties",
     }
 
 # this must be kept up to date with the cyclopts.instance classes
@@ -43,6 +44,11 @@ _dtypes = {
         ("vcaps", (np.float64, _N_CAPS_MAX),), # array of size N_CAPS_MAX
         ("pref", np.float64),
         ]),
+    "properties": np.dtype([
+        ("instid", ('str', 16)), # 16 bytes for uuid
+        ("nvar", np.int64),
+        ("nconstr", np.int64),
+        ]),
     }
 
 _filters = t.Filters(complevel=4)
@@ -56,11 +62,13 @@ def xdvars(obj):
                 and not attr.startswith('__') and not attr.startswith('_')]
 
 """Checks if a file has known Exchange-related tables and adds them if not"""
-def check_extables(h5file, h5node):
+def check_extables(h5node):
     for objname, tname in _tbl_names.items():
         if tname in h5node._v_children:
             pass
-        h5file.create_table(h5node, tname, _dtypes[objname], filters=_filters)
+        h5node._v_file.create_table(h5node, tname, _dtypes[objname], 
+                                    filters=_filters)
+    
 
 def write_exobjs(h5node, instid, objs):
     cname = objs[0].__class__.__name__
@@ -77,6 +85,26 @@ def write_exobjs(h5node, instid, objs):
             row[var] = attr
         row.append()
     tbl.flush()
+
+def write_exprops(h5node, instid, groups, nodes, arcs):
+    tname = _tbl_names[cname]
+    tbl = getattr(h5node, tname)
+    row = tbl.row
+    row['instid'] = instid.bytes
+    row['nvar'] = len(arcs)
+    nconstr = 0
+    for g in groups:
+        nconstr += len(g.caps)
+    row['nconstr'] = nconstr
+    row.append()
+    tbl.flush()
+
+def write_exinst(h5node, instid, groups, nodes, arcs):
+    check_extables(h5node)
+    write_exobjs(h5node, instid, groups)
+    write_exobjs(h5node, instid, nodes)
+    write_exobjs(h5node, instid, arcs)
+    write_exprops(h5node, instid, groups, nodes, arcs)
 
 def read_exobjs(h5node, instid, ctor):
     inst = ctor()

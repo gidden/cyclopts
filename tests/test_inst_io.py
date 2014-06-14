@@ -33,7 +33,7 @@ class TestExchangeIO:
         self.tmp = "tmp_{0}".format(self.instid)
         self.h5file = t.open_file(self.tmp, mode='w',)
         self.h5node = self.h5file.root
-        iio.check_extables(self.h5file, self.h5node)
+        iio.check_extables(self.h5node)
         
     def tearDown(self):
         self.h5file.close()

@@ -12,7 +12,6 @@ extra_types = 'xdress_extra_types'
 stlcontainers = [
     ('vector', 'int'),
     ('vector', 'float'),
-    ('vector', 'ArcFlow'),
     ('vector', 'ExGroup'),
     ('vector', 'ExNode'),
     ('vector', 'ExArc'),
@@ -33,10 +32,6 @@ includes = [
     ]
 
 classes = [
-    apiname('ArcFlow', 'cpp/execute.*', incfiles='execute.h'),
-    apiname('Solution', 'cpp/execute.*', incfiles='execute.h'),
-    apiname('GraphParams', 'cpp/execute.*', incfiles='execute.h'),
-    apiname('SolverParams', 'cpp/execute.*', incfiles='execute.h'),
     apiname('ExGroup', 'cpp/instance.*', incfiles='instance.h'),
     apiname('ExNode', 'cpp/instance.*', incfiles='instance.h'),
     apiname('ExArc', 'cpp/instance.*', incfiles='instance.h'),
@@ -44,8 +39,6 @@ classes = [
     apiname('ExSolution', 'cpp/instance.*', incfiles='instance.h'),
     ]
 functions = [
-    apiname('execute_exchange', 'cpp/execute.*', incfiles='execute.h'),
-    apiname('test', 'cpp/execute.*', incfiles='execute.h'),
     apiname('Run', 'cpp/instance.*', incfiles='instance.h'),
     apiname('Incr', 'cpp/instance.*', incfiles='instance.h'),
     apiname('IncrOne', 'cpp/instance.*', incfiles='instance.h'),

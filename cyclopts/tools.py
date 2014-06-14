@@ -19,7 +19,6 @@ from collections import defaultdict, Iterable
 import cyclopts
 from cyclopts.params import CONSTR_ARGS, Param, BoolParam, SupConstrParam, CoeffParam, \
     ReactorRequestSampler, ReactorRequestBuilder #, ReactorSupplySampler
-from cyclopts.execute import ArcFlow, SolverParams, execute_exchange
 
 class NotSpecified(object):
     """A helper class singleton for run control meaning that a 'real' value
@@ -495,40 +494,6 @@ def from_h5(fin=None, subinput=None):
     fin.close()
     return samplers
 
-def to_h5(fin=None, fout=None):
-    """Converts a contiguous dataspace as defined by an input run control file
-    into an HDF5 database. Each discrete point, as represented by a Sampler-type
-    object is converted into a row in a table of the object's name.
-    
-    Parameters
-    ----------
-    fin : str
-        the input file name (*.py)
-    fout : str
-        the output file name (*.h5)
-    """
-    fin = "cycloptsrc.py" if fin is None else fin
-    fout = "in.h5" if fout is None else fout
-    samplers = SamplerBuilder().build(parse_rc(fin))
-    filters = t.Filters(complevel=4)
-    fout = t.open_file(fout, mode='a', filters=filters)
-
-    d = defaultdict(list)
-    for s in samplers:
-        d[s.__class__.__name__].append(s)
-    for name in d.keys():
-        if name not in fout.root._f_list_nodes(classname="Table"):
-            print("creating table {0}".format(name))
-            fout.create_table(fout.root, name, 
-                              d[name][0].describe_h5(), name + " Table", 
-                              filters=filters)
-        tbl = fout.root._f_get_child(name)
-        row = tbl.row
-        for s in d[name]:
-            s.export_h5(row)
-            row.append()    
-        tbl.flush()
-    fout.close()
 
 def exec_from_h5(fin=None, fout=None, rc=None, solvers=None):
     """Runs an instance of Cyclopts.

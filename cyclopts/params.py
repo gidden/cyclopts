@@ -25,6 +25,7 @@ import collections
 
 try:
     import cyclopts.instance as inst
+    import cyclopts.inst_io as iio
 except ImportError as e:
     print("Caught import error, "
           "are you running from the root Cyclopts directory?")
@@ -172,6 +173,7 @@ CONSTR_ARGS = {
     CoeffParam: ['lb', 'ub', 'dist'],
     SupConstrParam: ['cutoff', 'rand', 'fracs'],
 }        
+
 
 class ReactorRequestSampler(object):
     """A container class for holding all sampling objects for reactor request
@@ -336,6 +338,11 @@ class ReactorRequestSampler(object):
         # suppliable
         conditions.append(self.n_commods.avg > self.sup_multi_commods.avg)
         return all(c for c in conditions)
+
+    def inst_builder_ctor():
+        """Returns a constructor to an object that builds problem instances from
+        the parameter space defined by this object."""
+        return ReactorRequestBuilder
         
 class ReactorRequestBuilder(object):
     """A helper class to translate sampling parameters for a reactor request
@@ -375,30 +382,12 @@ class ReactorRequestBuilder(object):
         """
         s = self.sampler = sampler
         self.commod_offset = commod_offset
-
-        self.commods = set(range(self.commod_offset, 
-                                 self.commod_offset + s.n_commods.sample()))
-        self.n_request = s.n_request.sample() # number of request groups
-        self.n_supply = s.n_supply.sample() # number of supply groups
         
         self.req_g_offset = req_g_offset
         self.sup_g_offset = sup_g_offset
         self.req_n_offset = req_n_offset
         self.sup_n_offset = sup_n_offset
         self.arc_offset = arc_offset
-
-        req_g_ids = Incrementer(req_g_offset)
-        # request groups
-        self.requesters = [req_g_ids.next() for i in range(self.n_request)] 
-        # include request values because ids are global
-        sup_g_ids = Incrementer(req_g_offset + sup_g_offset + self.n_request)
-        # supply groups
-        self.suppliers = [sup_g_ids.next() for i in range(self.n_supply)] 
-        self.arc_ids = Incrementer(arc_offset)
-
-        self.reqs_to_commods = {} # requests to their commodities
-        self.commods_to_reqs = {} # commodities to all requests
-        self.sups_to_commods = {} # supply to their commodities
 
     def valid(self):
         """Screens the provided sampler to determine if it provides a valid
@@ -482,9 +471,9 @@ class ReactorRequestBuilder(object):
 
         n_node_ucaps = {} # number of capacities per node
         req_qtys = {} # req node id to req qty 
-        groups = []
-        nodes = []
-        arcs = []
+        self.groups = []
+        self.nodes = []
+        self.arcs = []
         req = True
         bid = False
 
@@ -494,7 +483,7 @@ class ReactorRequestBuilder(object):
             n_constr = s.n_req_constr.sample()
             # add qty as first constraint -- required for clp/cbc
             caps = np.append(qty, self._req_constr_vals(n_constr, multi_reqs))
-            groups.append(inst.ExGroup(g_id, req, caps, qty))
+            self.groups.append(inst.ExGroup(g_id, req, caps, qty))
             
             exid = Incrementer()
             for reqs in multi_reqs: # mutually satisfying requests
@@ -503,7 +492,7 @@ class ReactorRequestBuilder(object):
                     qty = self._req_node_qty()
                     excl = s.exclusive.sample() # exclusive or not
                     excl_id = exid.next() if excl else -1 # need unique exclusive id
-                    nodes.append(
+                    self.nodes.append(
                         inst.ExNode(n_id, g_id, req, qty, excl, excl_id))
     
         # populate supply params and arc relations
@@ -514,29 +503,48 @@ class ReactorRequestBuilder(object):
         for g_id, sups in supply.items():
             caps = self._sup_constr_vals(supplier_capacity[g_id], 
                                          s.n_sup_constr.sample())
-            groups.append(inst.ExGroup(g_id, bid, caps))
+            self.groups.append(inst.ExGroup(g_id, bid, caps))
             for v_id, u_id in sups:
                 n_node_ucaps[v_id] = len(caps)
-                nodes.append(inst.ExNode(v_id, g_id, bid))
+                self.nodes.append(inst.ExNode(v_id, g_id, bid))
                 # arc from u-v node
                 # add qty as first constraint -- required for clp/cbc
                 ucaps = np.append(
                     [self._req_def_constr(qty)], 
                     [s.constr_coeff.sample() for i in range(n_node_ucaps[u_id])])
                 vcaps = [s.constr_coeff.sample() for i in range(n_node_ucaps[v_id])]
-                arcs.append(
+                self.arcs.append(
                     inst.ExArc(a_ids.next(), u_id, ucaps, 
                                v_id, vcaps, s.pref_coeff.sample()))
 
-        return groups, nodes, arcs
+        return self.groups, self.nodes, self.arcs
 
     def build(self, *args, **kwargs):
         """Builds Group, Node, and Arc components of a Reactor-Request based
         Resource Exchange
         """
-        commods = self.commods
-        requesters = self.requesters
-        suppliers = self.suppliers
+        s = self.sampler
+        commods = self.commods = \
+            set(range(self.commod_offset, 
+                      self.commod_offset + s.n_commods.sample()))
+        self.n_request = s.n_request.sample() # number of request groups
+        self.n_supply = s.n_supply.sample() # number of supply groups
+
+        req_g_ids = Incrementer(self.req_g_offset)
+        # request groups
+        requesters = self.requesters = \
+            [req_g_ids.next() for i in range(self.n_request)] 
+        # include request values because ids are global
+        sup_g_ids = \
+            Incrementer(self.req_g_offset + self.sup_g_offset + self.n_request)
+        # supply groups
+        suppliers = self.suppliers = \
+            [sup_g_ids.next() for i in range(self.n_supply)] 
+        self.arc_ids = Incrementer(self.arc_offset)
+
+        self.reqs_to_commods = {} # requests to their commodities
+        self.commods_to_reqs = {} # commodities to all requests
+        self.sups_to_commods = {} # supply to their commodities
 
         request = self.generate_request(commods, requesters)
         supply, supplier_commods = self.generate_supply(commods, suppliers)
@@ -555,6 +563,11 @@ class ReactorRequestBuilder(object):
                         set(commods), supplied_commods)))
         return self.populate_params(request, supply, supplier_commods)
 
+    def write(self, h5node):
+        """writes its current instance state to an output database"""
+        instid = uuid.uuid4()
+        iio.write_exinst(h5node, instid, 
+                         self.groups, self.nodes, self.arcs)
     
     #
     # Encapsulated assumptions

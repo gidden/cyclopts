@@ -7,13 +7,62 @@ import argparse
 
 from cyclopts.tools import to_h5, exec_from_h5
 from cyclopts.condor import submit_dag
+import cyclopts.params as params
 
 def condor(args):
     submit_dag(args.user, args.host, args.indb, args.solvers, 
                args.dumpdir, args.outdb, args.clean, args.auth)
 
 def convert(args):
-    to_h5(args.input, args.output)
+    """Converts a contiguous dataspace as defined by an input run control file
+    into problem instances in an HDF5 database. Each discrete point, as
+    represented by a Sampler-type object is converted into a row in a table of
+    the object's name, and each instance derived from data points is added to
+    its relevant Instance data tables.
+    """
+    fin = args.input
+    fout = args.output
+    ninst = args.ninst
+    samplers = params.SamplerBuilder().build(parse_rc(fin))
+    filters = t.Filters(complevel=4)
+    fout = t.open_file(fout, mode='a', filters=filters)
+
+    d = defaultdict(list)
+    for s in samplers:
+        d[s.__class__.__name__].append(s)
+    tbl_names = d.keys()
+    grp_name = 'Instances'
+    
+    # create leaves
+    tbls = fout.root._f_list_nodes(classname="Table")
+    grps = fout.root._f_list_nodes(classname="Group")
+    for name in tbl_names:
+        if name in tbls:
+            pass
+        print("creating table {0}".format(name))
+        inst = d[name][0]
+        fout.create_table(fout.root, name, 
+                          description=inst.describe_h5(), 
+                          filters=filters)
+    if grp_name not in grps:
+        print("creating group {0}".format(grp_name))
+        fout.create_group(fout.root, grp_name, filters=filters)
+    
+    # populate leaves
+    for name in tbl_names:
+        tbl = fout.root._f_get_child(name)
+        row = tbl.row
+        for s in d[name]:
+            s.export_h5(row)
+            row.append()
+            inst_builder_ctor = s.inst_builder_ctor()
+            builder = builder_ctor(s)
+            h5node = fout.root._f_get_child(grp_name)
+            for i in range(ninst):
+                builder.build()
+                builder.write(h5node)
+        tbl.flush()
+    fout.close()
 
 def execute(args):
     print("solvers:", args.solvers)
@@ -35,6 +84,10 @@ def main():
     outh = ("The HDF5 file to dump converted parameter space points to. "
             "This file can later be used an input to an execute run.")
     conv_parser.add_argument('-o', '--output', dest='output', help=outh)
+    ninst = ("The number of problem instances to generate per point in "
+             "parameter space.")
+    conv_parser.add_argument('-n', '--ninstances', type=int, dest='ninst', 
+                             help=ninst, default=1)
 
     # for runs
     exech = ("Executes a parameter sweep as defined "

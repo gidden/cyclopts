@@ -33,8 +33,6 @@ from cyclopts import stlcontainers
 
 
 
-
-
 # MapIntDouble
 def test_map_int_double():
     m = stlcontainers.MapIntDouble()
