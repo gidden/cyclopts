@@ -47,19 +47,26 @@ cdef class ExGroup:
 
 
 
-cdef class ExSolution:
+cdef class ExNode:
     cdef void * _inst
     cdef public bint _free_inst
-    cdef public stlcontainers._MapIntDouble _flows
     pass
 
 
 
 
 
-cdef class ExNode:
+cdef class ProbSolution:
     cdef void * _inst
     cdef public bint _free_inst
+    pass
+
+
+
+
+
+cdef class ExSolution(ProbSolution):
+    cdef public stlcontainers._MapIntDouble _flows
     pass
 
 

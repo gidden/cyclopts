@@ -28,6 +28,117 @@ import stlcontainers
 np.import_array()
 
 
+
+cdef class ProbSolution:
+    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ProbSolution', 'language': 'c++', 'srcname': 'ProbSolution', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+
+
+
+    # constuctors
+    def __cinit__(self, *args, **kwargs):
+        self._inst = NULL
+        self._free_inst = True
+
+        # cached property defaults
+
+
+    def _probsolution_probsolution_0(self, ):
+        """ProbSolution(self, )
+        """
+        self._inst = new cpp_instance.ProbSolution()
+    
+    
+    def _probsolution_probsolution_1(self, time=0, objective=0, type='', cyclus_version=''):
+        """ProbSolution(self, time=0, objective=0, type='', cyclus_version='')
+        """
+        cdef char * type_proxy
+        cdef char * cyclus_version_proxy
+        type_bytes = type.encode()
+        cyclus_version_bytes = cyclus_version.encode()
+        self._inst = new cpp_instance.ProbSolution(<double> time, <double> objective, std_string(<char *> type_bytes), std_string(<char *> cyclus_version_bytes))
+    
+    
+    _probsolution_probsolution_0_argtypes = frozenset()
+    _probsolution_probsolution_1_argtypes = frozenset(((0, float), (1, float), (2, str), (3, str), ("time", float), ("objective", float), ("type", str), ("cyclus_version", str)))
+    
+    def __init__(self, *args, **kwargs):
+        """ProbSolution(self, time=0, objective=0, type='', cyclus_version='')
+        """
+        types = set([(i, type(a)) for i, a in enumerate(args)])
+        types.update([(k, type(v)) for k, v in kwargs.items()])
+        # vtable-like dispatch for exactly matching types
+        if types <= self._probsolution_probsolution_0_argtypes:
+            self._probsolution_probsolution_0(*args, **kwargs)
+            return
+        if types <= self._probsolution_probsolution_1_argtypes:
+            self._probsolution_probsolution_1(*args, **kwargs)
+            return
+        # duck-typed dispatch based on whatever works!
+        try:
+            self._probsolution_probsolution_0(*args, **kwargs)
+            return
+        except (RuntimeError, TypeError, NameError):
+            pass
+        try:
+            self._probsolution_probsolution_1(*args, **kwargs)
+            return
+        except (RuntimeError, TypeError, NameError):
+            pass
+        raise RuntimeError('method __init__() could not be dispatched')
+    
+    def __dealloc__(self):
+        if self._free_inst and self._inst is not NULL:
+            free(self._inst)
+
+    # attributes
+    property cyclus_version:
+        """no docstring for cyclus_version, please file a bug report!"""
+        def __get__(self):
+            return bytes(<char *> (<cpp_instance.ProbSolution *> self._inst).cyclus_version.c_str()).decode()
+    
+        def __set__(self, value):
+            cdef char * value_proxy
+            value_bytes = value.encode()
+            (<cpp_instance.ProbSolution *> self._inst).cyclus_version = std_string(<char *> value_bytes)
+    
+    
+    property objective:
+        """no docstring for objective, please file a bug report!"""
+        def __get__(self):
+            return float((<cpp_instance.ProbSolution *> self._inst).objective)
+    
+        def __set__(self, value):
+            (<cpp_instance.ProbSolution *> self._inst).objective = <double> value
+    
+    
+    property time:
+        """no docstring for time, please file a bug report!"""
+        def __get__(self):
+            return float((<cpp_instance.ProbSolution *> self._inst).time)
+    
+        def __set__(self, value):
+            (<cpp_instance.ProbSolution *> self._inst).time = <double> value
+    
+    
+    property type:
+        """no docstring for type, please file a bug report!"""
+        def __get__(self):
+            return bytes(<char *> (<cpp_instance.ProbSolution *> self._inst).type.c_str()).decode()
+    
+        def __set__(self, value):
+            cdef char * value_proxy
+            value_bytes = value.encode()
+            (<cpp_instance.ProbSolution *> self._inst).type = std_string(<char *> value_bytes)
+    
+    
+    # methods
+    
+
+    pass
+
+
+
+
 def Run(groups, nodes, arcs, solver):
     """Run(groups, nodes, arcs, solver)
     no docstring for Run, please file a bug report!"""
@@ -89,7 +200,7 @@ def Run(groups, nodes, arcs, solver):
 
 
 cdef class ExNode:
-    """no docstring for {'tarbase': 'instance', 'tarname': 'ExNode', 'language': 'c++', 'srcname': 'ExNode', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExNode', 'language': 'c++', 'srcname': 'ExNode', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
@@ -226,8 +337,8 @@ cdef class ExNode:
 
 
 
-cdef class ExSolution:
-    """no docstring for {'tarbase': 'instance', 'tarname': 'ExSolution', 'language': 'c++', 'srcname': 'ExSolution', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+cdef class ExSolution(ProbSolution):
+    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExSolution', 'language': 'c++', 'srcname': 'ExSolution', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
@@ -239,64 +350,18 @@ cdef class ExSolution:
         # cached property defaults
         self._flows = None
 
-    def _exsolution_exsolution_0(self, ):
-        """ExSolution(self, )
+    def __init__(self, time=0, objective=0, type='', cyclus_version=''):
+        """ExSolution(self, time=0, objective=0, type='', cyclus_version='')
         """
-        self._inst = new cpp_instance.ExSolution()
-    
-    
-    def _exsolution_exsolution_1(self, time, cyclus_version):
-        """ExSolution(self, time, cyclus_version)
-        """
+        cdef char * type_proxy
         cdef char * cyclus_version_proxy
+        type_bytes = type.encode()
         cyclus_version_bytes = cyclus_version.encode()
-        self._inst = new cpp_instance.ExSolution(<double> time, std_string(<char *> cyclus_version_bytes))
+        self._inst = new cpp_instance.ExSolution(<double> time, <double> objective, std_string(<char *> type_bytes), std_string(<char *> cyclus_version_bytes))
     
     
-    _exsolution_exsolution_0_argtypes = frozenset()
-    _exsolution_exsolution_1_argtypes = frozenset(((0, float), (1, str), ("time", float), ("cyclus_version", str)))
-    
-    def __init__(self, *args, **kwargs):
-        """ExSolution(self, time, cyclus_version)
-        """
-        types = set([(i, type(a)) for i, a in enumerate(args)])
-        types.update([(k, type(v)) for k, v in kwargs.items()])
-        # vtable-like dispatch for exactly matching types
-        if types <= self._exsolution_exsolution_0_argtypes:
-            self._exsolution_exsolution_0(*args, **kwargs)
-            return
-        if types <= self._exsolution_exsolution_1_argtypes:
-            self._exsolution_exsolution_1(*args, **kwargs)
-            return
-        # duck-typed dispatch based on whatever works!
-        try:
-            self._exsolution_exsolution_0(*args, **kwargs)
-            return
-        except (RuntimeError, TypeError, NameError):
-            pass
-        try:
-            self._exsolution_exsolution_1(*args, **kwargs)
-            return
-        except (RuntimeError, TypeError, NameError):
-            pass
-        raise RuntimeError('method __init__() could not be dispatched')
-    
-    def __dealloc__(self):
-        if self._free_inst and self._inst is not NULL:
-            free(self._inst)
 
     # attributes
-    property cyclus_version:
-        """no docstring for cyclus_version, please file a bug report!"""
-        def __get__(self):
-            return bytes(<char *> (<cpp_instance.ExSolution *> self._inst).cyclus_version.c_str()).decode()
-    
-        def __set__(self, value):
-            cdef char * value_proxy
-            value_bytes = value.encode()
-            (<cpp_instance.ExSolution *> self._inst).cyclus_version = std_string(<char *> value_bytes)
-    
-    
     property flows:
         """no docstring for flows, please file a bug report!"""
         def __get__(self):
@@ -314,15 +379,6 @@ cdef class ExSolution:
             self._flows = None
     
     
-    property time:
-        """no docstring for time, please file a bug report!"""
-        def __get__(self):
-            return float((<cpp_instance.ExSolution *> self._inst).time)
-    
-        def __set__(self, value):
-            (<cpp_instance.ExSolution *> self._inst).time = <double> value
-    
-    
     # methods
     
 
@@ -333,7 +389,7 @@ cdef class ExSolution:
 
 
 cdef class ExGroup:
-    """no docstring for {'tarbase': 'instance', 'tarname': 'ExGroup', 'language': 'c++', 'srcname': 'ExGroup', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExGroup', 'language': 'c++', 'srcname': 'ExGroup', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
@@ -491,7 +547,7 @@ cdef class ExGroup:
 
 
 cdef class ExSolver:
-    """no docstring for {'tarbase': 'instance', 'tarname': 'ExSolver', 'language': 'c++', 'srcname': 'ExSolver', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExSolver', 'language': 'c++', 'srcname': 'ExSolver', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
@@ -537,7 +593,7 @@ cdef class ExSolver:
 
 
 cdef class ExArc:
-    """no docstring for {'tarbase': 'instance', 'tarname': 'ExArc', 'language': 'c++', 'srcname': 'ExArc', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExArc', 'language': 'c++', 'srcname': 'ExArc', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 

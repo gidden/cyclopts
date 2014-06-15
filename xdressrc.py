@@ -37,6 +37,7 @@ classes = [
     apiname('ExArc', 'cpp/instance.*', incfiles='instance.h'),
     apiname('ExSolver', 'cpp/instance.*', incfiles='instance.h'),
     apiname('ExSolution', 'cpp/instance.*', incfiles='instance.h'),
+    apiname('ProbSolution', 'cpp/instance.*', incfiles='instance.h'),
     ]
 functions = [
     apiname('Run', 'cpp/instance.*', incfiles='instance.h'),

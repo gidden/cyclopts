@@ -5,18 +5,34 @@ from __future__ import print_function
 
 import argparse
 import tables as t
+import numpy as np
 from collections import defaultdict
+import itertools
+import uuid
 
-from cyclopts.condor import submit_dag
-import cyclopts.params as params
+import cyclopts
+import cyclopts.condor as condor
 import cyclopts.tools as tools
+import cyclopts.inst_io as iio
+import cyclopts.instance as inst
 
 _inst_grp_name = 'Instances'
+_result_grp_name = 'Results'
+_result_tbl_name = 'General'
+_result_tbl_dtype = np.dtype([
+        ("instid", ('str', 16)), # 16 bytes for uuid
+        ("problem", ('str', 30)), # 30 seems long enough, right?
+        ("solver", ('str', 30)), # 30 seems long enough, right?
+        ("time", np.float64),
+        ("obj", np.float64),
+        ("cyclus_version", ('str', 12)),
+        ("cyclopts_version", ('str', 12)),
+        ])
 _filters = t.Filters(complevel=4)
 
 def condor(args):
-    submit_dag(args.user, args.host, args.indb, args.solvers, 
-               args.dumpdir, args.outdb, args.clean, args.auth)
+    condor.submit_dag(args.user, args.host, args.indb, args.solvers, 
+                      args.dumpdir, args.outdb, args.clean, args.auth)
 
 def convert(args):
     """Converts a contiguous dataspace as defined by an input run control file
@@ -25,8 +41,8 @@ def convert(args):
     the object's name, and each instance derived from data points is added to
     its relevant Instance data tables.
     """
-    fin = args.input
-    fout = args.output
+    fin = args.rc
+    fout = args.db
     ninst = args.ninst
     samplers = tools.SamplerBuilder().build(tools.parse_rc(fin))
     h5file = t.open_file(fout, mode='a', filters=_filters)
@@ -66,23 +82,79 @@ def convert(args):
         tbl.flush()
     h5file.close()
 
+def instids_from_rc(h5node, rc):
+    instids = set(uuid.UUID(x).bytes for x in rc['inst_ids']) \
+        if 'inst_ids' in rc.keys() else set()
+    
+    # inst queries are a mapping from instance table names to queryable
+    # conditions, the result of which is a collection of instids that meet those
+    # conditions
+    inst_queries = rc['inst_queries'] if 'inst_queries' in rc.keys() else {}
+    for tbl_name, conds in inst_queries.items():
+        tbl = h5node._f_get_child(tbl_name)
+        ops = conds[1::2]
+        conds = ['({0})'.format(c) if \
+                     not c.lstrip().startswith('(') and \
+                     not c.rstrip().endswith(')') else c for c in conds[::2]]
+        cond = ' '.join(
+                [' '.join(i) for i in \
+                     itertools.izip_longest(conds, ops, fillvalue='')]).strip()
+        rows = tbl.where(cond)
+        for row in rows:
+            instids.add(row['instid'])
+        
+    # if no ids, then run everything
+    if len(instids) == 0:
+        names = [node._v_name \
+                     for node in h5node._f_iter_nodes(classname='Table') \
+                     if 'properties' in node._v_name.lower()]
+        for tbl_name in names:
+            tbl = h5node._f_get_child(tbl_name)
+            for row in tbl.iterrows():
+                instids.add(row['instid'])
+    
+    return instids
+    
 def execute(args):
     db = args.db
-    rc = parse_rc(args.rc)
+    rc = parse_rc(args.rc) if args.rc is not None else {}
     solvers = args.solvers
-    instids = rc['instids'] if 'instids' in rc.keys() else []
-    # need to add queryability
+    h5file = t.open_file(db, mode='a', filters=_filters)
+    root = h5file.root
+    instnode = root._f_get_child(_inst_grp_name)
+    instids = instids_from_rc(instnode, rc)
 
-    h5file = t.open_file(db, mode='r', filters=_filters)
-    h5node = h5file.root._f_get_child(_inst_grp_name)
+    # create output leaves
+    if not root.__contains__(_result_grp_name):
+        print("creating group {0}".format(_result_grp_name))
+        h5file.create_group(root, _result_grp_name, filters=_filters)
+    resultnode = root._f_get_child(_result_grp_name)
+
+    if not resultnode.__contains__(_result_tbl_name):
+        h5file.create_table(resultnode, _result_tbl_name, _result_tbl_dtype, 
+                            filters=_filters)    
+    tbl = resultnode._f_get_child(_result_tbl_name) 
+
+    # run each instance note that the running and reporting is specific to
+    # exchange problems, and future problem instances will need this section to
+    # be refactored
+    row = tbl.row
     for id in instids:
-        groups, nodes, arcs = iio.read_exinst(h5node, id)
+        groups, nodes, arcs = iio.read_exinst(instnode, id) # exchange specific
         for s in solvers:
-            solver = ExSolver(s)
-            soln = Run(groups, nodes, arcs, solver)
-            # need to add reporting
-            # report(sampler, gparams, sparams, soln, db_path=db_path)
-
+            solver = inst.ExSolver(s)
+            soln = inst.Run(groups, nodes, arcs, solver) # exchange specific
+            iio.write_soln(instnode, id, soln) # exchange specific
+            row['instid'] = id
+            row["solver"] = s
+            row["problem"] = soln.type
+            row["time"] = soln.time
+            row["obj"] = soln.objective
+            row["cyclus_version"] = soln.cyclus_version
+            row["cyclopts_version"] = cyclopts.__version__
+            row.append()
+    tbl.flush()        
+            
 def main():
     """Entry point for Cyclopts runs."""
     parser = argparse.ArgumentParser("Cyclopts", add_help=True)    
@@ -94,13 +166,11 @@ def main():
                 "execution run.")
     conv_parser = sp.add_parser('convert', help=converth)
     conv_parser.set_defaults(func=convert)
-    inh = ("The run control file to use that defines a continguous parameter space.")
-    conv_parser.add_argument('-i', '--input', dest='input', 
-                             default='instances.rc', help=inh)
-    outh = ("The HDF5 file to dump converted parameter space points to. "
+    rc = ("The run control file to use that defines a continguous parameter space.")
+    conv_parser.add_argument('--rc', dest='rc', help=rc)
+    db = ("The HDF5 file to dump converted parameter space points to. "
             "This file can later be used an input to an execute run.")
-    conv_parser.add_argument('-o', '--output', dest='output', 
-                             default='instances.h5', help=outh)
+    conv_parser.add_argument('--db', dest='db', default='cyclopts.h5', help=db)
     ninst = ("The number of problem instances to generate per point in "
              "parameter space.")
     conv_parser.add_argument('-n', '--ninstances', type=int, dest='ninst', 
@@ -118,7 +188,7 @@ def main():
                              help=solversh)    
     rch = ("The run control file, which allows idetification of a subset "
            "of input to run.")
-    exec_parser.add_argument('--rc', dest='rc', help=rch)
+    exec_parser.add_argument('--rc', dest='rc', default=None, help=rch)
     
     # for condor
     condorh = ("Submits a job to condor, retrieves output when it has completed, "

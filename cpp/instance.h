@@ -104,15 +104,28 @@ class ExSolver {
   std::string type;
 };
 
-/// A simple container class for exchange solutions.
-class ExSolution {
+/// a generic container for problem instance solutions
+class ProbSolution {
  public:
-  ExSolution() { };
-  ExSolution(double time, std::string cyclus_version)
-    : time(time), cyclus_version(cyclus_version) { };
-
-  double time; // unit: s
+  ProbSolution(double time = 0, double objective = 0, std::string type = "",
+               std::string cyclus_version = "")
+    : time(time),
+      objective(objective), 
+      type(type),
+      cyclus_version(cyclus_version) { };
+  
+  double time;
+  double objective;
+  std::string type;
   std::string cyclus_version;
+};
+
+/// A simple container class for exchange solutions.
+class ExSolution: public ProbSolution {
+ public:
+  ExSolution(double time = 0, double objective = 0, std::string type = "",
+             std::string cyclus_version = "")
+    : ProbSolution(time, objective, type, cyclus_version) { };
   std::map<int, double> flows;
 };
 

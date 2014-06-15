@@ -16,16 +16,13 @@ from libcpp.vector cimport vector as cpp_vector
 
 cdef extern from "instance.h" namespace "cyclopts":
 
-    cdef cppclass ExSolution:
+    cdef cppclass ExSolver:
         # constructors
-        ExSolution() except +
-        ExSolution(double) except +
-        ExSolution(double, std_string) except +
+        ExSolver() except +
+        ExSolver(std_string) except +
 
         # attributes
-        std_string cyclus_version
-        cpp_map[int, double] flows
-        double time
+        std_string type
 
         # methods
 
@@ -112,13 +109,38 @@ cdef extern from "instance.h" namespace "cyclopts":
 
 cdef extern from "instance.h" namespace "cyclopts":
 
-    cdef cppclass ExSolver:
+    cdef cppclass ProbSolution:
         # constructors
-        ExSolver() except +
-        ExSolver(std_string) except +
+        ProbSolution() except +
+        ProbSolution(double) except +
+        ProbSolution(double, double) except +
+        ProbSolution(double, double, std_string) except +
+        ProbSolution(double, double, std_string, std_string) except +
 
         # attributes
+        std_string cyclus_version
+        double objective
+        double time
         std_string type
+
+        # methods
+
+        pass
+
+
+
+cdef extern from "instance.h" namespace "cyclopts":
+
+    cdef cppclass ExSolution(ProbSolution):
+        # constructors
+        ExSolution() except +
+        ExSolution(double) except +
+        ExSolution(double, double) except +
+        ExSolution(double, double, std_string) except +
+        ExSolution(double, double, std_string, std_string) except +
+
+        # attributes
+        cpp_map[int, double] flows
 
         # methods
 

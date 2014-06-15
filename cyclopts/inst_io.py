@@ -7,6 +7,8 @@ import numpy as np
 import tables as t
 from collections import Iterable
 
+import cyclopts.instance as inst
+
 _N_CAPS_MAX = 10
 
 # add to this if more objects need to be persistable
@@ -15,6 +17,7 @@ _tbl_names = {
     "ExNode": "ExchangeNodes",
     "ExArc": "ExchangeArcs",
     "properties": "ExchangeInstProperties",
+    "solutions": "ExchangeInstSolutions",
     }
 
 # this must be kept up to date with the cyclopts.instance classes
@@ -52,6 +55,11 @@ _dtypes = {
         ("n_u_nodes", np.int64),
         ("n_v_nodes", np.int64),
         ("n_constrs", np.int64),
+        ]),
+    "solutions": np.dtype([
+        ("instid", ('str', 16)), # 16 bytes for uuid
+        ("arc_id", np.int64),
+        ("pref", np.float64),
         ]),
     }
 
@@ -131,8 +139,8 @@ def read_exobjs(h5node, instid, ctor):
     tname = _tbl_names[cname]
     objs = []
     tbl = getattr(h5node, tname)
-    byteid = instid.bytes
-    rows = tbl.where('instid == byteid')
+#    byteid = instid.bytes
+    rows = tbl.where('instid == instid')
     vars = xdvars(inst)
     for row in rows:
         obj = ctor()
@@ -148,7 +156,17 @@ def read_exobjs(h5node, instid, ctor):
     return objs
 
 def read_exinst(h5node, instid):
-    groups = read_exobjs(h5node, instid, ExGroup)
-    nodes = read_exobjs(h5node, instid, ExNode)
-    arcs = read_exobjs(h5node, instid, ExArc)
-    return groups nodes, arcs
+    groups = read_exobjs(h5node, instid, inst.ExGroup)
+    nodes = read_exobjs(h5node, instid, inst.ExNode)
+    arcs = read_exobjs(h5node, instid, inst.ExArc)
+    return groups, nodes, arcs
+
+def write_soln(h5node, instid, soln):
+    tname = _tbl_names['solutions'] 
+    row = getattr(h5node, tname).row
+    for id, flow in soln.flows.iteritems():
+        row['instid'] = instid
+        row['arc_id'] = id
+        row['flow'] = flow
+        row.append()
+    h5node.flush()
