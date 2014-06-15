@@ -75,8 +75,7 @@ def test_cli():
 
     ninst = 2
     nvalid = 5 # visual confirmation of obs_valid.rc
-#    solvers = "clp greedy"
-    solvers = "greedy"
+    solvers = "cbc greedy"
 
     cmd = "cyclopts convert --rc {0} --db {1} -n {2}".format(rc, db, ninst)
     assert_equal(0, subprocess.call(cmd.split(), shell=(os.name == 'nt')))
@@ -91,12 +90,6 @@ def test_cli():
     h5node = h5file.root.Results.General
     assert_equal(h5node.nrows, ninst * nvalid * len(solvers.split()))
     h5file.close()
-
-    # f = t.open_file(db, 'r')
-    # for tbl in f.root._f_walknodes(classname='Table'):
-    #     if tbl._v_name == 'solver':
-    #         assert_equal(nvalid * ninst * len(solvers.split()), tbl.nrows)
-    # f.close()
 
     if os.path.exists(db):
         os.remove(db)

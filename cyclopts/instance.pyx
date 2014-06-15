@@ -30,7 +30,7 @@ np.import_array()
 
 
 cdef class ProbSolution:
-    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ProbSolution', 'language': 'c++', 'srcname': 'ProbSolution', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'instance', 'tarname': 'ProbSolution', 'language': 'c++', 'srcname': 'ProbSolution', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
@@ -42,13 +42,7 @@ cdef class ProbSolution:
         # cached property defaults
 
 
-    def _probsolution_probsolution_0(self, ):
-        """ProbSolution(self, )
-        """
-        self._inst = new cpp_instance.ProbSolution()
-    
-    
-    def _probsolution_probsolution_1(self, time=0, objective=0, type='', cyclus_version=''):
+    def __init__(self, time=0, objective=0, type='', cyclus_version=''):
         """ProbSolution(self, time=0, objective=0, type='', cyclus_version='')
         """
         cdef char * type_proxy
@@ -57,34 +51,6 @@ cdef class ProbSolution:
         cyclus_version_bytes = cyclus_version.encode()
         self._inst = new cpp_instance.ProbSolution(<double> time, <double> objective, std_string(<char *> type_bytes), std_string(<char *> cyclus_version_bytes))
     
-    
-    _probsolution_probsolution_0_argtypes = frozenset()
-    _probsolution_probsolution_1_argtypes = frozenset(((0, float), (1, float), (2, str), (3, str), ("time", float), ("objective", float), ("type", str), ("cyclus_version", str)))
-    
-    def __init__(self, *args, **kwargs):
-        """ProbSolution(self, time=0, objective=0, type='', cyclus_version='')
-        """
-        types = set([(i, type(a)) for i, a in enumerate(args)])
-        types.update([(k, type(v)) for k, v in kwargs.items()])
-        # vtable-like dispatch for exactly matching types
-        if types <= self._probsolution_probsolution_0_argtypes:
-            self._probsolution_probsolution_0(*args, **kwargs)
-            return
-        if types <= self._probsolution_probsolution_1_argtypes:
-            self._probsolution_probsolution_1(*args, **kwargs)
-            return
-        # duck-typed dispatch based on whatever works!
-        try:
-            self._probsolution_probsolution_0(*args, **kwargs)
-            return
-        except (RuntimeError, TypeError, NameError):
-            pass
-        try:
-            self._probsolution_probsolution_1(*args, **kwargs)
-            return
-        except (RuntimeError, TypeError, NameError):
-            pass
-        raise RuntimeError('method __init__() could not be dispatched')
     
     def __dealloc__(self):
         if self._free_inst and self._inst is not NULL:
@@ -200,7 +166,7 @@ def Run(groups, nodes, arcs, solver):
 
 
 cdef class ExNode:
-    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExNode', 'language': 'c++', 'srcname': 'ExNode', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'instance', 'tarname': 'ExNode', 'language': 'c++', 'srcname': 'ExNode', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
@@ -338,7 +304,7 @@ cdef class ExNode:
 
 
 cdef class ExSolution(ProbSolution):
-    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExSolution', 'language': 'c++', 'srcname': 'ExSolution', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'instance', 'tarname': 'ExSolution', 'language': 'c++', 'srcname': 'ExSolution', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
@@ -389,7 +355,7 @@ cdef class ExSolution(ProbSolution):
 
 
 cdef class ExGroup:
-    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExGroup', 'language': 'c++', 'srcname': 'ExGroup', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'instance', 'tarname': 'ExGroup', 'language': 'c++', 'srcname': 'ExGroup', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
@@ -547,7 +513,7 @@ cdef class ExGroup:
 
 
 cdef class ExSolver:
-    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExSolver', 'language': 'c++', 'srcname': 'ExSolver', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'instance', 'tarname': 'ExSolver', 'language': 'c++', 'srcname': 'ExSolver', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
@@ -593,7 +559,7 @@ cdef class ExSolver:
 
 
 cdef class ExArc:
-    """no docstring for {'sidecars': (), 'tarbase': 'instance', 'tarname': 'ExArc', 'language': 'c++', 'srcname': 'ExArc', 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'instance', 'tarname': 'ExArc', 'language': 'c++', 'srcname': 'ExArc', 'sidecars': (), 'incfiles': ('instance.h',), 'srcfiles': ('cpp/instance.cc', 'cpp/instance.h')}, please file a bug report!"""
 
 
 
