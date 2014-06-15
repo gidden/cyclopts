@@ -85,12 +85,12 @@ def test_cli():
     assert_equal(h5node.nrows, ninst * nvalid)
     h5file.close()
 
-    # cmd = "cyclopts exec --db={0} --solvers {1}".format(db, solvers)
-    # assert_equal(0, subprocess.call(cmd.split(), shell=(os.name == 'nt')))
-    # h5file = t.open_file(db, 'r')
-    # h5node = h5file.root.Instances.ExchangeInstProperties
-    # assert_equal(h5node.nrows, ninst * nvalid)
-    # h5file.close()
+    cmd = "cyclopts exec --db={0} --solvers {1}".format(db, solvers)
+    assert_equal(0, subprocess.call(cmd.split(), shell=(os.name == 'nt')))
+    h5file = t.open_file(db, 'r')
+    h5node = h5file.root.Results.General
+    assert_equal(h5node.nrows, ninst * nvalid * len(solvers.split()))
+    h5file.close()
 
     # f = t.open_file(db, 'r')
     # for tbl in f.root._f_walknodes(classname='Table'):

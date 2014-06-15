@@ -59,7 +59,7 @@ _dtypes = {
     "solutions": np.dtype([
         ("instid", ('str', 16)), # 16 bytes for uuid
         ("arc_id", np.int64),
-        ("pref", np.float64),
+        ("flow", np.float64),
         ]),
     }
 
@@ -163,10 +163,11 @@ def read_exinst(h5node, instid):
 
 def write_soln(h5node, instid, soln):
     tname = _tbl_names['solutions'] 
+    tbl = h5node._f_get_child(tname)
     row = getattr(h5node, tname).row
     for id, flow in soln.flows.iteritems():
         row['instid'] = instid
         row['arc_id'] = id
         row['flow'] = flow
         row.append()
-    h5node.flush()
+    tbl.flush()
