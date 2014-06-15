@@ -24,7 +24,7 @@ _result_tbl_dtype = np.dtype([
         ("problem", ('str', 30)), # 30 seems long enough, right?
         ("solver", ('str', 30)), # 30 seems long enough, right?
         ("time", np.float64),
-        ("obj", np.float64),
+        ("objective", np.float64),
         ("cyclus_version", ('str', 12)),
         ("cyclopts_version", ('str', 12)),
         ])
@@ -149,7 +149,7 @@ def execute(args):
             row["solver"] = s
             row["problem"] = soln.type
             row["time"] = soln.time
-            row["obj"] = soln.objective
+            row["objective"] = soln.objective
             row["cyclus_version"] = soln.cyclus_version
             row["cyclopts_version"] = cyclopts.__version__
             row.append()

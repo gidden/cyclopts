@@ -89,6 +89,9 @@ def test_cli():
     h5file = t.open_file(db, 'r')
     h5node = h5file.root.Results.General
     assert_equal(h5node.nrows, ninst * nvalid * len(solvers.split()))
+    for row in h5node.iterrows():
+        assert_true(row['objective'] > 0)
+        assert_true(row['time'] > 0)
     h5file.close()
 
     if os.path.exists(db):
