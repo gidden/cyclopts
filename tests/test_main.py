@@ -75,7 +75,7 @@ def test_cli():
 
     ninst = 2
     nvalid = 5 # visual confirmation of obs_valid.rc
-    solvers = "cbc greedy"
+    solvers = "greedy cbc"
 
     cmd = "cyclopts convert --rc {0} --db {1} -n {2}".format(rc, db, ninst)
     assert_equal(0, subprocess.call(cmd.split(), shell=(os.name == 'nt')))

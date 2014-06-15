@@ -153,7 +153,7 @@ def execute(args):
             row["cyclus_version"] = soln.cyclus_version
             row["cyclopts_version"] = cyclopts.__version__
             row.append()
-    tbl.flush()        
+            tbl.flush()        
             
 def main():
     """Entry point for Cyclopts runs."""
