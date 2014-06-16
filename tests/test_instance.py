@@ -76,11 +76,9 @@ def test_inst():
     excl = True
     
     gid = Incrementer()
-    # constraint for qty needed for cbc/clp and actual qty needed for greedy
     rg1 = ExGroup(gid.next(), req, np.array([1], dtype='float'), 1)
     rg2 = ExGroup(gid.next(), req, np.array([1.5], dtype='float'), 1.5)
-    # there is a bug in the greedy solver, this should be able to be [1, < 0.5]
-    rg3 = ExGroup(gid.next(), req, np.array([1, 0.5], dtype='float'), 1)
+    rg3 = ExGroup(gid.next(), req, np.array([1, 0.4], dtype='float'), 1)
     bg1 = ExGroup(gid.next(), bid, np.array([2], dtype='float'))
     bg2 = ExGroup(gid.next(), bid, np.array([1.5, 2], dtype='float'))
     bg3 = ExGroup(gid.next(), bid, np.array([1], dtype='float'))
