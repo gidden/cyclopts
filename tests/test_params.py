@@ -81,10 +81,10 @@ def test_def_rxtr_req_build():
     assert_equal(exp.vid, arcs[0].vid)
     assert_equal(len(arcs[0].ucaps), 1)
     assert_greater(arcs[0].ucaps,  0)
-    assert_less_equal(arcs[0].ucaps,  1)
+    assert_less_equal(arcs[0].ucaps,  2)
     assert_equal(len(arcs[0].vcaps), 1)
     assert_greater(arcs[0].vcaps,  0)
-    assert_less_equal(arcs[0].vcaps,  1)
+    assert_less_equal(arcs[0].vcaps,  2)
     assert_greater(arcs[0].pref,  0)
     assert_less_equal(arcs[0].pref,  1)
 
