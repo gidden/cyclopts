@@ -20,6 +20,7 @@ _inst_grp_name = 'Instances'
 _result_grp_name = 'Results'
 _result_tbl_name = 'General'
 _result_tbl_dtype = np.dtype([
+        ("solnid", ('str', 16)), # 16 bytes for uuid
         ("instid", ('str', 16)), # 16 bytes for uuid
         ("problem", ('str', 30)), # 30 seems long enough, right?
         ("solver", ('str', 30)), # 30 seems long enough, right?
@@ -139,14 +140,16 @@ def execute(args):
     # exchange problems, and future problem instances will need this section to
     # be refactored
     row = tbl.row
-    for id in instids:
-        groups, nodes, arcs = iio.read_exinst(instnode, id) # exchange specific
+    for instid in instids:
+        groups, nodes, arcs = iio.read_exinst(instnode, instid) # exchange specific
         for s in solvers:
             solver = inst.ExSolver(s)
             soln = inst.Run(groups, nodes, arcs, solver) # exchange specific
-            iio.write_soln(instnode, id, soln) # exchange specific
-            row['instid'] = id
-            row["solver"] = s
+            solnid = uuid.uuid4().bytes
+            iio.write_soln(instnode, instid, soln, solnid) # exchange specific
+            row['solnid'] = solnid
+            row['instid'] = instid
+            row["solver"] = solver.type
             row["problem"] = soln.type
             row["time"] = soln.time
             row["objective"] = soln.objective

@@ -495,6 +495,7 @@ class ReactorRequestBuilder(object):
                     excl_id = exid.next() if excl else -1 # need unique exclusive id
                     self.nodes.append(
                         inst.ExNode(n_id, g_id, req, qty, excl, excl_id))
+                    req_qtys[n_id] = qty
     
         # populate supply params and arc relations
         a_ids = Incrementer(self.arc_offset)
@@ -507,7 +508,7 @@ class ReactorRequestBuilder(object):
             self.groups.append(inst.ExGroup(g_id, bid, caps))
             for v_id, u_id in sups:
                 n_node_ucaps[v_id] = len(caps)
-                self.nodes.append(inst.ExNode(v_id, g_id, bid))
+                self.nodes.append(inst.ExNode(v_id, g_id, bid, req_qtys[u_id]))
                 # arc from u-v node
                 # add qty as first constraint -- required for clp/cbc
                 ucaps = np.append(

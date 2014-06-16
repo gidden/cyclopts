@@ -71,10 +71,12 @@ def test_instids():
 def test_cli():
     base = os.path.dirname(os.path.abspath(__file__))
     rc = os.path.join(base, 'files', 'obs_valid.rc')    
+    #rc = os.path.join(base, 'tstrc')    
     db = os.path.join(base, "tmp_{0}.h5".format(str(uuid.uuid4())))
 
     ninst = 2
     nvalid = 5 # visual confirmation of obs_valid.rc
+    #nvalid = 1
     solvers = "greedy cbc"
 
     cmd = "cyclopts convert --rc {0} --db {1} -n {2}".format(rc, db, ninst)

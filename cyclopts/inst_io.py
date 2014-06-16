@@ -57,6 +57,7 @@ _dtypes = {
         ("n_constrs", np.int64),
         ]),
     "solutions": np.dtype([
+        ("solnid", ('str', 16)), # 16 bytes for uuid
         ("instid", ('str', 16)), # 16 bytes for uuid
         ("arc_id", np.int64),
         ("flow", np.float64),
@@ -161,11 +162,12 @@ def read_exinst(h5node, instid):
     arcs = read_exobjs(h5node, instid, inst.ExArc)
     return groups, nodes, arcs
 
-def write_soln(h5node, instid, soln):
+def write_soln(h5node, instid, soln, solnid):
     tname = _tbl_names['solutions'] 
     tbl = h5node._f_get_child(tname)
     row = getattr(h5node, tname).row
     for id, flow in soln.flows.iteritems():
+        row['solnid'] = solnid
         row['instid'] = instid
         row['arc_id'] = id
         row['flow'] = flow
