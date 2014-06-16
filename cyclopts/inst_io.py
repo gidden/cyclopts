@@ -141,7 +141,6 @@ def read_exobjs(h5node, instid, ctor):
     objs = []
     tbl = getattr(h5node, tname)
     findid = instid
-    print("finding:", findid)
     rows = tbl.where('instid == findid')
     vars = xdvars(inst)
     for row in rows:
