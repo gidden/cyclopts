@@ -48,6 +48,7 @@ _dtypes = {
         ("pref", np.float64),
         ]),
     "properties": np.dtype([
+        ("paramid", ('str', 16)), # 16 bytes for uuid
         ("instid", ('str', 16)), # 16 bytes for uuid
         ("n_arcs", np.int64),
         ("n_u_grps", np.int64),
@@ -98,10 +99,11 @@ def write_exobjs(h5node, instid, objs):
         row.append()
     tbl.flush()
 
-def write_exprops(h5node, instid, groups, nodes, arcs):
+def write_exprops(h5node, instid, paramid, groups, nodes, arcs):
     tbl = getattr(h5node, _tbl_names['properties'])
     row = tbl.row
     row['instid'] = instid.bytes
+    row['paramid'] = paramid.bytes
     row['n_arcs'] = len(arcs)
     nconstr = 0
     nv = 0
@@ -127,12 +129,12 @@ def write_exprops(h5node, instid, groups, nodes, arcs):
     row.append()
     tbl.flush()
 
-def write_exinst(h5node, instid, groups, nodes, arcs):
+def write_exinst(h5node, instid, paramid, groups, nodes, arcs):
     check_extables(h5node)
     write_exobjs(h5node, instid, groups)
     write_exobjs(h5node, instid, nodes)
     write_exobjs(h5node, instid, arcs)
-    write_exprops(h5node, instid, groups, nodes, arcs)
+    write_exprops(h5node, instid, paramid, groups, nodes, arcs)
 
 def read_exobjs(h5node, instid, ctor):
     inst = ctor()

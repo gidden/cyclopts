@@ -223,6 +223,7 @@ class ReactorRequestSampler(object):
         pref_coeff : CoeffParam or similar, optional
             preference coefficients
         """
+        self.paramid = uuid.uuid4()
         self.n_commods = n_commods \
             if n_commods is not None else Param(1)
         self.n_request = n_request \
@@ -286,6 +287,9 @@ class ReactorRequestSampler(object):
         #               for name, obj in self.__dict__.items()])
         ret = []
         for name, obj in self.__dict__.items():
+            if name == 'paramid':
+                ret.append((name, ('str', 16)))
+                continue
             for subname, subobj in obj.__dict__.items():
                 ret.append(("{0}_{1}".format(name, subname), 
                             self._dt_convert(subobj)))
@@ -297,6 +301,9 @@ class ReactorRequestSampler(object):
     
     def import_h5(self, row):
         for name, obj in self.__dict__.items():
+            if name == 'paramid':
+                setattr(obj, name, UUID.uuid(bytes=row[name]))
+                continue
             for subname, subobj in obj.__dict__.items():
                 attr = getattr(obj, subname)
                 val = row["{0}_{1}".format(name, subname)]
@@ -309,6 +316,9 @@ class ReactorRequestSampler(object):
 
     def export_h5(self, row):
         for name, obj in self.__dict__.items():
+            if name == 'paramid':
+                row[name] = obj.bytes
+                continue
             for subname, subobj in obj.__dict__.items():
                 attr = getattr(obj, subname)
                 row["{0}_{1}".format(name, subname)] = \
@@ -381,7 +391,7 @@ class ReactorRequestBuilder(object):
         arc_offset : int, optional
             an offset for arc ids
         """
-        s = self.sampler = sampler
+        self.sampler = sampler
         self.commod_offset = commod_offset
         
         self.req_g_offset = req_g_offset
@@ -568,7 +578,7 @@ class ReactorRequestBuilder(object):
     def write(self, h5node):
         """writes its current instance state to an output database"""
         instid = uuid.uuid4()
-        iio.write_exinst(h5node, instid, 
+        iio.write_exinst(h5node, instid, self.sampler.paramid, 
                          self.groups, self.nodes, self.arcs)
     
     #
