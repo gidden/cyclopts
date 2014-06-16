@@ -43,7 +43,7 @@ class TestExchangeIO:
         exp = [ExGroup(1, True, np.array([1], dtype='float'), 3), 
                ExGroup(6, False, np.array([2, 3.5], dtype='float'))]
         iio.write_exobjs(self.h5node, self.instid, exp)
-        obs = iio.read_exobjs(self.h5node, self.instid, ExGroup)
+        obs = iio.read_exobjs(self.h5node, self.instid.bytes, ExGroup)
         assert_equal(len(exp), len(obs))
         for i in range(len(exp)):
             assert_xd_equal(exp[i], obs[i])
@@ -52,7 +52,7 @@ class TestExchangeIO:
         exp = [ExNode(1, 2, True, 3), 
                ExNode(6, 7, False, 0, True, 1)]
         iio.write_exobjs(self.h5node, self.instid, exp)
-        obs = iio.read_exobjs(self.h5node, self.instid, ExNode)
+        obs = iio.read_exobjs(self.h5node, self.instid.bytes, ExNode)
         assert_equal(len(exp), len(obs))
         for i in range(len(exp)):
             assert_xd_equal(exp[i], obs[i])
@@ -63,7 +63,7 @@ class TestExchangeIO:
                ExArc(1, 32, np.array([8.1, 5.3e6], dtype='float'), 
                      5, np.array([0.1, 77, 47], dtype='float'), 0.5e10)]
         iio.write_exobjs(self.h5node, self.instid, exp)
-        obs = iio.read_exobjs(self.h5node, self.instid, ExArc)
+        obs = iio.read_exobjs(self.h5node, self.instid.bytes, ExArc)
         assert_equal(len(exp), len(obs))
         for i in range(len(exp)):
             assert_xd_equal(exp[i], obs[i])
