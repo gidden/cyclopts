@@ -157,6 +157,7 @@ def execute(args):
             row["cyclopts_version"] = cyclopts.__version__
             row.append()
             tbl.flush()        
+    h5file.close()
             
 def main():
     """Entry point for Cyclopts runs."""
