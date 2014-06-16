@@ -5,7 +5,9 @@ from cyclopts.instance import ExGroup, ExNode, ExArc
 from test_inst_io import assert_xd_equal
 
 from nose.tools import assert_equal, assert_almost_equal, assert_true, \
-    assert_false, assert_raises
+    assert_false, assert_raises, assert_less, assert_greater, \
+    assert_less_equal, assert_greater_equal
+import nose
 import numpy as np
 
 def test_incr():
@@ -43,13 +45,13 @@ def test_def_rxtr_req_sample():
     for i in range(n):
         constr = s.constr_coeff.sample()
         constr_avg += constr
-        assert_true(constr > 0)
-        assert_true(constr <= 1)
+        assert_greater(constr,  0)
+        assert_less_equal(constr,  2)
         pref = s.pref_coeff.sample()
         pref_avg += pref
-        assert_true(pref > 0)
-        assert_true(pref <= 1)
-    assert_almost_equal(0.5, constr_avg / n, places=1)
+        assert_greater(pref,  0)
+        assert_less_equal(pref,  1)
+    assert_almost_equal(1.0, constr_avg / n, places=1)
     assert_almost_equal(0.5, pref_avg / n, places=1)
 
 def test_def_rxtr_req_build():
@@ -69,7 +71,7 @@ def test_def_rxtr_req_build():
     assert_xd_equal(exp, groups[1])
     exp = ExNode(0, 0, req, 1)
     assert_xd_equal(exp, nodes[0])
-    exp = ExNode(1, 1, bid)
+    exp = ExNode(1, 1, bid, 1)
     assert_xd_equal(exp, nodes[1])
     # arcs are separate because values are stochastic
     exp = ExArc(0, 0, np.array([1], dtype='float'), 
@@ -78,13 +80,13 @@ def test_def_rxtr_req_build():
     assert_equal(exp.uid, arcs[0].uid)
     assert_equal(exp.vid, arcs[0].vid)
     assert_equal(len(arcs[0].ucaps), 1)
-    assert_true(arcs[0].ucaps > 0)
-    assert_true(arcs[0].ucaps <= 1)
+    assert_greater(arcs[0].ucaps,  0)
+    assert_less_equal(arcs[0].ucaps,  1)
     assert_equal(len(arcs[0].vcaps), 1)
-    assert_true(arcs[0].vcaps > 0)
-    assert_true(arcs[0].vcaps <= 1)
-    assert_true(arcs[0].pref > 0)
-    assert_true(arcs[0].pref <= 1)
+    assert_greater(arcs[0].vcaps,  0)
+    assert_less_equal(arcs[0].vcaps,  1)
+    assert_greater(arcs[0].pref,  0)
+    assert_less_equal(arcs[0].pref,  1)
 
 def test_rxtr_req_build_changes():
     s = ReactorRequestSampler()
