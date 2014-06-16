@@ -250,7 +250,7 @@ class ReactorRequestSampler(object):
         self.connection = connection \
             if connection is not None else BoolParam(1.0)
         self.constr_coeff = constr_coeff \
-            if constr_coeff is not None else CoeffParam(1e-10, 1.0)
+            if constr_coeff is not None else CoeffParam(1e-10, 2.0)
         # 1e-10 is 'sufficiently' low
         self.pref_coeff = pref_coeff \
             if pref_coeff is not None else CoeffParam(1e-10, 1.0) 

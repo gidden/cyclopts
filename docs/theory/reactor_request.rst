@@ -354,8 +354,8 @@ proposed resource flows along the arc in quesiton.
 Distribution Candidacy
 ^^^^^^^^^^^^^^^^^^^^^^
 
-A distribution around unity will be used, however the distribution has yet to be
-chosen.
+A distribution around unity will is used. At present a uniform distribution from
+(0, 2] is used.
 
 Theoretical Basis
 ^^^^^^^^^^^^^^^^^
