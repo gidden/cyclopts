@@ -140,8 +140,8 @@ def read_exobjs(h5node, instid, ctor):
     tname = _tbl_names[cname]
     objs = []
     tbl = getattr(h5node, tname)
-#    byteid = instid.bytes
-    rows = tbl.where('instid == instid')
+    findid = instid
+    rows = tbl.where('instid == findid')
     vars = xdvars(inst)
     for row in rows:
         obj = ctor()
@@ -167,6 +167,8 @@ def write_soln(h5node, instid, soln, solnid):
     tbl = h5node._f_get_child(tname)
     row = getattr(h5node, tname).row
     for id, flow in soln.flows.iteritems():
+        if not flow > 0:
+            continue
         row['solnid'] = solnid
         row['instid'] = instid
         row['arc_id'] = id
