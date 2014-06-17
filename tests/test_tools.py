@@ -12,24 +12,6 @@ import tables as t
 from functools import reduce
 from nose.tools import assert_equal, assert_true, assert_false
 
-def test_report():    
-    base = os.path.dirname(os.path.abspath(__file__))
-    db_path = os.path.join(base, str(uuid.uuid4()) + '.h5')
-    
-    sampler = ReactorRequestSampler()
-    sp = SolverParams()
-    gp = GraphParams()
-    b = ReactorRequestBuilder(sampler, gp)
-    b.build()
-    soln = execute_exchange(gp, sp)
-    for i in range(len(soln.flows)):
-        f = ArcFlow(soln.flows[i:])
-        print("obj:", f.id, f.flow / gp.arc_pref[f.id])
-    report(sampler, gp, sp, soln, db_path=db_path)
-
-    if os.path.exists(db_path):
-        os.remove(db_path)
-
 def test_combine():    
     base = os.path.dirname(os.path.abspath(__file__))
     db1 = '994c5721-311d-46f3-8b7d-742beeaa9ec1.h5'
@@ -136,58 +118,3 @@ def test_parser():
     obs_dict = b._parse(rc)
 
     assert_equal(exp_dict, obs_dict)
-
-def test_sampler_converstion():
-    base = os.path.dirname(os.path.abspath(__file__))
-    fin = os.path.join(base, 'files', 'obs_conv.rc')
-    
-    fout = os.path.join(base, "tmp_{0}.h5".format(str(uuid.uuid4())))
-
-    to_h5(fin, fout)
-    obs = from_h5(fout)
-
-    exp = []
-    for i in range(1, 5):
-        for j in range(1, 5):
-            s = ReactorRequestSampler()
-            s.n_request = Param(i)
-            s.n_supply = Param(j)
-            exp.append(s)
-    
-    assert_equal(len(obs), len(exp))
-    assert_equal(obs, exp)
-
-    if (os.path.exists(fout)):
-        os.remove(fout)
-
-def test_sampler_validity():
-    base = os.path.dirname(os.path.abspath(__file__))
-    fin = os.path.join(base, 'files', 'obs_valid.rc')
-    
-    fout = os.path.join(base, "tmp_{0}.h5".format(str(uuid.uuid4())))
-
-    to_h5(fin, fout)
-    obs = from_h5(fout)
-
-    exp = []
-    for i in range(1, 3):
-        for req in range(1, 3):
-            for sup in range(1, 3):
-                if i > req: # more commods than suppliers
-                    continue
-                if i > sup: # more commods than requesters
-                    continue
-                print("n commods", i, "n supply", sup, "n request", req)
-                s = ReactorRequestSampler()
-                s.n_commods = Param(i)
-                s.n_supply = Param(sup)
-                s.n_request = Param(req)
-                exp.append(s)
-
-    assert_equal(len(obs), len(exp))
-    assert_equal(obs, exp)
-
-    if (os.path.exists(fout)):
-        os.remove(fout)
-        
-    
