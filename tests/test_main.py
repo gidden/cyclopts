@@ -96,5 +96,21 @@ def test_cli():
         assert_true(row['time'] > 0)
     h5file.close()
 
+    uuid_hex = exp_uuid_arcs[0][0]
+    newdb = os.path.join(base, "tmp_{0}.h5".format(str(uuid.uuid4())))
+    cmd = "cyclopts exec --db={0} --instids {1} --outdb {2}".format(
+        db, uuid_hex, newdb)
+    print("executing: {0}".format(cmd))
+    assert_equal(0, subprocess.call(cmd.split(), shell=(os.name == 'nt')))
+    h5file = t.open_file(newdb, 'r')
+    h5node = h5file.root.Results.General
+    assert_equal(h5node.nrows, 1)
+    for row in h5node.iterrows():
+        assert_equal(row['instid'], uuid.UUID(uuid_hex).bytes)
+    h5file.close()
+    
+    if os.path.exists(newdb):
+        os.remove(newdb)
+
     if os.path.exists(db):
         os.remove(db)

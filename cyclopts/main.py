@@ -83,8 +83,9 @@ def convert(args):
         tbl.flush()
     h5file.close()
 
-def instids_from_rc(h5node, rc):
-    instids = set(uuid.UUID(x).bytes for x in rc['inst_ids']) \
+def instids_from_rc(h5node, rc, instids=None):
+    instids = set() if instids is None else instids
+    instids |= set(uuid.UUID(x).bytes for x in rc['inst_ids']) \
         if 'inst_ids' in rc.keys() else set()
     
     # inst queries are a mapping from instance table names to queryable
@@ -117,23 +118,34 @@ def instids_from_rc(h5node, rc):
     return instids
     
 def execute(args):
-    db = args.db
+    indb = args.db
+    outdb = args.outdb
     rc = parse_rc(args.rc) if args.rc is not None else {}
     solvers = args.solvers
-    h5file = t.open_file(db, mode='a', filters=_filters)
-    root = h5file.root
-    instnode = root._f_get_child(_inst_grp_name)
-    instids = instids_from_rc(instnode, rc)
+    instids = set(uuid.UUID(x).bytes for x in args.instids)
+
+    # if a separate db is requested, open it, otherwise use only 
+    h5in = t.open_file(indb, mode='a', filters=_filters)
+    h5out = t.open_file(outdb, mode='a', filters=_filters) \
+        if outdb is not None else None
+    inroot = h5in.root
+    outroot = h5out.root if h5out is not None else h5in.root
+    
+    instnode = inroot._f_get_child(_inst_grp_name)
+
+    # read rc if it exists and we don't already have insts
+    instids = instids_from_rc(instnode, rc, instids=instids)
 
     # create output leaves
-    if not root.__contains__(_result_grp_name):
+    if not outroot.__contains__(_result_grp_name):
         print("creating group {0}".format(_result_grp_name))
-        h5file.create_group(root, _result_grp_name, filters=_filters)
-    resultnode = root._f_get_child(_result_grp_name)
+        outroot._v_file.create_group(outroot, _result_grp_name, 
+                                     filters=_filters)
+    resultnode = outroot._f_get_child(_result_grp_name)
 
     if not resultnode.__contains__(_result_tbl_name):
-        h5file.create_table(resultnode, _result_tbl_name, _result_tbl_dtype, 
-                            filters=_filters)    
+        outroot._v_file.create_table(resultnode, _result_tbl_name, 
+                                     _result_tbl_dtype, filters=_filters)    
     tbl = resultnode._f_get_child(_result_tbl_name) 
 
     # run each instance note that the running and reporting is specific to
@@ -157,8 +169,11 @@ def execute(args):
             row["cyclopts_version"] = cyclopts.__version__
             row.append()
             tbl.flush()        
-    h5file.close()
-            
+    
+    h5in.close()
+    if h5out is not None:
+        h5out.close()
+    
 def main():
     """Entry point for Cyclopts runs."""
     parser = argparse.ArgumentParser("Cyclopts", add_help=True)    
@@ -190,9 +205,15 @@ def main():
     solversh = ("A list of which solvers to use.")
     exec_parser.add_argument('--solvers', nargs='*', default=['cbc'], dest='solvers', 
                              help=solversh)    
+    instids = ("A list of instids (as UUID hex strings) to run.")
+    exec_parser.add_argument('--instids', nargs='*', default=[], dest='instids', 
+                             help=instids)    
     rch = ("The run control file, which allows idetification of a subset "
            "of input to run.")
     exec_parser.add_argument('--rc', dest='rc', default=None, help=rch)
+    outdb = ("An optional database to write results to. By default, the "
+             "database given by the --db flag is use.")
+    exec_parser.add_argument('--outdb', dest='outdb', default=None, help=outdb)
     
     # for condor
     condorh = ("Submits a job to condor, retrieves output when it has completed, "
