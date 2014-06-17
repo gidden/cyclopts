@@ -47,22 +47,23 @@ def test_instids():
     h5node = h5file.root.Instances
     
     rc = {}
-    obs = main.instids_from_rc(h5node, rc)
+    obs = main.collect_instids(h5node=h5node, rc=rc)
     exp = set(uuid.UUID(x[0]).bytes for x in exp_uuid_arcs)
     assert_equal(exp, obs)
     assert_equal(len(exp), len(exp_uuid_arcs))
     
     exp_uuid_hex = exp_uuid_arcs[0][0]
     rc = {'inst_ids': [exp_uuid_hex]}
-    obs = main.instids_from_rc(h5node, rc)
+    obs = main.collect_instids(h5node=h5node, rc=rc)
     exp = set([uuid.UUID(exp_uuid_hex).bytes])
+    assert_equal(len(exp), len(obs))
     assert_equal(exp, obs)
 
     bounds = (3, 12)
     conds = ['n_arcs > {0}'.format(bounds[0]), '&', 
              'n_arcs < {0}'.format(bounds[1])]
     rc = {'inst_queries': {'ExchangeInstProperties': conds}}
-    obs = main.instids_from_rc(h5node, rc)
+    obs = main.collect_instids(h5node=h5node, rc=rc)
     exp = set(uuid.UUID(x[0]).bytes \
                   for x in exp_uuid_arcs \
                   if x[1] > bounds[0] and x[1] < bounds[1])

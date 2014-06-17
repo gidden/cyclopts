@@ -83,8 +83,9 @@ def convert(args):
         tbl.flush()
     h5file.close()
 
-def instids_from_rc(h5node, rc, instids=None):
-    instids = set() if instids is None else instids
+def collect_instids(h5node=None, rc=None, instids=None):
+    instids = instids if instids is not None else set()
+    rc = rc if rc is not None else {}
     instids |= set(uuid.UUID(x).bytes for x in rc['inst_ids']) \
         if 'inst_ids' in rc.keys() else set()
     
@@ -93,6 +94,8 @@ def instids_from_rc(h5node, rc, instids=None):
     # conditions
     inst_queries = rc['inst_queries'] if 'inst_queries' in rc.keys() else {}
     for tbl_name, conds in inst_queries.items():
+        if h5node is None:
+            continue
         tbl = h5node._f_get_child(tbl_name)
         ops = conds[1::2]
         conds = ['({0})'.format(c) if \
@@ -106,7 +109,7 @@ def instids_from_rc(h5node, rc, instids=None):
             instids.add(row['instid'])
         
     # if no ids, then run everything
-    if len(instids) == 0:
+    if len(instids) == 0 and h5node is not None:
         names = [node._v_name \
                      for node in h5node._f_iter_nodes(classname='Table') \
                      if 'properties' in node._v_name.lower()]
@@ -134,7 +137,7 @@ def execute(args):
     instnode = inroot._f_get_child(_inst_grp_name)
 
     # read rc if it exists and we don't already have insts
-    instids = instids_from_rc(instnode, rc, instids=instids)
+    instids = collect_instids(h5node=instnode, rc=rc, instids=instids)
 
     # create output leaves
     if not outroot.__contains__(_result_grp_name):
@@ -179,7 +182,9 @@ def main():
     parser = argparse.ArgumentParser("Cyclopts", add_help=True)    
     sp = parser.add_subparsers()
 
-    # for conversion
+    #
+    # convert param space to database
+    #
     converth = ("Convert a parameter space defined by an "
                 "input run control file into an HDF5 database for a Cyclopts "
                 "execution run.")
@@ -195,7 +200,9 @@ def main():
     conv_parser.add_argument('-n', '--ninstances', type=int, dest='ninst', 
                              default=1, help=ninst)
 
-    # for runs
+    #
+    # execute instances locally
+    #
     exech = ("Executes a parameter sweep as defined "
              "by the input database and other command line arguments.")
     exec_parser = sp.add_parser('exec', help=exech)
@@ -203,8 +210,8 @@ def main():
     db = ("An HDF5 Cyclopts database (e.g., the result of 'cyclopts convert').")
     exec_parser.add_argument('--db', dest='db', help=db)
     solversh = ("A list of which solvers to use.")
-    exec_parser.add_argument('--solvers', nargs='*', default=['cbc'], dest='solvers', 
-                             help=solversh)    
+    exec_parser.add_argument('--solvers', nargs='*', default=['cbc'], 
+                             dest='solvers', help=solversh)    
     instids = ("A list of instids (as UUID hex strings) to run.")
     exec_parser.add_argument('--instids', nargs='*', default=[], dest='instids', 
                              help=instids)    
@@ -215,38 +222,43 @@ def main():
              "database given by the --db flag is use.")
     exec_parser.add_argument('--outdb', dest='outdb', default=None, help=outdb)
     
-    # for condor
+    #
+    # execute instances with condor
+    #
     condorh = ("Submits a job to condor, retrieves output when it has completed, "
-             "and cleans up the condor user space after.")
+               "and cleans up the condor user space after.")
     condor_parser = sp.add_parser('condor', help=condorh)
     condor_parser.set_defaults(func=condor)
     
+    # exec related
+    condor_parser.add_argument('--rc', dest='rc', default=None, help=rch)
+    condor_parser.add_argument('--db', dest='db', help=db)
+    condor_parser.add_argument('--instids', nargs='*', default=[], dest='instids', 
+                               help=instids)    
+    condor_parser.add_argument('--outdb', dest='outdb', default=None, help=outdb)
+    condor_parser.add_argument('--solvers', nargs='*', default=['cbc'], 
+                               dest='solvers', help=solversh)    
+    
+    # condor related
     uh = ("The condor user name.")
     condor_parser.add_argument('-u', '--user', dest='user', help=uh, 
                                default='gidden')
     hosth = ("The condor submit host.")
     condor_parser.add_argument('-t', '--host', dest='host', help=hosth, 
                                default='submit-1.chtc.wisc.edu')
-    indbh = ("The input database.")
-    condor_parser.add_argument('-i', '--input', dest='indb', help=indbh,
-                               default='in.h5')    
     dumph = ("The directory in which to place output.")
     condor_parser.add_argument('-d', '--dumpdir', dest='dumpdir', help=dumph,
                                default='run_results')      
-    outdbh = ("The output database.")
-    condor_parser.add_argument('-o', '--output', dest='outdb', help=outdbh,
-                               default='out.h5')    
     nocleanh = ("Do *not* clean up the submit node after.")
     condor_parser.add_argument('--no-clean', dest='clean', help=nocleanh,
                                action='store_false', default=True)    
-    solversh = ("A list of which solvers to use on each run.")
-    condor_parser.add_argument('--solvers', nargs='*', default=['cbc'], dest='solvers', 
-                             help=solversh)
     noauthh = ("Do not ask for a password for authorization.")
     condor_parser.add_argument('--no-auth', action='store_false', dest='auth', 
                                default=True, help=noauthh)    
-    
+
+    #
     # and away we go!
+    #
     args = parser.parse_args()
     args.func(args)
 
