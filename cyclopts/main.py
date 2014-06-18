@@ -9,6 +9,7 @@ import numpy as np
 from collections import defaultdict
 import itertools
 import uuid
+import datetime
 
 import cyclopts
 import cyclopts.condor as condor
@@ -28,6 +29,8 @@ _result_tbl_dtype = np.dtype([
         ("objective", np.float64),
         ("cyclus_version", ('str', 12)),
         ("cyclopts_version", ('str', 12)),
+        # len(dtime.datetime.now().isoformat(' ')) == 26
+        ("timestamp", ('str', 26)), 
         ])
 _filters = t.Filters(complevel=4)
 
@@ -175,6 +178,7 @@ def execute(args):
             row["objective"] = soln.objective
             row["cyclus_version"] = soln.cyclus_version
             row["cyclopts_version"] = cyclopts.__version__
+            row["timestamp"] = datetime.datetime.now().isoformat(' ')
             row.append()
             tbl.flush()        
     
