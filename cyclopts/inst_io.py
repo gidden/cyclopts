@@ -81,7 +81,7 @@ def check_extables(h5node):
         if tname in h5node._v_children:
             continue
         h5node._v_file.create_table(h5node, tname, _dtypes[objname], 
-                                    filters=_filters)    
+                                    filters=_filters)
 
 def write_exobjs(h5node, instid, objs):
     cname = objs[0].__class__.__name__
@@ -167,7 +167,7 @@ def read_exinst(h5node, instid):
 def write_soln(h5node, instid, soln, solnid):
     tname = _tbl_names['solutions'] 
     tbl = h5node._f_get_child(tname)
-    row = getattr(h5node, tname).row
+    row = tbl.row
     for id, flow in soln.flows.iteritems():
         if not flow > 0:
             continue

@@ -1,6 +1,7 @@
 from cyclopts import main
 
 import os
+import shutil
 import tables as t
 import uuid
 import subprocess
@@ -15,6 +16,7 @@ cyclopts/tests/files/exp_instances.h5 on 6/15/14 via
 
 .. code-block::
 
+  import tables as t
   h5f = t.open_file('cyclopts/tests/files/exp_instances.h5', 'r')
   h5n = h5f.root.Instances.ExchangeInstProperties
   for row in h5n.iterrows():
@@ -22,22 +24,22 @@ cyclopts/tests/files/exp_instances.h5 on 6/15/14 via
 
 """
 exp_uuid_arcs = [
-    ('31edfc5c35694c7682076b0a078aeecf', 1),
-    ('7ecf4de100dd4055a533b8ab2f18382d', 2),
-    ('39831aad8605406fbab4f413c34dacf9', 3),
-    ('0bac9e09ad5e4eadaeef3073bfada831', 4),
-    ('6f236710bc9d4abb879948e21252ab6c', 2),
-    ('53945b0e579c4db7bc0b465fe5b8364a', 4),
-    ('e882748326ce4c24892a6e74f7e843c0', 6),
-    ('8b84536c28934202acc55d6009334bf5', 8),
-    ('d00330c86cb345d098c0cd0e4288c01e', 3),
-    ('a08b4114ccef4defb0323f81b390a27e', 6),
-    ('affdbd2f7af04e8ca398607b9671e4e8', 9),
-    ('9bc8868cd9ad45a0b953558c4e36c3ab', 12),
-    ('ba99512e1da84cadbea0765f8b0fc0d7', 4),
-    ('b5a51c4ae07d48aabf0fc7cd17df9e83', 8),
-    ('6b654619b50941c0a1150b9e2b9c85b0', 12),
-    ('b28d6eccfbd546c995341b50281f5c52', 16),
+    ('4bee553ad2574923a0c19dcffa669bdd', 1),
+    ('741bb3864b224f61a6cf9a9f910aa69a', 2),
+    ('3ded701f631c4be8b02ba3297d3fa670', 3),
+    ('bd04d68431f1475f9b9d373b069f8b12', 4),
+    ('a07cd014e9564778a69ae2f6cdebe226', 2),
+    ('9b3b7607f27a45a3ad0a404dcb29a8c5', 4),
+    ('ef550c2f5a2148629b7fe7f57c7822d5', 6),
+    ('6fb9e2d02e1d40e3a9a81a7a6513c69c', 8),
+    ('dc806d20e3444043a4082f2f77ec0939', 3),
+    ('b1d68e095ed842fe848c7594a6643727', 6),
+    ('11eb0ab1078048d2be0ff7f88547bff5', 9),
+    ('d826cd10ef2942fb811624fcee5815ee', 12),
+    ('c16ad5c3ae4b4526b4864dbdc2eb7d8d', 4),
+    ('c1ff845537f349cfa8a1559a715fd640', 8),
+    ('078f6be90ece4b0f8d094028cbd0c22f', 12),
+    ('e0a8221169784067b572ec00232169ce', 16),
     ]
 
 def test_instids():
@@ -69,29 +71,18 @@ def test_instids():
                   if x[1] > bounds[0] and x[1] < bounds[1])
     assert_equal(exp, obs)
 
-def test_cli():
+def test_exec():
     base = os.path.dirname(os.path.abspath(__file__))
-    rc = os.path.join(base, 'files', 'obs_valid.rc')    
-    #rc = os.path.join(base, 'tstrc')    
     db = os.path.join(base, "tmp_{0}.h5".format(str(uuid.uuid4())))
-
-    ninst = 2
-    nvalid = 5 # visual confirmation of obs_valid.rc
-    #nvalid = 1
+    shutil.copy(os.path.join(base, 'files', 'exp_instances.h5'), db)
+    ninst = len(exp_uuid_arcs)
     solvers = "greedy cbc"
-
-    cmd = "cyclopts convert --rc {0} --db {1} -n {2}".format(rc, db, ninst)
-    assert_equal(0, subprocess.call(cmd.split(), shell=(os.name == 'nt')))
-    h5file = t.open_file(db, 'r')
-    h5node = h5file.root.Instances.ExchangeInstProperties
-    assert_equal(h5node.nrows, ninst * nvalid)
-    h5file.close()
 
     cmd = "cyclopts exec --db={0} --solvers {1}".format(db, solvers)
     assert_equal(0, subprocess.call(cmd.split(), shell=(os.name == 'nt')))
     h5file = t.open_file(db, 'r')
     h5node = h5file.root.Results.General
-    assert_equal(h5node.nrows, ninst * nvalid * len(solvers.split()))
+    assert_equal(h5node.nrows, ninst * len(solvers.split()))
     for row in h5node.iterrows():
         assert_true(row['objective'] > 0)
         assert_true(row['time'] > 0)
@@ -112,6 +103,28 @@ def test_cli():
     
     if os.path.exists(newdb):
         os.remove(newdb)
+
+    if os.path.exists(db):
+        os.remove(db)
+
+def test_condor():
+    pass
+
+def test_convert():
+    base = os.path.dirname(os.path.abspath(__file__))
+    rc = os.path.join(base, 'files', 'obs_valid.rc')    
+    db = os.path.join(base, "tmp_{0}.h5".format(str(uuid.uuid4())))
+
+    ninst = 2
+    nvalid = 5 # visual confirmation of obs_valid.rc
+    solvers = "greedy cbc"
+
+    cmd = "cyclopts convert --rc {0} --db {1} -n {2}".format(rc, db, ninst)
+    assert_equal(0, subprocess.call(cmd.split(), shell=(os.name == 'nt')))
+    h5file = t.open_file(db, 'r')
+    h5node = h5file.root.Instances.ExchangeInstProperties
+    assert_equal(h5node.nrows, ninst * nvalid)
+    h5file.close()
 
     if os.path.exists(db):
         os.remove(db)
