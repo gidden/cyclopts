@@ -19,26 +19,22 @@ except ImportError:
 
 from cyclopts.tools import combine
 
-rc_template = u"""
-path='{0}' 
-rows=range({1}, {2})
-"""
-
 sub_template = u"""
 universe = vanilla
 executable = run.sh
-arguments = {0}
-output = {0}.out
-error = {0}.err
-log = {0}.log
+arguments = {instids} {id}
+output = {id}.out
+error = {id}.err
+log = {id}.log
 requirements = (OpSysAndVer =?= "SL6") && Arch == "X86_64"
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
-transfer_input_files = ../../tars/cyclopts-build.tar.gz, {1}, {0}.rc
+transfer_input_files = ../../tars/cyclopts-build.tar.gz, {db}
 request_cpus = 1
 request_memory = 2500
 request_disk = 10242880
 notification = never
+periodic_hold = (JobStatus == 2) && ((CurrentTime - EnteredCurrentStatus) > ({max_time})
 queue
 """
 
@@ -55,43 +51,33 @@ git clone https://github.com/gidden/cyclopts
 cd cyclopts
 ./setup.py install --user
 cd ..;
-cyclopts exec -i {0} -o $1_out.h5 --solvers {solvers} --rc=$1.rc 
+cyclopts exec --db {db} --solvers {solvers} --instids $1 --outdb $2
 rm *.tar.gz
 """
 
 dag_template = u"""JOB J_{0} {0}.sub\n"""
 
-def gen_files(prefix=".", db="in.h5", solvers=['cbc'], 
-              tblname="ReactorRequestSampler", subfile = "dag.sub"):
+def gen_files(prefix, db, instids, solvers, subfile):
     """Generates all files needed to run a DAGMan instance of the given input
     database.
-    """
-    h5file = t.open_file(db, mode='r')
-    if hasattr(h5file.root, tblname):
-        tbl = getattr(h5file.root, tblname)
-    else:
-        raise IOError("Can't find table with name {0}.".format(tbl))
-    nrows = tbl.nrows
-    h5file.close()
-    
+    """    
     print("generating files for {0} runs".format(nrows))
     dag_lines = ""
-    for i in range(nrows):
-        rcname = os.path.join(prefix, "{0}.rc".format(i))
-        with io.open(rcname, 'w') as f:
-            f.write(rc_template.format(tblname, i, i+1))
+    for i in range(instids):
         subname = os.path.join(prefix, "{0}.sub".format(i))
+        max_time = 60 * 60 * 5 # 5 hours
         with io.open(subname, 'w') as f:
-            f.write(sub_template.format(i, db.split("/")[-1]))
+            f.write(sub_template.format(id=i, instid=instids[i], db=db, 
+                                        max_time=max_time))
         dag_lines += dag_template.format(i)
     dag_lines += "DAGMAN_MAX_JOBS_IDLE = 1000\n"
 
     runfile = os.path.join(prefix, "run.sh")
     solvers = " ".join(solvers)
     with io.open(runfile, 'w') as f:
-        f.write(run_template.format(db.split('/')[-1], solvers=solvers))
+        f.write(run_template.format(db, solvers=solvers))
 
-    dagfile = os.path.join(prefix, "dag.sub")
+    dagfile = os.path.join(prefix, subfile)
     with io.open(dagfile, 'w') as f:
         f.write(dag_lines)
 
@@ -207,7 +193,7 @@ def cleanup(client, remotedir):
     print("Remotely executing '{0}'".format(cmd))
     stdin, stdout, stderr = client.exec_command(cmd)
     
-def submit_dag(user, host, indb, solvers, dumpdir, outdb, clean, auth):
+def submit_dag(user, host, indb, instids, solvers, dumpdir, outdb, clean, auth):
     """Connects via SSH to a condor submit node, and executes a Cyclopts DAG
     run.
     
@@ -219,6 +205,8 @@ def submit_dag(user, host, indb, solvers, dumpdir, outdb, clean, auth):
         the condor submit node host (e.g. submit-1.chtc.wisc.edu)
     indb : str
         the input database location
+    instids : set
+        the set of instances to run
     solvers : list
         the solvers to use
     dumpdir : str
@@ -246,8 +234,11 @@ def submit_dag(user, host, indb, solvers, dumpdir, outdb, clean, auth):
         os.mkdir(run_dir)
     shutil.copy(indb, run_dir)
 
+    #
+    # begin dagman specific
+    #
     subfile = "dag.sub"
-    gen_files(prefix=run_dir, solvers=solvers, db=indb, subfile=subfile)
+    gen_files(run_dir, indb, instids, solvers, subfile)
     tarname = "{0}.tar.gz".format(run_dir)
     with tarfile.open(tarname, 'w:gz') as f:
         f.add(run_dir)
@@ -257,6 +248,9 @@ def submit_dag(user, host, indb, solvers, dumpdir, outdb, clean, auth):
     ssh.connect(host, username=user, password=pw)
     pid = submit(ssh, sub_dir, tarname, subfile)
     ssh.close()
+    #
+    # end dagman specific
+    #
 
     done = False
     while not done:

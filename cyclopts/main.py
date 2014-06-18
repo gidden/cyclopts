@@ -84,6 +84,11 @@ def convert(args):
     h5file.close()
 
 def collect_instids(h5node=None, rc=None, instids=None):
+    """Collects all instids. If only a database node is given, all instids found
+    in any table with any spelling of 'properties' in it are
+    collected. Otherwise, instids provided by the instid listing and the
+    paramater space defined by the run control are collected.
+    """
     instids = instids if instids is not None else set()
     rc = rc if rc is not None else {}
     instids |= set(uuid.UUID(x).bytes for x in rc['inst_ids']) \
@@ -243,18 +248,21 @@ def main():
     uh = ("The condor user name.")
     condor_parser.add_argument('-u', '--user', dest='user', help=uh, 
                                default='gidden')
-    hosth = ("The condor submit host.")
-    condor_parser.add_argument('-t', '--host', dest='host', help=hosth, 
+    hosth = ("The remote condor submit host.")
+    condor_parser.add_argument('-r', '--host', dest='host', help=hosth, 
                                default='submit-1.chtc.wisc.edu')
-    dumph = ("The directory in which to place output.")
-    condor_parser.add_argument('-d', '--dumpdir', dest='dumpdir', help=dumph,
-                               default='run_results')      
-    nocleanh = ("Do *not* clean up the submit node after.")
-    condor_parser.add_argument('--no-clean', dest='clean', help=nocleanh,
-                               action='store_false', default=True)    
     noauthh = ("Do not ask for a password for authorization.")
     condor_parser.add_argument('--no-auth', action='store_false', dest='auth', 
                                default=True, help=noauthh)    
+    localdir = ("The local directory in which to place resulting files.")
+    condor_parser.add_argument('-l', '--localdir', dest='localdir', 
+                               help=localdir, default='run_results')     
+    remotedir = ("The remote directory in which to run cyclopts jobs.")
+    condor_parser.add_argument('-d', '--remotedir', dest='remotedir', 
+                               help=remotedir, default='cyclopts_runs')      
+    nocleanh = ("Do *not* clean up the submit node after.")
+    condor_parser.add_argument('--no-clean', dest='clean', help=nocleanh,
+                               action='store_false', default=True)    
 
     #
     # and away we go!
