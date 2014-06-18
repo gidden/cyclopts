@@ -34,9 +34,64 @@ _result_tbl_dtype = np.dtype([
         ])
 _filters = t.Filters(complevel=4)
 
+def collect_instids(h5node=None, rc=None, instids=None):
+    """Collects all instids. If only a database node is given, all instids found
+    in any table with any spelling of 'properties' in it are
+    collected. Otherwise, instids provided by the instid listing and the
+    paramater space defined by the run control are collected.
+    """
+    instids = instids if instids is not None else set()
+    rc = rc if rc is not None else {}
+    instids |= set(uuid.UUID(x).bytes for x in rc['inst_ids']) \
+        if 'inst_ids' in rc.keys() else set()
+    
+    # inst queries are a mapping from instance table names to queryable
+    # conditions, the result of which is a collection of instids that meet those
+    # conditions
+    inst_queries = rc['inst_queries'] if 'inst_queries' in rc.keys() else {}
+    for tbl_name, conds in inst_queries.items():
+        if h5node is None:
+            continue
+        tbl = h5node._f_get_child(tbl_name)
+        ops = conds[1::2]
+        conds = ['({0})'.format(c) if \
+                     not c.lstrip().startswith('(') and \
+                     not c.rstrip().endswith(')') else c for c in conds[::2]]
+        cond = ' '.join(
+                [' '.join(i) for i in \
+                     itertools.izip_longest(conds, ops, fillvalue='')]).strip()
+        rows = tbl.where(cond)
+        for row in rows:
+            instids.add(row['instid'])
+        
+    # if no ids, then run everything
+    if len(instids) == 0 and h5node is not None:
+        names = [node._v_name \
+                     for node in h5node._f_iter_nodes(classname='Table') \
+                     if 'properties' in node._v_name.lower()]
+        for tbl_name in names:
+            tbl = h5node._f_get_child(tbl_name)
+            for row in tbl.iterrows():
+                instids.add(row['instid'])
+    
+    return instids
+
 def condor(args):
-    condor.submit_dag(args.user, args.host, args.indb, args.solvers, 
-                      args.dumpdir, args.outdb, args.clean, args.auth)
+    # collect instance ids
+    h5file = t.open_file(db, mode='r', filters=_filters)
+    instnode = h5file.root._f_get_child(_inst_grp_name)
+    instids = set(uuid.UUID(x).bytes for x in args.instids)
+    instids = collect_instids(h5node=instnode, rc=args.rc, instids=instids)
+    h5file.close()
+
+    # submit job
+    condor.submit_dag(args.user, args.db, instids, args.solvers, 
+                      outdb=args.outdb,
+                      host=args.host, 
+                      localdir=args.localdir, 
+                      remotedir=args.remotedir, 
+                      clean=args.clean, 
+                      auth=args.auth)
 
 def convert(args):
     """Converts a contiguous dataspace as defined by an input run control file
@@ -85,48 +140,6 @@ def convert(args):
                 builder.write(h5node)
         tbl.flush()
     h5file.close()
-
-def collect_instids(h5node=None, rc=None, instids=None):
-    """Collects all instids. If only a database node is given, all instids found
-    in any table with any spelling of 'properties' in it are
-    collected. Otherwise, instids provided by the instid listing and the
-    paramater space defined by the run control are collected.
-    """
-    instids = instids if instids is not None else set()
-    rc = rc if rc is not None else {}
-    instids |= set(uuid.UUID(x).bytes for x in rc['inst_ids']) \
-        if 'inst_ids' in rc.keys() else set()
-    
-    # inst queries are a mapping from instance table names to queryable
-    # conditions, the result of which is a collection of instids that meet those
-    # conditions
-    inst_queries = rc['inst_queries'] if 'inst_queries' in rc.keys() else {}
-    for tbl_name, conds in inst_queries.items():
-        if h5node is None:
-            continue
-        tbl = h5node._f_get_child(tbl_name)
-        ops = conds[1::2]
-        conds = ['({0})'.format(c) if \
-                     not c.lstrip().startswith('(') and \
-                     not c.rstrip().endswith(')') else c for c in conds[::2]]
-        cond = ' '.join(
-                [' '.join(i) for i in \
-                     itertools.izip_longest(conds, ops, fillvalue='')]).strip()
-        rows = tbl.where(cond)
-        for row in rows:
-            instids.add(row['instid'])
-        
-    # if no ids, then run everything
-    if len(instids) == 0 and h5node is not None:
-        names = [node._v_name \
-                     for node in h5node._f_iter_nodes(classname='Table') \
-                     if 'properties' in node._v_name.lower()]
-        for tbl_name in names:
-            tbl = h5node._f_get_child(tbl_name)
-            for row in tbl.iterrows():
-                instids.add(row['instid'])
-    
-    return instids
     
 def execute(args):
     indb = args.db
@@ -247,7 +260,7 @@ def main():
     condor_parser.add_argument('--outdb', dest='outdb', default=None, help=outdb)
     condor_parser.add_argument('--solvers', nargs='*', default=['cbc'], 
                                dest='solvers', help=solversh)    
-    
+
     # condor related
     uh = ("The condor user name.")
     condor_parser.add_argument('-u', '--user', dest='user', help=uh, 
@@ -261,7 +274,8 @@ def main():
     localdir = ("The local directory in which to place resulting files.")
     condor_parser.add_argument('-l', '--localdir', dest='localdir', 
                                help=localdir, default='run_results')     
-    remotedir = ("The remote directory in which to run cyclopts jobs.")
+    remotedir = ("The remote directory (relative to the user's home directory)"
+                 " in which to run cyclopts jobs.")
     condor_parser.add_argument('-d', '--remotedir', dest='remotedir', 
                                help=remotedir, default='cyclopts_runs')      
     nocleanh = ("Do *not* clean up the submit node after.")

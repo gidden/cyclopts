@@ -19,10 +19,18 @@ except ImportError:
 
 from cyclopts.tools import combine
 
+batlab_base_dir_template = u"""/home/{user}"""
+
+dag_job_template = u"""JOB J_{0} {0}.sub"""
+dag_template = u"""
+{job_lines}
+DAGMAN_MAX_JOBS_IDLE = 1000
+"""
+
 sub_template = u"""
 universe = vanilla
 executable = run.sh
-arguments = {instids} {id}
+arguments = {id}.h5 {instids}
 output = {id}.out
 error = {id}.err
 log = {id}.log
@@ -51,35 +59,39 @@ git clone https://github.com/gidden/cyclopts
 cd cyclopts
 ./setup.py install --user
 cd ..;
-cyclopts exec --db {db} --solvers {solvers} --instids $1 --outdb $2
+cyclopts exec --db {db} --solvers {solvers} --outdb $1 --instids $2
 rm *.tar.gz
 """
 
-dag_template = u"""JOB J_{0} {0}.sub\n"""
-
-def gen_files(prefix, db, instids, solvers, subfile):
+def gen_files(prefix, db, instids, solvers, subfile="dag.sub", max_time=259200):
     """Generates all files needed to run a DAGMan instance of the given input
     database.
     """    
-    print("generating files for {0} runs".format(nrows))
+    print("generating files for {0} runs".format(len(instids)))
+    if not os.path.exists(prefix):
+        os.makedirs(prefix)
+
+    # input db
+    shutil.copy(db, prefix)
+
+    # dag submit files
     dag_lines = ""
-    for i in range(instids):
+    for i in range(len(instids)):
         subname = os.path.join(prefix, "{0}.sub".format(i))
-        max_time = 60 * 60 * 5 # 5 hours
         with io.open(subname, 'w') as f:
-            f.write(sub_template.format(id=i, instid=instids[i], db=db, 
-                                        max_time=max_time))
-        dag_lines += dag_template.format(i)
-    dag_lines += "DAGMAN_MAX_JOBS_IDLE = 1000\n"
-
-    runfile = os.path.join(prefix, "run.sh")
-    solvers = " ".join(solvers)
-    with io.open(runfile, 'w') as f:
-        f.write(run_template.format(db, solvers=solvers))
-
+            f.write(sub_template.format(
+                    id=i, instids=instids[i], db=os.path.basename(db),
+                    max_time=max_time))
+        dag_lines += dag_job_template.format(i) + '\n'
     dagfile = os.path.join(prefix, subfile)
     with io.open(dagfile, 'w') as f:
-        f.write(dag_lines)
+        f.write(dag_template.format(job_lines=dag_lines))
+
+    # run script
+    runfile = os.path.join(prefix, "run.sh")
+    with io.open(runfile, 'w') as f:
+        f.write(run_template.format(db=os.path.basename(db), 
+                                    solvers=" ".join(solvers)))
 
 def wait_till_found(client, path, t_sleep=5):
     """Queries a client if a an expected file exists until it does."""
@@ -92,7 +104,7 @@ def wait_till_found(client, path, t_sleep=5):
         found = len(stdout.readlines()) > 0
         time.sleep(t_sleep)
 
-def submit(client, rundir, tarname, subfile):
+def submit(client, rundir, tarname, subfile="dag.sub"):
     """Performs a condor DAG sumbission on a client using a tarball of all
     submission-related data.
 
@@ -104,7 +116,7 @@ def submit(client, rundir, tarname, subfile):
         the run directory on the client
     tarname : str
         data tarball name
-    subfile : str
+    subfile : str, optional
         the name of the submit file
     """
     ftp = client.open_sftp()
@@ -193,7 +205,9 @@ def cleanup(client, remotedir):
     print("Remotely executing '{0}'".format(cmd))
     stdin, stdout, stderr = client.exec_command(cmd)
     
-def submit_dag(user, host, indb, instids, solvers, dumpdir, outdb, clean, auth):
+def submit_dag(user, db, instids, solvers, outdb=None, 
+               host="submit-1.chtc.wisc.edu", localdir=".", 
+               remotedir="cyclopts-runs", clean=False, auth=True):
     """Connects via SSH to a condor submit node, and executes a Cyclopts DAG
     run.
     
@@ -201,44 +215,41 @@ def submit_dag(user, host, indb, instids, solvers, dumpdir, outdb, clean, auth):
     ----------
     user : str
         the user on the condor submit host
-    host : str
-        the condor submit node host (e.g. submit-1.chtc.wisc.edu)
-    indb : str
-        the input database location
+    db : str
+        the problem instance database
     instids : set
         the set of instances to run
     solvers : list
         the solvers to use
-    dumpdir : str
-        the final run directory (where the input and output database files 
-        will be located)
-    outdb : str
-        the output database location
-    clean : bool
-        if true, removes the working directory on the submit node
-    auth : bool
-        if true, query a password authentication
-    """
-    timestamp = "_".join([str(t) for t in datetime.now().timetuple()][:-3])
-    
+    outdb : str, optional
+        the output database (i.e., don't write output to db)
+    host : str, optional
+        the condor submit host
+    localdir : str, optional
+        the local directory in which results will be placed
+    remotedir : str, optional
+        the base run directory on the condor submit node
+    clean : bool, optional
+        if true, removes the working directory on the submit node upon 
+        completion, which is automatically created relative to remotedir
+    auth : bool, optional
+        if true, query password authentication
+    """    
     prompt = "Password for {0}@{1}:".format(user, host)
     pw = getpass.getpass(prompt) if auth else None
     ssh = pm.SSHClient()
     ssh.set_missing_host_key_policy(pm.AutoAddPolicy())
 
+    batlab_dir = "{0}/{remotedir}".format(
+        batlab_base_dir_template.format(user=user), remotedir=remotedir)
+    timestamp = "_".join([str(t) for t in datetime.now().timetuple()][:-3])
     run_dir = "run_{0}".format(timestamp)
-    sub_dir = "/home/{0}/cyclopts-runs".format(user)
-    remote_dir = "{0}/{1}".format(sub_dir, run_dir)
-
-    if not os.path.exists(run_dir):
-        os.mkdir(run_dir)
-    shutil.copy(indb, run_dir)
 
     #
     # begin dagman specific
     #
-    subfile = "dag.sub"
-    gen_files(run_dir, indb, instids, solvers, subfile)
+    max_time = 60 * 60 * 5 # 5 hours
+    gen_files(run_dir, db, instids, solvers, max_time=max_time)
     tarname = "{0}.tar.gz".format(run_dir)
     with tarfile.open(tarname, 'w:gz') as f:
         f.add(run_dir)
@@ -246,7 +257,7 @@ def submit_dag(user, host, indb, instids, solvers, dumpdir, outdb, clean, auth):
     
     print("connecting to {0}@{1}".format(user, host))
     ssh.connect(host, username=user, password=pw)
-    pid = submit(ssh, sub_dir, tarname, subfile)
+    pid = submit(ssh, batlab_dir, tarname)
     ssh.close()
     #
     # end dagman specific
@@ -264,15 +275,15 @@ def submit_dag(user, host, indb, instids, solvers, dumpdir, outdb, clean, auth):
     print("{0} has completed.".format(run_dir))
 
     # create dump directory with aggregate input
-    final_in_path = os.path.join(dumpdir, indb)
+    final_in_path = os.path.join(dumpdir, db)
     if not os.path.exists(dumpdir):
         os.mkdir(dumpdir)
     if not os.path.exists(final_in_path):
-        shutil.copy(indb, dumpdir)
-    elif not shutil._samefile(indb, final_in_path):
+        shutil.copy(db, dumpdir)
+    elif not shutil._samefile(db, final_in_path):
         warnings.warn("Carefull! Overwriting file at {0} with {1}".format(
-                final_in_path, indb), RuntimeWarning)
-        shutil.copy(indb, dumpdir)
+                final_in_path, db), RuntimeWarning)
+        shutil.copy(db, dumpdir)
     
     # aggregate and dump output
     ssh.connect(host, username=user, password=pw)
