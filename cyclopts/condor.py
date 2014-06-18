@@ -30,7 +30,7 @@ DAGMAN_MAX_JOBS_IDLE = 1000
 sub_template = u"""
 universe = vanilla
 executable = run.sh
-arguments = {id}.h5 {instids}
+arguments = {id}_out.h5 {instids}
 output = {id}.out
 error = {id}.err
 log = {id}.log
@@ -63,33 +63,36 @@ cyclopts exec --db {db} --solvers {solvers} --outdb $1 --instids $2
 rm *.tar.gz
 """
 
-def gen_files(prefix, db, instids, solvers, subfile="dag.sub", max_time=259200):
+def gen_files(rundir, db, instids, solvers, subfile="dag.sub", max_time=259200, 
+              localdir="."):
     """Generates all files needed to run a DAGMan instance of the given input
     database.
     """    
     print("generating files for {0} runs".format(len(instids)))
-    if not os.path.exists(prefix):
-        os.makedirs(prefix)
+    
+    prepdir = os.path.join(localdir, rundir)
+    if not os.path.exists(prepdir):
+        os.makedirs(prepdir)
 
     # input db
-    shutil.copy(db, prefix)
+    shutil.copy(db, prepdir)
 
     # dag submit files
     dag_lines = ""
     for i in range(len(instids)):
-        subname = os.path.join(prefix, "{0}.sub".format(i))
+        subname = os.path.join(prepdir, "{0}.sub".format(i))
         with io.open(subname, 'w') as f:
             print(i, instids[i], os.path.basename(db), max_time)
             f.write(sub_template.format(
                     id=i, instids=instids[i], db=os.path.basename(db),
                     max_time=max_time))
         dag_lines += dag_job_template.format(i) + '\n'
-    dagfile = os.path.join(prefix, subfile)
+    dagfile = os.path.join(prepdir, subfile)
     with io.open(dagfile, 'w') as f:
         f.write(dag_template.format(job_lines=dag_lines))
 
     # run script
-    runfile = os.path.join(prefix, "run.sh")
+    runfile = os.path.join(prepdir, "run.sh")
     with io.open(runfile, 'w') as f:
         f.write(run_template.format(db=os.path.basename(db), 
                                     solvers=" ".join(solvers)))
@@ -142,7 +145,6 @@ def submit(client, remotedir, localdir, tarname, subfile="dag.sub"):
     cmd = cmd.format(tarname, dirname, submit=subfile, remotedir=remotedir)
     print("Remotely executing '{0}'".format(cmd))
     stdin, stdout, stderr = client.exec_command(cmd)
-    print("Result:\nstdout: {0}\nstderr: {1}".format(stdout.readlines(), stderr.readlines()))
     
     checkfile = "{remotedir}/{0}/{1}.dagman.out".format(
         dirname, subfile, remotedir=remotedir)
@@ -209,9 +211,8 @@ def aggregate(client, remotedir, localdir, outdb):
     os.remove('{0}/{1}'.format(localdir, outtar))
 
     files = glob.glob('{0}/{1}/*_out.h5'.format(localdir, outdir))
-    combine(files, '{0}/{1}'.format(localdir, outdb))
-
-    shutil.rmtree('{0}/{1}'.format(localdir, outdir))    
+    if len(files) > 0:
+        combine(files, '{0}/{1}'.format(localdir, outdb))
 
 def cleanup(client, remotedir):
     """Removes all files in the remote directory."""
@@ -257,21 +258,21 @@ def submit_dag(user, db, instids, solvers, outdb=None,
     batlab_dir = "{0}/{remotedir}".format(
         batlab_base_dir_template.format(user=user), remotedir=remotedir)
     timestamp = "_".join([str(t) for t in datetime.now().timetuple()][:-3])
-    run_dir = os.path.join(localdir, "run_{0}".format(timestamp))
+    run_dir = "run_{0}".format(timestamp)
 
     #
     # begin dagman specific
     #
     max_time = 60 * 60 * 5 # 5 hours
     gen_files(run_dir, db, instids, solvers, 
-              max_time=max_time)
-    tarname = "{0}.tar.gz".format(os.path.basename(run_dir))
+              max_time=max_time, localdir=localdir)
+    tarname = "{0}.tar.gz".format(run_dir)
     cwd = os.getcwd()
     os.chdir(localdir)
     with tarfile.open(tarname, 'w:gz') as f:
-        f.add(os.path.basename(run_dir))
-    os.chdir(cwd)
+        f.add(run_dir)
     shutil.rmtree(run_dir)
+    os.chdir(cwd)
     
     print("connecting to {0}@{1}".format(user, host))
     ssh.connect(host, username=user, password=pw)
@@ -294,20 +295,15 @@ def submit_dag(user, db, instids, solvers, outdb=None,
     print("{0} has completed.".format(run_dir))
 
     # create dump directory with aggregate input
-    final_in_path = os.path.join(dumpdir, db)
-    if not os.path.exists(dumpdir):
-        os.mkdir(dumpdir)
-    if not os.path.exists(final_in_path):
-        shutil.copy(db, dumpdir)
-    elif not shutil._samefile(db, final_in_path):
-        warnings.warn("Carefull! Overwriting file at {0} with {1}".format(
-                final_in_path, db), RuntimeWarning)
-        shutil.copy(db, dumpdir)
-    
-    # aggregate and dump output
+    outdir = os.path.join(localdir, run_dir)
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)    
     ssh.connect(host, username=user, password=pw)
     print("connecting to {0}@{1}".format(user, host))
-    aggregate(ssh, batlab_dir, dumpdir, outdb)
+    aggoutput = 'out.h5'
+    aggregate(ssh, batlab_dir, outdir, aggoutput)
+    combine([db, aggoutput])
+    os.remove(aggoutput)
     if clean:
-        cleanup(ssh, batlab_dir)
+        cleanup(ssh, os.path.join(batlab_dir, run_dir))
     ssh.close()
