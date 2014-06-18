@@ -76,13 +76,14 @@ def collect_instids(h5node=None, rc=None, instids=None):
     
     return instids
 
-def condor(args):
+def condor_submit(args):
     # collect instance ids
-    h5file = t.open_file(db, mode='r', filters=_filters)
+    h5file = t.open_file(args.db, mode='r', filters=_filters)
     instnode = h5file.root._f_get_child(_inst_grp_name)
     instids = set(uuid.UUID(x).bytes for x in args.instids)
     instids = collect_instids(h5node=instnode, rc=args.rc, instids=instids)
     h5file.close()
+    instids = [uuid.UUID(bytes=x).hex for x in instids]
 
     # submit job
     condor.submit_dag(args.user, args.db, instids, args.solvers, 
@@ -116,13 +117,11 @@ def convert(args):
     for name in tbl_names:
         if root.__contains__(name):
             continue
-        print("creating table {0}".format(name))
         inst = d[name][0]
         h5file.create_table(root, name, 
                             description=inst.describe_h5(), 
                             filters=_filters)
     if not root.__contains__(_inst_grp_name):
-        print("creating group {0}".format(_inst_grp_name))
         h5file.create_group(root, _inst_grp_name, filters=_filters)
     
     # populate leaves
@@ -250,7 +249,7 @@ def main():
     condorh = ("Submits a job to condor, retrieves output when it has completed, "
                "and cleans up the condor user space after.")
     condor_parser = sp.add_parser('condor', help=condorh)
-    condor_parser.set_defaults(func=condor)
+    condor_parser.set_defaults(func=condor_submit)
     
     # exec related
     condor_parser.add_argument('--rc', dest='rc', default=None, help=rch)
@@ -267,20 +266,20 @@ def main():
                                default='gidden')
     hosth = ("The remote condor submit host.")
     condor_parser.add_argument('-r', '--host', dest='host', help=hosth, 
-                               default='submit-1.chtc.wisc.edu')
-    noauthh = ("Do not ask for a password for authorization.")
-    condor_parser.add_argument('--no-auth', action='store_false', dest='auth', 
-                               default=True, help=noauthh)    
+                               default='submit-1.chtc.wisc.edu')    
     localdir = ("The local directory in which to place resulting files.")
     condor_parser.add_argument('-l', '--localdir', dest='localdir', 
                                help=localdir, default='run_results')     
     remotedir = ("The remote directory (relative to the user's home directory)"
                  " in which to run cyclopts jobs.")
     condor_parser.add_argument('-d', '--remotedir', dest='remotedir', 
-                               help=remotedir, default='cyclopts_runs')      
+                               help=remotedir, default='cyclopts-runs')      
     nocleanh = ("Do *not* clean up the submit node after.")
     condor_parser.add_argument('--no-clean', dest='clean', help=nocleanh,
                                action='store_false', default=True)    
+    noauthh = ("Do not ask for a password for authorization.")
+    condor_parser.add_argument('--no-auth', action='store_false', dest='auth', 
+                               default=True, help=noauthh)
 
     #
     # and away we go!

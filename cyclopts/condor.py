@@ -79,6 +79,7 @@ def gen_files(prefix, db, instids, solvers, subfile="dag.sub", max_time=259200):
     for i in range(len(instids)):
         subname = os.path.join(prefix, "{0}.sub".format(i))
         with io.open(subname, 'w') as f:
+            print(i, instids[i], os.path.basename(db), max_time)
             f.write(sub_template.format(
                     id=i, instids=instids[i], db=os.path.basename(db),
                     max_time=max_time))
@@ -104,7 +105,7 @@ def wait_till_found(client, path, t_sleep=5):
         found = len(stdout.readlines()) > 0
         time.sleep(t_sleep)
 
-def submit(client, rundir, tarname, subfile="dag.sub"):
+def submit(client, remotedir, localdir, tarname, subfile="dag.sub"):
     """Performs a condor DAG sumbission on a client using a tarball of all
     submission-related data.
 
@@ -112,29 +113,39 @@ def submit(client, rundir, tarname, subfile="dag.sub"):
     ----------
     client : paramiko SSHClient
         the client
-    rundir : str
+    remotedir : str
         the run directory on the client
+    localdir : str
+        the local directory in which the tarfile is located
     tarname : str
-        data tarball name
+        the name of the tarfile
     subfile : str, optional
         the name of the submit file
     """
-    ftp = client.open_sftp()
-    print("Copying {0} to condor submit node.".format(tarname))
-    ftp.put(tarname, "{0}/{1}".format(rundir, tarname))
-    ftp.close()
+    ffrom = os.path.join(localdir, tarname)
+    fto = os.path.join(remotedir, tarname)
+    print("Copying from {0} to {1} on the condor submit node.".format(
+            ffrom, fto))
+    try:
+        ftp = client.open_sftp()
+        ftp.put(ffrom, fto)
+        ftp.close()
+    except IOError:
+        raise IOError(
+            'Could not find {0} on the submit node.'.format(remotedir))
 
     dirname = tarname.split(".tar.gz")[0]
-    cmd = ("cd {rundir}; "
-           "tar -xf {0}; "
-           "cd {1}; "
+    cmd = ("cd {remotedir} && "
+           "tar -xf {0} && "
+           "cd {1} && "
            "condor_submit_dag {submit};")
-    cmd = cmd.format(tarname, dirname, submit=subfile, rundir=rundir)
+    cmd = cmd.format(tarname, dirname, submit=subfile, remotedir=remotedir)
     print("Remotely executing '{0}'".format(cmd))
     stdin, stdout, stderr = client.exec_command(cmd)
+    print("Result:\nstdout: {0}\nstderr: {1}".format(stdout.readlines(), stderr.readlines()))
     
-    checkfile = "{rundir}/{0}/{1}.dagman.out".format(
-        dirname, subfile, rundir=rundir)
+    checkfile = "{remotedir}/{0}/{1}.dagman.out".format(
+        dirname, subfile, remotedir=remotedir)
     wait_till_found(client, checkfile)
 
     cmd = "head {0}".format(checkfile)
@@ -154,7 +165,10 @@ def check_finish(client, pid):
     print("Remotely executing '{0}'".format(cmd))
     stdin, stdout, stderr = client.exec_command(cmd)
     outlines = stdout.readlines()
-    done = False if len(outlines) == 0 else outlines[-1].split()[0] == 'ID'
+    idcheck = outlines[-1].split()[0].strip()
+    done = False if len(outlines) == 0 else idcheck == 'ID'
+    if not done:
+        print('Not done yet!')
     return done
 
 def aggregate(client, remotedir, localdir, outdb):
@@ -243,21 +257,25 @@ def submit_dag(user, db, instids, solvers, outdb=None,
     batlab_dir = "{0}/{remotedir}".format(
         batlab_base_dir_template.format(user=user), remotedir=remotedir)
     timestamp = "_".join([str(t) for t in datetime.now().timetuple()][:-3])
-    run_dir = "run_{0}".format(timestamp)
+    run_dir = os.path.join(localdir, "run_{0}".format(timestamp))
 
     #
     # begin dagman specific
     #
     max_time = 60 * 60 * 5 # 5 hours
-    gen_files(run_dir, db, instids, solvers, max_time=max_time)
-    tarname = "{0}.tar.gz".format(run_dir)
+    gen_files(run_dir, db, instids, solvers, 
+              max_time=max_time)
+    tarname = "{0}.tar.gz".format(os.path.basename(run_dir))
+    cwd = os.getcwd()
+    os.chdir(localdir)
     with tarfile.open(tarname, 'w:gz') as f:
-        f.add(run_dir)
+        f.add(os.path.basename(run_dir))
+    os.chdir(cwd)
     shutil.rmtree(run_dir)
     
     print("connecting to {0}@{1}".format(user, host))
     ssh.connect(host, username=user, password=pw)
-    pid = submit(ssh, batlab_dir, tarname)
+    pid = submit(ssh, batlab_dir, localdir, tarname)
     ssh.close()
     #
     # end dagman specific
@@ -270,7 +288,8 @@ def submit_dag(user, db, instids, solvers, outdb=None,
         ssh.connect(host, username=user, password=pw)
         done = check_finish(ssh, pid)
         ssh.close()
-        time.sleep(300)
+        if not done:
+            time.sleep(300)
 
     print("{0} has completed.".format(run_dir))
 
@@ -288,7 +307,7 @@ def submit_dag(user, db, instids, solvers, outdb=None,
     # aggregate and dump output
     ssh.connect(host, username=user, password=pw)
     print("connecting to {0}@{1}".format(user, host))
-    aggregate(ssh, remote_dir, dumpdir, outdb)
+    aggregate(ssh, batlab_dir, dumpdir, outdb)
     if clean:
-        cleanup(ssh, remote_dir)
+        cleanup(ssh, batlab_dir)
     ssh.close()

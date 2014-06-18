@@ -70,6 +70,7 @@ def test_instids():
                   for x in exp_uuid_arcs \
                   if x[1] > bounds[0] and x[1] < bounds[1])
     assert_equal(exp, obs)
+    h5file.close()
 
 def test_exec():
     base = os.path.dirname(os.path.abspath(__file__))
@@ -108,8 +109,29 @@ def test_exec():
         os.remove(db)
 
 def test_condor():
-    pass
+    base = os.path.dirname(os.path.abspath(__file__))
+    tstdir = os.path.join(base, 'tmp_{0}'.format(uuid.uuid4()))
+    os.makedirs(tstdir)
+    dbname = 'exp_instances.h5'
 
+    db = os.path.join(base, 'files', dbname)
+    solvers = "greedy cbc"
+    instids = [x[0] for x in exp_uuid_arcs[:2]]
+    user = "gidden"
+    
+    cmd = ("cyclopts condor --db={db} --instids {instids} --solvers {solvers}"
+           "--user {user} --localdir {localdir}").format(
+        db=db, instids=" ".join(instids), solvers=solvers, 
+        user=user, localdir=tstdir)
+    assert_equal(0, subprocess.call(cmd.split(), shell=(os.name == 'nt')))
+
+    h5file = t.open_file(os.path.join(tstdir, dbname), 'r')
+    h5node = h5file.root.Instances.ExchangeInstProperties
+    assert_equal(h5node.nrows, len(instids) * len(solvers.split()))
+    h5file.close()
+    
+    shutil.rmtree(tstdir)
+    
 def test_convert():
     base = os.path.dirname(os.path.abspath(__file__))
     rc = os.path.join(base, 'files', 'obs_valid.rc')    
