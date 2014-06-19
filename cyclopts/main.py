@@ -197,6 +197,28 @@ def execute(args):
     h5in.close()
     if h5out is not None:
         h5out.close()
+
+cde_cmd = """
+cde cyclopts exec --db {db} --outdb {outdb} --solvers cbc greedy clp
+"""
+
+def update_cde(args):
+    db = os.path.join('tests', 'files', 'exp_instances.h5')
+    outdb = '.tmp.h5'
+    
+    cmd = cde_cmd.format(db=db, outdb=outdb)
+    subprocess.call(cmd.split(), shell=(os.name == 'nt')))
+
+    pkgdir = 'cde-package'
+    tarname = 'cde-cyclopts'
+    
+    with tarfile.open('{0}.tar.gz'.format(tarname), 'w:gz') as tar:
+        tar.add(pkgdir)
+        
+    rms = [pkgdir, outdb, 'cde.options','{0}.tar.gz'.format(tarname)]
+    for rm in rms:
+        if os.path.exists(rm):
+            shutil.rmtree(rm)
     
 def main():
     """Entry point for Cyclopts runs."""
@@ -286,6 +308,24 @@ def main():
     mv = ("Move (mv) the parameter space database (db) to the localdir.")
     condor_parser.add_argument('--mv-db', action='store_true', dest='mv', 
                                default=False, help=mv)
+    
+    #
+    # execute instances with condor
+    #
+    cde = ("Updates the Cyclopts CDE tarfile on a Condor submit node.")
+    cde_parser = sp.add_parser('cde', help=cde)
+    cde_parser.set_defaults(func=update_cde)
+
+    # condor related
+    uh = ("The condor user name.")
+    condor_parser.add_argument('-u', '--user', dest='user', help=uh, 
+                               default='gidden')
+    hosth = ("The remote condor submit host.")
+    condor_parser.add_argument('-r', '--host', dest='host', help=hosth, 
+                               default='submit-1.chtc.wisc.edu')    
+    noauthh = ("Do not ask for a password for authorization.")
+    condor_parser.add_argument('--no-auth', action='store_false', dest='auth', 
+                               default=True, help=noauthh)
 
     #
     # and away we go!
