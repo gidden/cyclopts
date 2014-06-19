@@ -231,6 +231,7 @@ def update_cde(args):
             ffrom, fto, user=user, host=host))
     cmd = "scp {ffrom} {user}@{host}:{fto}".format(
         user=user, host=host, ffrom=ffrom, fto=fto)
+    subprocess.call(cmd.split(), shell=(os.name == 'nt'))
 
     if clean:
         rms = ['cde.options','{0}.tar.gz'.format(tarname), db]
