@@ -205,18 +205,17 @@ def execute(args):
         h5out.close()
 
 cde_cmd = """
-cde cyclopts exec --db {db} --outdb {outdb} --solvers cbc greedy clp
+cde cyclopts exec --db {db} --solvers cbc greedy clp
 """
 
 def update_cde(args):
     user = args.user
-    auth = args.auth
     host = args.host
     clean = args.clean
 
-    db = os.path.join('tests', 'files', 'exp_instances.h5')
-    outdb = '.tmp.h5'    
-    cmd = cde_cmd.format(db=db, outdb=outdb)
+    db = '.tmp.h5'
+    shutil.copy(os.path.join('tests', 'files', 'exp_instances.h5'), db)    
+    cmd = cde_cmd.format(db=db)
     subprocess.call(cmd.split(), shell=(os.name == 'nt'))
 
     pkgdir = 'cde-package'
@@ -234,7 +233,7 @@ def update_cde(args):
         user=user, host=host, ffrom=ffrom, fto=fto)
 
     if clean:
-        rms = [outdb, 'cde.options','{0}.tar.gz'.format(tarname)]
+        rms = ['cde.options','{0}.tar.gz'.format(tarname), db]
         for rm in rms:
             os.remove(rm)
         shutil.rmtree(pkgdir)
