@@ -14,6 +14,8 @@ import subprocess
 import tarfile
 import os
 import shutil
+import paramiko as pm
+import getpass
 
 import cyclopts
 import cyclopts.condor as condor
@@ -207,23 +209,35 @@ cde cyclopts exec --db {db} --outdb {outdb} --solvers cbc greedy clp
 """
 
 def update_cde(args):
+    user = args.user
+    auth = args.auth
+    host = args.host
+    clean = args.clean
+
     db = os.path.join('tests', 'files', 'exp_instances.h5')
-    outdb = '.tmp.h5'
-    
+    outdb = '.tmp.h5'    
     cmd = cde_cmd.format(db=db, outdb=outdb)
     subprocess.call(cmd.split(), shell=(os.name == 'nt'))
 
     pkgdir = 'cde-package'
     tarname = 'cde-cyclopts'
 
-    print('tarring up ', pkgdir)
+    print('tarring up', pkgdir)
     with tarfile.open('{0}.tar.gz'.format(tarname), 'w:gz') as tar:
         tar.add(pkgdir)
         
-    rms = [outdb, 'cde.options','{0}.tar.gz'.format(tarname)]
-    for rm in rms:
-        os.remove(rm)
-    shutil.rmtree(pkgdir)
+    ffrom = os.path.join(os.getcwd(), '{0}.tar.gz'.format(tarname))
+    fto = condor.batlab_base_dir_template.format(user=user) + '/'
+    print("Copying {0} to {1} on condor submit node at {user}@{host}.".format(
+            ffrom, fto, user=user, host=host))
+    cmd = "scp {ffrom} {user}@{host}:{fto}".format(
+        user=user, host=host, ffrom=ffrom, fto=fto)
+
+    if clean:
+        rms = [outdb, 'cde.options','{0}.tar.gz'.format(tarname)]
+        for rm in rms:
+            os.remove(rm)
+        shutil.rmtree(pkgdir)
 
 def main():
     """Entry point for Cyclopts runs."""
@@ -327,10 +341,10 @@ def main():
                             default='gidden')
     hosth = ("The remote cde submit host.")
     cde_parser.add_argument('-r', '--host', dest='host', help=hosth, 
-                            default='submit-1.chtc.wisc.edu')    
-    noauthh = ("Do not ask for a password for authorization.")
-    cde_parser.add_argument('--no-auth', action='store_false', dest='auth', 
-                            default=True, help=noauthh)
+                            default='submit-1.chtc.wisc.edu')
+    noclean = ("Do not clean up files.")
+    cde_parser.add_argument('--no-clean', action='store_false', dest='clean', 
+                            default=True, help=noclean)
 
     #
     # and away we go!
