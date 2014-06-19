@@ -92,7 +92,7 @@ def condor_submit(args):
                       localdir=args.localdir, 
                       remotedir=args.remotedir, 
                       clean=args.clean, 
-                      auth=args.auth)
+                      auth=args.auth, cp=args.cp, mv=args.mv)
 
 def convert(args):
     """Converts a contiguous dataspace as defined by an input run control file
@@ -280,6 +280,12 @@ def main():
     noauthh = ("Do not ask for a password for authorization.")
     condor_parser.add_argument('--no-auth', action='store_false', dest='auth', 
                                default=True, help=noauthh)
+    cp = ("Do not copy the parameter space database (db) to the localdir.")
+    condor_parser.add_argument('--no-cp', action='store_false', dest='cp', 
+                               default=True, help=cp)
+    mv = ("Move (mv) the parameter space database (db) to the localdir.")
+    condor_parser.add_argument('--mv-db', action='store_true', dest='mv', 
+                               default=False, help=mv)
 
     #
     # and away we go!

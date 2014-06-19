@@ -1,4 +1,5 @@
 from cyclopts import main
+from cyclopts import tools
 
 import os
 import shutil
@@ -78,7 +79,7 @@ def test_exec():
     shutil.copy(os.path.join(base, 'files', 'exp_instances.h5'), db)
     ninst = len(exp_uuid_arcs)
     solvers = "greedy cbc"
-
+    
     cmd = "cyclopts exec --db={0} --solvers {1}".format(db, solvers)
     assert_equal(0, subprocess.call(cmd.split(), shell=(os.name == 'nt')))
     h5file = t.open_file(db, 'r')
@@ -108,6 +109,11 @@ def test_exec():
     if os.path.exists(db):
         os.remove(db)
 
+condor_cmd = """
+cyclopts condor --db={db} --instids {instids} --solvers {solvers} \
+                --user {user} --localdir {localdir} --no-auth
+"""
+
 def test_condor():
     base = os.path.dirname(os.path.abspath(__file__))
     tstdir = os.path.join(base, 'tmp_{0}'.format(uuid.uuid4()))
@@ -118,13 +124,15 @@ def test_condor():
     solvers = "greedy cbc"
     instids = [x[0] for x in exp_uuid_arcs[:2]]
     user = "gidden"
-    
-    cmd = ("cyclopts condor --db={db} --instids {instids} --solvers {solvers}"
-           "--user {user} --localdir {localdir}").format(
-        db=db, instids=" ".join(instids), solvers=solvers, 
-        user=user, localdir=tstdir)
-    assert_equal(0, subprocess.call(cmd.split(), shell=(os.name == 'nt')))
 
+    timeout = 30 # seconds
+    cmd = condor_cmd.format(db=db, instids=" ".join(instids), 
+                            solvers=solvers, user=user, localdir=tstdir) 
+    rtncode = tools.run(cmd.split(), timeout=timeout, shell=(os.name == 'nt'))[0]
+    if rtncode == -9:
+        print("Process timed out.")
+    assert_equal(0, rtncode)
+    
     h5file = t.open_file(os.path.join(tstdir, dbname), 'r')
     h5node = h5file.root.Instances.ExchangeInstProperties
     assert_equal(h5node.nrows, len(instids) * len(solvers.split()))
