@@ -32,11 +32,12 @@ dag_job_template = u"""JOB J_{0} {0}.sub"""
 sub_template = u"""
 universe = vanilla
 executable = run.sh
-arguments = {id}_out.h5 {instids}
+arguments = "'{id}_out.h5' '{instids}'"
 output = {id}.out
 error = {id}.err
 log = {id}.log
-requirements = (OpSysAndVer =?= "SL6") && Arch == "X86_64" && ( ForGidden == true )
+requirements = (OpSysAndVer =?= "SL6") && Arch == "X86_64"
+# && ( ForGidden == true )
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 transfer_input_files = {tardir}/cde-cyclopts.tar.gz, {tardir}/CDE.tar.gz, {db}
@@ -60,7 +61,7 @@ cd cde-package/cde-root
 sed -i 's/..\/cde-exec/cde-exec/g' ../cyclopts.cde
 ls -l
 ../cyclopts.cde exec --db {db} --solvers {solvers} --outdb $1 --instids $2
-mv cyclopts.h5 $pwd
+mv $1 $pwd
 
 cd $pwd
 ls -l
@@ -150,6 +151,7 @@ def get_files(client, remotedir, localdir, re):
     with tarfile.open(localtar, 'r:gz') as f:
         files = f.getnames()
         f.extractall(localdir)
+    print("Removing {0} on the local machine.".format(localtar))
     os.remove(localtar)
     
     return files[1:] # remove initial '.' entry
@@ -163,7 +165,24 @@ def _wait_till_found(client, path, t_sleep=5):
         print("Remotely executing '{0}'".format(cmd))
         stdin, stdout, stderr = client.exec_command(cmd)
         found = len(stdout.readlines()) > 0
-        time.sleep(t_sleep)
+        if not found:
+            print('Not there yet! Checking again in {0} seconds.'.format(
+                    t_sleep))
+            time.sleep(t_sleep)
+
+def _wait_till_done(client, user, host, pw, pid, t_sleep=300):
+    """Queries a client if a an expected process is done."""
+    done = False
+    while not done:
+        print("Querying status of {0}".format(pid))
+        print("connecting to {0}@{1}".format(user, host))
+        client.connect(host, username=user, password=pw)
+        done = _check_finish(client, pid)
+        client.close()
+        if not done:
+            print('Not done yet! Checking again in {0} minutes.'.format(
+                    t_sleep / 60.))
+            time.sleep(t_sleep)
 
 def _check_finish(client, pid):
     """Checks the status of a condor run on the client.
@@ -172,10 +191,11 @@ def _check_finish(client, pid):
     print("Remotely executing '{0}'".format(cmd))
     stdin, stdout, stderr = client.exec_command(cmd)
     outlines = stdout.readlines()
-    idcheck = outlines[-1].split()[0].strip()
-    done = False if len(outlines) == 0 else idcheck == 'ID'
-    if not done:
-        print('Not done yet!')
+    done = False
+    donecheck = 'ID'
+    if len(outlines) > 0 and len(outlines[-1].split()) > 0 \
+            and outlines[-1].split()[0].strip() == donecheck:
+        done = True
     return done
 
 def _submit(client, remotedir, localdir, tarname, subfile="dag.sub"):
@@ -231,7 +251,7 @@ def _submit(client, remotedir, localdir, tarname, subfile="dag.sub"):
 def submit_dag(user, db, instids, solvers, outdb=None, 
                host="submit-3.chtc.wisc.edu", localdir=".", 
                remotedir="cyclopts-runs", clean=False, auth=True, cp=True, 
-               mv=False):
+               mv=False, t_sleep=300):
     """Connects via SSH to a condor submit node, and executes a Cyclopts DAG
     run.
     
@@ -264,6 +284,8 @@ def submit_dag(user, db, instids, solvers, outdb=None,
     mv : bool, optional
         if true, the parameter space database is moved into the 
         localdir location
+    t_sleep : int, optional
+        how long to wait (seconds) before checking the progress of a run
     """
     if mv and cp:
         raise ValueError("Can not both move and copy the parameter space "
@@ -303,6 +325,7 @@ def submit_dag(user, db, instids, solvers, outdb=None,
     ssh.connect(host, username=user, password=pw)
     pid = _submit(ssh, batlab_dir, localdir, tarname)
     ssh.close()
+    os.remove(tarname)
     #
     # end dagman specific
     #
@@ -310,22 +333,13 @@ def submit_dag(user, db, instids, solvers, outdb=None,
     # copy/move files as soon as job is submitted, and assign it a value if we
     # did so
     if cp:
-        shutil.copy(db, localdir)
+        shutil.copy(db, os.path.join(localdir, run_dir))
     if mv:
-        shutil.move(db, localdir)
-    localdb = os.path.join(localdir, os.path.basename(db))
+        shutil.move(db, os.path.join(localdir, run_dir))
+    localdb = os.path.join(localdir, run_dir, os.path.basename(db))
     localdb = localdb if os.path.exists(localdb) else None
 
-    done = False
-    while not done:
-        print("Querying status of {0}".format(run_dir))
-        print("connecting to {0}@{1}".format(user, host))
-        ssh.connect(host, username=user, password=pw)
-        done = _check_finish(ssh, pid)
-        ssh.close()
-        if not done:
-            time.sleep(300)
-
+    _wait_till_done(ssh, user, host, pw, pid, t_sleep=t_sleep)
     print("{0} has completed.".format(run_dir))
 
     # create aggregation directory, aggregate output, and combine with input if
@@ -335,7 +349,6 @@ def submit_dag(user, db, instids, solvers, outdb=None,
         os.mkdir(aggdir)    
     ssh.connect(host, username=user, password=pw)
     print("connecting to {0}@{1}".format(user, host))
-    aggoutput = 'out.h5'
 
     # get files and clean up
     files = get_files(ssh, '{0}/{1}'.format(batlab_dir, run_dir), aggdir, 
@@ -348,11 +361,10 @@ def submit_dag(user, db, instids, solvers, outdb=None,
     ssh.close()
     
     # combine files and clean up
-    if outdb is not None:
-        combine(files, new_file=outdb)
-    elif localdb is not None:
-        combine([localdb] + files)
-    else:
-        combine(files, 
-                new_file=os.path.join(localdir, '{0}_out.h5'.format(run_dir)))
-    shutil.rmtree(aggdir)
+    new_file = outdb
+    if outdb is None and localdb is None:
+        new_file = '{0}_out.h5'.format(run_dir)
+    if localdb is not None:
+        files = [localdb] + [os.path.join(aggdir, f) for f in files]
+    print("Combinding databases: {0}".format(" ".join(files)))
+    combine(files, new_file=new_file)

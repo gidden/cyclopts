@@ -98,7 +98,8 @@ def condor_submit(args):
                       localdir=args.localdir, 
                       remotedir=args.remotedir, 
                       clean=args.clean, 
-                      auth=args.auth, cp=args.cp, mv=args.mv)
+                      auth=args.auth, cp=args.cp, mv=args.mv, 
+                      t_sleep=args.t_sleep)
 
 def convert(args):
     """Converts a contiguous dataspace as defined by an input run control file
@@ -327,6 +328,9 @@ def main():
     mv = ("Move (mv) the parameter space database (db) to the localdir.")
     condor_parser.add_argument('--mv-db', action='store_true', dest='mv', 
                                default=False, help=mv)
+    sleep = ("How long to wait (seconds) before checking the progress of a run.")
+    condor_parser.add_argument('-s', '--sleep', dest='t_sleep', type=int, 
+                               default=500, help=sleep)
     
     #
     # execute instances with condor
