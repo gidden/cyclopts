@@ -4,6 +4,8 @@ import uuid
 import os
 import shutil
 import paramiko as pm
+import warnings
+
 from cyclopts import condor
 from cyclopts import main
 
@@ -49,17 +51,21 @@ def test_get_files():
 
     os.makedirs(localdir)
     
-    ssh.connect(host, username=user, password=None)    
-    tstfiles = ['tmp_test_file', 'tmp_other_file']
-    for f in tstfiles:
-        cmd = "mkdir -p {0} && touch {0}/{1}".format(remotedir, f)
+    try:
+        ssh.connect(host, username=user, password=None)    
+        tstfiles = ['tmp_test_file', 'tmp_other_file']
+        for f in tstfiles:
+            cmd = "mkdir -p {0} && touch {0}/{1}".format(remotedir, f)
+            ssh.exec_command(cmd)
+        files = condor.get_files(ssh, remotedir, localdir, 'tmp_*')
+        cmd = "rm -rf {0}".format(remotedir)
         ssh.exec_command(cmd)
-    files = condor.get_files(ssh, remotedir, localdir, 'tmp_*')
-    cmd = "rm -rf {0}".format(remotedir)
-    ssh.exec_command(cmd)
-    ssh.close()
+        ssh.close()
 
-    assert_equal(set(files), set(['./{0}'.format(f) for f in tstfiles]))
-    assert_equal(set(os.listdir(localdir)), set(tstfiles))
-    
+        assert_equal(set(files), set(['./{0}'.format(f) for f in tstfiles]))
+        assert_equal(set(os.listdir(localdir)), set(tstfiles))
+    except pm.PasswordRequiredException:
+        warnings.warn(("This test requires your public key to be added to"
+                       " {0}@{1}'s authorized keys.").format(user, host))
+
     shutil.rmtree(localdir)
