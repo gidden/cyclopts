@@ -307,7 +307,7 @@ def main():
                                default='gidden')
     hosth = ("The remote condor submit host.")
     condor_parser.add_argument('-r', '--host', dest='host', help=hosth, 
-                               default='submit-1.chtc.wisc.edu')    
+                               default='submit-3.chtc.wisc.edu')    
     localdir = ("The local directory in which to place resulting files.")
     condor_parser.add_argument('-l', '--localdir', dest='localdir', 
                                help=localdir, default='run_results')     
@@ -341,7 +341,7 @@ def main():
                             default='gidden')
     hosth = ("The remote cde submit host.")
     cde_parser.add_argument('-r', '--host', dest='host', help=hosth, 
-                            default='submit-1.chtc.wisc.edu')
+                            default='submit-3.chtc.wisc.edu')
     noclean = ("Do not clean up files.")
     cde_parser.add_argument('--no-clean', action='store_false', dest='clean', 
                             default=True, help=noclean)

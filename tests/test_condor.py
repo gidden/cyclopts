@@ -22,7 +22,7 @@ def test_file_gen():
     solvers = ['s1', 's2']
     subfile = 'tst.sub'
     max_time = 5
-    obs = condor.gen_files(prefix, os.path.basename(db), instids, solvers, 
+    obs = condor.gen_files(prefix, os.path.basename(db), instids, solvers, '.', 
                            subfile=subfile, max_time=max_time)   
     
     exp = ['0.sub', '1.sub', 'run.sh', subfile]
@@ -39,7 +39,7 @@ def test_file_gen():
 
 def test_get_files():
     user = 'gidden'
-    host = 'submit-1.chtc.wisc.edu'
+    host = 'submit-3.chtc.wisc.edu'
     ssh = pm.SSHClient()
     ssh.set_missing_host_key_policy(pm.AutoAddPolicy())
 

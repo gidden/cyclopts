@@ -22,10 +22,6 @@ from cyclopts.tools import combine
 batlab_base_dir_template = u"""/home/{user}"""
 
 dag_job_template = u"""JOB J_{0} {0}.sub"""
-dag_template = u"""
-{job_lines}
-DAGMAN_MAX_JOBS_IDLE = 1000
-"""
 
 # This submission file template includes a condor execute node requirement
 # called ForGidden. This requirement is used to target nonhyperthreaded cores in
@@ -43,53 +39,47 @@ log = {id}.log
 requirements = (OpSysAndVer =?= "SL6") && Arch == "X86_64" && ( ForGidden == true )
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
-transfer_input_files = {buildtar}, {db}
+transfer_input_files = {tardir}/cde-cyclopts.tar.gz, {tardir}/CDE.tar.gz, {db}
 request_cpus = 1
 #request_memory = 2500
 #request_disk = 10242880
 notification = never
-periodic_hold = (JobStatus == 2) && ((CurrentTime - EnteredCurrentStatus) > ({max_time})
-queue
 """
 
 run_template = u"""#!/bin/bash
 pwd=$PWD
 ls -l
-tar -xf cde-cyclopts.tar.gz
-git clone https://github.com/gidden/CDE
-cd CDE && make && cd ..
-export PATH=$pwd/CDE/:$PATH
 
+tar -xf CDE.tar.gz
+tar -xf cde-cyclopts.tar.gz
+export PATH=$pwd/CDE/:$PATH
+ls -l
+
+mv exp_instances.h5 cde-package/cde-root
 cd cde-package/cde-root
 sed -i 's/..\/cde-exec/cde-exec/g' ../cyclopts.cde
-../cyclopts.cde exec --db {db} --solvers {solvers} --outdb $1 --instids $2
 ls -l
-mv $1 $pwd
+../cyclopts.cde exec --db {db} --solvers {solvers} --outdb $1 --instids $2
+mv cyclopts.h5 $pwd
 
 cd $pwd
-ls -l
-mkdir tmp
-mv * tmp
-mv tmp/cyclopts.h5 .
-ls -l
-rm -rf tmp
 ls -l
 """
 
 submit_cmd = """
 mkdir -p {remotedir} && cd {remotedir} &&
 tar -xf {tarfile} && cd {cddir} && 
-condor_submit_dag {submit};
+condor_submit_dag -maxidle 1000 {submit};
 """
 
 tar_output_cmd = """
-mkdir -p {remotedir}/{tardir} && 
-cd {remotedir} && mv {re} {tardir} &&
+mkdir -p {remotedir}/{tardir}; 
+cd {remotedir}; mv {re} {tardir};
 tar -czf {tardir}.tar.gz {tardir}
 """
 
-def gen_files(rundir, dbname, instids, solvers, subfile="dag.sub", max_time=259200, 
-              localdir=".", buildtar='cde-cyclopts.tar.gz'):
+def gen_files(rundir, dbname, instids, solvers, tardir, subfile="dag.sub", 
+              max_time=None, localdir="."):
     """Generates all files needed to run a DAGMan instance of the given input
     database.
     """    
@@ -101,18 +91,23 @@ def gen_files(rundir, dbname, instids, solvers, subfile="dag.sub", max_time=2592
         os.makedirs(prepdir)
 
     # dag submit files
+    max_time_line = ("\nperiodic_hold = (JobStatus == 2) && "
+                     "((CurrentTime - EnteredCurrentStatus) > "
+                     "({0}))").format(max_time) if max_time is not None \
+                     else ""
     dag_lines = ""
     for i in range(len(instids)):
         subname = os.path.join(prepdir, "{0}.sub".format(i))
         with io.open(subname, 'w') as f:
-            f.write(sub_template.format(
-                    id=i, instids=instids[i], db=dbname,
-                    max_time=max_time, buildtar=buildtar))
+            sublines = sub_template.format(id=i, instids=instids[i], db=dbname,
+                                           tardir=tardir)
+            sublines += max_time_line + '\nqueue'
+            f.write(sublines)
             files.append(subname)
         dag_lines += dag_job_template.format(i) + '\n'
     dagfile = os.path.join(prepdir, subfile)
     with io.open(dagfile, 'w') as f:
-        f.write(dag_template.format(job_lines=dag_lines))
+        f.write(dag_lines)
         files.append(dagfile)
         
     # run script
@@ -234,7 +229,7 @@ def _submit(client, remotedir, localdir, tarname, subfile="dag.sub"):
     return pid
     
 def submit_dag(user, db, instids, solvers, outdb=None, 
-               host="submit-1.chtc.wisc.edu", localdir=".", 
+               host="submit-3.chtc.wisc.edu", localdir=".", 
                remotedir="cyclopts-runs", clean=False, auth=True, cp=True, 
                mv=False):
     """Connects via SSH to a condor submit node, and executes a Cyclopts DAG
@@ -285,7 +280,6 @@ def submit_dag(user, db, instids, solvers, outdb=None,
 
     batlab_dir = "{0}/{remotedir}".format(
         batlab_base_dir_template.format(user=user), remotedir=remotedir)
-    buildtar = "{0}/cde-cyclopts.tar.gz".format(batlab_dir)
     timestamp = "_".join([str(t) for t in datetime.now().timetuple()][:-3])
     run_dir = "run_{0}".format(timestamp)
 
@@ -294,7 +288,8 @@ def submit_dag(user, db, instids, solvers, outdb=None,
     #
     max_time = 60 * 60 * 5 # 5 hours
     files = gen_files(run_dir, os.path.basename(db), instids, solvers, 
-                      max_time=max_time, localdir=localdir, buildtar=buildtar)
+                      batlab_base_dir_template.format(user=user), 
+                      max_time=max_time, localdir=localdir)
     files.append(db)
     print("tarring files: {0}".format(", ".join(files)))
     tarname = os.path.join(localdir, "{0}.tar.gz".format(run_dir))
