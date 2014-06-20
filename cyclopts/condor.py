@@ -27,6 +27,12 @@ dag_template = u"""
 DAGMAN_MAX_JOBS_IDLE = 1000
 """
 
+# This submission file template includes a condor execute node requirement
+# called ForGidden. This requirement is used to target nonhyperthreaded cores in
+# order to get accurate time comparisons for problem instance runs. In the
+# future, if this tool is used by others, ForGidden should be changed on the
+# Condor side to ForCyclopts, ForTimeMeasurement, or an equivalent, and this
+# template should be updated. Contact chtc@cs.wisc.edu to do so.
 sub_template = u"""
 universe = vanilla
 executable = run.sh
@@ -34,33 +40,40 @@ arguments = {id}_out.h5 {instids}
 output = {id}.out
 error = {id}.err
 log = {id}.log
-requirements = (OpSysAndVer =?= "SL6") && Arch == "X86_64"
+requirements = (OpSysAndVer =?= "SL6") && Arch == "X86_64" && ( ForGidden == true )
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
-transfer_input_files = ../../tars/cyclopts-build.tar.gz, {db}
+transfer_input_files = {buildtar}, {db}
 request_cpus = 1
-request_memory = 2500
-request_disk = 10242880
+#request_memory = 2500
+#request_disk = 10242880
 notification = never
 periodic_hold = (JobStatus == 2) && ((CurrentTime - EnteredCurrentStatus) > ({max_time})
 queue
 """
 
 run_template = u"""#!/bin/bash
-tar -xf cyclopts-build.tar.gz
-tar -xf cyclus-install.tar.gz
-tar -xf cyclus-deps.tar.gz
-tar -xf python-modules.tar.gz
-tar -xf python-build.tar.gz
-tar -xf scripts.tar.gz
-source ./scripts/source.sh
-mkdir -p $CYCLOPTS_INST_DIR/lib/python2.7/site-packages/
-git clone https://github.com/gidden/cyclopts
-cd cyclopts
-./setup.py install --user
-cd ..;
-cyclopts exec --db {db} --solvers {solvers} --outdb $1 --instids $2
-rm *.tar.gz
+pwd=$PWD
+ls -l
+tar -xf cde-cyclopts.tar.gz
+git clone https://github.com/gidden/CDE
+cd CDE && make && cd ..
+export PATH=$pwd/CDE/:$PATH
+
+cd cde-package/cde-root
+sed -i 's/..\/cde-exec/cde-exec/g' ../cyclopts.cde
+../cyclopts.cde exec --db {db} --solvers {solvers} --outdb $1 --instids $2
+ls -l
+mv $1 $pwd
+
+cd $pwd
+ls -l
+mkdir tmp
+mv * tmp
+mv tmp/cyclopts.h5 .
+ls -l
+rm -rf tmp
+ls -l
 """
 
 submit_cmd = """
@@ -71,12 +84,12 @@ condor_submit_dag {submit};
 
 tar_output_cmd = """
 mkdir -p {remotedir}/{tardir} && 
-mv {remotedir}/{re} {remotedir}/{tardir} &&
-tar -czf {remotedir}/{tardir}.tar.gz -C {remotedir}/{tardir} .;
+cd {remotedir} && mv {re} {tardir} &&
+tar -czf {tardir}.tar.gz {tardir}
 """
 
 def gen_files(rundir, dbname, instids, solvers, subfile="dag.sub", max_time=259200, 
-              localdir="."):
+              localdir=".", buildtar='cde-cyclopts.tar.gz'):
     """Generates all files needed to run a DAGMan instance of the given input
     database.
     """    
@@ -94,7 +107,7 @@ def gen_files(rundir, dbname, instids, solvers, subfile="dag.sub", max_time=2592
         with io.open(subname, 'w') as f:
             f.write(sub_template.format(
                     id=i, instids=instids[i], db=dbname,
-                    max_time=max_time))
+                    max_time=max_time, buildtar=buildtar))
             files.append(subname)
         dag_lines += dag_job_template.format(i) + '\n'
     dagfile = os.path.join(prepdir, subfile)
@@ -272,6 +285,7 @@ def submit_dag(user, db, instids, solvers, outdb=None,
 
     batlab_dir = "{0}/{remotedir}".format(
         batlab_base_dir_template.format(user=user), remotedir=remotedir)
+    buildtar = "{0}/cde-cyclopts.tar.gz".format(batlab_dir)
     timestamp = "_".join([str(t) for t in datetime.now().timetuple()][:-3])
     run_dir = "run_{0}".format(timestamp)
 
@@ -280,13 +294,14 @@ def submit_dag(user, db, instids, solvers, outdb=None,
     #
     max_time = 60 * 60 * 5 # 5 hours
     files = gen_files(run_dir, os.path.basename(db), instids, solvers, 
-                      max_time=max_time, localdir=localdir)
+                      max_time=max_time, localdir=localdir, buildtar=buildtar)
     files.append(db)
     print("tarring files: {0}".format(", ".join(files)))
     tarname = os.path.join(localdir, "{0}.tar.gz".format(run_dir))
     with tarfile.open(tarname, 'w:gz') as tar:
         for f in files:
-            tar.add(f, arcname=os.path.basename(f))
+            basename = os.path.basename(f)
+            tar.add(f, arcname="{0}/{1}".format(run_dir, basename))
     shutil.rmtree(os.path.join(localdir, run_dir))
     
     print("connecting to {0}@{1}".format(user, host))
@@ -328,9 +343,11 @@ def submit_dag(user, db, instids, solvers, outdb=None,
     aggoutput = 'out.h5'
 
     # get files and clean up
-    files = get_files(ssh, batlab_dir, aggdir, '*_out.h5')
+    files = get_files(ssh, '{0}/{1}'.format(batlab_dir, run_dir), aggdir, 
+                      '*_out.h5')
     if clean:
-        cmd = "rm -rf {0}".format(os.path.join(batlab_dir, run_dir))
+        cleandir = '{0}/{1}'.format(batlab_dir, run_dir)
+        cmd = "rm -r {0} && rm {0}.tar.gz".format(cleandir)
         print("Remotely executing '{0}'".format(cmd))
         stdin, stdout, stderr = ssh.exec_command(cmd)
     ssh.close()
@@ -343,4 +360,4 @@ def submit_dag(user, db, instids, solvers, outdb=None,
     else:
         combine(files, 
                 new_file=os.path.join(localdir, '{0}_out.h5'.format(run_dir)))
-    os.remove(aggdir)
+    shutil.rmtree(aggdir)
