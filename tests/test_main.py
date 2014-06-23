@@ -109,36 +109,36 @@ cyclopts condor --db {db} --instids {instids} --solvers {solvers} \
                 --user {user} --localdir {localdir}
 """
 
-def test_condor():
-    base = os.path.dirname(os.path.abspath(__file__))
-    tstdir = os.path.join(base, 'tmp_{0}'.format(uuid.uuid4()))
-    os.makedirs(tstdir)
-    dbname = 'exp_instances.h5'
+# def test_condor():
+#     base = os.path.dirname(os.path.abspath(__file__))
+#     tstdir = os.path.join(base, 'tmp_{0}'.format(uuid.uuid4()))
+#     os.makedirs(tstdir)
+#     dbname = 'exp_instances.h5'
 
-    db = os.path.join(base, 'files', dbname)
-    solvers = "greedy cbc"
-    instids = [x[0] for x in exp_uuid_arcs()[0:2]] # 2 runs
-    user = "gidden"
+#     db = os.path.join(base, 'files', dbname)
+#     solvers = "greedy cbc"
+#     instids = [x[0] for x in exp_uuid_arcs()[0:2]] # 2 runs
+#     user = "gidden"
     
-    timeout = -1 # seconds
-    cmd = condor_cmd.format(db=db, instids=" ".join(instids), 
-                            solvers=solvers, user=user, localdir=tstdir) 
-    print("executing {0}".format(cmd))
-    rtncode, out, err = tools.run(cmd.split(), timeout=timeout, shell=(os.name == 'nt'))
-    if rtncode == -9:
-        print("Process timed out.")
-    if rtncode != 0:
-        print("Error in execution.")
-        print("Stdout: {0}".format(out))
-        print("Stderr: {0}".format(err))
-    assert_equal(0, rtncode)
+#     timeout = -1 # seconds
+#     cmd = condor_cmd.format(db=db, instids=" ".join(instids), 
+#                             solvers=solvers, user=user, localdir=tstdir) 
+#     print("executing {0}".format(cmd))
+#     rtncode, out, err = tools.run(cmd.split(), timeout=timeout, shell=(os.name == 'nt'))
+#     if rtncode == -9:
+#         print("Process timed out.")
+#     if rtncode != 0:
+#         print("Error in execution.")
+#         print("Stdout: {0}".format(out))
+#         print("Stderr: {0}".format(err))
+#     assert_equal(0, rtncode)
     
-    h5file = t.open_file(os.path.join(tstdir, dbname), 'r')
-    h5node = h5file.root.Instances.ExchangeInstSolutions
-    assert_equal(h5node.nrows, len(instids) * len(solvers.split()))
-    h5file.close()
+#     h5file = t.open_file(os.path.join(tstdir, dbname), 'r')
+#     h5node = h5file.root.Instances.ExchangeInstSolutions
+#     assert_equal(h5node.nrows, len(instids) * len(solvers.split()))
+#     h5file.close()
     
-    shutil.rmtree(tstdir)
+#     shutil.rmtree(tstdir)
     
 def test_convert():
     base = os.path.dirname(os.path.abspath(__file__))

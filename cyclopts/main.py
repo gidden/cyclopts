@@ -228,6 +228,7 @@ def update_cde(args):
     user = args.user
     host = args.host
     clean = args.clean
+    keyfile = args.keyfile
 
     db = '.tmp.h5'
     shutil.copy(os.path.join('tests', 'files', 'exp_instances.h5'), db)    
@@ -235,22 +236,28 @@ def update_cde(args):
     subprocess.call(cmd.split(), shell=(os.name == 'nt'))
 
     pkgdir = 'cde-package'
-    tarname = 'cde-cyclopts'
+    tarname = 'cde-cyclopts.tar.gz'
 
     print('tarring up', pkgdir)
-    with tarfile.open('{0}.tar.gz'.format(tarname), 'w:gz') as tar:
+    with tarfile.open(tarname, 'w:gz') as tar:
         tar.add(pkgdir)
-        
-    ffrom = os.path.join(os.getcwd(), '{0}.tar.gz'.format(tarname))
-    fto = condor.batlab_base_dir_template.format(user=user) + '/'
-    print("Copying {0} to {1} on condor submit node at {user}@{host}.".format(
+    
+    ffrom = tarname
+    fto = '/'.join([condor.batlab_base_dir_template.format(user=user), 
+                    tarname])
+    client = pm.SSHClient()
+    client.set_missing_host_key_policy(pm.AutoAddPolicy())
+    _, keyfile = tools.ssh_test_connect(client, host, user, keyfile, auth=True)
+    client.connect(host, username=user, key_filename=keyfile)
+    ftp = client.open_sftp()
+    print("Copying {0} to {user}@{host}:{1}.".format(
             ffrom, fto, user=user, host=host))
-    cmd = "scp {ffrom} {user}@{host}:{fto}".format(
-        user=user, host=host, ffrom=ffrom, fto=fto)
-    subprocess.call(cmd.split(), shell=(os.name == 'nt'))
+    ftp.put(ffrom, fto)
+    ftp.close()    
+    client.close()
 
     if clean:
-        rms = ['cde.options','{0}.tar.gz'.format(tarname), db]
+        rms = [tarname, db]
         for rm in rms:
             os.remove(rm)
         shutil.rmtree(pkgdir)
@@ -325,7 +332,7 @@ def main():
     condor_parser.add_argument('-u', '--user', dest='user', help=uh, 
                                default='gidden')
     hosth = ("The remote condor submit host.")
-    condor_parser.add_argument('-r', '--host', dest='host', help=hosth, 
+    condor_parser.add_argument('-t', '--host', dest='host', help=hosth, 
                                default='submit-3.chtc.wisc.edu')    
     keyfile = ("An ssh public key file.")
     condor_parser.add_argument('--keyfile', dest='keyfile', help=keyfile, 
@@ -362,12 +369,15 @@ def main():
     cde_parser.add_argument('-u', '--user', dest='user', help=uh, 
                             default='gidden')
     hosth = ("The remote cde submit host.")
-    cde_parser.add_argument('-r', '--host', dest='host', help=hosth, 
+    cde_parser.add_argument('-t', '--host', dest='host', help=hosth, 
                             default='submit-3.chtc.wisc.edu')
     noclean = ("Do not clean up files.")
     cde_parser.add_argument('--no-clean', action='store_false', dest='clean', 
                             default=True, help=noclean)
-
+    keyfile = ("An ssh public key file.")
+    cde_parser.add_argument('--keyfile', dest='keyfile', help=keyfile, 
+                               default=None)    
+    
     #
     # and away we go!
     #
