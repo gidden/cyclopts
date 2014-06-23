@@ -74,9 +74,7 @@ condor_submit_dag -maxidle 1000 {submit};
 """
 
 tar_output_cmd = """
-mkdir -p {remotedir}/{tardir}; 
-cd {remotedir}; mv {re} {tardir};
-tar -czf {tardir}.tar.gz {tardir}
+cd {remotedir} && ls -l && tar -czf {tardir}.tar.gz {re}
 """
 
 def gen_files(rundir, dbname, instids, solvers, tardir, subfile="dag.sub", 
@@ -149,18 +147,15 @@ def get_files(client, remotedir, localdir, re):
     ftp.close()
 
     with tarfile.open(localtar, 'r:gz') as f:
-        files = f.getnames()[1:] # kill initial folder
+        files = f.getnames()
         f.extractall(localdir)
-
-    for f in files:
-        print(f, localdir)
-        shutil.move(os.path.join(localdir, f), localdir)
+    
+    print("retrived {0} from tarball".format(" ".join(files)))
 
     os.remove(localtar)
-    shutil.rmtree(os.path.join(localdir, tardir))
 
     # remove initial '.' entry
-    return [os.path.join(localdir, os.path.basename(f)) for f in files] 
+    return [os.path.join(localdir, os.path.basename(name)) for name in files] 
         
 def _wait_till_found(client, path, t_sleep=5):
     """Queries a client if a an expected file exists until it does."""
@@ -256,7 +251,7 @@ def _submit(client, remotedir, localdir, tarname, subfile="dag.sub"):
     
 def submit_dag(user, db, instids, solvers, outdb=None, 
                host="submit-3.chtc.wisc.edu", localdir=".", 
-               remotedir="cyclopts-runs", clean=False, auth=True, cp=True, 
+               remotedir="cyclopts-runs", clean=False, keyfile=None, cp=True, 
                mv=False, t_sleep=300):
     """Connects via SSH to a condor submit node, and executes a Cyclopts DAG
     run.
@@ -282,8 +277,8 @@ def submit_dag(user, db, instids, solvers, outdb=None,
     clean : bool, optional
         if true, removes the working directory on the submit node upon 
         completion, which is automatically created relative to remotedir
-    auth : bool, optional
-        if true, query password authentication    
+    keyfile : str, optional
+        the public key file    
     cp : bool, optional
         if true, a copy of the parameter space database is made in the 
         localdir location
@@ -301,10 +296,9 @@ def submit_dag(user, db, instids, solvers, outdb=None,
         raise ValueError("Must either move or copy the parameter space "
                          "database if an output database is not provided.")
 
-    prompt = "Password for {0}@{1}:".format(user, host)
-    pw = getpass.getpass(prompt) if auth else None
     ssh = pm.SSHClient()
     ssh.set_missing_host_key_policy(pm.AutoAddPolicy())
+    ssh_test_connect(client, host, user, keyfile, auth=True)
 
     batlab_dir = "{0}/{remotedir}".format(
         batlab_base_dir_template.format(user=user), remotedir=remotedir)

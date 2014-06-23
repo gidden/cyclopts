@@ -344,3 +344,49 @@ def get_process_children(pid):
               stdout = PIPE, stderr = PIPE)
     stdout, stderr = p.communicate()
     return [int(p) for p in stdout.split()]
+
+def ssh_test_connect(client, host, user, keyfile=None, auth=True):
+    """Tests an ssh connection and returns success or failure thereof.
+    
+    Parameters
+    ----------
+    client : paramiko SSH client
+    host : str
+    user : str
+    keyfile : str, optional
+    auth : bool, optional
+        whether to prompt for a password authorization on failure
+    """
+    keyfile = keyfile if keyfile is not None else \
+        os.path.join(os.environ['HOME'], '.ssh','id_rsa.pub') 
+
+    try:
+        client.connect(host, username=rc.user, key_filename=keyfile)
+        client.close()
+        can_connect = True
+    except pm.AuthenticationException:
+            can_connect = False
+    except pm.BadHostKeyException:
+            import pdb; pdb.set_trace()
+            can_connect = False
+    if not can_connect and auth:
+        password = False
+        while not password:
+            password = getpass("{0}@{1} password: ".format(user, host))
+            pub = ssh_pub_key(keyfile)
+            cmds = ["mkdir -p ~/.ssh",
+                    'echo "{0}" >> ~/.ssh/authorized_keys'.format(pub),
+                    'chmod og-rw ~/.ssh/authorized_keys',
+                    'chmod a-x ~/.ssh/authorized_keys',
+                    'chmod 700 ~/.ssh',
+                    ]
+            client.connect(host, username=user, password=password)
+            for cmd in cmds:
+                stdin, stdout, stderr = client.exec_command(cmd)
+            client.close()
+            # verify thatthis key works
+            client.connect(host, username=user, key_filename=keyfile)
+            client.close()
+            can_connect = True
+            print("finished connecting")        
+    return can_connect

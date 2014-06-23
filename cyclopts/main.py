@@ -101,7 +101,7 @@ def condor_submit(args):
                       localdir=args.localdir, 
                       remotedir=args.remotedir, 
                       clean=args.clean, 
-                      auth=args.auth, cp=args.cp, mv=args.mv, 
+                      keyfile=keyfile, cp=args.cp, mv=args.mv, 
                       t_sleep=args.t_sleep)
 
 def convert(args):
@@ -327,6 +327,10 @@ def main():
     hosth = ("The remote condor submit host.")
     condor_parser.add_argument('-r', '--host', dest='host', help=hosth, 
                                default='submit-3.chtc.wisc.edu')    
+    keyfile = ("An ssh public key file.")
+    condor_parser.add_argument(
+        '--keyfile', dest='keyfile', help=keyfile, 
+        default=os.path.join(os.environ['HOME'], '.ssh', 'id_rsa.pub'))    
     localdir = ("The local directory in which to place resulting files.")
     condor_parser.add_argument('-l', '--localdir', dest='localdir', 
                                help=localdir, default='run_results')     
@@ -337,9 +341,6 @@ def main():
     nocleanh = ("Do *not* clean up the submit node after.")
     condor_parser.add_argument('--no-clean', dest='clean', help=nocleanh,
                                action='store_false', default=True)    
-    noauthh = ("Do not ask for a password for authorization.")
-    condor_parser.add_argument('--no-auth', action='store_false', dest='auth', 
-                               default=True, help=noauthh)
     cp = ("Do not copy the parameter space database (db) to the localdir.")
     condor_parser.add_argument('--no-cp', action='store_false', dest='cp', 
                                default=True, help=cp)

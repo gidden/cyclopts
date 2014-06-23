@@ -74,6 +74,7 @@ def test_get_files():
     cmd = "mkdir -p {0} && touch {1}".format(remotedir, touchline)
     client.connect(host, username=user, key_filename=keyfile)
     client.exec_command(cmd)
+    condor._wait_till_found(client, '/'.join([remotedir, tstfiles[-1]]))
     files = condor.get_files(client, remotedir, localdir, prefix + '*')
     client.close()
     
