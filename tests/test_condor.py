@@ -8,6 +8,7 @@ import warnings
 
 from cyclopts import condor
 from cyclopts import main
+from cyclopts import tools
 
 from test_main import exp_uuid_arcs 
 
@@ -40,34 +41,22 @@ def test_file_gen():
 def test_get_files():
     user = 'gidden'
     host = 'submit-3.chtc.wisc.edu'
-    keyfile = os.path.join(os.environ['HOME'], '.ssh','id_rsa.pub')
-    client = pm.SSHClient()
-    client.set_missing_host_key_policy(pm.AutoAddPolicy())
 
     localbase = os.path.dirname(os.path.abspath(__file__))
     remotebase = condor.batlab_base_dir_template.format(user=user)
     tmpdir = 'tmp_{0}'.format(uuid.uuid4())
     localdir = os.path.join(localbase, tmpdir)
-    remotedir = '{0}/{1}'.format(remotebase, tmpdir)
-
-    os.makedirs(localdir)
+    remotedir = '/'.join([remotebase, tmpdir])
     
-    try:
-        client.connect(host, username=user,
-                       key_filename=keyfile)
-        can_connect = True
-        client.close()
-    except pm.AuthenticationException:
-        can_connect = False
-    except pm.BadHostKeyException:
-        import pdb; pdb.set_trace()
-        can_connect = False
+    client = pm.SSHClient()
+    client.set_missing_host_key_policy(pm.AutoAddPolicy())
+    can_connect, keyfile = tools.ssh_test_connect(client, host, user, auth=False)
     if not can_connect:
-        shutil.rmtree(localdir)
         warnings.warn(("This test requires your public key to be added to"
                        " {0}@{1}'s authorized keys.").format(user, host))
         return
     
+    os.makedirs(localdir)
     prefix='tmp_'
     tstfiles = [prefix + 'test_file', prefix + 'other_file']
     touchline = " ".join("/".join([remotedir, f]) for f in tstfiles)
