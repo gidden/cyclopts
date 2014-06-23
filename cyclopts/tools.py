@@ -240,41 +240,36 @@ class SamplerBuilder(object):
             for name, param in perturbations[i]:
                 setattr(samplers[i], name, param)
 
-def append_rows(src, dest):
-    dtypes = src.dtype.names    
-    # this is a hack because appending rows throws an error
-    # see http://stackoverflow.com/questions/17847587/pytables-appending-recarray
-    # dest.append([row for row in src.iterrows()])
-    for src_row in src.iterrows():
-        dest_row = dest.row
-        for j in range(len(dtypes)):
-            dest_row[dtypes[j]] = src_row[j]
-        print('appending row')
-        dest_row.append()
-    dest.flush()
-
 def merge_leaf(node, dest_file):
+    src = node
+    dest = dest_file.get_node(node._v_pathname)
     if isinstance(node, t.Table):
-        append_rows(node, dest_file.get_node(node._v_pathname))
-
-def merge_node(node, dest_file, d=0):
-    print('node: ', node._v_name)
-    print('is a node?:', isinstance(node, t.Node))
-    print('is a leaf?:', isinstance(node, t.Leaf))
-    print('is a group?:', isinstance(node, t.Group))
-    
+        dtypes = src.dtype.names    
+        # this is a hack because appending rows throws an error
+        # see http://stackoverflow.com/questions/17847587/pytables-appending-recarray
+        # dest.append([row for row in src.iterrows()])
+        for src_row in src.iterrows():
+            dest_row = dest.row
+            for j in range(len(dtypes)):
+                dest_row[dtypes[j]] = src_row[j]
+            dest_row.append()
+        dest.flush()
+        
+def merge_node(node, dest_file):
     if not dest_file.__contains__(node._v_pathname):
-        node._v_file.copy_node(where, newparent=dest_file.get_node(node._v_parent._v_pathname))
-    
+        node._v_file.copy_node(
+            node._v_pathname, 
+            newparent=dest_file.get_node(node._v_parent._v_pathname),
+            recursive=True)
+        dest_file.flush()
+        return 
+
     if isinstance(node, t.Leaf):
         merge_leaf(node, dest_file)
     else:
         for child in node._v_children:
-            merge_node(node._v_file.get_node(node._v_pathname + '/' + child), dest_file, d)
-
-def merge(f1, f2):
-    merge_node(f1.root, f2)
-    f2.flush()
+            merge_node(node._v_file.get_node(node._v_pathname + '/' + child), 
+                       dest_file)
             
 def combine(files, new_file=None):
     """Combines two or more databases with identical layout, writing their
@@ -302,20 +297,8 @@ def combine(files, new_file=None):
     f = t.open_file(fname, 'a')
     dbs = [t.open_file(files[i], 'r') for i in range(1, len(files))]
     for db in dbs:
-        tbls = [node._v_name for node in db.iter_nodes('/', classname='Table')]
-        for tbl in tbls:
-            src = db.get_node('/', name=tbl, classname='Table')
-            dest = f.get_node('/', name=tbl, classname='Table')
-            dtypes = src.dtype.names
-            
-            # this is a hack because appending rows throws an error
-            # see http://stackoverflow.com/questions/17847587/pytables-appending-recarray
-            # dest.append([row for row in src.iterrows()])
-            for src_row in src.iterrows():
-                dest_row = dest.row
-                for j in range(len(dtypes)):
-                    dest_row[dtypes[j]] = src_row[j]
-                dest_row.append()
+        merge_node(db.root, f)
+        f.flush()
         db.close()
     f.close()
     
