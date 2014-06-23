@@ -17,7 +17,7 @@ except ImportError:
     warnings.warn(("The Condor module was not able to "
                    "import its necessary modules"), ImportWarning)
 
-from cyclopts.tools import combine
+from cyclopts import tools
 
 batlab_base_dir_template = u"""/home/{user}"""
 
@@ -171,13 +171,13 @@ def _wait_till_found(client, path, t_sleep=5):
                     t_sleep))
             time.sleep(t_sleep)
 
-def _wait_till_done(client, user, host, pw, pid, t_sleep=300):
+def _wait_till_done(client, user, host, keyfile, pid, t_sleep=300):
     """Queries a client if a an expected process is done."""
     done = False
     while not done:
         print("Querying status of {0}".format(pid))
         print("connecting to {0}@{1}".format(user, host))
-        client.connect(host, username=user, password=pw)
+        client.connect(host, username=user, key_filename=keyfile)
         done = _check_finish(client, pid)
         client.close()
         if not done:
@@ -296,47 +296,46 @@ def submit_dag(user, db, instids, solvers, outdb=None,
         raise ValueError("Must either move or copy the parameter space "
                          "database if an output database is not provided.")
 
-    ssh = pm.SSHClient()
-    ssh.set_missing_host_key_policy(pm.AutoAddPolicy())
-    ssh_test_connect(client, host, user, keyfile, auth=True)
+    client = pm.SSHClient()
+    client.set_missing_host_key_policy(pm.AutoAddPolicy())
+    _, keyfile = tools.ssh_test_connect(client, host, user, keyfile, auth=True)
 
     batlab_dir = "{0}/{remotedir}".format(
         batlab_base_dir_template.format(user=user), remotedir=remotedir)
     timestamp = "_".join([str(t) for t in datetime.now().timetuple()][:-3])
-#    run_dir = "run_{0}".format(timestamp)
-    run_dir = "run_2014_6_20_15_27_40"
+    run_dir = "run_{0}".format(timestamp)
 
-    # #
-    # # begin dagman specific
-    # #
-    # max_time = 60 * 60 * 5 # 5 hours
-    # files = gen_files(run_dir, os.path.basename(db), instids, solvers, 
-    #                   batlab_base_dir_template.format(user=user), 
-    #                   max_time=max_time, localdir=localdir)
-    # files.append(db)
-    # print("tarring files: {0}".format(", ".join(files)))
-    # tarname = os.path.join(localdir, "{0}.tar.gz".format(run_dir))
-    # with tarfile.open(tarname, 'w:gz') as tar:
-    #     for f in files:
-    #         basename = os.path.basename(f)
-    #         tar.add(f, arcname="{0}/{1}".format(run_dir, basename))
-    # shutil.rmtree(os.path.join(localdir, run_dir))
+    #
+    # begin dagman specific
+    #
+    max_time = 60 * 60 * 5 # 5 hours
+    files = gen_files(run_dir, os.path.basename(db), instids, solvers, 
+                      batlab_base_dir_template.format(user=user), 
+                      max_time=max_time, localdir=localdir)
+    files.append(db)
+    print("tarring files: {0}".format(", ".join(files)))
+    tarname = os.path.join(localdir, "{0}.tar.gz".format(run_dir))
+    with tarfile.open(tarname, 'w:gz') as tar:
+        for f in files:
+            basename = os.path.basename(f)
+            tar.add(f, arcname="{0}/{1}".format(run_dir, basename))
+    shutil.rmtree(os.path.join(localdir, run_dir))
     
-    # print("connecting to {0}@{1}".format(user, host))
-    # ssh.connect(host, username=user, password=pw)
-    # pid = _submit(ssh, batlab_dir, localdir, tarname)
-    # ssh.close()
-    # os.remove(tarname)
-    # #
-    # # end dagman specific
-    # #
+    print("connecting to {0}@{1}".format(user, host))
+    client.connect(host, username=user, key_filename=keyfile)
+    pid = _submit(client, batlab_dir, localdir, tarname)
+    client.close()
+    os.remove(tarname)
+    #
+    # end dagman specific
+    #
 
-    # _wait_till_done(ssh, user, host, pw, pid, t_sleep=t_sleep)
-    # print("{0} has completed.".format(run_dir))
+    _wait_till_done(client, user, host, keyfile, pid, t_sleep=t_sleep)
+    print("{0} has completed.".format(run_dir))
 
     # create aggregation directory, aggregate output, and combine with input if
     # desired
-    aggdir = os.path.join(localdir, run_dir)
+    aggdir = os.path.join(localdir)
     if not os.path.exists(aggdir):
         os.mkdir(aggdir)    
 
@@ -349,18 +348,18 @@ def submit_dag(user, db, instids, solvers, outdb=None,
     localdb = os.path.join(aggdir, os.path.basename(db))
     localdb = localdb if os.path.exists(localdb) else None
 
-    ssh.connect(host, username=user, password=pw)
+    client.connect(host, username=user, key_filename=keyfile)
     print("connecting to {0}@{1}".format(user, host))
 
     # get files and clean up
-    files = get_files(ssh, '{0}/{1}'.format(batlab_dir, run_dir), aggdir, 
+    files = get_files(client, '{0}/{1}'.format(batlab_dir, run_dir), aggdir, 
                       '*_out.h5')
     if clean:
         cleandir = '{0}/{1}'.format(batlab_dir, run_dir)
         cmd = "rm -r {0} && rm {0}.tar.gz".format(cleandir)
         print("Remotely executing '{0}'".format(cmd))
-        stdin, stdout, stderr = ssh.exec_command(cmd)
-    ssh.close()
+        stdin, stdout, stderr = client.exec_command(cmd)
+    client.close()
     
     # combine files and clean up
     new_file = outdb if outdb is not None else \
@@ -369,10 +368,10 @@ def submit_dag(user, db, instids, solvers, outdb=None,
     stmt = "Combining the following databases into {1}: {0}".format(
         " ".join(files), new_file)
     print(stmt)
-    combine(files, new_file=new_file)
+    tools.combine(files, new_file=new_file)
 
     if localdb is not None and outdb is None:
         print("Combining input and output dbs, and cleaning up output.")
-        combine([localdb, new_file])    
-        #os.remove(new_file)
+        tools.combine([localdb, new_file])    
+        os.remove(new_file)
         

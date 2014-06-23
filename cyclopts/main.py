@@ -101,7 +101,7 @@ def condor_submit(args):
                       localdir=args.localdir, 
                       remotedir=args.remotedir, 
                       clean=args.clean, 
-                      keyfile=keyfile, cp=args.cp, mv=args.mv, 
+                      keyfile=args.keyfile, cp=args.cp, mv=args.mv, 
                       t_sleep=args.t_sleep)
 
 def convert(args):
@@ -328,9 +328,8 @@ def main():
     condor_parser.add_argument('-r', '--host', dest='host', help=hosth, 
                                default='submit-3.chtc.wisc.edu')    
     keyfile = ("An ssh public key file.")
-    condor_parser.add_argument(
-        '--keyfile', dest='keyfile', help=keyfile, 
-        default=os.path.join(os.environ['HOME'], '.ssh', 'id_rsa.pub'))    
+    condor_parser.add_argument('--keyfile', dest='keyfile', help=keyfile, 
+                               default=None)    
     localdir = ("The local directory in which to place resulting files.")
     condor_parser.add_argument('-l', '--localdir', dest='localdir', 
                                help=localdir, default='run_results')     

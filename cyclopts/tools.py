@@ -15,6 +15,7 @@ import numpy as np
 from functools import reduce
 from itertools import product
 from collections import defaultdict, Iterable
+import paramiko as pm
 
 import cyclopts
 from cyclopts.params import CONSTR_ARGS, Param, BoolParam, SupConstrParam, CoeffParam, \
@@ -361,7 +362,7 @@ def ssh_test_connect(client, host, user, keyfile=None, auth=True):
         os.path.join(os.environ['HOME'], '.ssh','id_rsa.pub') 
 
     try:
-        client.connect(host, username=rc.user, key_filename=keyfile)
+        client.connect(host, username=user, key_filename=keyfile)
         client.close()
         can_connect = True
     except pm.AuthenticationException:
@@ -389,4 +390,4 @@ def ssh_test_connect(client, host, user, keyfile=None, auth=True):
             client.close()
             can_connect = True
             print("finished connecting")        
-    return can_connect
+    return can_connect, keyfile
