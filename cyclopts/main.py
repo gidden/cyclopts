@@ -161,10 +161,11 @@ def execute(args):
     inroot = h5in.root
     outroot = h5out.root if h5out is not None else h5in.root
     
-    instnode = inroot._f_get_child(_inst_grp_name)
+    ininstnode = inroot._f_get_child(_inst_grp_name)
+    outinstnode = outroot._f_get_child(_inst_grp_name)
 
     # read rc if it exists and we don't already have insts
-    instids = collect_instids(h5node=instnode, rc=rc, instids=instids)
+    instids = collect_instids(h5node=ininstnode, rc=rc, instids=instids)
 
     # create output leaves
     if not outroot.__contains__(_result_grp_name):
@@ -183,12 +184,12 @@ def execute(args):
     # be refactored
     row = tbl.row
     for instid in instids:
-        groups, nodes, arcs = iio.read_exinst(instnode, instid) # exchange specific
+        groups, nodes, arcs = iio.read_exinst(ininstnode, instid) # exchange specific
         for s in solvers:
             solver = inst.ExSolver(s)
             soln = inst.Run(groups, nodes, arcs, solver) # exchange specific
             solnid = uuid.uuid4().bytes
-            iio.write_soln(instnode, instid, soln, solnid) # exchange specific
+            iio.write_soln(outinstnode, instid, soln, solnid) # exchange specific
             row['solnid'] = solnid
             row['instid'] = instid
             row["solver"] = solver.type
