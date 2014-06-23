@@ -265,8 +265,10 @@ def combine(files, new_file=None):
 
     f = t.open_file(fname, 'a')
     dbs = [t.open_file(files[i], 'r') for i in range(1, len(files))]
+    print(dbs)
     for db in dbs:
         tbls = [node._v_name for node in db.iter_nodes('/', classname='Table')]
+        print(tbls)
         for tbl in tbls:
             src = db.get_node('/', name=tbl, classname='Table')
             dest = f.get_node('/', name=tbl, classname='Table')
@@ -280,6 +282,7 @@ def combine(files, new_file=None):
                 for j in range(len(dtypes)):
                     dest_row[dtypes[j]] = src_row[j]
                 dest_row.append()
+            print(tbl, dest.nrows)
         db.close()
     f.close()
     
