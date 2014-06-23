@@ -16,6 +16,7 @@ import os
 import shutil
 import paramiko as pm
 import getpass
+import ast
 
 import cyclopts
 import cyclopts.condor as condor
@@ -56,6 +57,8 @@ def collect_instids(h5node=None, rc=None, instids=None):
     # conditions
     inst_queries = rc['inst_queries'] if 'inst_queries' in rc.keys() else {}
     for tbl_name, conds in inst_queries.items():
+        if isinstance(conds, basestring):
+            conds = [conds]
         if h5node is None:
             continue
         tbl = h5node._f_get_child(tbl_name)
@@ -151,6 +154,7 @@ def execute(args):
     indb = args.db
     outdb = args.outdb
     rc = parse_rc(args.rc) if args.rc is not None else {}
+    rc.update(ast.literal_eval(args.conds))
     solvers = args.solvers
     instids = set(uuid.UUID(x).bytes for x in args.instids)
 
@@ -162,10 +166,15 @@ def execute(args):
     outroot = h5out.root if h5out is not None else h5in.root
     
     ininstnode = inroot._f_get_child(_inst_grp_name)
+    if not outroot.__contains__(_inst_grp_name):
+        print("creating group {0}".format(_inst_grp_name))
+        outroot._v_file.create_group(outroot, _inst_grp_name, 
+                                     filters=_filters)
     outinstnode = outroot._f_get_child(_inst_grp_name)
 
     # read rc if it exists and we don't already have insts
     instids = collect_instids(h5node=ininstnode, rc=rc, instids=instids)
+    print("Executing {0} instances.".format(len(instids)))
 
     # create output leaves
     if not outroot.__contains__(_result_grp_name):
@@ -285,6 +294,9 @@ def main():
     outdb = ("An optional database to write results to. By default, the "
              "database given by the --db flag is use.")
     exec_parser.add_argument('--outdb', dest='outdb', default=None, help=outdb)
+    conds = ("A dictionary representation of execution conditions. This CLI "
+             "argument can be used instead of placing them in an RC file.")
+    exec_parser.add_argument('--conds', dest='conds', default='{}', help=conds)
     
     #
     # execute instances with condor

@@ -12,11 +12,13 @@ import cyclopts.instance as inst
 _N_CAPS_MAX = 10
 
 # add to this if more objects need to be persistable
-_tbl_names = {
+_in_tbl_names = {
     "ExGroup": "ExchangeGroups",
     "ExNode": "ExchangeNodes",
     "ExArc": "ExchangeArcs",
     "properties": "ExchangeInstProperties",
+    }
+_out_tbl_names = {
     "solutions": "ExchangeInstSolutions",
     }
 
@@ -76,8 +78,8 @@ def xdvars(obj):
                 and not attr.startswith('__') and not attr.startswith('_')]
 
 """Checks if a file has known Exchange-related tables and adds them if not"""
-def check_extables(h5node):
-    for objname, tname in _tbl_names.items():
+def check_extables(h5node, names=_in_tbl_names):
+    for objname, tname in names.items():
         if tname in h5node._v_children:
             continue
         h5node._v_file.create_table(h5node, tname, _dtypes[objname], 
@@ -85,7 +87,7 @@ def check_extables(h5node):
 
 def write_exobjs(h5node, instid, objs):
     cname = objs[0].__class__.__name__
-    tname = _tbl_names[cname]
+    tname = _out_tbl_names[cname]
     tbl = getattr(h5node, tname)
     row = tbl.row
     for obj in objs:
@@ -100,7 +102,7 @@ def write_exobjs(h5node, instid, objs):
     tbl.flush()
 
 def write_exprops(h5node, instid, paramid, groups, nodes, arcs):
-    tbl = getattr(h5node, _tbl_names['properties'])
+    tbl = getattr(h5node, _in_tbl_names['properties'])
     row = tbl.row
     row['instid'] = instid.bytes
     row['paramid'] = paramid.bytes
@@ -130,7 +132,7 @@ def write_exprops(h5node, instid, paramid, groups, nodes, arcs):
     tbl.flush()
 
 def write_exinst(h5node, instid, paramid, groups, nodes, arcs):
-    check_extables(h5node)
+    check_extables(h5node, _in_tbl_names)
     write_exobjs(h5node, instid, groups)
     write_exobjs(h5node, instid, nodes)
     write_exobjs(h5node, instid, arcs)
@@ -139,7 +141,7 @@ def write_exinst(h5node, instid, paramid, groups, nodes, arcs):
 def read_exobjs(h5node, instid, ctor):
     inst = ctor()
     cname = inst.__class__.__name__
-    tname = _tbl_names[cname]
+    tname = _in_tbl_names[cname]
     objs = []
     tbl = getattr(h5node, tname)
     findid = instid
@@ -165,7 +167,8 @@ def read_exinst(h5node, instid):
     return groups, nodes, arcs
 
 def write_soln(h5node, instid, soln, solnid):
-    tname = _tbl_names['solutions'] 
+    check_extables(h5node, _out_tbl_names)
+    tname = _out_tbl_names['solutions'] 
     tbl = h5node._f_get_child(tname)
     row = tbl.row
     for id, flow in soln.flows.iteritems():
