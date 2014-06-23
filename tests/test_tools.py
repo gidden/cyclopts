@@ -11,59 +11,60 @@ import nose
 import tables as t
 from functools import reduce
 from nose.tools import assert_equal, assert_true, assert_false
+import subprocess
+
+exec_cmd = """cyclopts exec --db {indb} --outdb {outdb} \
+--conds "{{'inst_queries':{{'ExchangeInstProperties':['n_arcs=={narcs}']}}}}"
+"""
 
 def test_combine():    
     base = os.path.dirname(os.path.abspath(__file__))
-    db1 = '994c5721-311d-46f3-8b7d-742beeaa9ec1.h5'
-    db2 = 'e5b781e6-fb86-4099-a46b-f36370bf8af4.h5'
-    db1 = os.path.join(base, 'dbs', db1)
-    db2 = os.path.join(base, 'dbs', db2)
+    workdir = os.path.join(base, 'files')
+    orig_in = 'exp_instances.h5'
+    cp_in = 'cp_instances.h5'
+    tmp_out = 'tmp_out.h5'
+    out1 = '1arcs.h5'
+    nsoln1 = 1
+    out4 = '4arcs.h5'
+    nsoln4 = 2
+    ninsts = 5
+    tmpfiles = {out1: os.path.join(workdir, out1), 
+                out4: os.path.join(workdir, out4), 
+                cp_in: os.path.join(workdir, cp_in), 
+                tmp_out: os.path.join(workdir, tmp_out)}
     
-    new_file = os.path.join(base, 'dbs', 'combine.h5')
-    copy_file = os.path.join(base, 'dbs', 'copy.h5')
-    tmps = [new_file, copy_file]
-    for tmp in tmps:
-        if os.path.exists(tmp):
-            os.remove(tmp)
-    shutil.copyfile(db1, copy_file)
+    # setup
+    for _, f in tmpfiles.items():
+        if os.path.exists(f):
+            os.remove(f)
+    cmd = exec_cmd.format(indb=os.path.join(workdir, orig_in), 
+                          outdb=os.path.join(workdir, out1), narcs=1)
+    print("executing cmd", cmd)
+    subprocess.call(cmd.split(), shell=(os.name == 'nt'))
+    cmd = exec_cmd.format(indb=os.path.join(workdir, orig_in), 
+                          outdb=os.path.join(workdir, out4), narcs=4)
+    print("executing cmd", cmd)
+    subprocess.call(cmd.split(), shell=(os.name == 'nt'))
+    shutil.copyfile(os.path.join(workdir, orig_in), tmpfiles[cp_in])
     
-    combine([db1, db2], new_file=new_file)
-    f1 = t.open_file(db1, 'r')
-    f2 = t.open_file(db2, 'r')
-    test = t.open_file(new_file, 'r')
-    test_ids = [x['sim_id'] for x in test.root.solution.iterrows()]
-    f1_ids = [x['sim_id'] for x in f1.root.solution.iterrows()]
-    f2_ids = [x['sim_id'] for x in f2.root.solution.iterrows()]
-    assert_equal(test_ids[0], f1_ids[0])
-    assert_equal(test_ids[0], f1_ids[0])
-    assert_equal(test_ids[1], f2_ids[0])
-    assert_equal(len(test_ids), 2)
-    assert_equal(len(f1_ids), 1)
-    assert_equal(len(f2_ids), 1)
-    test.close()
-    f2.close()
-    f1.close()
-
-    combine([copy_file, db2])
-    f1 = t.open_file(db1, 'r')
-    f2 = t.open_file(db2, 'r')
-    test = t.open_file(copy_file, 'r')
-    test_ids = [x['sim_id'] for x in test.root.solution.iterrows()]
-    f1_ids = [x['sim_id'] for x in f1.root.solution.iterrows()]
-    f2_ids = [x['sim_id'] for x in f2.root.solution.iterrows()]
-    assert_equal(test_ids[0], f1_ids[0])
-    assert_equal(test_ids[0], f1_ids[0])
-    assert_equal(test_ids[1], f2_ids[0])
-    assert_equal(len(test_ids), 2)
-    assert_equal(len(f1_ids), 1)
-    assert_equal(len(f2_ids), 1)
-    test.close()
-    f2.close()
-    f1.close()
+    # operations
+    combine([tmpfiles[cp_in], tmpfiles[out4], tmpfiles[out1]], 
+            new_file=tmpfiles[tmp_out])
+    combine([tmpfiles[cp_in], tmpfiles[out4], tmpfiles[out1]])
     
-    for tmp in tmps:
-        if os.path.exists(tmp):
-            os.remove(tmp)
+    chkfiles = [tmpfiles[tmp_out], tmpfiles[cp_in]]
+    for f in chkfiles:
+        print("checking", f)
+        db = t.open_file(f, 'r')
+        assert_equal(db.root.Instances.ExchangeInstProperties.nrows, ninsts)
+        assert_equal(db.root.Instances.ExchangeInstSolutions.nrows, 
+                     nsoln1 + nsoln4)
+        assert_equal(db.root.Results.General.nrows, 2) # 2 runs were performed
+    
+    # teardown
+    for _, f in tmpfiles.items():
+        if os.path.exists(f):
+            os.remove(f)
 
 def test_simple_sampler_builder():
     rc_params = {

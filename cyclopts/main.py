@@ -154,7 +154,12 @@ def execute(args):
     indb = args.db
     outdb = args.outdb
     rc = parse_rc(args.rc) if args.rc is not None else {}
-    rc.update(ast.literal_eval(args.conds))
+    conds = ": ".join(args.conds.split(':'))
+    asteval = ast.literal_eval(conds)
+    if isinstance(asteval, basestring):
+        # some scripting workflows produce a string the first time
+        asteval = ast.literal_eval(asteval) 
+    rc.update(asteval)
     solvers = args.solvers
     instids = set(uuid.UUID(x).bytes for x in args.instids)
 
