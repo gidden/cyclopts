@@ -23,7 +23,7 @@ cyclopts_logo = r"""
 """
 
 INFO = {
-    'version': '0.0.1',
+    'version': '0.0.2',
     }
 
 def parse_args():
