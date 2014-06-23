@@ -24,24 +24,18 @@ cyclopts/tests/files/exp_instances.h5 on 6/15/14 via
     print(uuid.UUID(bytes=row['instid']).hex, row['n_arcs'])
 
 """
-exp_uuid_arcs = [
-    ('4bee553ad2574923a0c19dcffa669bdd', 1),
-    ('741bb3864b224f61a6cf9a9f910aa69a', 2),
-    ('3ded701f631c4be8b02ba3297d3fa670', 3),
-    ('bd04d68431f1475f9b9d373b069f8b12', 4),
-    ('a07cd014e9564778a69ae2f6cdebe226', 2),
-    ('9b3b7607f27a45a3ad0a404dcb29a8c5', 4),
-    ('ef550c2f5a2148629b7fe7f57c7822d5', 6),
-    ('6fb9e2d02e1d40e3a9a81a7a6513c69c', 8),
-    ('dc806d20e3444043a4082f2f77ec0939', 3),
-    ('b1d68e095ed842fe848c7594a6643727', 6),
-    ('11eb0ab1078048d2be0ff7f88547bff5', 9),
-    ('d826cd10ef2942fb811624fcee5815ee', 12),
-    ('c16ad5c3ae4b4526b4864dbdc2eb7d8d', 4),
-    ('c1ff845537f349cfa8a1559a715fd640', 8),
-    ('078f6be90ece4b0f8d094028cbd0c22f', 12),
-    ('e0a8221169784067b572ec00232169ce', 16),
-    ]
+_exp_uuid_arcs = []
+def exp_uuid_arcs():
+    global _exp_uuid_arcs    
+    if len(_exp_uuid_arcs) == 0:
+        base = os.path.dirname(os.path.abspath(__file__))
+        pth = os.path.join(base, 'files', 'exp_instances.h5')
+        h5file = t.open_file(pth, 'r')
+        tbl = h5file.root.Instances.ExchangeInstProperties
+        _exp_uuid_arcs = [(uuid.UUID(bytes=row['instid']).hex, row['n_arcs']) \
+                              for row in tbl.iterrows()]
+        h5file.close()
+    return _exp_uuid_arcs
 
 def test_instids():
     base = os.path.dirname(os.path.abspath(__file__))
@@ -51,11 +45,12 @@ def test_instids():
     
     rc = {}
     obs = main.collect_instids(h5node=h5node, rc=rc)
-    exp = set(uuid.UUID(x[0]).bytes for x in exp_uuid_arcs)
+    exp = exp_uuid_arcs()
+    exp = set(uuid.UUID(x[0]).bytes for x in exp)
+    assert_equal(len(exp), len(obs))
     assert_equal(exp, obs)
-    assert_equal(len(exp), len(exp_uuid_arcs))
     
-    exp_uuid_hex = exp_uuid_arcs[0][0]
+    exp_uuid_hex = exp_uuid_arcs()[0][0]
     rc = {'inst_ids': [exp_uuid_hex]}
     obs = main.collect_instids(h5node=h5node, rc=rc)
     exp = set([uuid.UUID(exp_uuid_hex).bytes])
@@ -68,7 +63,7 @@ def test_instids():
     rc = {'inst_queries': {'ExchangeInstProperties': conds}}
     obs = main.collect_instids(h5node=h5node, rc=rc)
     exp = set(uuid.UUID(x[0]).bytes \
-                  for x in exp_uuid_arcs \
+                  for x in exp_uuid_arcs() \
                   if x[1] > bounds[0] and x[1] < bounds[1])
     assert_equal(exp, obs)
     h5file.close()
@@ -77,7 +72,7 @@ def test_exec():
     base = os.path.dirname(os.path.abspath(__file__))
     db = os.path.join(base, "tmp_{0}.h5".format(str(uuid.uuid4())))
     shutil.copy(os.path.join(base, 'files', 'exp_instances.h5'), db)
-    ninst = len(exp_uuid_arcs)
+    ninst = len(exp_uuid_arcs())
     solvers = "greedy clp cbc"
     
     cmd = "cyclopts exec --db={0} --solvers {1}".format(db, solvers)
@@ -90,7 +85,7 @@ def test_exec():
         assert_true(row['time'] > 0)
     h5file.close()
 
-    uuid_hex = exp_uuid_arcs[0][0]
+    uuid_hex = exp_uuid_arcs()[0][0]
     newdb = os.path.join(base, "tmp_{0}.h5".format(str(uuid.uuid4())))
     cmd = "cyclopts exec --db={0} --instids {1} --outdb {2}".format(
         db, uuid_hex, newdb)
@@ -122,7 +117,7 @@ cyclopts condor --db={db} --instids {instids} --solvers {solvers} \
 
 #     db = os.path.join(base, 'files', dbname)
 #     solvers = "greedy cbc"
-#     instids = [x[0] for x in exp_uuid_arcs[:2]]
+#     instids = [x[0] for x in exp_uuid_arcs()[:2]]
 #     user = "gidden"
 
 #     timeout = 30 # seconds

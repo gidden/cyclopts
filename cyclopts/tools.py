@@ -296,6 +296,7 @@ def combine(files, new_file=None):
 
     f = t.open_file(fname, 'a')
     dbs = [t.open_file(files[i], 'r') for i in range(1, len(files))]
+    print(dbs)
     for db in dbs:
         merge_node(db.root, f)
         f.flush()

@@ -87,7 +87,7 @@ def check_extables(h5node, names=_in_tbl_names):
 
 def write_exobjs(h5node, instid, objs):
     cname = objs[0].__class__.__name__
-    tname = _out_tbl_names[cname]
+    tname = _in_tbl_names[cname]
     tbl = getattr(h5node, tname)
     row = tbl.row
     for obj in objs:

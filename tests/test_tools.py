@@ -54,7 +54,7 @@ def test_combine():
     
     chkfiles = [tmpfiles[tmp_out], tmpfiles[cp_in]]
     for f in chkfiles:
-        print("checking", f)
+        print("checking {0}".format(f))
         db = t.open_file(f, 'r')
         assert_equal(db.root.Instances.ExchangeInstProperties.nrows, ninsts)
         assert_equal(db.root.Instances.ExchangeInstSolutions.nrows, 

@@ -18,7 +18,7 @@ def test_file_gen():
     base = os.path.dirname(os.path.abspath(__file__))
     db = os.path.join(base, 'files', 'exp_instances.h5')
     prefix=os.path.join(base, 'tmp_{0}'.format(uuid.uuid4()))
-    instids = [x[0] for x in exp_uuid_arcs[:2]] # 2 ids
+    instids = [x[0] for x in exp_uuid_arcs()[:2]] # 2 ids
     solvers = ['s1', 's2']
     subfile = 'tst.sub'
     max_time = 5
@@ -40,8 +40,9 @@ def test_file_gen():
 def test_get_files():
     user = 'gidden'
     host = 'submit-3.chtc.wisc.edu'
-    ssh = pm.SSHClient()
-    ssh.set_missing_host_key_policy(pm.AutoAddPolicy())
+    keyfile = os.path.join(os.environ['HOME'], '.ssh','id_rsa.pub')
+    client = pm.SSHClient()
+    client.set_missing_host_key_policy(pm.AutoAddPolicy())
 
     localbase = os.path.dirname(os.path.abspath(__file__))
     remotebase = condor.batlab_base_dir_template.format(user=user)
@@ -52,20 +53,37 @@ def test_get_files():
     os.makedirs(localdir)
     
     try:
-        ssh.connect(host, username=user, password=None)    
-        tstfiles = ['tmp_test_file', 'tmp_other_file']
-        for f in tstfiles:
-            cmd = "mkdir -p {0} && touch {0}/{1}".format(remotedir, f)
-            ssh.exec_command(cmd)
-        files = condor.get_files(ssh, remotedir, localdir, 'tmp_*')
-        cmd = "rm -rf {0}".format(remotedir)
-        ssh.exec_command(cmd)
-        ssh.close()
-
-        assert_equal(set(files), set(['./{0}'.format(f) for f in tstfiles]))
-        assert_equal(set(os.listdir(localdir)), set(tstfiles))
-    except pm.PasswordRequiredException:
+        client.connect(host, username=user,
+                       key_filename=keyfile)
+        can_connect = True
+        client.close()
+    except pm.AuthenticationException:
+        can_connect = False
+    except pm.BadHostKeyException:
+        import pdb; pdb.set_trace()
+        can_connect = False
+    if not can_connect:
+        shutil.rmtree(localdir)
         warnings.warn(("This test requires your public key to be added to"
                        " {0}@{1}'s authorized keys.").format(user, host))
-
+        return
+    
+    prefix='tmp_'
+    tstfiles = [prefix + 'test_file', prefix + 'other_file']
+    touchline = " ".join("/".join([remotedir, f]) for f in tstfiles)
+    cmd = "mkdir -p {0} && touch {1}".format(remotedir, touchline)
+    client.connect(host, username=user, key_filename=keyfile)
+    client.exec_command(cmd)
+    files = condor.get_files(client, remotedir, localdir, prefix + '*')
+    client.close()
+    
+    print("files:", files)
+    assert_equal(set(files), set([os.path.join(localdir, f) for f in tstfiles]))
+    assert_equal(set(os.listdir(localdir)), set(tstfiles))
+    
+    client.connect(host, username=user, key_filename=keyfile)
+    cmd = "rm -rf {0}".format(remotedir)
+    client.exec_command(cmd)
+    client.close()
+        
     shutil.rmtree(localdir)

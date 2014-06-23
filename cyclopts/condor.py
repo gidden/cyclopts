@@ -149,12 +149,18 @@ def get_files(client, remotedir, localdir, re):
     ftp.close()
 
     with tarfile.open(localtar, 'r:gz') as f:
-        files = f.getnames()
+        files = f.getnames()[1:] # kill initial folder
         f.extractall(localdir)
-    print("Removing {0} on the local machine.".format(localtar))
+
+    for f in files:
+        print(f, localdir)
+        shutil.move(os.path.join(localdir, f), localdir)
+
     os.remove(localtar)
-    
-    return files[1:] # remove initial '.' entry
+    shutil.rmtree(os.path.join(localdir, tardir))
+
+    # remove initial '.' entry
+    return [os.path.join(localdir, os.path.basename(f)) for f in files] 
         
 def _wait_till_found(client, path, t_sleep=5):
     """Queries a client if a an expected file exists until it does."""
@@ -303,50 +309,52 @@ def submit_dag(user, db, instids, solvers, outdb=None,
     batlab_dir = "{0}/{remotedir}".format(
         batlab_base_dir_template.format(user=user), remotedir=remotedir)
     timestamp = "_".join([str(t) for t in datetime.now().timetuple()][:-3])
-    run_dir = "run_{0}".format(timestamp)
+#    run_dir = "run_{0}".format(timestamp)
+    run_dir = "run_2014_6_20_15_27_40"
 
-    #
-    # begin dagman specific
-    #
-    max_time = 60 * 60 * 5 # 5 hours
-    files = gen_files(run_dir, os.path.basename(db), instids, solvers, 
-                      batlab_base_dir_template.format(user=user), 
-                      max_time=max_time, localdir=localdir)
-    files.append(db)
-    print("tarring files: {0}".format(", ".join(files)))
-    tarname = os.path.join(localdir, "{0}.tar.gz".format(run_dir))
-    with tarfile.open(tarname, 'w:gz') as tar:
-        for f in files:
-            basename = os.path.basename(f)
-            tar.add(f, arcname="{0}/{1}".format(run_dir, basename))
-    shutil.rmtree(os.path.join(localdir, run_dir))
+    # #
+    # # begin dagman specific
+    # #
+    # max_time = 60 * 60 * 5 # 5 hours
+    # files = gen_files(run_dir, os.path.basename(db), instids, solvers, 
+    #                   batlab_base_dir_template.format(user=user), 
+    #                   max_time=max_time, localdir=localdir)
+    # files.append(db)
+    # print("tarring files: {0}".format(", ".join(files)))
+    # tarname = os.path.join(localdir, "{0}.tar.gz".format(run_dir))
+    # with tarfile.open(tarname, 'w:gz') as tar:
+    #     for f in files:
+    #         basename = os.path.basename(f)
+    #         tar.add(f, arcname="{0}/{1}".format(run_dir, basename))
+    # shutil.rmtree(os.path.join(localdir, run_dir))
     
-    print("connecting to {0}@{1}".format(user, host))
-    ssh.connect(host, username=user, password=pw)
-    pid = _submit(ssh, batlab_dir, localdir, tarname)
-    ssh.close()
-    os.remove(tarname)
-    #
-    # end dagman specific
-    #
+    # print("connecting to {0}@{1}".format(user, host))
+    # ssh.connect(host, username=user, password=pw)
+    # pid = _submit(ssh, batlab_dir, localdir, tarname)
+    # ssh.close()
+    # os.remove(tarname)
+    # #
+    # # end dagman specific
+    # #
 
-    # copy/move files as soon as job is submitted, and assign it a value if we
-    # did so
-    if cp:
-        shutil.copy(db, os.path.join(localdir, run_dir))
-    if mv:
-        shutil.move(db, os.path.join(localdir, run_dir))
-    localdb = os.path.join(localdir, run_dir, os.path.basename(db))
-    localdb = localdb if os.path.exists(localdb) else None
-
-    _wait_till_done(ssh, user, host, pw, pid, t_sleep=t_sleep)
-    print("{0} has completed.".format(run_dir))
+    # _wait_till_done(ssh, user, host, pw, pid, t_sleep=t_sleep)
+    # print("{0} has completed.".format(run_dir))
 
     # create aggregation directory, aggregate output, and combine with input if
     # desired
     aggdir = os.path.join(localdir, run_dir)
     if not os.path.exists(aggdir):
         os.mkdir(aggdir)    
+
+    # copy/move files as soon as job is submitted, and assign it a value if we
+    # did so
+    if cp:
+        shutil.copy(db, aggdir)
+    if mv:
+        shutil.move(db, aggdir)
+    localdb = os.path.join(aggdir, os.path.basename(db))
+    localdb = localdb if os.path.exists(localdb) else None
+
     ssh.connect(host, username=user, password=pw)
     print("connecting to {0}@{1}".format(user, host))
 
@@ -361,10 +369,16 @@ def submit_dag(user, db, instids, solvers, outdb=None,
     ssh.close()
     
     # combine files and clean up
-    new_file = outdb
-    if outdb is None and localdb is None:
-        new_file = '{0}_out.h5'.format(run_dir)
-    if localdb is not None:
-        files = [localdb] + [os.path.join(aggdir, f) for f in files]
-    print("Combinding databases: {0}".format(" ".join(files)))
+    new_file = outdb if outdb is not None else \
+        os.path.join(aggdir, '{0}_out.h5'.format(run_dir))
+    files = [os.path.join(aggdir, f) for f in files]
+    stmt = "Combining the following databases into {1}: {0}".format(
+        " ".join(files), new_file)
+    print(stmt)
     combine(files, new_file=new_file)
+
+    if localdb is not None and outdb is None:
+        print("Combining input and output dbs, and cleaning up output.")
+        combine([localdb, new_file])    
+        #os.remove(new_file)
+        
