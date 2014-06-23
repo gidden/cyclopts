@@ -105,7 +105,7 @@ def test_exec():
         os.remove(db)
 
 condor_cmd = """
-cyclopts condor --db={db} --instids {instids} --solvers {solvers} \
+cyclopts condor --db {db} --instids {instids} --solvers {solvers} \
                 --user {user} --localdir {localdir}
 """
 
