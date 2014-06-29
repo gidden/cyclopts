@@ -134,11 +134,14 @@ def convert(args):
     if not root.__contains__(_inst_grp_name):
         h5file.create_group(root, _inst_grp_name, filters=_filters)
     
-    # populate leaves
     for name in tbl_names:
         tbl = root._f_get_child(name)
         row = tbl.row
-        for s in d[name]:
+        # populate leaves
+        samplers = d[name]
+        print('Converting {0} instances'.format(len(samplers) * ninst))
+        counter = 0
+        for s in samplers:
             s.export_h5(row)
             row.append()
             inst_builder_ctor = s.inst_builder_ctor()
@@ -147,6 +150,9 @@ def convert(args):
             for i in range(ninst):
                 builder.build()
                 builder.write(h5node)
+                counter += 1
+                if counter % 100 == 0:
+                    print('{0} instances converted.'.format(counter))
         tbl.flush()
     h5file.close()
     
