@@ -161,6 +161,31 @@ def test_convert():
     if os.path.exists(db):
         os.remove(db)
 
+def test_combine():
+    localbase = os.path.dirname(os.path.abspath(__file__))
+    localdir = 'example_run'
+    localpath = os.path.join(localbase, 'files', localdir)
+    
+    exp_files = ['0_out.h5', '1_out.h5']
+    exp_total = 0
+    for f in exp_files:
+        h5file = t.open_file(os.path.join(localpath, f), 'r')
+        h5node = h5file.root.Results.General
+        exp_total += h5node.nrows
+        h5file.close()
+
+    outdb = os.path.join(localbase, '.tmp_{0}.h5'.format(uuid.uuid4()))
+    cmd = "cyclopts combine --files {0} --outdb {1} --no-clean".format(
+        " ".join([os.path.join(localpath, f) for f in exp_files]), outdb)
+    rtn = subprocess.call(cmd.split(), shell=(os.name == 'nt'))
+    assert_equal(0, rtn)
+
+    h5file = t.open_file(outdb, 'r')
+    h5node = h5file.root.Results.General
+    assert_equal(h5node.nrows, exp_total)
+    h5file.close()
+    os.remove(outdb)
+
 def test_collect():
     user = 'gidden'
     host = 'submit-3.chtc.wisc.edu'
@@ -198,7 +223,7 @@ def test_collect():
 
     tmppath = os.path.join(localbase, '.tmp_{0}'.format(uuid.uuid4()))
     outdb = os.path.join(tmppath, 'test_collect_out.h5')
-    cmd = "cyclopts collect -l {0} -d {1} --outdb {2}".format(
+    cmd = "cyclopts condor-collect -l {0} -d {1} --outdb {2}".format(
         tmppath, remotepath, outdb)
     rtn = subprocess.call(cmd.split(), shell=(os.name == 'nt'))
     assert_equal(0, rtn)

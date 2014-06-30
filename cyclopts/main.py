@@ -110,6 +110,12 @@ def condor_collect(args):
     condor.collect(args.localdir, args.remotedir, args.user, 
                    host=args.host, outdb=args.outdb,                 
                    clean=args.clean, keyfile=args.keyfile)
+
+def cyclopts_combine(args):
+    print("Combining {0} files into one master named {1}".format(
+            len(args.files), args.outdb))
+    tools.combine(iter(args.files), new_file=args.outdb, clean=args.clean)
+    
     
 def convert(args):
     """Converts a contiguous dataspace as defined by an input run control file
@@ -328,55 +334,55 @@ def main():
     #
     # execute instances with condor
     #
-    condorh = ("Submits a job to condor, retrieves output when it has completed, "
+    submit = ("Submits a job to condor, retrieves output when it has completed, "
                "and cleans up the condor user space after.")
-    condor_parser = sp.add_parser('condor', help=condorh)
-    condor_parser.set_defaults(func=condor_submit)
+    submit_parser = sp.add_parser('condor-submit', help=submit)
+    submit_parser.set_defaults(func=condor_submit)
     
     # exec related
-    condor_parser.add_argument('--rc', dest='rc', default=None, help=rch)
-    condor_parser.add_argument('--db', dest='db', help=db)
-    condor_parser.add_argument('--instids', nargs='*', default=[], dest='instids', 
+    submit_parser.add_argument('--rc', dest='rc', default=None, help=rch)
+    submit_parser.add_argument('--db', dest='db', help=db)
+    submit_parser.add_argument('--instids', nargs='*', default=[], dest='instids', 
                                help=instids)    
-    condor_parser.add_argument('--outdb', dest='outdb', default=None, help=outdb)
-    condor_parser.add_argument('--solvers', nargs='*', default=['cbc'], 
+    submit_parser.add_argument('--outdb', dest='outdb', default=None, help=outdb)
+    submit_parser.add_argument('--solvers', nargs='*', default=['cbc'], 
                                dest='solvers', help=solversh)    
 
     # condor related
     uh = ("The condor user name.")
-    condor_parser.add_argument('-u', '--user', dest='user', help=uh, 
+    submit_parser.add_argument('-u', '--user', dest='user', help=uh, 
                                default='gidden')
     hosth = ("The remote condor submit host.")
-    condor_parser.add_argument('-t', '--host', dest='host', help=hosth, 
+    submit_parser.add_argument('-t', '--host', dest='host', help=hosth, 
                                default='submit-3.chtc.wisc.edu')    
     keyfile = ("An ssh public key file.")
-    condor_parser.add_argument('--keyfile', dest='keyfile', help=keyfile, 
+    submit_parser.add_argument('--keyfile', dest='keyfile', help=keyfile, 
                                default=None)    
     localdir = ("The local directory in which to place resulting files.")
-    condor_parser.add_argument('-l', '--localdir', dest='localdir', 
+    submit_parser.add_argument('-l', '--localdir', dest='localdir', 
                                help=localdir, default='run_results')     
     remotedir = ("The remote directory (relative to the user's home directory)"
                  " in which to run cyclopts jobs.")
-    condor_parser.add_argument('-d', '--remotedir', dest='remotedir', 
+    submit_parser.add_argument('-d', '--remotedir', dest='remotedir', 
                                help=remotedir, default='cyclopts-runs')      
     nocleanh = ("Do *not* clean up the submit node after.")
-    condor_parser.add_argument('--no-clean', dest='clean', help=nocleanh,
+    submit_parser.add_argument('--no-clean', dest='clean', help=nocleanh,
                                action='store_false', default=True)    
     cp = ("Do not copy the parameter space database (db) to the localdir.")
-    condor_parser.add_argument('--no-cp', action='store_false', dest='cp', 
+    submit_parser.add_argument('--no-cp', action='store_false', dest='cp', 
                                default=True, help=cp)
     mv = ("Move (mv) the parameter space database (db) to the localdir.")
-    condor_parser.add_argument('--mv-db', action='store_true', dest='mv', 
+    submit_parser.add_argument('--mv-db', action='store_true', dest='mv', 
                                default=False, help=mv)
     sleep = ("How long to wait (seconds) before checking the progress of a run.")
-    condor_parser.add_argument('-s', '--sleep', dest='t_sleep', type=int, 
+    submit_parser.add_argument('-s', '--sleep', dest='t_sleep', type=int, 
                                default=500, help=sleep)
     
     #
     # collect condor results
     #
     collect = ("Collects a condor submission's output.")
-    collect_parser = sp.add_parser('collect', help=collect)
+    collect_parser = sp.add_parser('condor-collect', help=collect)
     collect_parser.set_defaults(func=condor_collect)
     collect_parser.add_argument('--outdb', dest='outdb', 
                                 default='cyclopts_results.h5', help=outdb)
@@ -399,8 +405,7 @@ def main():
     nocleanh = ("Do *not* clean up the submit node after.")
     collect_parser.add_argument('--no-clean', dest='clean', help=nocleanh,
                                 action='store_false', default=True)    
-        
-    
+            
     #
     # build a cde tarball for condor
     #
@@ -421,6 +426,23 @@ def main():
     keyfile = ("An ssh public key file.")
     cde_parser.add_argument('--keyfile', dest='keyfile', help=keyfile, 
                                default=None)    
+    
+    #
+    # combine a collection of databases
+    #
+    combine = ("Combines a collection of databases, merging their content.")
+    combine_parser = sp.add_parser('combine', help=combine)
+    combine_parser.set_defaults(func=cyclopts_combine)
+    files = ("All files to combine.")
+    combine_parser.add_argument('--files', nargs='+', dest='files', help=files)
+    outdb = ("An output database, containing the combined content.")
+    combine_parser.add_argument('-o', '--outdb', 
+                                default='cyclopts_results.h5', dest='outdb', 
+                                help=outdb)
+    noclean = ("Do *not* to clean up (remove) the original files.")
+    combine_parser.add_argument('--no-clean', dest='clean', help=noclean,
+                                action='store_false', default=True)    
+                
     
     #
     # and away we go!
