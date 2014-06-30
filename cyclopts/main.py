@@ -114,6 +114,7 @@ def convert(args):
     fin = args.rc
     fout = args.db
     ninst = args.ninst
+    print('Building samplers from input run control')
     samplers = tools.SamplerBuilder().build(tools.parse_rc(fin))
     h5file = t.open_file(fout, mode='a', filters=_filters)
     root = h5file.root
@@ -124,6 +125,7 @@ def convert(args):
     tbl_names = d.keys()
     
     # create leaves
+    print('Preparing input database')
     for name in tbl_names:
         if root.__contains__(name):
             continue
