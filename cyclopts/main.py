@@ -104,6 +104,13 @@ def condor_submit(args):
                       keyfile=args.keyfile, cp=args.cp, mv=args.mv, 
                       t_sleep=args.t_sleep)
 
+def condor_collect(args):
+    print("Collecting the results of a condor run from {0} at {1}@{2}".format(
+            args.remotedir, args.user, args.host))
+    condor.collect(args.localdir, args.remotedir, args.user, 
+                   host=args.host, outdb=args.outdb,                 
+                   clean=args.clean, keyfile=args.keyfile)
+    
 def convert(args):
     """Converts a contiguous dataspace as defined by an input run control file
     into problem instances in an HDF5 database. Each discrete point, as
@@ -366,7 +373,36 @@ def main():
                                default=500, help=sleep)
     
     #
-    # execute instances with condor
+    # collect condor results
+    #
+    collect = ("Collects a condor submission's output.")
+    collect_parser = sp.add_parser('collect', help=collect)
+    collect_parser.set_defaults(func=condor_collect)
+    collect_parser.add_argument('--outdb', dest='outdb', 
+                                default='cyclopts_results.h5', help=outdb)
+    uh = ("The condor user name.")
+    collect_parser.add_argument('-u', '--user', dest='user', help=uh, 
+                                default='gidden')
+    hosth = ("The remote condor submit host.")
+    collect_parser.add_argument('-t', '--host', dest='host', help=hosth, 
+                                default='submit-3.chtc.wisc.edu')    
+    keyfile = ("An ssh public key file.")
+    collect_parser.add_argument('--keyfile', dest='keyfile', help=keyfile, 
+                                default=None)    
+    localdir = ("The local directory in which to place resulting files.")
+    collect_parser.add_argument('-l', '--localdir', dest='localdir',
+                                help=localdir, default='run_results')     
+    remotedir = ("The remote directory (relative to the user's home directory)"
+                 " in which output files from a run are located.")
+    collect_parser.add_argument('-d', '--remotedir', dest='remotedir', 
+                                help=remotedir, default='cyclopts-runs')      
+    nocleanh = ("Do *not* clean up the submit node after.")
+    collect_parser.add_argument('--no-clean', dest='clean', help=nocleanh,
+                                action='store_false', default=True)    
+        
+    
+    #
+    # build a cde tarball for condor
     #
     cde = ("Updates the Cyclopts CDE tarfile on a Condor submit node.")
     cde_parser = sp.add_parser('cde', help=cde)

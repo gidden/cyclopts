@@ -48,9 +48,9 @@ def test_combine():
     shutil.copyfile(os.path.join(workdir, orig_in), tmpfiles[cp_in])
     
     # operations
-    combine([tmpfiles[cp_in], tmpfiles[out4], tmpfiles[out1]], 
+    combine(iter([tmpfiles[cp_in], tmpfiles[out4], tmpfiles[out1]]), 
             new_file=tmpfiles[tmp_out])
-    combine([tmpfiles[cp_in], tmpfiles[out4], tmpfiles[out1]])
+    combine(iter([tmpfiles[cp_in], tmpfiles[out4], tmpfiles[out1]]))
     
     chkfiles = [tmpfiles[tmp_out], tmpfiles[cp_in]]
     for f in chkfiles:

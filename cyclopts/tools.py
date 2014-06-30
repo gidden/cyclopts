@@ -16,6 +16,9 @@ from functools import reduce
 from itertools import product
 from collections import defaultdict, Iterable
 import paramiko as pm
+from os import kill
+from signal import alarm, signal, SIGALRM, SIGKILL
+from subprocess import PIPE, Popen
 
 import cyclopts
 from cyclopts.params import CONSTR_ARGS, Param, BoolParam, SupConstrParam, CoeffParam, \
@@ -272,42 +275,41 @@ def merge_node(node, dest_file):
             merge_node(node._v_file.get_node(node._v_pathname + '/' + child), 
                        dest_file)
             
-def combine(files, new_file=None):
+def combine(files, new_file=None, clean=False):
     """Combines two or more databases with identical layout, writing their
     output into a new file or appending to the first in the list.
     
     Parameters
     ----------
-    files : list
-        A list of all databases to combine
+    files : iterator
+        An iterator listing all databases to combine
     new_file : str, optional
         The new database to write to. If None, all databases are appended to the
         end of the first database in the list.
+    clean : bool, optional
+        Whether to remove original files after combining them
     """ 
-    if len(files) == 0:
-        raise ValueError("Must have at least one file to combine.")
-
     if new_file is not None and os.path.exists(new_file):
         raise ValueError('Cannot write combined hdf5 files to an existing location.')
 
+    first = files.next()
     if new_file is not None:
-        shutil.copyfile(files[0], new_file)
+        shutil.copyfile(first, new_file)
+        fname = new_file
+        if clean:
+            os.remove(first)
+    else:
+        fname = first
 
-    fname = files[0] if new_file is None else new_file
-
-    f = t.open_file(fname, 'a')
-    dbs = [t.open_file(files[i], 'r') for i in range(1, len(files))]
-    print(dbs)
-    for db in dbs:
-        merge_node(db.root, f)
-        f.flush()
+    aggdb = t.open_file(fname, 'a')
+    for f in files:
+        db = t.open_file(f, 'r')
+        merge_node(db.root, aggdb)
+        aggdb.flush()
         db.close()
-    f.close()
-    
-
-from os import kill
-from signal import alarm, signal, SIGALRM, SIGKILL
-from subprocess import PIPE, Popen
+        if clean:
+            os.remove(f)
+    aggdb.close()
 
 def run(args, cwd = None, shell = False, kill_tree = True, timeout = -1, env = None):
     '''

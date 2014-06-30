@@ -7,6 +7,7 @@ import time
 import os
 import io
 import glob 
+import uuid
 
 try:
     import paramiko as pm
@@ -375,19 +376,17 @@ def submit_dag(user, db, instids, solvers, outdb=None,
         tools.combine([localdb, new_file])    
         os.remove(new_file)
 
-def collect(user, host="submit-3.chtc.wisc.edu", outdb='cyclopts_results.h5', 
-            localdir=".", remotedir="cyclopts-runs", clean=False, keyfile=None):
+def collect(localdir, remotedir, user, host="submit-3.chtc.wisc.edu", 
+            outdb='cyclopts_results.h5', clean=False, keyfile=None):
     client = pm.SSHClient()
     client.set_missing_host_key_policy(pm.AutoAddPolicy())
-    _, keyfile = tools.ssh_test_connect(client, host, user, keyfile)
-
-    # create aggregation directory, aggregate output, and combine with input if
-    # desired
-    if not os.path.exists(localdir):
-        os.makedirs(localdir)    
-        
+    _, keyfile = tools.ssh_test_connect(client, host, user, keyfile=keyfile, 
+                                        auth=False)
     client.connect(host, username=user, key_filename=keyfile)
     print("connecting to {0}@{1}".format(user, host))
+
+    if not os.path.exists(localdir):
+        os.makedirs(localdir)    
 
     # get files and clean up
     nfiles = get_files(client, remotedir, localdir, '*_out.h5')
@@ -399,7 +398,7 @@ def collect(user, host="submit-3.chtc.wisc.edu", outdb='cyclopts_results.h5',
     client.close()
     
     # combine files and clean up
-    files = glob.iglob(os.path.join(aggdir, re))
+    files = glob.iglob(os.path.join(localdir, '*_out.h5'))
     stmt = "Combining {0} databases into {1}".format(nfiles, outdb)
     print(stmt)
-    tools.combine(files, new_file=outdb)
+    tools.combine(files, new_file=outdb, clean=True)
