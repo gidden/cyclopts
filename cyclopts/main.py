@@ -95,14 +95,15 @@ def condor_submit(args):
     instids = [uuid.UUID(bytes=x).hex for x in instids]
 
     # submit job
-    condor.submit_dag(args.user, args.db, instids, args.solvers, 
-                      outdb=args.outdb,
-                      host=args.host, 
-                      localdir=args.localdir, 
-                      remotedir=args.remotedir, 
-                      clean=args.clean, 
-                      keyfile=args.keyfile, cp=args.cp, mv=args.mv, 
-                      t_sleep=args.t_sleep)
+    if args.type == 'dag':
+        condor.submit_dag(args.user, args.db, instids, args.solvers,
+                          host=args.host, remotedir=args.remotedir, 
+                          keyfile=args.keyfile, verbose=args.verbose)
+    elif args.type == 'queue':
+        condor.submit_worker_queue(args.user, args.db, instids, args.solvers, 
+                                   host=args.host, remotedir=args.remotedir, 
+                                   keyfile=args.keyfile, verbose=args.verbose)
+        
 
 def condor_collect(args):
     print("Collecting the results of a condor run from {0} at {1}@{2}".format(
@@ -114,8 +115,7 @@ def condor_collect(args):
 def cyclopts_combine(args):
     print("Combining {0} files into one master named {1}".format(
             len(args.files), args.outdb))
-    tools.combine(iter(args.files), new_file=args.outdb, clean=args.clean)
-    
+    tools.combine(iter(args.files), new_file=args.outdb, clean=args.clean)    
     
 def convert(args):
     """Converts a contiguous dataspace as defined by an input run control file
@@ -344,7 +344,6 @@ def main():
     submit_parser.add_argument('--db', dest='db', help=db)
     submit_parser.add_argument('--instids', nargs='*', default=[], dest='instids', 
                                help=instids)    
-    submit_parser.add_argument('--outdb', dest='outdb', default=None, help=outdb)
     submit_parser.add_argument('--solvers', nargs='*', default=['cbc'], 
                                dest='solvers', help=solversh)    
 
@@ -358,26 +357,20 @@ def main():
     keyfile = ("An ssh public key file.")
     submit_parser.add_argument('--keyfile', dest='keyfile', help=keyfile, 
                                default=None)    
-    localdir = ("The local directory in which to place resulting files.")
-    submit_parser.add_argument('-l', '--localdir', dest='localdir', 
-                               help=localdir, default='run_results')     
     remotedir = ("The remote directory (relative to the user's home directory)"
                  " in which to run cyclopts jobs.")
-    submit_parser.add_argument('-d', '--remotedir', dest='remotedir', 
-                               help=remotedir, default='cyclopts-runs')      
-    nocleanh = ("Do *not* clean up the submit node after.")
-    submit_parser.add_argument('--no-clean', dest='clean', help=nocleanh,
-                               action='store_false', default=True)    
-    cp = ("Do not copy the parameter space database (db) to the localdir.")
-    submit_parser.add_argument('--no-cp', action='store_false', dest='cp', 
-                               default=True, help=cp)
-    mv = ("Move (mv) the parameter space database (db) to the localdir.")
-    submit_parser.add_argument('--mv-db', action='store_true', dest='mv', 
-                               default=False, help=mv)
-    sleep = ("How long to wait (seconds) before checking the progress of a run.")
-    submit_parser.add_argument('-s', '--sleep', dest='t_sleep', type=int, 
-                               default=500, help=sleep)
-    
+    timestamp = "_".join([str(t) for t in datetime.now().timetuple()][:-3])
+    submit_parser.add_argument(
+        '-d', '--remotedir', dest='remotedir', help=remotedir, 
+        default='/'.join(['cyclopts-runs', 'run_{0}'.format(timestamp)]))      
+    kind = ("The kind of condor submission to use.")
+    submit_parser.add_argument('-k', '--kind', choices=['dag', 'queue'], 
+                               default='dag', help=kind)
+    verbose = ("Print output during the submisison process.")
+    submit_parser.add_argument('-v', '--verbose', dest='verbose', 
+                               action='store_false', default=False, help=verbose)
+
+
     #
     # collect condor results
     #

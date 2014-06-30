@@ -79,17 +79,12 @@ tar_output_cmd = """
 cd {remotedir} && ls -l && tar -czf {tardir}.tar.gz {re}
 """
 
-def gen_files(rundir, dbname, instids, solvers, tardir, subfile="dag.sub", 
-              max_time=None, localdir="."):
+def _gen_dag_files(prepdir, dbname, instids, solvers, tardir, subfile="dag.sub", 
+                   max_time=None):
     """Generates all files needed to run a DAGMan instance of the given input
     database.
     """    
     print("generating files for {0} runs".format(len(instids)))
-    files = []
-
-    prepdir = os.path.join(localdir, rundir)
-    if not os.path.exists(prepdir):
-        os.makedirs(prepdir)
 
     # dag submit files
     max_time_line = ("\nperiodic_hold = (JobStatus == 2) && "
@@ -97,6 +92,7 @@ def gen_files(rundir, dbname, instids, solvers, tardir, subfile="dag.sub",
                      "({0}))").format(max_time) if max_time is not None \
                      else ""
     dag_lines = ""
+    nfiles = len(instids)
     for i in range(len(instids)):
         subname = os.path.join(prepdir, "{0}.sub".format(i))
         with io.open(subname, 'w') as f:
@@ -104,20 +100,19 @@ def gen_files(rundir, dbname, instids, solvers, tardir, subfile="dag.sub",
                                            tardir=tardir)
             sublines += max_time_line + '\nqueue'
             f.write(sublines)
-            files.append(subname)
         dag_lines += dag_job_template.format(i) + '\n'
     dagfile = os.path.join(prepdir, subfile)
+    nfiles += 1
     with io.open(dagfile, 'w') as f:
         f.write(dag_lines)
-        files.append(dagfile)
         
     # run script
     runfile = os.path.join(prepdir, "run.sh")
+    nfiles += 1 
     with io.open(runfile, 'w') as f:
         f.write(run_template.format(db=dbname, solvers=" ".join(solvers)))
-        files.append(runfile)
     
-    return files
+    return nfiles
 
 def get_files(client, remotedir, localdir, re):
     """Retrieves all files matching an expression on a remote site.
@@ -199,7 +194,8 @@ def _check_finish(client, pid):
         done = True
     return done
 
-def _submit(client, remotedir, localdir, tarname, subfile="dag.sub"):
+def _submit_dag(client, remotedir, localdir, tarname, subfile="dag.sub", 
+                verbose=False):
     """Performs a condor DAG sumbission on a client using a tarball of all
     submission-related data.
 
@@ -215,12 +211,15 @@ def _submit(client, remotedir, localdir, tarname, subfile="dag.sub"):
         the name of the tarfile
     subfile : str, optional
         the name of the submit file
+    verbose : bool, optional
+        whether to print information regarding the submission process    
     """
     tarname = os.path.basename(tarname)
     ffrom = os.path.join(localdir, tarname)
     fto = '{0}/{1}'.format(remotedir, tarname)
-    print("Copying from {0} to {1} on the condor submit node.".format(
-            ffrom, fto))
+    if verbose:
+        print("Copying from {0} to {1} on the condor submit node.".format(
+                ffrom, fto))
     try:
         ftp = client.open_sftp()
         ftp.put(ffrom, fto)
@@ -240,7 +239,8 @@ def _submit(client, remotedir, localdir, tarname, subfile="dag.sub"):
     _wait_till_found(client, checkfile)
 
     cmd = "head {0}".format(checkfile)
-    print("Remotely executing '{0}'".format(cmd))
+    if verbose:
+        print("Remotely executing '{0}'".format(cmd))
     stdin, stdout, stderr = client.exec_command(cmd)
     err = stderr.readlines()
     if len(err) > 0:
@@ -248,11 +248,44 @@ def _submit(client, remotedir, localdir, tarname, subfile="dag.sub"):
     pid = stdout.readlines()[1].split('condor_scheduniv_exec.')[1].split()[0]
 
     return pid
+
+def submit_work_queue(user, db, instids, solvers, remotedir, 
+                      host="submit-3.chtc.wisc.edu", keyfile=None):
+    pass
+
+def gen_dag_tar(rundir, db, instids, solvers, user, verbose=False):
+    prepdir = os.path.join('.tmp_', rundir)
+    if not os.path.exists(prepdir):
+        os.makedirs(prepdir)
+    else:
+        raise IOError("File preparation directory {0} already exists".format(
+                prepdir))
+
+    max_time = 60 * 60 * 5 # 5 hours    
+    nfiles = _gen_dag_files(prepdir, os.path.basename(db), instids, solvers, 
+                            batlab_base_dir_template.format(user=user), 
+                            max_time=max_time)
     
-def submit_dag(user, db, instids, solvers, outdb=None, 
-               host="submit-3.chtc.wisc.edu", localdir=".", 
-               remotedir="cyclopts-runs", clean=False, keyfile=None, cp=True, 
-               mv=False, t_sleep=300):
+    subfiles = glob.iglob(os.path.join(prepdir, '*.sub'))
+    shfiles = glob.iglob(os.path.join(prepdir, '*.sh'))
+
+    nfiles += 1 # add db
+    if verbose:
+        print("tarring {0} files".format(nfiles))
+    tarname = "{0}.tar.gz".format(rundir)
+    with tarfile.open(tarname, 'w:gz') as tar:
+        tar.add(db, arcname="{0}/{1}".format(rundir, os.path.basename(db)))
+        for f in subfiles:
+            basename = os.path.basename(f)
+            tar.add(f, arcname="{0}/{1}".format(rundir, basename))
+        for f in shfiles:
+            basename = os.path.basename(f)
+            tar.add(f, arcname="{0}/{1}".format(rundir, basename))
+
+    shutil.rmtree(prepdir)
+
+def submit_dag(user, db, instids, solvers, remotedir, 
+               host="submit-3.chtc.wisc.edu", keyfile=None, verbose=False):
     """Connects via SSH to a condor submit node, and executes a Cyclopts DAG
     run.
     
@@ -266,115 +299,32 @@ def submit_dag(user, db, instids, solvers, outdb=None,
         the set of instances to run
     solvers : list
         the solvers to use
-    outdb : str, optional
-        the output database (i.e., don't write output to db)
+    remotedir : str
+        the base run directory on the condor submit node, relative to the 
+        user's home directory
     host : str, optional
         the condor submit host
-    localdir : str, optional
-        the local directory in which results will be placed
-    remotedir : str, optional
-        the base run directory on the condor submit node
-    clean : bool, optional
-        if true, removes the working directory on the submit node upon 
-        completion, which is automatically created relative to remotedir
     keyfile : str, optional
         the public key file    
-    cp : bool, optional
-        if true, a copy of the parameter space database is made in the 
-        localdir location
-    mv : bool, optional
-        if true, the parameter space database is moved into the 
-        localdir location
-    t_sleep : int, optional
-        how long to wait (seconds) before checking the progress of a run
+    verbose : bool, optional
+        whether to print information regarding the submission process    
     """
-    if mv and cp:
-        raise ValueError("Can not both move and copy the parameter space "
-                         "database.")
-    
-    if not mv and not cp and outdb is None:
-        raise ValueError("Must either move or copy the parameter space "
-                         "database if an output database is not provided.")
-
     client = pm.SSHClient()
     client.set_missing_host_key_policy(pm.AutoAddPolicy())
     _, keyfile = tools.ssh_test_connect(client, host, user, keyfile, auth=True)
 
-    batlab_dir = "{0}/{remotedir}".format(
-        batlab_base_dir_template.format(user=user), remotedir=remotedir)
-    timestamp = "_".join([str(t) for t in datetime.now().timetuple()][:-3])
-    run_dir = "run_{0}".format(timestamp)
+    localtar = gen_dag_tar(rundir, db, instids, solvers, user, verbose=verbose)
 
-    #
-    # begin dagman specific
-    #
-    max_time = 60 * 60 * 5 # 5 hours
-    files = gen_files(run_dir, os.path.basename(db), instids, solvers, 
-                      batlab_base_dir_template.format(user=user), 
-                      max_time=max_time, localdir=localdir)
-    files.append(db)
-    print("tarring files: {0}".format(", ".join(files)))
-    tarname = os.path.join(localdir, "{0}.tar.gz".format(run_dir))
-    with tarfile.open(tarname, 'w:gz') as tar:
-        for f in files:
-            basename = os.path.basename(f)
-            tar.add(f, arcname="{0}/{1}".format(run_dir, basename))
-    shutil.rmtree(os.path.join(localdir, run_dir))
-    
-    print("connecting to {0}@{1}".format(user, host))
+    if verbose:
+        print("connecting to {0}@{1}".format(user, host))
     client.connect(host, username=user, key_filename=keyfile)
-    pid = _submit(client, batlab_dir, localdir, tarname)
+    pid = _submit_dag(client, remotedir, localdir, localtar)
     client.close()
-    os.remove(tarname)
-    #
-    # end dagman specific
-    #
+    if verbose:
+        print("Submitted job in {0}@{1}:~/{2} with pid: {3}".format(
+                user, host, remotedir, pid)) 
 
-    _wait_till_done(client, user, host, keyfile, pid, t_sleep=t_sleep)
-    print("{0} has completed.".format(run_dir))
-
-    # create aggregation directory, aggregate output, and combine with input if
-    # desired
-    aggdir = os.path.join(localdir)
-    if not os.path.exists(aggdir):
-        os.mkdir(aggdir)    
-
-    # copy/move files as soon as job is submitted, and assign it a value if we
-    # did so
-    if cp:
-        shutil.copy(db, aggdir)
-    if mv:
-        shutil.move(db, aggdir)
-    localdb = os.path.join(aggdir, os.path.basename(db))
-    localdb = localdb if os.path.exists(localdb) else None
-
-    client.connect(host, username=user, key_filename=keyfile)
-    print("connecting to {0}@{1}".format(user, host))
-
-    # get files and clean up
-    re = '*_out.h5'
-    nfiles = get_files(client, '{0}/{1}'.format(batlab_dir, run_dir), aggdir, 
-                       re)
-    if clean:
-        cleandir = '{0}/{1}'.format(batlab_dir, run_dir)
-        cmd = "rm -r {0} && rm {0}.tar.gz".format(cleandir)
-        print("Remotely executing '{0}'".format(cmd))
-        stdin, stdout, stderr = client.exec_command(cmd)
-    client.close()
-    
-    # combine files and clean up
-    files = glob.iglob(os.path.join(aggdir, re))
-    new_file = outdb if outdb is not None else \
-        os.path.join(aggdir, '{0}_out.h5'.format(run_dir))
-    stmt = "Combining {0} databases into {1}".format(
-        nfiles, new_file)
-    print(stmt)
-    tools.combine(files, new_file=new_file)
-
-    if localdb is not None and outdb is None:
-        print("Combining input and output dbs, and cleaning up output.")
-        tools.combine([localdb, new_file])    
-        os.remove(new_file)
+    os.remove(localtar)
 
 def collect(localdir, remotedir, user, host="submit-3.chtc.wisc.edu", 
             outdb='cyclopts_results.h5', clean=False, keyfile=None):

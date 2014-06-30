@@ -23,8 +23,8 @@ def test_file_gen():
     solvers = ['s1', 's2']
     subfile = 'tst.sub'
     max_time = 5
-    obs = condor.gen_files(prefix, os.path.basename(db), instids, solvers, '.', 
-                           subfile=subfile, max_time=max_time)   
+    obs = condor.gen_dag_tar(prefix, db, instids, solvers, '.', 
+                             subfile=subfile, max_time=max_time)   
     
     exp = ['0.sub', '1.sub', 'run.sh', subfile]
     exp = [os.path.join(prefix, x) for x in exp]
