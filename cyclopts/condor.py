@@ -6,6 +6,7 @@ import shutil
 import time
 import os
 import io
+import glob 
 
 try:
     import paramiko as pm
@@ -118,8 +119,7 @@ def gen_files(rundir, dbname, instids, solvers, tardir, subfile="dag.sub",
     return files
 
 def get_files(client, remotedir, localdir, re):
-    """Returns all files matching a pattern at a remote directory to a local
-    directory.
+    """Retrieves all files matching an expression on a remote site.
 
     Parameters
     ----------
@@ -148,14 +148,13 @@ def get_files(client, remotedir, localdir, re):
 
     with tarfile.open(localtar, 'r:gz') as f:
         files = f.getnames()
+        nfiles = len(files)
         f.extractall(localdir)
     
-    print("retrived {0} from tarball".format(" ".join(files)))
+    print("retrived {0} files from tarball".format(nfiles))
 
     os.remove(localtar)
-
-    # remove initial '.' entry
-    return [os.path.join(localdir, os.path.basename(name)) for name in files] 
+    return nfiles
         
 def _wait_till_found(client, path, t_sleep=5):
     """Queries a client if a an expected file exists until it does."""
@@ -352,8 +351,9 @@ def submit_dag(user, db, instids, solvers, outdb=None,
     print("connecting to {0}@{1}".format(user, host))
 
     # get files and clean up
-    files = get_files(client, '{0}/{1}'.format(batlab_dir, run_dir), aggdir, 
-                      '*_out.h5')
+    re = '*_out.h5'
+    nfiles = get_files(client, '{0}/{1}'.format(batlab_dir, run_dir), aggdir, 
+                       re)
     if clean:
         cleandir = '{0}/{1}'.format(batlab_dir, run_dir)
         cmd = "rm -r {0} && rm {0}.tar.gz".format(cleandir)
@@ -362,11 +362,11 @@ def submit_dag(user, db, instids, solvers, outdb=None,
     client.close()
     
     # combine files and clean up
+    files = glob.iglob(os.path.join(aggdir, re))
     new_file = outdb if outdb is not None else \
         os.path.join(aggdir, '{0}_out.h5'.format(run_dir))
-    files = [os.path.join(aggdir, f) for f in files]
-    stmt = "Combining the following databases into {1}: {0}".format(
-        " ".join(files), new_file)
+    stmt = "Combining {0} databases into {1}".format(
+        nfiles, new_file)
     print(stmt)
     tools.combine(files, new_file=new_file)
 
@@ -374,4 +374,32 @@ def submit_dag(user, db, instids, solvers, outdb=None,
         print("Combining input and output dbs, and cleaning up output.")
         tools.combine([localdb, new_file])    
         os.remove(new_file)
+
+def collect(user, host="submit-3.chtc.wisc.edu", outdb='cyclopts_results.h5', 
+            localdir=".", remotedir="cyclopts-runs", clean=False, keyfile=None):
+    client = pm.SSHClient()
+    client.set_missing_host_key_policy(pm.AutoAddPolicy())
+    _, keyfile = tools.ssh_test_connect(client, host, user, keyfile)
+
+    # create aggregation directory, aggregate output, and combine with input if
+    # desired
+    if not os.path.exists(localdir):
+        os.makedirs(localdir)    
         
+    client.connect(host, username=user, key_filename=keyfile)
+    print("connecting to {0}@{1}".format(user, host))
+
+    # get files and clean up
+    nfiles = get_files(client, remotedir, localdir, '*_out.h5')
+    
+    if clean:
+        cmd = "rm -r {0} && rm {0}.tar.gz".format(remotedir)
+        print("Remotely executing '{0}'".format(cmd))
+        stdin, stdout, stderr = client.exec_command(cmd)
+    client.close()
+    
+    # combine files and clean up
+    files = glob.iglob(os.path.join(aggdir, re))
+    stmt = "Combining {0} databases into {1}".format(nfiles, outdb)
+    print(stmt)
+    tools.combine(files, new_file=outdb)

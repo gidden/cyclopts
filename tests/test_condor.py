@@ -64,11 +64,9 @@ def test_get_files():
     client.connect(host, username=user, key_filename=keyfile)
     client.exec_command(cmd)
     condor._wait_till_found(client, '/'.join([remotedir, tstfiles[-1]]))
-    files = condor.get_files(client, remotedir, localdir, prefix + '*')
+    nfiles = condor.get_files(client, remotedir, localdir, prefix + '*')
     client.close()
     
-    print("files:", files)
-    assert_equal(set(files), set([os.path.join(localdir, f) for f in tstfiles]))
     assert_equal(set(os.listdir(localdir)), set(tstfiles))
     
     client.connect(host, username=user, key_filename=keyfile)
