@@ -16,7 +16,7 @@ from test_main import exp_uuid_arcs
 import nose
 from nose.tools import assert_equal, assert_true
 
-def test_file_gen():
+def test_gen_dag_tar():
     base = os.path.dirname(os.path.abspath(__file__))
     db = os.path.join(base, 'files', 'exp_instances.h5')
     prefix='tmp_{0}'.format(uuid.uuid4())
