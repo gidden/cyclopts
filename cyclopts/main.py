@@ -431,9 +431,9 @@ def main():
     combine_parser.add_argument('-o', '--outdb', 
                                 default='cyclopts_results.h5', dest='outdb', 
                                 help=outdb)
-    noclean = ("Do *not* to clean up (remove) the original files.")
-    combine_parser.add_argument('--no-clean', dest='clean', help=noclean,
-                                action='store_false', default=True)    
+    clean = ("Clean up (remove) the original files.")
+    combine_parser.add_argument('--clean', dest='clean', help=clean,
+                                action='store_true', default=False)    
                 
     
     #

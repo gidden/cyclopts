@@ -108,42 +108,6 @@ def test_exec():
 
     if os.path.exists(db):
         os.remove(db)
-
-condor_cmd = """
-cyclopts condor --db {db} --instids {instids} --solvers {solvers} \
-                --user {user} --localdir {localdir}
-"""
-
-# def test_condor():
-#     base = os.path.dirname(os.path.abspath(__file__))
-#     tstdir = os.path.join(base, 'tmp_{0}'.format(uuid.uuid4()))
-#     os.makedirs(tstdir)
-#     dbname = 'exp_instances.h5'
-
-#     db = os.path.join(base, 'files', dbname)
-#     solvers = "greedy cbc"
-#     instids = [x[0] for x in exp_uuid_arcs()[0:2]] # 2 runs
-#     user = "gidden"
-    
-#     timeout = -1 # seconds
-#     cmd = condor_cmd.format(db=db, instids=" ".join(instids), 
-#                             solvers=solvers, user=user, localdir=tstdir) 
-#     print("executing {0}".format(cmd))
-#     rtncode, out, err = tools.run(cmd.split(), timeout=timeout, shell=(os.name == 'nt'))
-#     if rtncode == -9:
-#         print("Process timed out.")
-#     if rtncode != 0:
-#         print("Error in execution.")
-#         print("Stdout: {0}".format(out))
-#         print("Stderr: {0}".format(err))
-#     assert_equal(0, rtncode)
-    
-#     h5file = t.open_file(os.path.join(tstdir, dbname), 'r')
-#     h5node = h5file.root.Instances.ExchangeInstSolutions
-#     assert_equal(h5node.nrows, len(instids) * len(solvers.split()))
-#     h5file.close()
-    
-#     shutil.rmtree(tstdir)
     
 def test_convert():
     base = os.path.dirname(os.path.abspath(__file__))
@@ -178,7 +142,7 @@ def test_combine():
         h5file.close()
 
     outdb = os.path.join(localbase, '.tmp_{0}.h5'.format(uuid.uuid4()))
-    cmd = "cyclopts combine --files {0} --outdb {1} --no-clean".format(
+    cmd = "cyclopts combine --files {0} --outdb {1}".format(
         " ".join([os.path.join(localpath, f) for f in exp_files]), outdb)
     rtn = subprocess.call(cmd.split(), shell=(os.name == 'nt'))
     assert_equal(0, rtn)
@@ -243,3 +207,53 @@ def test_collect():
 
     shutil.rmtree(tmppath)
     
+
+#
+# This was a first attempt at a test for the full condor stack. Because it takes
+# an unknown amount of time to complete, it is a good candidate for a regression
+# test, but not for unit testing. The DAG stack was tested succesfully running
+# the following commands in the cyclopts/tests/files directory:
+#
+# $ cyclopts condor-submit --rc run_rc.py --db exp_instances.h5 -d test-one-more -k dag -v
+# $ cyclopts condor-collect --outdb test-one-more_out.h5 -d test-one-more 
+# $ cyclopts combine --files exp_instances.h5 test-one-more_out.h5 -o test-one-more_combined.h5
+
+#
+# And this is a previous draft of such a regression test
+#
+
+# condor_cmd = """
+# cyclopts condor --db {db} --instids {instids} --solvers {solvers} \
+#                 --user {user} --localdir {localdir}
+# """
+
+# def test_condor():
+#     base = os.path.dirname(os.path.abspath(__file__))
+#     tstdir = os.path.join(base, 'tmp_{0}'.format(uuid.uuid4()))
+#     os.makedirs(tstdir)
+#     dbname = 'exp_instances.h5'
+
+#     db = os.path.join(base, 'files', dbname)
+#     solvers = "greedy cbc"
+#     instids = [x[0] for x in exp_uuid_arcs()[0:2]] # 2 runs
+#     user = "gidden"
+    
+#     timeout = -1 # seconds
+#     cmd = condor_cmd.format(db=db, instids=" ".join(instids), 
+#                             solvers=solvers, user=user, localdir=tstdir) 
+#     print("executing {0}".format(cmd))
+#     rtncode, out, err = tools.run(cmd.split(), timeout=timeout, shell=(os.name == 'nt'))
+#     if rtncode == -9:
+#         print("Process timed out.")
+#     if rtncode != 0:
+#         print("Error in execution.")
+#         print("Stdout: {0}".format(out))
+#         print("Stderr: {0}".format(err))
+#     assert_equal(0, rtncode)
+    
+#     h5file = t.open_file(os.path.join(tstdir, dbname), 'r')
+#     h5node = h5file.root.Instances.ExchangeInstSolutions
+#     assert_equal(h5node.nrows, len(instids) * len(solvers.split()))
+#     h5file.close()
+    
+#     shutil.rmtree(tstdir)
