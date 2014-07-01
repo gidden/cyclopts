@@ -48,14 +48,14 @@ def collect_instids(h5node=None, rc=None, instids=None):
     paramater space defined by the run control are collected.
     """
     instids = instids if instids is not None else set()
-    rc = rc if rc is not None else {}
-    instids |= set(uuid.UUID(x).bytes for x in rc['inst_ids']) \
-        if 'inst_ids' in rc.keys() else set()
+    rc = rc if rc is not None else tools.RunControl()
+    instids |= set(uuid.UUID(x).bytes for x in rc.inst_ids) \
+        if 'inst_ids' in rc else set()
     
     # inst queries are a mapping from instance table names to queryable
     # conditions, the result of which is a collection of instids that meet those
     # conditions
-    inst_queries = rc['inst_queries'] if 'inst_queries' in rc.keys() else {}
+    inst_queries = rc.inst_queries if 'inst_queries' in rc else {}
     for tbl_name, conds in inst_queries.items():
         if isinstance(conds, basestring):
             conds = [conds]
@@ -90,7 +90,7 @@ def condor_submit(args):
     h5file = t.open_file(args.db, mode='r', filters=_filters)
     instnode = h5file.root._f_get_child(_inst_grp_name)
     instids = set(uuid.UUID(x).bytes for x in args.instids)
-    rc = tools.parse_rc(args.rc) if args.rc is not None else {}
+    rc = tools.parse_rc(args.rc) if args.rc is not None else tools.RunControl()
     instids = collect_instids(h5node=instnode, rc=rc, instids=instids)
     h5file.close()
     instids = [uuid.UUID(bytes=x).hex for x in instids]
@@ -175,13 +175,13 @@ def convert(args):
 def execute(args):
     indb = args.db
     outdb = args.outdb
-    rc = tools.parse_rc(args.rc) if args.rc is not None else {}
+    rc = tools.parse_rc(args.rc) if args.rc is not None else tools.RunControl()
     conds = ": ".join(args.conds.split(':'))
     asteval = ast.literal_eval(conds)
     if isinstance(asteval, basestring):
         # some scripting workflows produce a string the first time
         asteval = ast.literal_eval(asteval) 
-    rc.update(asteval)
+    rc._update(asteval)
     solvers = args.solvers
     instids = set(uuid.UUID(x).bytes for x in args.instids)
 

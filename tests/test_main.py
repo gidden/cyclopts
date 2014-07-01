@@ -45,7 +45,7 @@ def test_instids():
     h5file = t.open_file(pth, 'r')
     h5node = h5file.root.Instances
     
-    rc = {}
+    rc = tools.RunControl()
     obs = main.collect_instids(h5node=h5node, rc=rc)
     exp = exp_uuid_arcs()
     exp = set(uuid.UUID(x[0]).bytes for x in exp)
@@ -53,7 +53,9 @@ def test_instids():
     assert_equal(exp, obs)
     
     exp_uuid_hex = exp_uuid_arcs()[0][0]
-    rc = {'inst_ids': [exp_uuid_hex]}
+    rc = tools.RunControl()
+    rc._update({'inst_ids': [exp_uuid_hex]})
+    print("rc:", rc)
     obs = main.collect_instids(h5node=h5node, rc=rc)
     exp = set([uuid.UUID(exp_uuid_hex).bytes])
     assert_equal(len(exp), len(obs))
@@ -62,7 +64,8 @@ def test_instids():
     bounds = (3, 12)
     conds = ['n_arcs > {0}'.format(bounds[0]), '&', 
              'n_arcs < {0}'.format(bounds[1])]
-    rc = {'inst_queries': {'ExchangeInstProperties': conds}}
+    rc = tools.RunControl()
+    rc._update({'inst_queries': {'ExchangeInstProperties': conds}})
     obs = main.collect_instids(h5node=h5node, rc=rc)
     exp = set(uuid.UUID(x[0]).bytes \
                   for x in exp_uuid_arcs() \

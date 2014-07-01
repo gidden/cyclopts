@@ -1,1 +1,1 @@
-{'inst_queries': {'ExchangeInstProperties': ['n_arcs == 4']}}
+inst_queries = {'ExchangeInstProperties': ['n_arcs == 4']}

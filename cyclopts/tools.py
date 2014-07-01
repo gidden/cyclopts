@@ -51,9 +51,7 @@ class RunControl(object):
 
         """
         self._dict = {}
-        print("new rc")
         for k, v in kwargs.items():
-            print("k:", k, "v:", v)
             setattr(self, k, v)
         self._updaters = {}
 
@@ -121,12 +119,6 @@ class RunControl(object):
         else:
             return NotImplemented
 
-    def update(self, other):
-        self._update(other)
-    
-    def keys(self):
-        return self._dict.keys()
-        
     def _update(self, other):
         """Updates the rc with values from another mapping.  If this rc has
         if a key is in self, other, and self._updaters, then the updaters
