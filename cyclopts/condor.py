@@ -198,7 +198,7 @@ def _gen_dag_files(prepdir, dbname, instids, solvers, remotehome, subfile="dag.s
     
     return nfiles
 
-def _submit_dag(client, remotedir, localdir, tarname, subfile="dag.sub", 
+def _submit_dag(client, remotedir, tarname, subfile="dag.sub", 
                 verbose=False):
     """Performs a condor DAG sumbission on a client using a tarball of all
     submission-related data.
@@ -209,8 +209,6 @@ def _submit_dag(client, remotedir, localdir, tarname, subfile="dag.sub",
         the client
     remotedir : str
         the run directory on the client
-    localdir : str
-        the local directory in which the tarfile is located
     tarname : str
         the name of the tarfile
     subfile : str, optional
@@ -218,8 +216,8 @@ def _submit_dag(client, remotedir, localdir, tarname, subfile="dag.sub",
     verbose : bool, optional
         whether to print information regarding the submission process    
     """
+    ffrom = tarname
     tarname = os.path.basename(tarname)
-    ffrom = os.path.join(localdir, tarname)
     fto = '{0}/{1}'.format(remotedir, tarname)
     if verbose:
         print("Copying from {0} to {1} on the condor submit node.".format(
@@ -277,13 +275,12 @@ def gen_dag_tar(rundir, db, instids, solvers, user="gidden", verbose=False):
         tar.add(db, arcname="{0}/{1}".format(rundir, os.path.basename(db)))
         for f in subfiles:
             basename = os.path.basename(f)
-            print("{0}/{1}".format(rundir, basename))
             tar.add(f, arcname="{0}/{1}".format(rundir, basename))
         for f in shfiles:
             basename = os.path.basename(f)
             tar.add(f, arcname="{0}/{1}".format(rundir, basename))
-        print(tar.getnames())
     shutil.rmtree(prepdir)
+    return tarname
 
 def submit_dag(user, db, instids, solvers, remotedir, 
                host="submit-3.chtc.wisc.edu", keyfile=None, verbose=False):
@@ -301,8 +298,8 @@ def submit_dag(user, db, instids, solvers, remotedir,
     solvers : list
         the solvers to use
     remotedir : str
-        the base run directory on the condor submit node, relative to the 
-        user's home directory
+        the base run directory on the condor submit node, relative to 
+        ~/cyclopts-runs
     host : str, optional
         the condor submit host
     keyfile : str, optional
@@ -314,12 +311,15 @@ def submit_dag(user, db, instids, solvers, remotedir,
     client.set_missing_host_key_policy(pm.AutoAddPolicy())
     _, keyfile = tools.ssh_test_connect(client, host, user, keyfile, auth=True)
 
-    localtar = gen_dag_tar(rundir, db, instids, solvers, user, verbose=verbose)
+    localtar = gen_dag_tar(remotedir, db, instids, solvers, user, 
+                           verbose=verbose)
 
     if verbose:
         print("connecting to {0}@{1}".format(user, host))
     client.connect(host, username=user, key_filename=keyfile)
-    pid = _submit_dag(client, remotedir, localdir, localtar)
+    
+    pid = _submit_dag(client, tools.cyclopts_remote_run_dir, localtar, 
+                      verbose=verbose)
     client.close()
     if verbose:
         print("Submitted job in {0}@{1}:~/{2} with pid: {3}".format(

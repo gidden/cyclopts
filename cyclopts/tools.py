@@ -24,6 +24,8 @@ import cyclopts
 from cyclopts.params import CONSTR_ARGS, Param, BoolParam, SupConstrParam, CoeffParam, \
     ReactorRequestSampler, ReactorRequestBuilder #, ReactorSupplySampler
 
+cyclopts_remote_run_dir = 'cyclopts-runs'
+
 class NotSpecified(object):
     """A helper class singleton for run control meaning that a 'real' value
     has not been given."""

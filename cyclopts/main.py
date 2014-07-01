@@ -96,20 +96,21 @@ def condor_submit(args):
     instids = [uuid.UUID(bytes=x).hex for x in instids]
 
     # submit job
-    if args.type == 'dag':
+    if args.kind == 'dag':
         condor.submit_dag(args.user, args.db, instids, args.solvers,
                           host=args.host, remotedir=args.remotedir, 
                           keyfile=args.keyfile, verbose=args.verbose)
-    elif args.type == 'queue':
+    elif args.kind == 'queue':
         condor.submit_worker_queue(args.user, args.db, instids, args.solvers, 
                                    host=args.host, remotedir=args.remotedir, 
                                    keyfile=args.keyfile, verbose=args.verbose)
         
 
 def condor_collect(args):
+    remotedir = '/'.join([tools.cyclopts_remote_run_dir, args.remotedir])
     print("Collecting the results of a condor run from {0} at {1}@{2}".format(
-            args.remotedir, args.user, args.host))
-    condor.collect(args.localdir, args.remotedir, args.user, 
+            remotedir, args.user, args.host))
+    condor.collect(args.localdir, remotedir, args.user, 
                    host=args.host, outdb=args.outdb,                 
                    clean=args.clean, keyfile=args.keyfile)
 
@@ -360,13 +361,13 @@ def main():
     timestamp = "_".join([str(t) for t in datetime.now().timetuple()][:-3])
     submit_parser.add_argument(
         '-d', '--remotedir', dest='remotedir', help=remotedir, 
-        default='/'.join(['cyclopts-runs', 'run_{0}'.format(timestamp)]))      
+        default='run_{0}'.format(timestamp))      
     kind = ("The kind of condor submission to use.")
     submit_parser.add_argument('-k', '--kind', choices=['dag', 'queue'], 
                                default='dag', help=kind)
     verbose = ("Print output during the submisison process.")
     submit_parser.add_argument('-v', '--verbose', dest='verbose', 
-                               action='store_false', default=False, help=verbose)
+                               action='store_true', default=False, help=verbose)
 
 
     #
@@ -392,7 +393,7 @@ def main():
     remotedir = ("The remote directory (relative to the user's home directory)"
                  " in which output files from a run are located.")
     collect_parser.add_argument('-d', '--remotedir', dest='remotedir', 
-                                help=remotedir, default='cyclopts-runs')      
+                                help=remotedir)      
     nocleanh = ("Do *not* clean up the submit node after.")
     collect_parser.add_argument('--no-clean', dest='clean', help=nocleanh,
                                 action='store_false', default=True)    
