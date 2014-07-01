@@ -90,7 +90,8 @@ def condor_submit(args):
     h5file = t.open_file(args.db, mode='r', filters=_filters)
     instnode = h5file.root._f_get_child(_inst_grp_name)
     instids = set(uuid.UUID(x).bytes for x in args.instids)
-    instids = collect_instids(h5node=instnode, rc=args.rc, instids=instids)
+    rc = tools.parse_rc(args.rc) if args.rc is not None else {}
+    instids = collect_instids(h5node=instnode, rc=rc, instids=instids)
     h5file.close()
     instids = [uuid.UUID(bytes=x).hex for x in instids]
 
@@ -174,7 +175,7 @@ def convert(args):
 def execute(args):
     indb = args.db
     outdb = args.outdb
-    rc = parse_rc(args.rc) if args.rc is not None else {}
+    rc = tools.parse_rc(args.rc) if args.rc is not None else {}
     conds = ": ".join(args.conds.split(':'))
     asteval = ast.literal_eval(conds)
     if isinstance(asteval, basestring):
@@ -241,10 +242,6 @@ def execute(args):
     if h5out is not None:
         h5out.close()
 
-cde_cmd = """
-cde cyclopts exec --db {db} --solvers cbc greedy clp
-"""
-
 def update_cde(args):
     user = args.user
     host = args.host
@@ -253,7 +250,8 @@ def update_cde(args):
 
     db = '.tmp.h5'
     shutil.copy(os.path.join('tests', 'files', 'exp_instances.h5'), db)    
-    cmd = cde_cmd.format(db=db)
+    cmd = "cde cyclopts exec --db {db} --solvers cbc greedy clp"
+    cmd = cmd.format(db=db)
     subprocess.call(cmd.split(), shell=(os.name == 'nt'))
 
     pkgdir = 'cde-package'
