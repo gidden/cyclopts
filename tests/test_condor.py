@@ -5,6 +5,7 @@ import os
 import shutil
 import paramiko as pm
 import warnings
+import tarfile
 
 from cyclopts import condor
 from cyclopts import main
@@ -18,26 +19,28 @@ from nose.tools import assert_equal, assert_true
 def test_file_gen():
     base = os.path.dirname(os.path.abspath(__file__))
     db = os.path.join(base, 'files', 'exp_instances.h5')
-    prefix=os.path.join(base, 'tmp_{0}'.format(uuid.uuid4()))
+    prefix='tmp_{0}'.format(uuid.uuid4())
     instids = [x[0] for x in exp_uuid_arcs()[:2]] # 2 ids
     solvers = ['s1', 's2']
-    subfile = 'tst.sub'
-    max_time = 5
-    obs = condor.gen_dag_tar(prefix, db, instids, solvers, '.', 
-                             subfile=subfile, max_time=max_time)   
     
-    exp = ['0.sub', '1.sub', 'run.sh', subfile]
-    exp = [os.path.join(prefix, x) for x in exp]
-    assert_equal(set(exp), set(obs))
- 
-    obs = os.listdir(prefix)
-    assert_equal(len(exp), len(obs))
-    for f in exp:
-        assert_true(os.path.basename(f) in obs)
-
+    condor.gen_dag_tar(prefix, db, instids, solvers)   
+    
     if os.path.exists(prefix):
         shutil.rmtree(prefix)    
 
+    exp = ['0.sub', '1.sub', 'run.sh', 'dag.sub', 'exp_instances.h5']
+    tarname = '{0}.tar.gz'.format(prefix)
+    obs = [] 
+    with tarfile.open(tarname, 'r:gz') as tar:
+        for f in tar.getnames():
+            s = f.split('/')
+            assert_equal(len(s), 2)
+            assert_equal(s[0], prefix)
+            obs += [s[1]]
+    assert_equal(len(exp), len(obs))
+    assert_equal(set(exp), set(obs))
+    os.remove(tarname)
+    
 def test_get_files():
     user = 'gidden'
     host = 'submit-3.chtc.wisc.edu'

@@ -9,7 +9,7 @@ import numpy as np
 from collections import defaultdict
 import itertools
 import uuid
-import datetime
+from datetime import datetime
 import subprocess
 import tarfile
 import os
@@ -233,7 +233,7 @@ def execute(args):
             row["objective"] = soln.objective
             row["cyclus_version"] = soln.cyclus_version
             row["cyclopts_version"] = cyclopts.__version__
-            row["timestamp"] = datetime.datetime.now().isoformat(' ')
+            row["timestamp"] = datetime.now().isoformat(' ')
             row.append()
             tbl.flush()        
     

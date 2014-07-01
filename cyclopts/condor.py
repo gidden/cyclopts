@@ -38,11 +38,10 @@ arguments = "'{id}_out.h5' '{instids}'"
 output = {id}.out
 error = {id}.err
 log = {id}.log
-requirements = (OpSysAndVer =?= "SL6") && Arch == "X86_64"
-# && ( ForGidden == true )
+requirements = (OpSysAndVer =?= "SL6") && Arch == "X86_64" && ( ForGidden == true )
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
-transfer_input_files = {tardir}/cde-cyclopts.tar.gz, {tardir}/CDE.tar.gz, {db}
+transfer_input_files = {homedir}/cde-cyclopts.tar.gz, {homedir}/CDE.tar.gz, {db}
 request_cpus = 1
 #request_memory = 2500
 #request_disk = 10242880
@@ -78,41 +77,6 @@ condor_submit_dag -maxidle 1000 {submit};
 tar_output_cmd = """
 cd {remotedir} && ls -l && tar -czf {tardir}.tar.gz {re}
 """
-
-def _gen_dag_files(prepdir, dbname, instids, solvers, tardir, subfile="dag.sub", 
-                   max_time=None):
-    """Generates all files needed to run a DAGMan instance of the given input
-    database.
-    """    
-    print("generating files for {0} runs".format(len(instids)))
-
-    # dag submit files
-    max_time_line = ("\nperiodic_hold = (JobStatus == 2) && "
-                     "((CurrentTime - EnteredCurrentStatus) > "
-                     "({0}))").format(max_time) if max_time is not None \
-                     else ""
-    dag_lines = ""
-    nfiles = len(instids)
-    for i in range(len(instids)):
-        subname = os.path.join(prepdir, "{0}.sub".format(i))
-        with io.open(subname, 'w') as f:
-            sublines = sub_template.format(id=i, instids=instids[i], db=dbname,
-                                           tardir=tardir)
-            sublines += max_time_line + '\nqueue'
-            f.write(sublines)
-        dag_lines += dag_job_template.format(i) + '\n'
-    dagfile = os.path.join(prepdir, subfile)
-    nfiles += 1
-    with io.open(dagfile, 'w') as f:
-        f.write(dag_lines)
-        
-    # run script
-    runfile = os.path.join(prepdir, "run.sh")
-    nfiles += 1 
-    with io.open(runfile, 'w') as f:
-        f.write(run_template.format(db=dbname, solvers=" ".join(solvers)))
-    
-    return nfiles
 
 def get_files(client, remotedir, localdir, re):
     """Retrieves all files matching an expression on a remote site.
@@ -194,6 +158,46 @@ def _check_finish(client, pid):
         done = True
     return done
 
+def submit_work_queue(user, db, instids, solvers, remotedir, 
+                      host="submit-3.chtc.wisc.edu", keyfile=None):
+    pass
+
+def _gen_dag_files(prepdir, dbname, instids, solvers, remotehome, subfile="dag.sub", 
+                   max_time=None, verbose=False):
+    """Generates all files needed to run a DAGMan instance of the given input
+    database.
+    """    
+    if verbose:
+        print("generating files for {0} runs".format(len(instids)))
+
+    # dag submit files
+    max_time_line = ("\nperiodic_hold = (JobStatus == 2) && "
+                     "((CurrentTime - EnteredCurrentStatus) > "
+                     "({0}))").format(max_time) if max_time is not None \
+                     else ""
+    dag_lines = ""
+    nfiles = len(instids)
+    for i in range(len(instids)):
+        subname = os.path.join(prepdir, "{0}.sub".format(i))
+        with io.open(subname, 'w') as f:
+            sublines = sub_template.format(id=i, instids=instids[i], db=dbname,
+                                           homedir=remotehome)
+            sublines += max_time_line + '\nqueue'
+            f.write(sublines)
+        dag_lines += dag_job_template.format(i) + '\n'
+    dagfile = os.path.join(prepdir, subfile)
+    nfiles += 1
+    with io.open(dagfile, 'w') as f:
+        f.write(dag_lines)
+        
+    # run script
+    runfile = os.path.join(prepdir, "run.sh")
+    nfiles += 1 
+    with io.open(runfile, 'w') as f:
+        f.write(run_template.format(db=dbname, solvers=" ".join(solvers)))
+    
+    return nfiles
+
 def _submit_dag(client, remotedir, localdir, tarname, subfile="dag.sub", 
                 verbose=False):
     """Performs a condor DAG sumbission on a client using a tarball of all
@@ -249,11 +253,7 @@ def _submit_dag(client, remotedir, localdir, tarname, subfile="dag.sub",
 
     return pid
 
-def submit_work_queue(user, db, instids, solvers, remotedir, 
-                      host="submit-3.chtc.wisc.edu", keyfile=None):
-    pass
-
-def gen_dag_tar(rundir, db, instids, solvers, user, verbose=False):
+def gen_dag_tar(rundir, db, instids, solvers, user="gidden", verbose=False):
     prepdir = os.path.join('.tmp_', rundir)
     if not os.path.exists(prepdir):
         os.makedirs(prepdir)
@@ -261,10 +261,10 @@ def gen_dag_tar(rundir, db, instids, solvers, user, verbose=False):
         raise IOError("File preparation directory {0} already exists".format(
                 prepdir))
 
-    max_time = 60 * 60 * 5 # 5 hours    
+    max_time = 60 * 60 * 5 # 5 hours
+    remotehome = batlab_base_dir_template.format(user=user)
     nfiles = _gen_dag_files(prepdir, os.path.basename(db), instids, solvers, 
-                            batlab_base_dir_template.format(user=user), 
-                            max_time=max_time)
+                            remotehome, max_time=max_time, verbose=verbose)
     
     subfiles = glob.iglob(os.path.join(prepdir, '*.sub'))
     shfiles = glob.iglob(os.path.join(prepdir, '*.sh'))
@@ -277,11 +277,12 @@ def gen_dag_tar(rundir, db, instids, solvers, user, verbose=False):
         tar.add(db, arcname="{0}/{1}".format(rundir, os.path.basename(db)))
         for f in subfiles:
             basename = os.path.basename(f)
+            print("{0}/{1}".format(rundir, basename))
             tar.add(f, arcname="{0}/{1}".format(rundir, basename))
         for f in shfiles:
             basename = os.path.basename(f)
             tar.add(f, arcname="{0}/{1}".format(rundir, basename))
-
+        print(tar.getnames())
     shutil.rmtree(prepdir)
 
 def submit_dag(user, db, instids, solvers, remotedir, 
