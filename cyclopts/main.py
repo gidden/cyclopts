@@ -356,8 +356,8 @@ def main():
     keyfile = ("An ssh public key file.")
     submit_parser.add_argument('--keyfile', dest='keyfile', help=keyfile, 
                                default=None)    
-    remotedir = ("The remote directory (relative to the user's home directory)"
-                 " in which to run cyclopts jobs.")
+    remotedir = ("The remote directory (relative to ~/cyclopts-runs)"
+                 " on the submit node in which to run cyclopts jobs.")
     timestamp = "_".join([str(t) for t in datetime.now().timetuple()][:-3])
     submit_parser.add_argument(
         '-d', '--remotedir', dest='remotedir', help=remotedir, 
