@@ -67,6 +67,7 @@ def test_get_files():
     client.connect(host, username=user, key_filename=keyfile)
     client.exec_command(cmd)
     condor._wait_till_found(client, '/'.join([remotedir, tstfiles[-1]]))
+    print("getting", remotedir)
     nfiles = condor.get_files(client, remotedir, localdir, prefix + '*')
     client.close()
     

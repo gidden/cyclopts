@@ -207,7 +207,8 @@ def test_collect():
 
     remotebase = condor.batlab_base_dir_template.format(user=user)
     remotedir = '.tmp_{0}'.format(uuid.uuid4()) 
-    remotepath = '/'.join([remotebase, remotedir])
+    remotepath = '/'.join([remotebase, tools.cyclopts_remote_run_dir, 
+                           remotedir])
     
     client = pm.SSHClient()
     client.set_missing_host_key_policy(pm.AutoAddPolicy())
@@ -219,6 +220,7 @@ def test_collect():
 
     client.connect(host, username=user, key_filename=keyfile)
     ftp = client.open_sftp()
+    print("making remote directory", remotepath)
     ftp.mkdir(remotepath)
     for f in os.listdir(localpath):
         ftp.put(os.path.join(localpath, f), '/'.join([remotepath, f]))
@@ -227,7 +229,7 @@ def test_collect():
     tmppath = os.path.join(localbase, '.tmp_{0}'.format(uuid.uuid4()))
     outdb = os.path.join(tmppath, 'test_collect_out.h5')
     cmd = "cyclopts condor-collect -l {0} -d {1} --outdb {2}".format(
-        tmppath, remotepath, outdb)
+        tmppath, remotedir, outdb)
     rtn = subprocess.call(cmd.split(), shell=(os.name == 'nt'))
     assert_equal(0, rtn)
     cmd = "rm -rf {0}".format(remotepath)
