@@ -252,13 +252,13 @@ def _submit_dag(client, remotedir, tarname, subfile="dag.sub",
     return pid
 
 def gen_dag_tar(rundir, db, instids, solvers, user="gidden", verbose=False):
-    prepdir = os.path.join('.tmp_', rundir)
+    prepdir = '.tmp_{0}'.format(rundir)
     if not os.path.exists(prepdir):
         os.makedirs(prepdir)
     else:
         raise IOError("File preparation directory {0} already exists".format(
                 prepdir))
-
+    print(prepdir)
     max_time = 60 * 60 * 5 # 5 hours
     remotehome = batlab_base_dir_template.format(user=user)
     nfiles = _gen_dag_files(prepdir, os.path.basename(db), instids, solvers, 
