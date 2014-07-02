@@ -113,15 +113,15 @@ def mv_input(indb, path, nodes):
     for node in nodes:
         conds = 'machine=="{0}.chtc.wisc.edu"'.format(node)
         sublines = mv_sub.format(indb=indb, node=node, conds=conds)
-        with io.open('mv.sub', 'w') as f:
+        subfile = 'mv_{0}.sub'.format(node)
+        with io.open(subfile, 'w') as f:
             f.write(sublines)
             
-        cmd = 'condor_submit {0}'.format('mv.sub')
+        cmd = 'condor_submit {0}'.format(subfile)
         print "executing cmd for node {1}: {0}".format(cmd, node)
         p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, shell=(os.name == 'nt'))
         pids.append(p.stdout.readlines()[1].split('cluster')[1].split('.')[0].strip())
         
-        os.remove('mv.sub')
     return pids
 
 def rm_input(indb, path, nodes):
@@ -133,15 +133,15 @@ def rm_input(indb, path, nodes):
     for node in nodes:
         conds = 'machine=="{0}.chtc.wisc.edu"'.format(node)
         sublines = rm_sub.format(indb=indb, node=node, conds=conds)
-        with io.open('rm.sub', 'w') as f:
+        subfile = 'rm_{0}.sub'.format(node)
+        with io.open(subfile, 'w') as f:
             f.write(sublines)
             
-        cmd = 'condor_submit {0}'.format('rm.sub')
+        cmd = 'condor_submit {0}'.format(subfile)
         print "executing cmd for node {1}: {0}".format(cmd, node)
         p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, shell=(os.name == 'nt'))
         pids.append(p.stdout.readlines()[1].split('cluster')[1].split('.')[0].strip())
         
-        os.remove('rm.sub')
     return pids
 
 def wait_till_done(pids, timeout=5):
