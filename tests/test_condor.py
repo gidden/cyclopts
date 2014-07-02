@@ -25,7 +25,7 @@ def test_gen_dag_tar():
     instids = [x[0] for x in exp_uuid_arcs()[:2]] # 2 ids
     solvers = ['s1', 's2']
     
-    dag.gen_dag_tar(prefix, db, instids, solvers)   
+    dag.gen_tar(prefix, db, instids, solvers)   
     
     if os.path.exists(prefix):
         shutil.rmtree(prefix)    

@@ -11,7 +11,7 @@ import uuid
 from cyclopts import tools
 from cyclopts.condor.utils import _wait_till_found, batlab_base_dir_template
 
-dag_job_template = u"""JOB J_{0} {0}.sub"""
+job_template = u"""JOB J_{0} {0}.sub"""
 
 # This submission file template includes a condor execute node requirement
 # called ForGidden. This requirement is used to target nonhyperthreaded cores in
@@ -59,10 +59,10 @@ ls -l
 submit_cmd = """
 mkdir -p {remotedir} && cd {remotedir} &&
 tar -xf {tarfile} && cd {cddir} && 
-condor_submit_dag -maxidle 1000 {submit};
+condor_submit -maxidle 1000 {submit};
 """
 
-def _gen_dag_files(prepdir, dbname, instids, solvers, remotehome, subfile="dag.sub", 
+def _gen_files(prepdir, dbname, instids, solvers, remotehome, subfile="dag.sub", 
                    max_time=None, verbose=False):
     """Generates all files needed to run a DAGMan instance of the given input
     database.
@@ -75,7 +75,7 @@ def _gen_dag_files(prepdir, dbname, instids, solvers, remotehome, subfile="dag.s
                      "((CurrentTime - EnteredCurrentStatus) > "
                      "({0}))").format(max_time) if max_time is not None \
                      else ""
-    dag_lines = ""
+    lines = ""
     nfiles = len(instids)
     for i in range(len(instids)):
         subname = os.path.join(prepdir, "{0}.sub".format(i))
@@ -84,11 +84,11 @@ def _gen_dag_files(prepdir, dbname, instids, solvers, remotehome, subfile="dag.s
                                            homedir=remotehome)
             sublines += max_time_line + '\nqueue'
             f.write(sublines)
-        dag_lines += dag_job_template.format(i) + '\n'
+        lines += job_template.format(i) + '\n'
     dagfile = os.path.join(prepdir, subfile)
     nfiles += 1
     with io.open(dagfile, 'w') as f:
-        f.write(dag_lines)
+        f.write(lines)
         
     # run script
     runfile = os.path.join(prepdir, "run.sh")
@@ -98,7 +98,7 @@ def _gen_dag_files(prepdir, dbname, instids, solvers, remotehome, subfile="dag.s
     
     return nfiles
 
-def _submit_dag(client, remotedir, tarname, subfile="dag.sub", 
+def _submit(client, remotedir, tarname, subfile="dag.sub", 
                 verbose=False):
     """Performs a condor DAG sumbission on a client using a tarball of all
     submission-related data.
@@ -151,7 +151,7 @@ def _submit_dag(client, remotedir, tarname, subfile="dag.sub",
 
     return pid
 
-def gen_dag_tar(rundir, db, instids, solvers, user="gidden", verbose=False):
+def gen_tar(rundir, db, instids, solvers, user="gidden", verbose=False):
     prepdir = '.tmp_{0}'.format(rundir)
     if not os.path.exists(prepdir):
         os.makedirs(prepdir)
@@ -161,7 +161,7 @@ def gen_dag_tar(rundir, db, instids, solvers, user="gidden", verbose=False):
     print(prepdir)
     max_time = 60 * 60 * 5 # 5 hours
     remotehome = batlab_base_dir_template.format(user=user)
-    nfiles = _gen_dag_files(prepdir, os.path.basename(db), instids, solvers, 
+    nfiles = _gen_files(prepdir, os.path.basename(db), instids, solvers, 
                             remotehome, max_time=max_time, verbose=verbose)
     
     subfiles = glob.iglob(os.path.join(prepdir, '*.sub'))
@@ -182,7 +182,7 @@ def gen_dag_tar(rundir, db, instids, solvers, user="gidden", verbose=False):
     shutil.rmtree(prepdir)
     return tarname
 
-def submit_dag(user, db, instids, solvers, remotedir, 
+def submit(user, db, instids, solvers, remotedir, 
                host="submit-3.chtc.wisc.edu", keyfile=None, verbose=False):
     """Connects via SSH to a condor submit node, and executes a Cyclopts DAG
     run.
@@ -211,14 +211,14 @@ def submit_dag(user, db, instids, solvers, remotedir,
     client.set_missing_host_key_policy(pm.AutoAddPolicy())
     _, keyfile = tools.ssh_test_connect(client, host, user, keyfile, auth=True)
 
-    localtar = gen_dag_tar(remotedir, db, instids, solvers, user, 
+    localtar = gen_tar(remotedir, db, instids, solvers, user, 
                            verbose=verbose)
 
     if verbose:
         print("connecting to {0}@{1}".format(user, host))
     client.connect(host, username=user, key_filename=keyfile)
     
-    pid = _submit_dag(client, tools.cyclopts_remote_run_dir, localtar, 
+    pid = _submit(client, tools.cyclopts_remote_run_dir, localtar, 
                       verbose=verbose)
     client.close()
     if verbose:
