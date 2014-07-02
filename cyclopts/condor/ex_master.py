@@ -5,9 +5,47 @@ import os
 import sys
 import subprocess
 import work_queue as wq
+import io
+import time
+
+mv_sh = u"""#!/bin/bash
+mv $1 {loc}
+ls -l {loc} > tmp.out
+"""
+
+mv_sub = u"""universe = vanilla
+executable = mv.sh
+arguments = {indb}
+output = mv_{node}.out
+error = mv_{node}.err
+log = mv_{node}.log
+requirements = {conds}
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+request_cpus = 1
+transfer_input_files = {indb}
+notification = never
+queue
+"""
+
+rm_sh = u"""#!/bin/bash
+rm {loc}/$1
+ls -l {loc}
+"""
+
+rm_sub = u"""universe = vanilla
+executable = rm.sh
+arguments = {indb}
+output = rm_{node}.out
+error = rm_{node}.err
+log = rm_{node}.log
+requirements = {conds}
+request_cpus = 1
+notification = never
+queue
+"""
 
 def running_workers(user):
-    inuse = []
     cmd = "condor_q {user} -run".format(user=user)
     print "executing cmd: {0}".format(cmd)
     p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, shell=(os.name == 'nt'))
@@ -27,7 +65,9 @@ def idled_workers(user):
         print "executing cmd: {0}".format(cmd)
         p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, shell=(os.name == 'nt'))
         req_line = [line for line in p.stdout.readlines() if line.startswith('Requirements')][0]
-        inuse.append(req_line.split('machine == "')[1].split('.chtc.wisc.edu')[0])
+        s = req_line.split('machine == "')
+        if len(s) > 1:
+            inuse.append(s[1].split('.chtc.wisc.edu')[0])
     return inuse
 
 def ncores(node):
@@ -38,31 +78,96 @@ def ncores(node):
     slots = [line for line in p.stdout.readlines() if line.startswith('slot') and '_' in line.split()[0].split('@')[0]]
     return len(slots)
 
-def start_workers(user, port, exec_nodes, n_tasks = 1, n_leave_open = 0):
+def open_cores(user, exec_nodes, n_leave_open=0):
     current_workers = running_workers(user) + idled_workers(user)
     current_workers = dict((node, current_workers.count(node)) for node in exec_nodes) 
-
     open_cores = dict((node, max(ncores(node) - current_workers[node] - n_leave_open, 0)) for node in exec_nodes)
+    return open_cores
+
+def assign_workers(open_cores, n_tasks=1):
+    workers = dict((node, 0) for node, _ in open_cores.items())
     all_cores = sum([n for _, n in open_cores.items()])
-
-    worker_cmd = """condor_submit_workers -r {conds} {machine}.chtc.wisc.edu {port} {n}"""
-    n_started = 0
-    print("Starting {0} workers.".format(min(n_tasks, all_cores)))
-    while n_started != n_tasks and n_started != all_cores:
+    n_assigned = 0
+    while n_assigned != n_tasks and n_assigned != all_cores:
         node = max(open_cores.iteritems(), key=operator.itemgetter(1))[0]
-        conds = '(ForGidden==true&&machine=="{0}.chtc.wisc.edu")'.format(node)
-        cmd = worker_cmd.format(conds=conds, machine='submit-3', port=port, n=1)
-        print "executing cmd: {0}".format(cmd)
-        subprocess.call(cmd.split(), shell=(os.name == 'nt'))
-        n_started += 1
+        n_assigned += 1
+        workers[node] += 1
         open_cores[node] -= 1
+    return dict((node, n) for node, n in workers.items() if n > 0)
+    
+def start_workers(worker_nodes, port):
+    worker_cmd = """condor_submit_workers -r {conds} {machine}.chtc.wisc.edu {port} {n}"""
+    print("Starting {0} workers.".format(sum(n for _, n in worker_nodes.items())))
+    for node, n in worker_nodes.items():
+        conds = '(ForGidden==true&&machine=="{0}.chtc.wisc.edu")'.format(node)
+        cmd = worker_cmd.format(conds=conds, machine='submit-3', port=port, n=n)
+        print "executing cmd: {0}".format(cmd)
+        subprocess.call(cmd.split(), shell=(os.name == 'nt'))        
 
-def start_queue(q, uuids, runfile):
-    exec_cmd = """./{runfile} {outdb} {uuid}"""
-    cmds = [exec_cmd.format(runfile=runfile, uuid=uuids[i], outdb='{0}_out.h5'.format(i)) for i in range(len(uuids))]
+def mv_input(indb, path, nodes):
+    pids = []
+    shlines = mv_sh.format(loc=path)
+    with io.open('mv.sh', 'w') as f:
+        f.write(shlines)
+    
+    for node in nodes:
+        conds = 'machine=="{0}.chtc.wisc.edu"'.format(node)
+        sublines = mv_sub.format(indb=indb, node=node, conds=conds)
+        with io.open('mv.sub', 'w') as f:
+            f.write(sublines)
+            
+        cmd = 'condor_submit {0}'.format('mv.sub')
+        print "executing cmd for node {1}: {0}".format(cmd, node)
+        p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, shell=(os.name == 'nt'))
+        pids.append(p.stdout.readlines()[1].split('cluster')[1].split('.')[0].strip())
+        
+        os.remove('mv.sub')
+    return pids
+
+def rm_input(indb, path, nodes):
+    pids = []
+    shlines = rm_sh.format(loc=path)
+    with io.open('rm.sh', 'w') as f:
+        f.write(shlines)
+    
+    for node in nodes:
+        conds = 'machine=="{0}.chtc.wisc.edu"'.format(node)
+        sublines = rm_sub.format(indb=indb, node=node, conds=conds)
+        with io.open('rm.sub', 'w') as f:
+            f.write(sublines)
+            
+        cmd = 'condor_submit {0}'.format('rm.sub')
+        print "executing cmd for node {1}: {0}".format(cmd, node)
+        p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, shell=(os.name == 'nt'))
+        pids.append(p.stdout.readlines()[1].split('cluster')[1].split('.')[0].strip())
+        
+        os.remove('rm.sub')
+    return pids
+
+def wait_till_done(pids, timeout=5):
+    done = False
+    while not done:
+        cmd = 'condor_q {0}'.format(" ".join(pids))
+        print "executing cmd: {0}".format(cmd)
+        p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, shell=(os.name == 'nt'))
+        out = p.stdout.readlines()
+        if not out[-1].strip().startswith('ID'):
+            waiting = [x.split()[0] for x in out if \
+                           len(x.split()) > 0 and x.split()[0].split('.')[0].isdigit()]
+            print("Still waiting on jobs: {0}").format(" ".join(waiting))
+            time.sleep(timeout)
+        else:
+            done = True
+    print("All jobs are done")
+
+def start_queue(q, uuids, indbpath, bring_files):
+    runfile = bring_files['run_file']
+    
+    exec_cmd = """./{runfile} {outdb} {uuid} {path}"""
+    cmds = [exec_cmd.format(runfile=runfile, path=indbpath, uuid=uuids[i], outdb='{0}_out.h5'.format(i)) for i in range(len(uuids))]
     
     takefiles = ['{0}_out.h5'.format(i) for i in range(len(uuids))]
-    bringfiles = ['../cde-cyclopts.tar.gz', '../CDE.tar.gz', 'instances.h5', runfile]
+    bringfiles = ['/home/gidden/cde-cyclopts.tar.gz', '/home/gidden/CDE.tar.gz'] + [f for _, f in bring_files.iteritems()]
 
     q.specify_log('wq_log')
     for cmd in cmds:
@@ -82,22 +187,44 @@ def finish_queue(q):
       print "waiting on tasks, number: {0}".format(q.stats.tasks_waiting)
       print "active workers: {0}".format(q.stats.total_workers_joined)
       if t:
-          print "task (id# %d) complete: %s (return code %d)" % (t.id, t.command, t.return_status)
+          print "task (id# %d) on host %s complete: %s (return code %d)" % (t.id, t.hostname, t.command, t.return_status)
           if t.return_status != 0:
-            print "task failed: {0}, host: {1}".format(t.result, t.hostname)      
+            print "task failed: {0}".format(t.result)      
     print "all tasks complete!"
 
 def main():
     port = 5422
     user = 'gidden'
+    indb = 'instances.h5'
+    indbpath = '../..' # relative to the landing point on the exec node
     exec_nodes = ['e121', 'e122', 'e123', 'e124', 'e125', 'e126']
-    run_file = 'run.sh'
-    all_uuids = ['a45c9977384b40eabfa8fb100bafa7a3', '38f60ce3843743cea713846da9381b22']
+    bring_files = {
+        'run_file': 'test-run.sh',
+        }
+    all_uuids = ['a45c9977384b40eabfa8fb100bafa7a3', '38f60ce3843743cea713846da9381b22']    
 
+    # get workers to launch    
+    cores = open_cores(user, exec_nodes)
+    workers = assign_workers(cores, n_tasks=1)
+
+    # set up nodes with input
+    pids = mv_input(indb, indbpath, workers.keys())
+    timeout = 5*60 # 5 minutes
+    wait_till_done(pids, timeout=timeout)
+    
+    # launch workers    
+    start_workers(workers, port)
+    
+    # launch q
+    print("Starting work queue master on port {0}".format(port))
     q = wq.WorkQueue(port)
-    #start_queue(q, all_uuids, run_file)
-    start_workers(user, port, exec_nodes, n_tasks=17)
-    #finish_queue(q)
+    start_queue(q, all_uuids, indbpath, bring_files)
+    finish_queue(q)
 
+    # tear down nodes with input    
+    pids = rm_input(indb, indbpath, workers.keys())
+    
+    
+    
 if __name__ == '__main__':
     main()
