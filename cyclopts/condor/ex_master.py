@@ -11,8 +11,7 @@ exec_cmd = """./{runfile} {outdb} {uuid}"""
 
 uuids = ['a45c9977384b40eabfa8fb100bafa7a3', '38f60ce3843743cea713846da9381b22']
 
-#exec_nodes = ['e121', 'e122', 'e123', 'e124', 'e125', 'e126']
-exec_nodes = ['e121', 'e121', 'e126', 'e126']
+exec_nodes = ['e121', 'e122', 'e123', 'e124', 'e125', 'e126']
 
 worker_cmd = """condor_submit_workers -r {conds} {machine}.chtc.wisc.edu {port} {n}"""
 
@@ -39,6 +38,14 @@ def idled_workers(user):
         req_line = [line for line in p.stdout.readlines() if line.startswith('Requirements')][0]
         inuse.append(req_line.split('machine == "')[1].split('.chtc.wisc.edu')[0])
     return inuse
+
+def ncores(node):
+    conds = 'machine=="{0}.chtc.wisc.edu"'.format(node)
+    cmd = "condor_status -constraint {conds}".format(conds=conds)
+    print "executing cmd: {0}".format(cmd)
+    p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, shell=(os.name == 'nt'))
+    slots = [line for line in p.stdout.readlines() if line.startswith('slot') and '_' in line.split()[0].split('@')[0]]
+    return len(slots)
 
 def start_workers(user, port):
     
@@ -93,10 +100,8 @@ def main():
     #start_queue(q)
     #start_workers(user, port)
     #finish_queue(q)
-    running = running_workers(user)
-    idled = idled_workers(user)
-    print "running", running
-    print "idled", idled
+    for node in exec_nodes:
+        print ncores(node)
 
 if __name__ == '__main__':
     main()
