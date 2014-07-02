@@ -6,10 +6,6 @@ import sys
 import subprocess
 import work_queue as wq
 
-exec_cmd = """./{runfile} {outdb} {uuid}"""
-
-worker_cmd = """condor_submit_workers -r {conds} {machine}.chtc.wisc.edu {port} {n}"""
-
 def running_workers(user):
     inuse = []
     cmd = "condor_q {user} -run".format(user=user)
@@ -49,6 +45,7 @@ def start_workers(user, port, exec_nodes, n_tasks = 1, n_leave_open = 0):
     open_cores = dict((node, max(ncores(node) - current_workers[node] - n_leave_open, 0)) for node in exec_nodes)
     all_cores = sum([n for _, n in open_cores.items()])
 
+    worker_cmd = """condor_submit_workers -r {conds} {machine}.chtc.wisc.edu {port} {n}"""
     n_started = 0
     print("Starting {0} workers.".format(min(n_tasks, all_cores)))
     while n_started != n_tasks and n_started != all_cores:
@@ -61,8 +58,8 @@ def start_workers(user, port, exec_nodes, n_tasks = 1, n_leave_open = 0):
         open_cores[node] -= 1
 
 def start_queue(q, uuids, runfile):
-    cmds = [exec_cmd.format(runfile=runfile,
-                            uuid=uuids[i], outdb='{0}_out.h5'.format(i)) for i in range(len(uuids))]
+    exec_cmd = """./{runfile} {outdb} {uuid}"""
+    cmds = [exec_cmd.format(runfile=runfile, uuid=uuids[i], outdb='{0}_out.h5'.format(i)) for i in range(len(uuids))]
     
     takefiles = ['{0}_out.h5'.format(i) for i in range(len(uuids))]
     bringfiles = ['../cde-cyclopts.tar.gz', '../CDE.tar.gz', 'instances.h5', runfile]
