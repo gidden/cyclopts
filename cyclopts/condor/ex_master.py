@@ -1,17 +1,12 @@
 #!/usr/bin/python
 
+import operator
 import os
 import sys
 import subprocess
 import work_queue as wq
 
-run_file = 'run.sh'
-
 exec_cmd = """./{runfile} {outdb} {uuid}"""
-
-uuids = ['a45c9977384b40eabfa8fb100bafa7a3', '38f60ce3843743cea713846da9381b22']
-
-exec_nodes = ['e121', 'e122', 'e123', 'e124', 'e125', 'e126']
 
 worker_cmd = """condor_submit_workers -r {conds} {machine}.chtc.wisc.edu {port} {n}"""
 
@@ -47,12 +42,7 @@ def ncores(node):
     slots = [line for line in p.stdout.readlines() if line.startswith('slot') and '_' in line.split()[0].split('@')[0]]
     return len(slots)
 
-def _choose_node(open_cores):
-    for node, n in open_cores.items():
-        if n > 0:
-            return node
-
-def start_workers(user, port, n_tasks = 1, n_leave_open = 0):
+def start_workers(user, port, exec_nodes, n_tasks = 1, n_leave_open = 0):
     current_workers = running_workers(user) + idled_workers(user)
     current_workers = dict((node, current_workers.count(node)) for node in exec_nodes) 
 
@@ -60,20 +50,22 @@ def start_workers(user, port, n_tasks = 1, n_leave_open = 0):
     all_cores = sum([n for _, n in open_cores.items()])
 
     n_started = 0
+    print("Starting {0} workers.".format(min(n_tasks, all_cores)))
     while n_started != n_tasks and n_started != all_cores:
-        node = _choose_node(open_cores)
+        node = max(open_cores.iteritems(), key=operator.itemgetter(1))[0]
         conds = '(ForGidden==true&&machine=="{0}.chtc.wisc.edu")'.format(node)
         cmd = worker_cmd.format(conds=conds, machine='submit-3', port=port, n=1)
         print "executing cmd: {0}".format(cmd)
         subprocess.call(cmd.split(), shell=(os.name == 'nt'))
         n_started += 1
+        open_cores[node] -= 1
 
-def start_queue(q):
-    cmds = [exec_cmd.format(runfile=run_file,
+def start_queue(q, uuids, runfile):
+    cmds = [exec_cmd.format(runfile=runfile,
                             uuid=uuids[i], outdb='{0}_out.h5'.format(i)) for i in range(len(uuids))]
     
     takefiles = ['{0}_out.h5'.format(i) for i in range(len(uuids))]
-    bringfiles = ['../cde-cyclopts.tar.gz', '../CDE.tar.gz', 'instances.h5', run_file]
+    bringfiles = ['../cde-cyclopts.tar.gz', '../CDE.tar.gz', 'instances.h5', runfile]
 
     q.specify_log('wq_log')
     for cmd in cmds:
@@ -95,25 +87,20 @@ def finish_queue(q):
       if t:
           print "task (id# %d) complete: %s (return code %d)" % (t.id, t.command, t.return_status)
           if t.return_status != 0:
-            # The task failed. Error handling (e.g., resubmit with new parameters, examine logs, etc.) here
-            print "task failed: {0}, host: {1}".format(t.result, t.hostname)
-      
-    #task object will be garbage collected by Python automatically when it goes out of scope
+            print "task failed: {0}, host: {1}".format(t.result, t.hostname)      
     print "all tasks complete!"
 
 def main():
     port = 5422
     user = 'gidden'
+    exec_nodes = ['e121', 'e122', 'e123', 'e124', 'e125', 'e126']
+    run_file = 'run.sh'
+    all_uuids = ['a45c9977384b40eabfa8fb100bafa7a3', '38f60ce3843743cea713846da9381b22']
 
-    #q = wq.WorkQueue(port)
-    #start_queue(q)
-    start_workers(user, port, n_tasks=6)
+    q = wq.WorkQueue(port)
+    #start_queue(q, all_uuids, run_file)
+    start_workers(user, port, exec_nodes, n_tasks=17)
     #finish_queue(q)
-
-    open_cores = dict((node, ncores(node)) for node in exec_nodes)
-    all_cores = sum([n for _, n in open_cores.items()])
-    print open_cores
-    print all_cores
 
 if __name__ == '__main__':
     main()
