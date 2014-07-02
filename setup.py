@@ -58,13 +58,18 @@ def cyclopts_setup():
     scripts = [os.path.join(scripts_dir, f)
                for f in os.listdir(scripts_dir)]
 
-    packages = ['cyclopts']
+    packages = [
+        'cyclopts', 
+        'cyclopts.condor'
+        ]
     pack_dir = {
         'cyclopts': 'cyclopts',
+        'cyclopts.condor': 'cyclopts/condor',
         }
     extpttn = ['*.dll', '*.so', '*.dylib', '*.pyd', '*.pyo']
     pack_data = {
         'cyclopts': ['*.pxd', 'include/*.h', 'include/*.pxi',] + extpttn,
+        'cyclopts.condor': extpttn,
         }
     setup_kwargs = {
         "name": "cyclopts",

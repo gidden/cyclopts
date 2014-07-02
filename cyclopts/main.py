@@ -101,9 +101,9 @@ def condor_submit(args):
                           host=args.host, remotedir=args.remotedir, 
                           keyfile=args.keyfile, verbose=args.verbose)
     elif args.kind == 'queue':
-        condor.submit_worker_queue(args.user, args.db, instids, args.solvers, 
-                                   host=args.host, remotedir=args.remotedir, 
-                                   keyfile=args.keyfile, verbose=args.verbose)
+        condor.submit_work_queue(args.user, args.db, instids, args.solvers, 
+                                 host=args.host, remotedir=args.remotedir, 
+                                 keyfile=args.keyfile, verbose=args.verbose)
         
 
 def condor_collect(args):

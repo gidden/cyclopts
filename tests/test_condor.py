@@ -7,7 +7,9 @@ import paramiko as pm
 import warnings
 import tarfile
 
-from cyclopts import condor
+from cyclopts.condor import dag
+from cyclopts.condor import queue
+from cyclopts.condor import utils
 from cyclopts import main
 from cyclopts import tools
 
@@ -23,7 +25,7 @@ def test_gen_dag_tar():
     instids = [x[0] for x in exp_uuid_arcs()[:2]] # 2 ids
     solvers = ['s1', 's2']
     
-    condor.gen_dag_tar(prefix, db, instids, solvers)   
+    dag.gen_dag_tar(prefix, db, instids, solvers)   
     
     if os.path.exists(prefix):
         shutil.rmtree(prefix)    
@@ -46,7 +48,7 @@ def test_get_files():
     host = 'submit-3.chtc.wisc.edu'
 
     localbase = os.path.dirname(os.path.abspath(__file__))
-    remotebase = condor.batlab_base_dir_template.format(user=user)
+    remotebase = utils.batlab_base_dir_template.format(user=user)
     tmpdir = 'tmp_{0}'.format(uuid.uuid4())
     localdir = os.path.join(localbase, tmpdir)
     remotedir = '/'.join([remotebase, tmpdir])
@@ -66,9 +68,9 @@ def test_get_files():
     cmd = "mkdir -p {0} && touch {1}".format(remotedir, touchline)
     client.connect(host, username=user, key_filename=keyfile)
     client.exec_command(cmd)
-    condor._wait_till_found(client, '/'.join([remotedir, tstfiles[-1]]))
+    utils._wait_till_found(client, '/'.join([remotedir, tstfiles[-1]]))
     print("getting", remotedir)
-    nfiles = condor.get_files(client, remotedir, localdir, prefix + '*')
+    nfiles = utils.get_files(client, remotedir, localdir, prefix + '*')
     client.close()
     
     assert_equal(set(os.listdir(localdir)), set(tstfiles))

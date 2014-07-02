@@ -10,6 +10,7 @@ import subprocess
 import numpy as np
 from numpy.testing import assert_array_equal
 import paramiko as pm
+import warnings
 
 import nose
 from nose.tools import assert_equal, assert_true
@@ -169,7 +170,7 @@ def test_collect():
         exp_total += h5node.nrows
         h5file.close()
 
-    remotebase = condor.batlab_base_dir_template.format(user=user)
+    remotebase = condor.utils.batlab_base_dir_template.format(user=user)
     remotedir = '.tmp_{0}'.format(uuid.uuid4()) 
     remotepath = '/'.join([remotebase, tools.cyclopts_remote_run_dir, 
                            remotedir])
