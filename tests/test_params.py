@@ -41,7 +41,7 @@ def test_def_rxtr_req_sample():
     assert_true(s.connection.sample())
     constr_avg = 0
     pref_avg = 0
-    n = 1000
+    n = 5000
     for i in range(n):
         constr = s.constr_coeff.sample()
         constr_avg += constr
