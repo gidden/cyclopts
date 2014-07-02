@@ -47,17 +47,26 @@ def ncores(node):
     slots = [line for line in p.stdout.readlines() if line.startswith('slot') and '_' in line.split()[0].split('@')[0]]
     return len(slots)
 
-def start_workers(user, port):
-    
-    current_workers = running_workers(user) + idled_workers(user)
+def _choose_node(open_cores):
+    for node, n in open_cores.items():
+        if n > 0:
+            return node
 
-    for e in exec_nodes:
-        if e in current_workers:
-            continue # don't add duplicate jobs
-        conds = '(ForGidden==true&&machine=="{0}.chtc.wisc.edu")'.format(e)
+def start_workers(user, port, n_tasks = 1, n_leave_open = 0):
+    current_workers = running_workers(user) + idled_workers(user)
+    current_workers = dict((node, current_workers.count(node)) for node in exec_nodes) 
+
+    open_cores = dict((node, max(ncores(node) - current_workers[node] - n_leave_open, 0)) for node in exec_nodes)
+    all_cores = sum([n for _, n in open_cores.items()])
+
+    n_started = 0
+    while n_started != n_tasks and n_started != all_cores:
+        node = _choose_node(open_cores)
+        conds = '(ForGidden==true&&machine=="{0}.chtc.wisc.edu")'.format(node)
         cmd = worker_cmd.format(conds=conds, machine='submit-3', port=port, n=1)
         print "executing cmd: {0}".format(cmd)
         subprocess.call(cmd.split(), shell=(os.name == 'nt'))
+        n_started += 1
 
 def start_queue(q):
     cmds = [exec_cmd.format(runfile=run_file,
@@ -98,10 +107,13 @@ def main():
 
     #q = wq.WorkQueue(port)
     #start_queue(q)
-    #start_workers(user, port)
+    start_workers(user, port, n_tasks=6)
     #finish_queue(q)
-    for node in exec_nodes:
-        print ncores(node)
+
+    open_cores = dict((node, ncores(node)) for node in exec_nodes)
+    all_cores = sum([n for _, n in open_cores.items()])
+    print open_cores
+    print all_cores
 
 if __name__ == '__main__':
     main()
