@@ -9,8 +9,9 @@ import io
 import time
 
 mv_sh = u"""#!/bin/bash
+ls -l {loc}
 mv $1 {loc}
-ls -l {loc} > tmp.out
+ls -l {loc}
 """
 
 mv_sub = u"""universe = vanilla
@@ -29,6 +30,7 @@ queue
 """
 
 rm_sh = u"""#!/bin/bash
+ls -l {loc}
 rm {loc}/$1
 ls -l {loc}
 """
@@ -151,7 +153,7 @@ def wait_till_done(pids, timeout=5):
         print "executing cmd: {0}".format(cmd)
         p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, shell=(os.name == 'nt'))
         out = p.stdout.readlines()
-        if not out[-1].strip().startswith('ID'):
+        if len(out) > 0 and not out[-1].strip().startswith('ID'):
             waiting = [x.split()[0] for x in out if \
                            len(x.split()) > 0 and x.split()[0].split('.')[0].isdigit()]
             print("Still waiting on jobs: {0}").format(" ".join(waiting))
@@ -160,23 +162,22 @@ def wait_till_done(pids, timeout=5):
             done = True
     print("All jobs are done")
 
-def start_queue(q, uuids, indbpath, bring_files):
+def start_queue(q, n_tasks, idgen, indbpath, bring_files):
     runfile = bring_files['run_file']
-    
     exec_cmd = """./{runfile} {outdb} {uuid} {path}"""
-    cmds = [exec_cmd.format(runfile=runfile, path=indbpath, uuid=uuids[i], outdb='{0}_out.h5'.format(i)) for i in range(len(uuids))]
-    
-    takefiles = ['{0}_out.h5'.format(i) for i in range(len(uuids))]
-    bringfiles = ['/home/gidden/cde-cyclopts.tar.gz', '/home/gidden/CDE.tar.gz'] + [f for _, f in bring_files.iteritems()]
-
     q.specify_log('wq_log')
-    for cmd in cmds:
+    for i in range(n_tasks):
+        outdb = '{0}_out.h5'.format(i)
+        cmd = exec_cmd.format(runfile=runfile, path=indbpath, uuid=idgen.next().strip(), outdb=outdb)
         t = wq.Task(cmd)
         t.specify_cores(1)
-        for f in bringfiles:
-            t.specify_input_file(f, os.path.basename(f))
-        for f in takefiles:
-            t.specify_output_file(f, os.path.basename(f))
+        f = bring_files['cyclopts_tar']
+        t.specify_input_file(f, os.path.basename(f), cache=True)
+        f = bring_files['cde_tar']
+        t.specify_input_file(f, os.path.basename(f), cache=True)
+        f = runfile
+        t.specify_input_file(f, os.path.basename(f), cache=False)
+        t.specify_output_file(outdb, outdb, cache=False)
         q.submit(t)
     
 def finish_queue(q):
@@ -188,20 +189,26 @@ def finish_queue(q):
       print "active workers: {0}".format(q.stats.total_workers_joined)
       if t:
           print "task (id# %d) on host %s complete: %s (return code %d)" % (t.id, t.hostname, t.command, t.return_status)
+          print "task output: {0}".format(t.output)
           if t.return_status != 0:
             print "task failed: {0}".format(t.result)      
     print "all tasks complete!"
 
 def main():
-    port = 5422
+    port = 5522
     user = 'gidden'
     indb = 'instances.h5'
     indbpath = '../..' # relative to the landing point on the exec node
-    exec_nodes = ['e121', 'e122', 'e123', 'e124', 'e125', 'e126']
+    exec_nodes = ['e125']#, 'e122', 'e123', 'e124', 'e125', 'e126']
     bring_files = {
-        'run_file': 'test-run.sh',
+#        'run_file': 'test-run.sh',
+        'run_file': 'run.sh',
+        'cyclopts_tar': '/home/gidden/cde-cyclopts.tar.gz', 
+        'cde_tar': '/home/gidden/CDE.tar.gz',
         }
-    all_uuids = ['a45c9977384b40eabfa8fb100bafa7a3', '38f60ce3843743cea713846da9381b22']    
+    nids = 2
+    uuidfile = 'uuids'
+    idgen = open(uuidfile)
 
     # get workers to launch    
     cores = open_cores(user, exec_nodes)
@@ -209,7 +216,7 @@ def main():
 
     # set up nodes with input
     pids = mv_input(indb, indbpath, workers.keys())
-    timeout = 5*60 # 5 minutes
+    timeout = 30 # 5 minutes
     wait_till_done(pids, timeout=timeout)
     
     # launch workers    
@@ -218,7 +225,7 @@ def main():
     # launch q
     print("Starting work queue master on port {0}".format(port))
     q = wq.WorkQueue(port)
-    start_queue(q, all_uuids, indbpath, bring_files)
+    start_queue(q, nids, idgen, indbpath, bring_files)
     finish_queue(q)
 
     # tear down nodes with input    
