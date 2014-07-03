@@ -195,20 +195,25 @@ def finish_queue(q):
     print "all tasks complete!"
 
 def main():
-    port = 5522
-    user = 'gidden'
-    indb = 'instances.h5'
+    # get vars from command line or use defaults
+    args = [a.split('=') for a in sys.argv[1:]]
+    args = dict((a[0], a[1]) for a in args)
+    
+    port = 5522 if 'port' not in args.keys() else args['port']
+    user = 'gidden' if 'user' not in args.keys() else args['user']
+    indb = 'instances.h5' if 'indb' not in args.keys() else args['indb']
     indbpath = '../..' # relative to the landing point on the exec node
-    exec_nodes = ['e121', 'e122', 'e123', 'e124', 'e125', 'e126']
+    exec_nodes = ['e121', 'e122', 'e123', 'e124', 'e125', 'e126'] if 'nodes' not in args.keys() else args['nodes'].split(',')
+    run_file = 'run.sh' if 'run_file' not in args.keys() else args['run_file']
+    nids = 2 if 'nids' not in args.keys() else args['nids']
+    uuidfile = 'uuids' if 'uuids' not in args.keys() else args['uuids']
+    
+    idgen = open(uuidfile)
     bring_files = {
-#        'run_file': 'test-run.sh',
-        'run_file': 'run.sh',
+        'run_file': run_file,
         'cyclopts_tar': '/home/gidden/cde-cyclopts.tar.gz', 
         'cde_tar': '/home/gidden/CDE.tar.gz',
         }
-    nids = 2
-    uuidfile = 'uuids'
-    idgen = open(uuidfile)
 
     # get workers to launch    
     cores = open_cores(user, exec_nodes)
