@@ -199,7 +199,7 @@ def main():
     user = 'gidden'
     indb = 'instances.h5'
     indbpath = '../..' # relative to the landing point on the exec node
-    exec_nodes = ['e125']#, 'e122', 'e123', 'e124', 'e125', 'e126']
+    exec_nodes = ['e121', 'e122', 'e123', 'e124', 'e125', 'e126']
     bring_files = {
 #        'run_file': 'test-run.sh',
         'run_file': 'run.sh',
