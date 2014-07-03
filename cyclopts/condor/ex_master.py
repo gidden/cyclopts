@@ -47,26 +47,35 @@ notification = never
 queue
 """
 
+def condor_cmd(cmd, timeout=10):
+    rtn = -1
+    while rtn != 0:
+        print "executing cmd: {0}".format(cmd)
+        p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, shell=(os.name == 'nt'))
+        out, err = p.communicate()
+        rtn = p.returncode
+        if rtn != 0:
+            print "cmd failed with code {0}, trying again in {1} seconds".format(rtn, timeout)
+            time.sleep(timeout)
+    return out.split('\n')
+
 def running_workers(user):
     cmd = "condor_q {user} -run".format(user=user)
-    print "executing cmd: {0}".format(cmd)
-    p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, shell=(os.name == 'nt'))
+    lines = condor_cmd(cmd)
     inuse = [line.split('@')[1].split('.')[0] \
-                 for line in p.stdout.readlines() if len(line.split('@')) > 1]
+                 for line in lines if len(line.split('@')) > 1]
     return inuse
 
 def idled_workers(user):
     inuse = []
     cmd = 'condor_q {user} -constraint JobStatus==1'.format(user=user)
-    print "executing cmd: {0}".format(cmd)
-    p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, shell=(os.name == 'nt'))
-    pids = [x.split()[0] for x in p.stdout.readlines() if \
+    lines = condor_cmd(cmd)
+    pids = [x.split()[0] for x in lines if \
                 len(x.split()) > 0 and x.split()[0].split('.')[0].isdigit()]
     for pid in pids:
         cmd = 'condor_q {pid} -l'.format(pid=pid)
-        print "executing cmd: {0}".format(cmd)
-        p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, shell=(os.name == 'nt'))
-        req_line = [line for line in p.stdout.readlines() if line.startswith('Requirements')][0]
+        lines = condor_cmd(cmd)
+        req_line = [line for line in lines if line.startswith('Requirements')][0]
         s = req_line.split('machine == "')
         if len(s) > 1:
             inuse.append(s[1].split('.chtc.wisc.edu')[0])
@@ -75,9 +84,10 @@ def idled_workers(user):
 def ncores(node):
     conds = 'machine=="{0}.chtc.wisc.edu"'.format(node)
     cmd = "condor_status -constraint {conds}".format(conds=conds)
-    print "executing cmd: {0}".format(cmd)
-    p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, shell=(os.name == 'nt'))
-    slots = [line for line in p.stdout.readlines() if line.startswith('slot') and '_' in line.split()[0].split('@')[0]]
+    lines = condor_cmd(cmd)
+    if 'Drained' in lines[2]:
+        return 0
+    slots = [line for line in lines if line.startswith('slot') and '_' in line.split()[0].split('@')[0]]
     return len(slots)
 
 def open_cores(user, exec_nodes, n_leave_open=0):
@@ -120,9 +130,8 @@ def mv_input(indb, path, nodes):
             f.write(sublines)
             
         cmd = 'condor_submit {0}'.format(subfile)
-        print "executing cmd for node {1}: {0}".format(cmd, node)
-        p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, shell=(os.name == 'nt'))
-        pids.append(p.stdout.readlines()[1].split('cluster')[1].split('.')[0].strip())
+        lines = condor_cmd(cmd)
+        pids.append(lines[1].split('cluster')[1].split('.')[0].strip())
         
     return pids
 
@@ -140,9 +149,8 @@ def rm_input(indb, path, nodes):
             f.write(sublines)
             
         cmd = 'condor_submit {0}'.format(subfile)
-        print "executing cmd for node {1}: {0}".format(cmd, node)
-        p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, shell=(os.name == 'nt'))
-        pids.append(p.stdout.readlines()[1].split('cluster')[1].split('.')[0].strip())
+        lines = condor_cmd(cmd)
+        pids.append(lines[1].split('cluster')[1].split('.')[0].strip())
         
     return pids
 
@@ -150,9 +158,7 @@ def wait_till_done(pids, timeout=5):
     done = False
     while not done:
         cmd = 'condor_q {0}'.format(" ".join(pids))
-        print "executing cmd: {0}".format(cmd)
-        p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, shell=(os.name == 'nt'))
-        out = p.stdout.readlines()
+        out = condor_cmd(cmd)
         if len(out) > 0 and not out[-1].strip().startswith('ID'):
             waiting = [x.split()[0] for x in out if \
                            len(x.split()) > 0 and x.split()[0].split('.')[0].isdigit()]
@@ -199,11 +205,11 @@ def main():
     args = [a.split('=') for a in sys.argv[1:]]
     args = dict((a[0], a[1]) for a in args)
     
-    port = 5522 if 'port' not in args.keys() else args['port']
+    port = 5622 if 'port' not in args.keys() else args['port']
     user = 'gidden' if 'user' not in args.keys() else args['user']
     indb = 'instances.h5' if 'indb' not in args.keys() else args['indb']
     indbpath = '../..' # relative to the landing point on the exec node
-    exec_nodes = ['e121', 'e122', 'e123', 'e124', 'e125', 'e126'] if 'nodes' not in args.keys() else args['nodes'].split(',')
+    exec_nodes = ['e124', 'e122', 'e123', 'e124', 'e125', 'e126'] if 'nodes' not in args.keys() else args['nodes'].split(',')
     run_file = 'run.sh' if 'run_file' not in args.keys() else args['run_file']
     nids = 2 if 'nids' not in args.keys() else args['nids']
     uuidfile = 'uuids' if 'uuids' not in args.keys() else args['uuids']
