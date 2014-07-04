@@ -5,6 +5,22 @@ import paramiko as pm
 from cyclopts import tools
 from cyclopts.condor.utils import _wait_till_found
 
+run_lines = """#!/bin/bash             
+pwd=$PWD
+ls -l
+tar -xf CDE.tar.gz
+tar -xf cde-cyclopts.tar.gz
+export PATH=$pwd/CDE/:$PATH
+ls -l
+cd cde-package/cde-root
+sed -i 's/..\/cde-exec/cde-exec/g' ../cyclopts.cde
+ls -l
+../cyclopts.cde exec --db $pwd/$3/instances.h5 --outdb $1 --instids $2
+mv $1 $pwd
+cd $pwd
+ls -l
+"""
+
 def submit_work_queue(user, db, instids, solvers, remotedir, 
                       host="submit-3.chtc.wisc.edu", keyfile=None, 
                       verbose=False):
@@ -34,3 +50,4 @@ def submit_work_queue(user, db, instids, solvers, remotedir,
     client = pm.SSHClient()
     client.set_missing_host_key_policy(pm.AutoAddPolicy())
     _, keyfile = tools.ssh_test_connect(client, host, user, keyfile, auth=True)
+    

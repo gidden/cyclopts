@@ -212,7 +212,7 @@ def submit(user, db, instids, solvers, remotedir,
     _, keyfile = tools.ssh_test_connect(client, host, user, keyfile, auth=True)
 
     localtar = gen_tar(remotedir, db, instids, solvers, user, 
-                           verbose=verbose)
+                       verbose=verbose)
 
     if verbose:
         print("connecting to {0}@{1}".format(user, host))
