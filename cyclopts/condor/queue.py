@@ -1,11 +1,15 @@
 from __future__ import print_function
 
 import paramiko as pm
+import os
+import io
+import tarfile 
+import shutil 
 
 from cyclopts import tools
 from cyclopts.condor.utils import _wait_till_found, batlab_base_dir_template
 
-run_lines = """#!/bin/bash
+run_lines = u"""#!/bin/bash
 pwd=$PWD
 outdb=$1
 instids=$2
@@ -60,7 +64,7 @@ echo "pwd dir post-execute"
 ls -l
 """
 
-def gen_tar(remotedir, db, instids, solvers, user, verbose=False):
+def gen_tar(remotedir, db, instids, solvers, user="gidden", verbose=False):
     prepdir = '.tmp_{0}'.format(remotedir)
     if not os.path.exists(prepdir):
         os.makedirs(prepdir)
@@ -69,16 +73,16 @@ def gen_tar(remotedir, db, instids, solvers, user, verbose=False):
                 prepdir))
     remotehome = batlab_base_dir_template.format(user=user)
     
-    nfile = 0
-    runlines = run_lines.format(" ".join(solvers))
+    nfiles = 0
+    runlines = run_lines.format(solvers=" ".join(solvers))
     runfile = os.path.join(prepdir, 'run.sh')
-    with io.open(runfile) as f:
+    with io.open(runfile, mode='w') as f:
         f.write(runlines)
     nfiles += 1
     idfile = os.path.join(prepdir, 'uuids')
-    with io.open(idfile) as f:
+    with io.open(idfile, mode='w') as f:
         for i in instids:
-            f.write('{0}\n'.format(i))
+            f.write(u'{0}\n'.format(i))
     nfiles += 1
     base = os.path.dirname(os.path.abspath(__file__))
     mastername = 'launch_master.py'
