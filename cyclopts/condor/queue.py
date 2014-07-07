@@ -103,10 +103,65 @@ def gen_tar(remotedir, db, instids, solvers, user="gidden", verbose=False):
     shutil.rmtree(prepdir)
     return tarname
 
+submit_cmd = """
+mkdir -p {remotedir} && cd {remotedir} &&
+tar -xf {tarfile} && cd {cddir} && 
+nohup python -u launch_master.py port={port} user={user} nids={nids} indb={indb} nodes={nodes} &> launch_master.out &
+"""
 
-def submit_work_queue(user, db, instids, solvers, remotedir, 
-                      host="submit-3.chtc.wisc.edu", keyfile=None, 
-                      verbose=False):
+def _submit(client, remotedir, tarname, nids, indb,
+            port='5422', user='gidden',
+            nodes=['e121', 'e122', 'e123', 'e124', 'e125', 'e126'],
+            verbose=False):
+    """Performs a condor Work Queue sumbission on a client using a tarball of all
+    submission-related data.
+
+    Parameters
+    ----------
+    client : paramiko SSHClient
+        the client
+    remotedir : str
+        the run directory on the client
+    tarname : str
+        the name of the tarfile
+    nids : int
+        the number of ids being run
+    port : str, optional
+        the port for the workers and master to communicate on
+    user : str, optional
+        the user to run the jobs on
+    nodes : list, optional
+        a list of execute nodes prefixes (e.g., e121.chtc.wisc.edu -> e121)
+    verbose : bool, optional
+        whether to print information regarding the submission process    
+    """
+    ffrom = tarname
+    tarname = os.path.basename(tarname)
+    fto = '{0}/{1}'.format(remotedir, tarname)
+    if verbose:
+        print("Copying from {0} to {1} on the condor submit node.".format(
+                ffrom, fto))
+    try:
+        ftp = client.open_sftp()
+        ftp.put(ffrom, fto)
+        ftp.close()
+    except IOError:
+        raise IOError(
+            'Could not find {0} on the submit node.'.format(remotedir))
+    
+    cddir = tarname.split(".tar.gz")[0]
+    
+
+    cmd = submit_cmd.format(tarfile=tarname, cddir=cddir, 
+                            remotedir=remotedir, port=port, user=user, 
+                            nids=nids, indb=indb, nodes=",".join(nodes))    
+    print("Remotely executing '{0}'".format(cmd))
+    stdin, stdout, stderr = client.exec_command(cmd)
+    return stdout.channel.recv_exit_status()
+
+def submit(user, db, instids, solvers, remotedir, 
+           host="submit-3.chtc.wisc.edu", keyfile=None, 
+           verbose=False):
     """Connects via SSH to a condor submit node, and executes a Cyclopts Work
     Queue run.
     
@@ -141,12 +196,12 @@ def submit_work_queue(user, db, instids, solvers, remotedir,
         print("connecting to {0}@{1}".format(user, host))
     client.connect(host, username=user, key_filename=keyfile)
     
-    pid = _submit(client, tools.cyclopts_remote_run_dir, localtar, 
-                  verbose=verbose)
+    rtn = _submit(client, tools.cyclopts_remote_run_dir, localtar, 
+                  len(instids), os.path.basename(db), verbose=verbose)
     client.close()
     if verbose:
-        print("Submitted job in {0}@{1}:~/{2} with pid: {3}".format(
-                user, host, remotedir, pid)) 
+        print("Submitted job in {0}@{1}:~/{2} with exit code: {rtn}".format(
+                user, host, remotedir, rtn=rtn)) 
 
     os.remove(localtar)
 

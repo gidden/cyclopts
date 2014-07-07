@@ -104,7 +104,8 @@ def assign_workers(open_cores, n_tasks=1):
     workers = dict((node, 0) for node, _ in open_cores.items())
     all_cores = sum([n for _, n in open_cores.items()])
     n_assigned = 0
-    while n_assigned != n_tasks and n_assigned != all_cores:
+    to_assign = min(n_tasks, all_cores)
+    while n_assigned != to_assign:
         node = max(open_cores.iteritems(), key=operator.itemgetter(1))[0]
         n_assigned += 1
         workers[node] += 1
@@ -212,13 +213,17 @@ def main():
     args = [a.split('=') for a in sys.argv[1:]]
     args = dict((a[0], a[1]) for a in args)
 
-    port = 5122 if 'port' not in args.keys() else args['port']
+    # generally specify
+    port = 5122 if 'port' not in args.keys() else int(args['port'])
     user = 'gidden' if 'user' not in args.keys() else args['user']
     indb = 'instances.h5' if 'indb' not in args.keys() else args['indb']
     indbpath = '../..' # relative to the landing point on the exec node
-    exec_nodes = ['e121']#, 'e122', 'e123', 'e124', 'e125', 'e126'] if 'nodes' not in args.keys() else args['nodes'].split(',')
+    exec_nodes = ['e121', 'e122', 'e123', 'e124', 'e125', 'e126'] \
+        if 'nodes' not in args.keys() else args['nodes'].split(',')
+    nids = 2 if 'nids' not in args.keys() else int(args['nids'])
+    
+    # generally use defaults
     run_file = 'run.sh' if 'run_file' not in args.keys() else args['run_file']
-    nids = 2 if 'nids' not in args.keys() else args['nids']
     uuidfile = 'uuids' if 'uuids' not in args.keys() else args['uuids']
     
     idgen = open(uuidfile)
@@ -228,17 +233,19 @@ def main():
         'cde_tar': '/home/gidden/CDE.tar.gz',
         }
 
-    # get workers to launch    
+    # get workers to launch  
     cores = open_cores(user, exec_nodes)
-    workers = assign_workers(cores, n_tasks=1)
+    workers = assign_workers(cores, n_tasks=nids)
     if sum([n for _, n in workers.iteritems()]) == 0:
         raise ValueError("No available cores for workers were found")
-
-
-    # # set up nodes with input
-    # pids = mv_input(indb, indbpath, workers.keys())
-    # timeout = 30 # 5 minutes
-    # wait_till_done(pids, timeout=timeout)
+    config = ", ".join(["{0}: {1}".format(node, n) for node, n in workers.iteritems()])
+    print("Assigning {0} tasks to workers in the following configuration: {1}".format(
+            nids, config))
+    
+    # set up nodes with input
+    pids = mv_input(indb, indbpath, workers.keys())
+    timeout = 60 * 3 # 3 minutes
+    wait_till_done(pids, timeout=timeout)
     
     # launch workers    
     start_workers(workers, port)
@@ -250,9 +257,7 @@ def main():
     finish_queue(q)
 
     # tear down nodes with input    
-    #pids = rm_input(indb, indbpath, workers.keys())
-    
-    
+    pids = rm_input(indb, indbpath, workers.keys())    
     
 if __name__ == '__main__':
     main()
