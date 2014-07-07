@@ -185,11 +185,19 @@ def execute(args):
     rc._update(asteval)
     solvers = args.solvers
     instids = set(uuid.UUID(x).bytes for x in args.instids)
+    
+    if not os.path.exists(indb):
+        raise IOError('Input database {0} does not exist.'.format(indb))
 
     # if a separate db is requested, open it, otherwise use only 
-    h5in = t.open_file(indb, mode='a', filters=_filters)
-    h5out = t.open_file(outdb, mode='a', filters=_filters) \
-        if outdb is not None else None
+    h5in = t.open_file(indb, mode='r', filters=_filters)
+    if outdb is not None:
+        h5out = t.open_file(outdb, mode='a', filters=_filters)
+    else:
+        h5in.close()
+        h5in = t.open_file(indb, mode='a', filters=_filters)
+        h5out = h5in
+
     inroot = h5in.root
     outroot = h5out.root if h5out is not None else h5in.root
     

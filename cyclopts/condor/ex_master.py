@@ -9,6 +9,8 @@ import io
 import time
 
 mv_sh = u"""#!/bin/bash
+echo "pwd: $PWD"
+echo "dbdir: $PWD/{loc}"
 ls -l {loc}
 mv $1 {loc}
 ls -l {loc}
@@ -30,6 +32,8 @@ queue
 """
 
 rm_sh = u"""#!/bin/bash
+echo "pwd: $PWD"
+echo "dbdir: $PWD/{loc}"
 ls -l {loc}
 rm {loc}/$1
 ls -l {loc}
@@ -162,19 +166,22 @@ def wait_till_done(pids, timeout=5):
         if len(out) > 0 and not out[-1].strip().startswith('ID'):
             waiting = [x.split()[0] for x in out if \
                            len(x.split()) > 0 and x.split()[0].split('.')[0].isdigit()]
-            print("Still waiting on jobs: {0}").format(" ".join(waiting))
-            time.sleep(timeout)
+            if len(waiting) == 0:
+                done = True
+            else:
+                print("Still waiting on jobs: {0}").format(" ".join(waiting))
+                time.sleep(timeout)
         else:
             done = True
     print("All jobs are done")
 
-def start_queue(q, n_tasks, idgen, indbpath, bring_files):
+def start_queue(q, n_tasks, idgen, indb, bring_files):
     runfile = bring_files['run_file']
-    exec_cmd = """./{runfile} {outdb} {uuid} {path}"""
+    exec_cmd = """./{runfile} {outdb} {uuid} {indb}"""
     q.specify_log('wq_log')
     for i in range(n_tasks):
         outdb = '{0}_out.h5'.format(i)
-        cmd = exec_cmd.format(runfile=runfile, path=indbpath, uuid=idgen.next().strip(), outdb=outdb)
+        cmd = exec_cmd.format(runfile=runfile, indb=indb, uuid=idgen.next().strip(), outdb=outdb)
         t = wq.Task(cmd)
         t.specify_cores(1)
         f = bring_files['cyclopts_tar']
@@ -204,12 +211,12 @@ def main():
     # get vars from command line or use defaults
     args = [a.split('=') for a in sys.argv[1:]]
     args = dict((a[0], a[1]) for a in args)
-    
-    port = 5622 if 'port' not in args.keys() else args['port']
+
+    port = 5122 if 'port' not in args.keys() else args['port']
     user = 'gidden' if 'user' not in args.keys() else args['user']
     indb = 'instances.h5' if 'indb' not in args.keys() else args['indb']
     indbpath = '../..' # relative to the landing point on the exec node
-    exec_nodes = ['e124', 'e122', 'e123', 'e124', 'e125', 'e126'] if 'nodes' not in args.keys() else args['nodes'].split(',')
+    exec_nodes = ['e121']#, 'e122', 'e123', 'e124', 'e125', 'e126'] if 'nodes' not in args.keys() else args['nodes'].split(',')
     run_file = 'run.sh' if 'run_file' not in args.keys() else args['run_file']
     nids = 2 if 'nids' not in args.keys() else args['nids']
     uuidfile = 'uuids' if 'uuids' not in args.keys() else args['uuids']
@@ -224,11 +231,14 @@ def main():
     # get workers to launch    
     cores = open_cores(user, exec_nodes)
     workers = assign_workers(cores, n_tasks=1)
+    if sum([n for _, n in workers.iteritems()]) == 0:
+        raise ValueError("No available cores for workers were found")
 
-    # set up nodes with input
-    pids = mv_input(indb, indbpath, workers.keys())
-    timeout = 30 # 5 minutes
-    wait_till_done(pids, timeout=timeout)
+
+    # # set up nodes with input
+    # pids = mv_input(indb, indbpath, workers.keys())
+    # timeout = 30 # 5 minutes
+    # wait_till_done(pids, timeout=timeout)
     
     # launch workers    
     start_workers(workers, port)
@@ -236,11 +246,11 @@ def main():
     # launch q
     print("Starting work queue master on port {0}".format(port))
     q = wq.WorkQueue(port)
-    start_queue(q, nids, idgen, indbpath, bring_files)
+    start_queue(q, nids, idgen, '/'.join([indbpath, indb]), bring_files)
     finish_queue(q)
 
     # tear down nodes with input    
-    pids = rm_input(indb, indbpath, workers.keys())
+    #pids = rm_input(indb, indbpath, workers.keys())
     
     
     
