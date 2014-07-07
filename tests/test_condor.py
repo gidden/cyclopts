@@ -42,6 +42,31 @@ def test_gen_dag_tar():
     assert_equal(len(exp), len(obs))
     assert_equal(set(exp), set(obs))
     os.remove(tarname)
+
+def test_gen_q_tar():
+    base = os.path.dirname(os.path.abspath(__file__))
+    db = os.path.join(base, 'files', 'exp_instances.h5')
+    prefix='tmp_{0}'.format(uuid.uuid4())
+    instids = [x[0] for x in exp_uuid_arcs()[:2]] # 2 ids
+    solvers = ['s1', 's2']
+    
+    dag.gen_tar(prefix, db, instids, solvers)   
+    
+    if os.path.exists(prefix):
+        shutil.rmtree(prefix)    
+
+    exp = ['uuids', 'launch_master.py', 'run.sh', 'exp_instances.h5']
+    tarname = '{0}.tar.gz'.format(prefix)
+    obs = []
+    with tarfile.open(tarname, 'r:gz') as tar:
+        for f in tar.getnames():
+            s = f.split('/')
+            assert_equal(len(s), 2)
+            assert_equal(s[0], prefix)
+            obs += [s[1]]
+    assert_equal(len(exp), len(obs))
+    assert_equal(set(exp), set(obs))
+    os.remove(tarname)
     
 def test_get_files():
     user = 'gidden'

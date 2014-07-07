@@ -50,7 +50,7 @@ echo "execute dir pre-execute"
 ls -l
 
 echo "Executing ../cyclopts.cde exec --db $indb --outdb $outdb --instids $instids"
-../cyclopts.cde exec --db $indb --outdb $outdb --instids $instids
+../cyclopts.cde exec --db $indb --outdb $outdb --instids $instids --solvers {solvers}
 echo "execute dir post-execute"
 ls -l
 
@@ -68,14 +68,34 @@ def gen_tar(remotedir, db, instids, solvers, user, verbose=False):
         raise IOError("File preparation directory {0} already exists".format(
                 prepdir))
     remotehome = batlab_base_dir_template.format(user=user)
-
+    
+    nfile = 0
+    runlines = run_lines.format(" ".join(solvers))
+    runfile = os.path.join(prepdir, 'run.sh')
+    with io.open(runfile) as f:
+        f.write(runlines)
+    nfiles += 1
+    idfile = os.path.join(prepdir, 'uuids')
+    with io.open(idfile) as f:
+        for i in instids:
+            f.write('{0}\n'.format(i))
+    nfiles += 1
+    base = os.path.dirname(os.path.abspath(__file__))
+    mastername = 'launch_master.py'
+    masterfile = os.path.join(base, mastername)
+    nfiles += 1
     nfiles += 1 # add db
     if verbose:
         print("tarring {0} files".format(nfiles))
     tarname = "{0}.tar.gz".format(remotedir)
     with tarfile.open(tarname, 'w:gz') as tar:
         tar.add(db, arcname="{0}/{1}".format(remotedir, os.path.basename(db)))
-        
+        tar.add(runfile, arcname="{0}/{1}".format(remotedir, 
+                                                  os.path.basename(runfile)))
+        tar.add(idfile, arcname="{0}/{1}".format(remotedir, 
+                                                  os.path.basename(idfile)))
+        tar.add(masterfile, arcname="{0}/{1}".format(remotedir, 
+                                                     os.path.basename(masterfile)))
     shutil.rmtree(prepdir)
     return tarname
 
@@ -110,7 +130,6 @@ def submit_work_queue(user, db, instids, solvers, remotedir,
     client.set_missing_host_key_policy(pm.AutoAddPolicy())
     _, keyfile = tools.ssh_test_connect(client, host, user, keyfile, auth=True)
     
-    
     localtar = gen_tar(remotedir, db, instids, solvers, user, 
                        verbose=verbose)
 
@@ -119,7 +138,7 @@ def submit_work_queue(user, db, instids, solvers, remotedir,
     client.connect(host, username=user, key_filename=keyfile)
     
     pid = _submit(client, tools.cyclopts_remote_run_dir, localtar, 
-                      verbose=verbose)
+                  verbose=verbose)
     client.close()
     if verbose:
         print("Submitted job in {0}@{1}:~/{2} with pid: {3}".format(
