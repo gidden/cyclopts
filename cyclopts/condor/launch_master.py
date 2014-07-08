@@ -251,14 +251,16 @@ def main():
     # set up nodes with input
     pids = mv_input(indb, indbpath, workers.keys())
     timeout = 60 * 3 # 3 minutes
-
-    # wait till each mv is done and then launch its workers
-    start_workers(pids, workers, port, timeout=timeout)    
     
     # launch q
     print("Starting work queue master on port {0}".format(port))
     q = wq.WorkQueue(port)
     start_queue(q, nids, idgen, '/'.join([indbpath, indb]), bring_files)
+
+    # wait till each mv is done and then launch its workers
+    start_workers(pids, workers, port, timeout=timeout)    
+
+    # wait till its done
     finish_queue(q)
 
     # tear down nodes with input    
