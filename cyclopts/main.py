@@ -19,8 +19,9 @@ import getpass
 import ast
 
 import cyclopts
-from cyclopts import condor 
-import cyclopts.condor.queue as cdag
+from cyclopts.condor import dag as cdag
+from cyclopts.condor import queue as cqueue
+from cyclopts.condor import utils as cutils 
 import cyclopts.tools as tools
 import cyclopts.inst_io as iio
 import cyclopts.instance as inst
@@ -98,22 +99,22 @@ def condor_submit(args):
 
     # submit job
     if args.kind == 'dag':
-        condor.dag.submit(args.user, args.db, instids, args.solvers,
-                          host=args.host, remotedir=args.remotedir, 
-                          keyfile=args.keyfile, verbose=args.verbose)
+        cdag.submit(args.user, args.db, instids, args.solvers,
+                    host=args.host, remotedir=args.remotedir, 
+                    keyfile=args.keyfile, verbose=args.verbose)
     elif args.kind == 'queue':
-        condor.queue.submit(args.user, args.db, instids, args.solvers, 
-                            host=args.host, remotedir=args.remotedir, 
-                            keyfile=args.keyfile, verbose=args.verbose)        
+        cqueue.submit(args.user, args.db, instids, args.solvers, 
+                      host=args.host, remotedir=args.remotedir, 
+                      keyfile=args.keyfile, verbose=args.verbose)        
 
 def condor_collect(args):
     remotedir = '/'.join([tools.cyclopts_remote_run_dir, args.remotedir])
     print("Collecting the results of a condor run from {0} at {1}@{2}".format(
             remotedir, args.user, args.host))
-    condor.utils.collect(args.localdir, remotedir, args.user, 
-                         host=args.host, outdb=args.outdb,                 
-                         clean=args.clean, keyfile=args.keyfile)
-
+    cutils.collect(args.localdir, remotedir, args.user, 
+                   host=args.host, outdb=args.outdb,                 
+                   clean=args.clean, keyfile=args.keyfile)
+    
 def cyclopts_combine(args):
     print("Combining {0} files into one master named {1}".format(
             len(args.files), args.outdb))
@@ -271,7 +272,7 @@ def update_cde(args):
         tar.add(pkgdir)
     
     ffrom = tarname
-    fto = '/'.join([condor.utils.batlab_base_dir_template.format(user=user), 
+    fto = '/'.join([cutils.batlab_base_dir_template.format(user=user), 
                     tarname])
     client = pm.SSHClient()
     client.set_missing_host_key_policy(pm.AutoAddPolicy())
