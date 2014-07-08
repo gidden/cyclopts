@@ -5,6 +5,7 @@ import os
 import io
 import tarfile 
 import shutil 
+import stat
 
 from cyclopts import tools
 from cyclopts.condor.utils import _wait_till_found, batlab_base_dir_template
@@ -78,6 +79,8 @@ def gen_tar(remotedir, db, instids, solvers, user="gidden", verbose=False):
     runfile = os.path.join(prepdir, 'run.sh')
     with io.open(runfile, mode='w') as f:
         f.write(runlines)
+    # chmod 775
+    os.chmod(runfile, stat.S_IRWXG | stat.S_IRWXU | stat.S_IXOTH | stat.S_IROTH)
     nfiles += 1
     idfile = os.path.join(prepdir, 'uuids')
     with io.open(idfile, mode='w') as f:
