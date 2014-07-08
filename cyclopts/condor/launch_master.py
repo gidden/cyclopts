@@ -111,18 +111,42 @@ def assign_workers(open_cores, n_tasks=1):
         workers[node] += 1
         open_cores[node] -= 1
     return dict((node, n) for node, n in workers.items() if n > 0)
-    
-def start_workers(worker_nodes, port):
+
+def _start_workers(node, n, port):
     worker_cmd = """condor_submit_workers -r {conds} {machine}.chtc.wisc.edu {port} {n}"""
-    print("Starting {0} workers.".format(sum(n for _, n in worker_nodes.items())))
-    for node, n in worker_nodes.items():
-        conds = '(ForGidden==true&&machine=="{0}.chtc.wisc.edu")'.format(node)
-        cmd = worker_cmd.format(conds=conds, machine='submit-3', port=port, n=n)
-        print "executing cmd: {0}".format(cmd)
-        subprocess.call(cmd.split(), shell=(os.name == 'nt'))        
+    print("Starting {0} workers or node {1}.".format(n, node))
+    conds = '(ForGidden==true&&machine=="{0}.chtc.wisc.edu")'.format(node)
+    cmd = worker_cmd.format(conds=conds, machine='submit-3', port=port, n=n)
+    print "executing cmd: {0}".format(cmd)
+    subprocess.call(cmd.split(), shell=(os.name == 'nt'))
+
+def start_workers(pids, worker_nodes, port, timeout=5):
+    done = False
+    started = set()
+    nodes = dict((pid, node) for node, pid in pids.iteritems())
+    pids = set(pids.values())
+    while not done:
+        cmd = 'condor_q {0}'.format(" ".join(pids))
+        out = condor_cmd(cmd)
+        if len(out) > 0 and not out[-1].strip().startswith('ID'):
+            waiting = set(x.split()[0].split('.')[0] for x in out if \
+                              len(x.split()) > 0 and x.split()[0].split('.')[0].isdigit())
+            tostart = pids - waiting - started
+            for pid in tostart:
+                node = nodes[pid]
+                _start_workers(node, worker_nodes[node], port)
+                started.add(pid)
+            if len(waiting) == 0:
+                done = True
+            else:
+                print("Still waiting on jobs: {0}").format(" ".join(waiting))
+                time.sleep(timeout)
+        else:
+            done = True
+    print("All jobs are done")
 
 def mv_input(indb, path, nodes):
-    pids = []
+    pids = {}
     shlines = mv_sh.format(loc=path)
     with io.open('mv.sh', 'w') as f:
         f.write(shlines)
@@ -136,12 +160,11 @@ def mv_input(indb, path, nodes):
             
         cmd = 'condor_submit {0}'.format(subfile)
         lines = condor_cmd(cmd)
-        pids.append(lines[1].split('cluster')[1].split('.')[0].strip())
-        
+        pids[node] = lines[1].split('cluster')[1].split('.')[0].strip()
     return pids
 
 def rm_input(indb, path, nodes):
-    pids = []
+    pids = {}
     shlines = rm_sh.format(loc=path)
     with io.open('rm.sh', 'w') as f:
         f.write(shlines)
@@ -155,26 +178,9 @@ def rm_input(indb, path, nodes):
             
         cmd = 'condor_submit {0}'.format(subfile)
         lines = condor_cmd(cmd)
-        pids.append(lines[1].split('cluster')[1].split('.')[0].strip())
+        pids[node] = lines[1].split('cluster')[1].split('.')[0].strip()
         
     return pids
-
-def wait_till_done(pids, timeout=5):
-    done = False
-    while not done:
-        cmd = 'condor_q {0}'.format(" ".join(pids))
-        out = condor_cmd(cmd)
-        if len(out) > 0 and not out[-1].strip().startswith('ID'):
-            waiting = [x.split()[0] for x in out if \
-                           len(x.split()) > 0 and x.split()[0].split('.')[0].isdigit()]
-            if len(waiting) == 0:
-                done = True
-            else:
-                print("Still waiting on jobs: {0}").format(" ".join(waiting))
-                time.sleep(timeout)
-        else:
-            done = True
-    print("All jobs are done")
 
 def start_queue(q, n_tasks, idgen, indb, bring_files):
     runfile = bring_files['run_file']
@@ -214,7 +220,7 @@ def main():
     args = dict((a[0], a[1]) for a in args)
 
     # generally specify
-    port = 5122 if 'port' not in args.keys() else int(args['port'])
+    port = 5222 if 'port' not in args.keys() else int(args['port'])
     user = 'gidden' if 'user' not in args.keys() else args['user']
     indb = 'instances.h5' if 'indb' not in args.keys() else args['indb']
     indbpath = '../..' # relative to the landing point on the exec node
@@ -245,10 +251,9 @@ def main():
     # set up nodes with input
     pids = mv_input(indb, indbpath, workers.keys())
     timeout = 60 * 3 # 3 minutes
-    wait_till_done(pids, timeout=timeout)
-    
-    # launch workers    
-    start_workers(workers, port)
+
+    # wait till each mv is done and then launch its workers
+    start_workers(pids, workers, port, timeout=timeout)    
     
     # launch q
     print("Starting work queue master on port {0}".format(port))
