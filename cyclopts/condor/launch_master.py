@@ -190,7 +190,8 @@ def start_queue(q, n_tasks, idgen, indb, bring_files):
         outdb = '{0}_out.h5'.format(i)
         cmd = exec_cmd.format(runfile=runfile, indb=indb, uuid=idgen.next().strip(), outdb=outdb)
         t = wq.Task(cmd)
-        t.specify_cores(1)
+        t.specify_cores(1) # 1 core
+        t.specify_memory(4096) # 4 GB
         f = bring_files['cyclopts_tar']
         t.specify_input_file(f, os.path.basename(f), cache=True)
         f = bring_files['cde_tar']
