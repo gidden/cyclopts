@@ -203,7 +203,7 @@ def submit(user, db, instids, solvers, remotedir,
                   len(instids), os.path.basename(db), verbose=verbose)
     client.close()
     if verbose:
-        print("Submitted job in {0}@{1}:~/{2} with exit code: {rtn}".format(
+        print("Submitted job in {0}@{1}:~/cyclopts-runs/{2} with exit code: {rtn}".format(
                 user, host, remotedir, rtn=rtn)) 
 
     os.remove(localtar)

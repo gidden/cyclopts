@@ -222,7 +222,7 @@ def submit(user, db, instids, solvers, remotedir,
                       verbose=verbose)
     client.close()
     if verbose:
-        print("Submitted job in {0}@{1}:~/{2} with pid: {3}".format(
+        print("Submitted job in {0}@{1}:~/cyclopts-runs/{2} with pid: {3}".format(
                 user, host, remotedir, pid)) 
 
     os.remove(localtar)
