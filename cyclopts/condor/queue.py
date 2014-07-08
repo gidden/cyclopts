@@ -164,7 +164,7 @@ def _submit(client, remotedir, tarname, nids, indb,
 
 def submit(user, db, instids, solvers, remotedir, 
            host="submit-3.chtc.wisc.edu", keyfile=None, 
-           verbose=False):
+           port='5422', verbose=False):
     """Connects via SSH to a condor submit node, and executes a Cyclopts Work
     Queue run.
     
@@ -184,7 +184,9 @@ def submit(user, db, instids, solvers, remotedir,
     host : str, optional
         the condor submit host
     keyfile : str, optional
-        the public key file    
+        the public key file
+    port : str, optional
+        the port to use for master/worker communication    
     verbose : bool, optional
         whether to print information regarding the submission process    
     """
@@ -200,7 +202,7 @@ def submit(user, db, instids, solvers, remotedir,
     client.connect(host, username=user, key_filename=keyfile)
     
     rtn = _submit(client, tools.cyclopts_remote_run_dir, localtar, 
-                  len(instids), os.path.basename(db), verbose=verbose)
+                  len(instids), os.path.basename(db), port=port, verbose=verbose)
     client.close()
     if verbose:
         print("Submitted job in {0}@{1}:~/cyclopts-runs/{2} with exit code: {rtn}".format(

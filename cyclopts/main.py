@@ -105,7 +105,8 @@ def condor_submit(args):
     elif args.kind == 'queue':
         cqueue.submit(args.user, args.db, instids, args.solvers, 
                       host=args.host, remotedir=args.remotedir, 
-                      keyfile=args.keyfile, verbose=args.verbose)        
+                      keyfile=args.keyfile, verbose=args.verbose,
+                      port=args.port)        
 
 def condor_collect(args):
     remotedir = '/'.join([tools.cyclopts_remote_run_dir, args.remotedir])
@@ -374,6 +375,8 @@ def main():
     kind = ("The kind of condor submission to use.")
     submit_parser.add_argument('-k', '--kind', choices=['dag', 'queue'], 
                                default='dag', help=kind)
+    port = ("The port to use for a condor queue submission.")
+    submit_parser.add_argument('-p', '--port', default='5422', help=port)
     verbose = ("Print output during the submisison process.")
     submit_parser.add_argument('-v', '--verbose', dest='verbose', 
                                action='store_true', default=False, help=verbose)
