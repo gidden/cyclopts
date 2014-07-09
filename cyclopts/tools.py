@@ -19,6 +19,7 @@ import paramiko as pm
 from os import kill
 from signal import alarm, signal, SIGALRM, SIGKILL
 from subprocess import PIPE, Popen
+import getpass
 
 import cyclopts
 from cyclopts.params import CONSTR_ARGS, Param, BoolParam, SupConstrParam, CoeffParam, \
@@ -374,24 +375,25 @@ def ssh_test_connect(client, host, user, keyfile=None, auth=True):
     except pm.BadHostKeyException:
             import pdb; pdb.set_trace()
             can_connect = False
+    password = None
     if not can_connect and auth:
         password = False
         while not password:
-            password = getpass("{0}@{1} password: ".format(user, host))
-            pub = ssh_pub_key(keyfile)
-            cmds = ["mkdir -p ~/.ssh",
-                    'echo "{0}" >> ~/.ssh/authorized_keys'.format(pub),
-                    'chmod og-rw ~/.ssh/authorized_keys',
-                    'chmod a-x ~/.ssh/authorized_keys',
-                    'chmod 700 ~/.ssh',
-                    ]
+            password = getpass.getpass("{0}@{1} password: ".format(user, host))
+            # pub = pm.ssh_pub_key(keyfile)
+            # cmds = ["mkdir -p ~/.ssh",
+            #         'echo "{0}" >> ~/.ssh/authorized_keys'.format(pub),
+            #         'chmod og-rw ~/.ssh/authorized_keys',
+            #         'chmod a-x ~/.ssh/authorized_keys',
+            #         'chmod 700 ~/.ssh',
+            #         ]
             client.connect(host, username=user, password=password)
-            for cmd in cmds:
-                stdin, stdout, stderr = client.exec_command(cmd)
-            client.close()
-            # verify thatthis key works
-            client.connect(host, username=user, key_filename=keyfile)
-            client.close()
+            # for cmd in cmds:
+            #     stdin, stdout, stderr = client.exec_command(cmd)
+            # client.close()
+            # # verify thatthis key works
+            # client.connect(host, username=user, key_filename=keyfile)
+            # client.close()
             can_connect = True
-            print("finished connecting")        
-    return can_connect, keyfile
+            print("finished connecting")
+    return can_connect, keyfile, password

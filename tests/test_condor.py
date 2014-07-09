@@ -80,7 +80,7 @@ def test_get_files():
     
     client = pm.SSHClient()
     client.set_missing_host_key_policy(pm.AutoAddPolicy())
-    can_connect, keyfile = tools.ssh_test_connect(client, host, user, auth=False)
+    can_connect, keyfile, pw = tools.ssh_test_connect(client, host, user, auth=False)
     if not can_connect:
         warnings.warn(("This test requires your public key to be added to"
                        " {0}@{1}'s authorized keys.").format(user, host))

@@ -209,14 +209,14 @@ def submit(user, db, instids, solvers, remotedir,
     """
     client = pm.SSHClient()
     client.set_missing_host_key_policy(pm.AutoAddPolicy())
-    _, keyfile = tools.ssh_test_connect(client, host, user, keyfile, auth=True)
+    _, keyfile, pw = tools.ssh_test_connect(client, host, user, keyfile, auth=True)
 
     localtar = gen_tar(remotedir, db, instids, solvers, user, 
                        verbose=verbose)
 
     if verbose:
         print("connecting to {0}@{1}".format(user, host))
-    client.connect(host, username=user, key_filename=keyfile)
+    client.connect(host, username=user, key_filename=keyfile, password=pw)
     
     pid = _submit(client, tools.cyclopts_remote_run_dir, localtar, 
                       verbose=verbose)

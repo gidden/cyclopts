@@ -95,6 +95,7 @@ def condor_submit(args):
     rc = tools.parse_rc(args.rc) if args.rc is not None else tools.RunControl()
     instids = collect_instids(h5node=instnode, rc=rc, instids=instids)
     h5file.close()
+    print(instids)
     instids = [uuid.UUID(bytes=x).hex for x in instids]
 
     # submit job
@@ -277,8 +278,8 @@ def update_cde(args):
                     tarname])
     client = pm.SSHClient()
     client.set_missing_host_key_policy(pm.AutoAddPolicy())
-    _, keyfile = tools.ssh_test_connect(client, host, user, keyfile, auth=True)
-    client.connect(host, username=user, key_filename=keyfile)
+    _, keyfile, pw = tools.ssh_test_connect(client, host, user, keyfile, auth=True)
+    client.connect(host, username=user, key_filename=keyfile, password=pw)
     ftp = client.open_sftp()
     print("Copying {0} to {user}@{host}:{1}.".format(
             ffrom, fto, user=user, host=host))
