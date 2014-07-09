@@ -95,7 +95,6 @@ def condor_submit(args):
     rc = tools.parse_rc(args.rc) if args.rc is not None else tools.RunControl()
     instids = collect_instids(h5node=instnode, rc=rc, instids=instids)
     h5file.close()
-    print(instids)
     instids = [uuid.UUID(bytes=x).hex for x in instids]
 
     # submit job
