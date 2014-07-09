@@ -58,6 +58,7 @@ _dtypes = {
         ("n_u_nodes", np.int64),
         ("n_v_nodes", np.int64),
         ("n_constrs", np.int64),
+        ("excl_frac", np.float64),
         ]),
     "solutions": np.dtype([
         ("solnid", ('str', 16)), # 16 bytes for uuid
@@ -107,6 +108,9 @@ def write_exprops(h5node, instid, paramid, groups, nodes, arcs):
     row['instid'] = instid.bytes
     row['paramid'] = paramid.bytes
     row['n_arcs'] = len(arcs)
+    excl = {n.id: n.excl for n in nodes}
+    nexcl = sum([int(excl[a.uid] or excl[a.vid]) for a in arcs])
+    row['excl_frac'] = nexcl / float(len(arcs))
     nconstr = 0
     nv = 0
     nu = 0
