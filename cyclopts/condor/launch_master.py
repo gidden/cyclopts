@@ -113,7 +113,7 @@ def assign_workers(open_cores, n_tasks=1):
     return dict((node, n) for node, n in workers.items() if n > 0)
 
 def _start_workers(node, n, port):
-    worker_cmd = """condor_submit_workers -r {conds} {machine}.chtc.wisc.edu {port} {n}"""
+    worker_cmd = """condor_submit_workers -t 600 -r {conds} {machine}.chtc.wisc.edu {port} {n}"""
     print("Starting {0} workers or node {1}.".format(n, node))
     conds = '(ForGidden==true&&machine=="{0}.chtc.wisc.edu")'.format(node)
     cmd = worker_cmd.format(conds=conds, machine='submit-3', port=port, n=n)
