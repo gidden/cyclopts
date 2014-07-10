@@ -115,6 +115,11 @@ def condor_collect(args):
     cutils.collect(args.localdir, remotedir, args.user, 
                    host=args.host, outdb=args.outdb,                 
                    clean=args.clean, keyfile=args.keyfile)
+
+def condor_rm(args):
+    print("Removing condor jobs for {0}@{1}".format(args.user, args.host))
+    expr = 'work_queue_worker' if args.kind == 'workers' else None
+    cutils.rm(args.user, host=args.host, keyfile=args.keyfile, expr=expr)
     
 def cyclopts_combine(args):
     print("Combining {0} files into one master named {1}".format(
@@ -409,7 +414,26 @@ def main():
     nocleanh = ("Do *not* clean up the submit node after.")
     collect_parser.add_argument('--no-clean', dest='clean', help=nocleanh,
                                 action='store_false', default=True)    
-            
+    
+    #
+    # remove processes on condor
+    #
+    rm = ("Removes processes on condor for a user.")
+    rm_parser = sp.add_parser('condor-rm', help=rm)
+    rm_parser.set_defaults(func=condor_rm)
+    uh = ("The condor user name.")
+    rm_parser.add_argument('-u', '--user', dest='user', help=uh, 
+                           default='gidden')
+    hosth = ("The remote condor submit host.")
+    rm_parser.add_argument('-t', '--host', dest='host', help=hosth, 
+                           default='submit-3.chtc.wisc.edu')    
+    keyfile = ("An ssh public key file.")
+    rm_parser.add_argument('--keyfile', dest='keyfile', help=keyfile, 
+                           default=None)    
+    kind = ("The kind of job to remove.")
+    rm_parser.add_argument('-k', '--kind', choices=['all', 'workers'], 
+                           help=kind)
+                
     #
     # build a cde tarball for condor
     #

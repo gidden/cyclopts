@@ -8,6 +8,7 @@ import os
 import io
 import glob 
 import uuid
+import re
 
 try:
     import paramiko as pm
@@ -68,6 +69,31 @@ def _check_finish(client, pid):
             and outlines[-1].split()[0].strip() == donecheck:
         done = True
     return done
+
+def rm(user, host="submit-3.chtc.wisc.edu", keyfile=None, expr=None):
+    client = pm.SSHClient()
+    client.set_missing_host_key_policy(pm.AutoAddPolicy())
+    _, keyfile, pw = tools.ssh_test_connect(client, host, user, keyfile=keyfile, 
+                                            auth=False)
+    client.connect(host, username=user, key_filename=keyfile, password=pw)
+    print("connecting to {0}@{1}".format(user, host))
+    
+    cmd = "condor_q {user}".format(user=user)
+    print("Remotely executing '{0}'".format(cmd))
+    stdin, stdout, stderr = client.exec_command(cmd)
+    
+    expr = user if expr is None else expr
+    cexpr = re.compile(expr)
+    pids = [l.split()[0] for l in stdout.readlines() if cexpr.search(l)]
+    
+    if len(pids) > 0:
+        cmd = "condor_rm {pids}".format(pids=" ".join(pids))
+        print("Remotely executing '{0}'".format(cmd))
+        stdin, stdout, stderr = client.exec_command(cmd)
+    else:
+        print("No jobs found matching {0}.".format(expr))
+    client.close()
+    
     
 def collect(localdir, remotedir, user, host="submit-3.chtc.wisc.edu", 
             outdb='cyclopts_results.h5', clean=False, keyfile=None):
