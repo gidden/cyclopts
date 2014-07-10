@@ -411,9 +411,9 @@ def main():
                  " in which output files from a run are located.")
     collect_parser.add_argument('-d', '--remotedir', dest='remotedir', 
                                 help=remotedir)      
-    nocleanh = ("Do *not* clean up the submit node after.")
-    collect_parser.add_argument('--no-clean', dest='clean', help=nocleanh,
-                                action='store_false', default=True)    
+    clean = ("Clean up the submit node after.")
+    collect_parser.add_argument('--clean', dest='clean', help=clean,
+                                action='store_true', default=False)    
     
     #
     # remove processes on condor
