@@ -105,8 +105,8 @@ cdef class ProbSolution:
 
 
 
-def Run(groups, nodes, arcs, solver):
-    """Run(groups, nodes, arcs, solver)
+def Run(groups, nodes, arcs, solver, verbose=True):
+    """Run(groups, nodes, arcs, solver, verbose=True)
     no docstring for Run, please file a bug report!"""
     cdef cpp_vector[cpp_instance.ExGroup] groups_proxy
     cdef int igroups
@@ -156,7 +156,7 @@ def Run(groups, nodes, arcs, solver):
         for iarcs in range(arcs_size):
             arcs_proxy[iarcs] = (<cpp_instance.ExArc *> (<ExArc> arcs[iarcs])._inst)[0]
     solver_proxy = <ExSolver> solver
-    rtnval = cpp_instance.Run(groups_proxy, nodes_proxy, arcs_proxy, (<cpp_instance.ExSolver *> solver_proxy._inst)[0])
+    rtnval = cpp_instance.Run(groups_proxy, nodes_proxy, arcs_proxy, (<cpp_instance.ExSolver *> solver_proxy._inst)[0], <bint> verbose)
     rtnval_proxy = ExSolution()
     (<cpp_instance.ExSolution *> rtnval_proxy._inst)[0] = rtnval
     return rtnval_proxy

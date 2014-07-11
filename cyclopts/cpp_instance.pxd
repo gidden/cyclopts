@@ -158,6 +158,7 @@ cdef extern from "instance.h" namespace "cyclopts":
     ExSolution Run(cpp_vector[ExGroup] &, cpp_vector[ExNode] &) except +
     ExSolution Run(cpp_vector[ExGroup] &, cpp_vector[ExNode] &, cpp_vector[ExArc] &) except +
     ExSolution Run(cpp_vector[ExGroup] &, cpp_vector[ExNode] &, cpp_vector[ExArc] &, ExSolver &) except +
+    ExSolution Run(cpp_vector[ExGroup] &, cpp_vector[ExNode] &, cpp_vector[ExArc] &, ExSolver &, cpp_bool) except +
 
 
 

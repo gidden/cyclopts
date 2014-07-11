@@ -130,7 +130,7 @@ class ExSolution: public ProbSolution {
 };
 
 ExSolution Run(std::vector<ExGroup>& groups, std::vector<ExNode>& nodes,
-               std::vector<ExArc>& arcs, ExSolver& solver);
+               std::vector<ExArc>& arcs, ExSolver& solver, bool verbose=false);
 
 } // namespace cyclopts
 
