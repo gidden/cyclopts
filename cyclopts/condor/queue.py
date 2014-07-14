@@ -113,9 +113,7 @@ nohup python -u launch_master.py port={port} user={user} nids={nids} indb={indb}
 """
 
 def _submit(client, remotedir, tarname, nids, indb,
-            port='5422', user='gidden',
-            nodes=['e121', 'e122', 'e123', 'e124', 'e125', 'e126'],
-            verbose=False):
+            port='5422', user='gidden', nodes=None, verbose=False):
     """Performs a condor Work Queue sumbission on a client using a tarball of all
     submission-related data.
 
@@ -141,6 +139,7 @@ def _submit(client, remotedir, tarname, nids, indb,
     ffrom = tarname
     tarname = os.path.basename(tarname)
     fto = '{0}/{1}'.format(remotedir, tarname)
+    nodes = ['e121', 'e122', 'e123', 'e124', 'e125', 'e126'] if nodes is None else nodes
     if verbose:
         print("Copying from {0} to {1} on the condor submit node.".format(
                 ffrom, fto))
@@ -164,6 +163,7 @@ def _submit(client, remotedir, tarname, nids, indb,
 
 def submit(user, db, instids, solvers, remotedir, 
            host="submit-3.chtc.wisc.edu", keyfile=None, 
+           nodes=None,
            port='5422', verbose=False):
     """Connects via SSH to a condor submit node, and executes a Cyclopts Work
     Queue run.
@@ -185,6 +185,8 @@ def submit(user, db, instids, solvers, remotedir,
         the condor submit host
     keyfile : str, optional
         the public key file
+    nodes : list, optional
+        a list of execute nodes prefixes (e.g., e121.chtc.wisc.edu -> e121)
     port : str, optional
         the port to use for master/worker communication    
     verbose : bool, optional
@@ -202,7 +204,8 @@ def submit(user, db, instids, solvers, remotedir,
     client.connect(host, username=user, key_filename=keyfile, password=pw)
     
     rtn = _submit(client, tools.cyclopts_remote_run_dir, localtar, 
-                  len(instids), os.path.basename(db), port=port, verbose=verbose)
+                  len(instids), os.path.basename(db), nodes=nodes,
+                  port=port, verbose=verbose)
     client.close()
     if verbose:
         print("Submitted job in {0}@{1}:~/cyclopts-runs/{2} with exit code: {rtn}".format(

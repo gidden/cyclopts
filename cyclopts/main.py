@@ -106,7 +106,7 @@ def condor_submit(args):
         cqueue.submit(args.user, args.db, instids, args.solvers, 
                       host=args.host, remotedir=args.remotedir, 
                       keyfile=args.keyfile, verbose=args.verbose,
-                      port=args.port)        
+                      nodes=args.nodes, port=args.port)        
 
 def condor_collect(args):
     remotedir = '/'.join([tools.cyclopts_remote_run_dir, args.remotedir])
@@ -382,6 +382,8 @@ def main():
                                default='dag', help=kind)
     port = ("The port to use for a condor queue submission.")
     submit_parser.add_argument('-p', '--port', default='5422', help=port)
+    nodes = ("The execute nodes to target.")
+    submit_parser.add_argument('--nodes', default=None, nargs='*', help=nodes)
     verbose = ("Print output during the submisison process.")
     submit_parser.add_argument('-v', '--verbose', dest='verbose', 
                                action='store_true', default=False, help=verbose)
