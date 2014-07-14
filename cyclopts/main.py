@@ -17,6 +17,7 @@ import shutil
 import paramiko as pm
 import getpass
 import ast
+import sys
 
 import cyclopts
 from cyclopts.condor import dag as cdag
@@ -73,7 +74,10 @@ def collect_instids(h5node=None, rc=None, instids=None):
                      itertools.izip_longest(conds, ops, fillvalue='')]).strip()
         rows = tbl.where(cond)
         for row in rows:
-            instids.add(row['instid'])
+            iid = row['instid']
+            if len(iid) == 15:
+                iid += '\0'
+            instids.add(iid)
         
     # if no ids, then run everything
     if len(instids) == 0 and h5node is not None:
@@ -83,7 +87,10 @@ def collect_instids(h5node=None, rc=None, instids=None):
         for tbl_name in names:
             tbl = h5node._f_get_child(tbl_name)
             for row in tbl.iterrows():
-                instids.add(row['instid'])
+                iid = row['instid']
+                if len(iid) == 15:
+                    iid += '\0'
+                instids.add(iid)
     
     return instids
 
@@ -96,7 +103,7 @@ def condor_submit(args):
     instids = collect_instids(h5node=instnode, rc=rc, instids=instids)
     h5file.close()
     instids = [uuid.UUID(bytes=x).hex for x in instids]
-
+    
     # submit job
     if args.kind == 'dag':
         cdag.submit(args.user, args.db, instids, args.solvers,
