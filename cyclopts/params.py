@@ -181,7 +181,7 @@ class ReactorRequestSampler(object):
     scenarios.
     """
     def __init__(self, n_commods = None, 
-                 n_request = None, assem_per_req = None, 
+                 n_request = None, assem_per_req = None, req_qty = None, 
                  assem_multi_commod = None, 
                  req_multi_commods = None, exclusive = None, n_req_constr = None, 
                  n_supply = None, sup_multi = None, sup_multi_commods = None, 
@@ -195,6 +195,8 @@ class ReactorRequestSampler(object):
             the number of requesters (i.e., RequestGroups)
         assem_per_req : Param or similar, optional
             the number of assemblies in a request
+        req_qty : Param or similar, optional
+            the quantity associated with each request
         assem_multi_commod : BoolParam or similar, optional
             whether an assembly request can be satisfied by multiple 
             commodities
@@ -230,6 +232,8 @@ class ReactorRequestSampler(object):
             if n_request is not None else Param(1)
         self.assem_per_req = assem_per_req \
             if assem_per_req is not None else Param(1)
+        self.req_qty = req_qty \
+            if req_qty is not None else Param(1)
         self.assem_multi_commod = assem_multi_commod \
             if assem_multi_commod is not None else BoolParam(-1.0) # never true
         self.req_multi_commods = req_multi_commods \
@@ -490,22 +494,22 @@ class ReactorRequestBuilder(object):
 
         # populate request params
         for g_id, multi_reqs in request.items():
-            qty = self._req_qty(multi_reqs)
+            total_grp_qty = self._req_grp_qty(multi_reqs)
             n_constr = s.n_req_constr.sample()
             # add qty as first constraint -- required for clp/cbc
-            caps = np.append(qty, self._req_constr_vals(n_constr, multi_reqs))
-            self.groups.append(inst.ExGroup(g_id, req, caps, qty))
+            caps = np.append(total_grp_qty, self._req_constr_vals(n_constr, multi_reqs))
+            self.groups.append(inst.ExGroup(g_id, req, caps, total_grp_qty))
             
             exid = Incrementer()
             for reqs in multi_reqs: # mutually satisfying requests
                 for n_id, commod in reqs:
                     n_node_ucaps[n_id] = n_constr
-                    qty = self._req_node_qty()
+                    req_qty = self._req_node_qty()
                     excl = s.exclusive.sample() # exclusive or not
                     excl_id = exid.next() if excl else -1 # need unique exclusive id
                     self.nodes.append(
-                        inst.ExNode(n_id, g_id, req, qty, excl, excl_id))
-                    req_qtys[n_id] = qty
+                        inst.ExNode(n_id, g_id, req, req_qty, excl, excl_id))
+                    req_qtys[n_id] = req_qty
     
         # populate supply params and arc relations
         a_ids = Incrementer(self.arc_offset)
@@ -517,12 +521,13 @@ class ReactorRequestBuilder(object):
                                          s.n_sup_constr.sample())
             self.groups.append(inst.ExGroup(g_id, bid, caps))
             for v_id, u_id in sups:
+                req_qty = req_qtys[u_id]
                 n_node_ucaps[v_id] = len(caps)
-                self.nodes.append(inst.ExNode(v_id, g_id, bid, req_qtys[u_id]))
+                self.nodes.append(inst.ExNode(v_id, g_id, bid, req_qty))
                 # arc from u-v node
                 # add qty as first constraint -- required for clp/cbc
                 ucaps = np.append(
-                    [self._req_def_constr(qty)], 
+                    [self._req_def_constr(req_qty)], 
                     [s.constr_coeff.sample() for i in range(n_node_ucaps[u_id])])
                 vcaps = [s.constr_coeff.sample() for i in range(n_node_ucaps[v_id])]
                 self.arcs.append(
@@ -541,6 +546,8 @@ class ReactorRequestBuilder(object):
                       self.commod_offset + s.n_commods.sample()))
         self.n_request = s.n_request.sample() # number of request groups
         self.n_supply = s.n_supply.sample() # number of supply groups
+        # the request quantity per assembly (i.e., kg of fuel per assembly request)
+        self.req_qty = s.req_qty.sample() 
 
         req_g_ids = Incrementer(self.req_g_offset)
         # request groups
@@ -683,7 +690,7 @@ class ReactorRequestBuilder(object):
                     self.sups_to_commods[s_id] = self.reqs_to_commods[req]
         return supply
 
-    def _req_qty(self, reqs):
+    def _req_grp_qty(self, reqs):
         """Returns the request quantity for a request group.
 
         Parameters
@@ -693,7 +700,7 @@ class ReactorRequestBuilder(object):
         """
         # assumes 1 assembly == 1 mass unit, all constr vals equivalent. note
         # that reqs = [ [satisfying commods] ], so one entry per actual request
-        return len(reqs)
+        return self.req_qty * len(reqs)
 
     def _req_constr_vals(self, n_constr, reqs):
         """Returns a list of rhs constraint values for a request group.
@@ -713,17 +720,20 @@ class ReactorRequestBuilder(object):
     def _req_node_qty(self):
         """Returns the quantity for an individual request."""
         # change these if all assemblies have mass != 1
-        return 1
+        return self.req_qty
     
     def _req_def_constr(self, req_qty):
-        """Returns the default constraint value for a request.
+        """Returns the default unit constraint value for a request.
 
         Parameters
         ----------
         req_qty : float
             the request quantity
         """
-        # change these if all assemblies have mass != 1
+        # change these if all assemblies have mass != 1 
+        # ---
+        # ^ I don't actually think so, this looks like the unit capacity, which
+        # should always be 1 if all requests have the same mass
         return 1
 
     def _commod_demand(self):
@@ -751,7 +761,8 @@ class ReactorRequestBuilder(object):
         The maximum supply capacity is calculated as the maximum demand for all
         commodities that can be supplied.
         """
-        return {sup: max([commod_demand[c] for c in commods]) \
+        factor = self.req_qty
+        return {sup: factor * max([commod_demand[c] for c in commods]) \
                     for sup, commods in supplier_commods.items()}
 
     def _sup_constr_vals(self, capacity, n_constr):
