@@ -166,28 +166,29 @@ def exec_file(filename, glb=None, loc=None):
 class SamplerBuilder(object):
     """A helper class to build configure instances of parameter samplers
     """
-    def build(self, rc):
+    def __init__(self, rc):
+        pdict = self._get_param_dict(rc)
+        self.n_samplers = reduce(operator.mul, 
+                                 (len(l) for _, val in pdict.iteritems() \
+                                      for l in val), 1)
+        self.params_it = self._param_gen(pdict)
+        
+    def build(self):
         """Builds all permutations of samplers.
-
-        Parameters
-        ----------
-        rc : RunControl
-            A RunControl object defined by the user's parsed rc file.
         """
-        params_dict = self._parse(rc)
-        return self._build(params_dict)
-    
-    def _build(self, params_dict):
-        params_list = self._constr_params(params_dict)
-        n_samplers = reduce(operator.mul, (len(l) for _, l in params_list), 1)
-        samplers = [ReactorRequestSampler() for i in range(n_samplers)]
         ## for supply implementation
         # samplers = [ReactorRequestSampler() if params_dict['request'] \
         #                 else ReactorSupplySampler() for range(n_samplers)]
-        self._add_params(samplers, params_list)
-        return [sampler for sampler in samplers if sampler.valid()]
-
-    def _parse(self, rc):
+        s_ctor = ReactorRequestSampler
+        pairings = [[(name, param) for param in params] for name, params in self.params_it]
+        for p in product(*pairings):
+            s = s_ctor()
+            for name, param in p:
+                setattr(s, name, param)
+            if s.valid():
+                yield s
+        
+    def _get_param_dict(self, rc):
         """Provides a dictionary of parameter names to all constructor arguments
         for a resource exchange range of instances.
         
@@ -230,22 +231,14 @@ class SamplerBuilder(object):
         #         if len(vals) > 0:
         #             params_dict[name] = vals
         return params_dict
-        
-    def _constr_params(self, params_dict):
+
+    def _param_gen(self, params_dict):
         """Returns input for _add_subtree() given input for build()"""
         params_dict = {k: [i for i in product(*v)] \
                            for k, v in params_dict.items()}
         s = ReactorRequestSampler()
-        return [(k, [type(getattr(s, k))(*args) for args in v]) \
-                    for k, v in params_dict.items()]
-
-    def _add_params(self, samplers, params_list):
-        """Configures samplers with all possible perturbations of parameters."""
-        pairings = [[(name, param) for param in params] for name, params in params_list]
-        perturbations = [p for p in product(*pairings)]
-        for i in range(len(perturbations)):
-            for name, param in perturbations[i]:
-                setattr(samplers[i], name, param)
+        for k, v in params_dict.items():
+            yield k, [type(getattr(s, k))(*args) for args in v]
 
 def merge_leaf(node, dest_file):
     src = node

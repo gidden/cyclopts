@@ -1,4 +1,4 @@
-from cyclopts.tools import combine, SamplerBuilder
+from cyclopts.tools import combine, RunControl, SamplerBuilder
 
 from cyclopts.params import Incrementer, Param, BoolParam, \
     ReactorRequestSampler, ReactorRequestBuilder
@@ -67,39 +67,39 @@ def test_combine():
             os.remove(f)
 
 def test_simple_sampler_builder():
-    rc_params = {
-        'n_commods': [[1], [True, False]],
-        'n_request': [[1, 3]],
-        'constr_coeff': [[0, 0.5], [1]],
-        }
+    rc = RunControl(
+        n_commods=[[1], [True, False]],
+        n_request= [[1, 3]],
+        constr_coeff= [[0, 0.5], [1]],)
+    
+    b = SamplerBuilder(rc)
 
-    b = SamplerBuilder()
+    # params_list = [(k, v) for k, v in b.params_it]
+    # for i in range(len(params_list[0][1])):
+    #     assert_equal(params_list[0][1][i].avg, i * 2 + 1)
+    #     assert_equal(params_list[0][1][i].dist, None)
+    # for i in range(len(params_list[1][1])):
+    #     assert_equal(params_list[1][1][i].avg, 1)
+    #     assert_equal(params_list[1][1][i].dist, True if i == 0 else False)
+    # for i in range(len(params_list[2][1])):
+    #     assert_equal(params_list[2][1][i].ub, 1)
+    #     assert_equal(params_list[2][1][i].lb, 0.5 * i)
+    # print("lst:", params_list)
 
-    params_list = b._constr_params(rc_params)
-    for i in range(len(params_list[0][1])):
-        assert_equal(params_list[0][1][i].avg, i * 2 + 1)
-        assert_equal(params_list[0][1][i].dist, None)
-    for i in range(len(params_list[1][1])):
-        assert_equal(params_list[1][1][i].avg, 1)
-        assert_equal(params_list[1][1][i].dist, True if i == 0 else False)
-    for i in range(len(params_list[2][1])):
-        assert_equal(params_list[2][1][i].ub, 1)
-        assert_equal(params_list[2][1][i].lb, 0.5 * i)
-    print("lst:", params_list)
-
-    samplers = b._build(rc_params)    
-    assert_equal(len(samplers), 8)
+    #samplers = b._build(rc_params)    
+    #assert_equal(len(samplers), 8)
     req_exp = [1, 1, 1, 1, 3, 3, 3, 3]
     commod_exp = [True, True, False, False, True, True, False, False]
-    constr_exp = [0, 0.5, 0, 0.5, 0, 0.5, 0, 0.5]
-    for i in range(len(samplers)):
-        print(samplers[i].n_request)
-        assert_equal(samplers[i].n_request.avg, req_exp[i])
-        assert_equal(samplers[i].n_request.dist, None)
-        assert_equal(samplers[i].n_commods.avg, 1)
-        assert_equal(samplers[i].n_commods.dist, commod_exp[i])
-        assert_equal(samplers[i].constr_coeff.lb, constr_exp[i])
-        assert_equal(samplers[i].constr_coeff.ub, 1)
+    constr_exp = [1e-10, 0.5, 0, 0.5, 0, 0.5, 0, 0.5]
+    i = 0
+    for s in b.build():
+        assert_equal(s.n_request.avg, req_exp[i])
+        assert_equal(s.n_request.dist, None)
+        assert_equal(s.n_commods.avg, 1)
+        #assert_equal(s.n_commods.dist, commod_exp[i])
+        assert_equal(s.constr_coeff.lb, constr_exp[i])
+        assert_equal(s.constr_coeff.ub, 1)
+        i += 1
 
 def test_parser():
     class TestRC():

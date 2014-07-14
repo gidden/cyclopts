@@ -26,6 +26,7 @@ from cyclopts.condor import utils as cutils
 import cyclopts.tools as tools
 import cyclopts.inst_io as iio
 import cyclopts.instance as inst
+import cyclopts.params as params
 
 _inst_grp_name = 'Instances'
 _result_grp_name = 'Results'
@@ -143,47 +144,45 @@ def convert(args):
     fin = args.rc
     fout = args.db
     ninst = args.ninst
-    print('Building samplers from input run control')
-    samplers = tools.SamplerBuilder().build(tools.parse_rc(fin))
+    rc = tools.parse_rc(fin)
     h5file = t.open_file(fout, mode='a', filters=_filters)
     root = h5file.root
-
-    d = defaultdict(list)
-    for s in samplers:
-        d[s.__class__.__name__].append(s)
-    tbl_names = d.keys()
+    
+    # update for new types
+    s_types = [('ReactorRequestSampler', params.ReactorRequestSampler),]
     
     # create leaves
     print('Preparing input database')
-    for name in tbl_names:
+    for name, ctor in s_types:
         if root.__contains__(name):
             continue
-        inst = d[name][0]
+        inst = ctor()
         h5file.create_table(root, name, 
                             description=inst.describe_h5(), 
                             filters=_filters)
     if not root.__contains__(_inst_grp_name):
         h5file.create_group(root, _inst_grp_name, filters=_filters)
     
-    for name in tbl_names:
-        tbl = root._f_get_child(name)
+    sbuilder = tools.SamplerBuilder(rc)
+    print('Building {0} samplers from input run control'.format(sbuilder.n_samplers))
+    s_it = sbuilder.build()
+    
+    counter = 0
+    print('Converting {0} instances'.format(sbuilder.n_samplers * ninst))
+    for s in s_it:    
+        tbl = root._f_get_child(s.__class__.__name__)
         row = tbl.row
-        # populate leaves
-        samplers = d[name]
-        print('Converting {0} instances'.format(len(samplers) * ninst))
-        counter = 0
-        for s in samplers:
-            s.export_h5(row)
-            row.append()
-            inst_builder_ctor = s.inst_builder_ctor()
-            builder = inst_builder_ctor(s)
-            h5node = root._f_get_child(_inst_grp_name)
-            for i in range(ninst):
-                builder.build()
-                builder.write(h5node)
-                counter += 1
-                if counter % 100 == 0:
-                    print('{0} instances converted.'.format(counter))
+        s.export_h5(row)
+        row.append()
+        inst_builder_ctor = s.inst_builder_ctor()
+        builder = inst_builder_ctor(s)
+        h5node = root._f_get_child(_inst_grp_name)
+        for i in range(ninst):
+            builder.build()
+            builder.write(h5node)
+            counter += 1
+            if counter % 50 == 0:
+                print('{0} instances converted.'.format(counter))
         tbl.flush()
     h5file.close()
     
