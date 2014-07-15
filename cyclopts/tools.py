@@ -397,3 +397,6 @@ def ssh_test_connect(client, host, user, keyfile=None, auth=True):
             can_connect = True
             print("finished connecting")
     return can_connect, keyfile, password
+
+def uuidhex(bytes=bytes):
+    return uuid.UUID(bytes=bytes).hex
