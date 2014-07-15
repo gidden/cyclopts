@@ -246,7 +246,8 @@ def execute(args):
         groups, nodes, arcs = iio.read_exinst(ininstnode, instid) # exchange specific
         for s in solvers:
             solver = inst.ExSolver(s)
-            soln = inst.Run(groups, nodes, arcs, solver) # exchange specific
+            verbose = False
+            soln = inst.Run(groups, nodes, arcs, solver, verbose) # exchange specific
             solnid = uuid.uuid4().bytes
             iio.write_soln(outinstnode, instid, soln, solnid) # exchange specific
             row['solnid'] = solnid

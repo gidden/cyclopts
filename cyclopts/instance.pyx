@@ -105,8 +105,8 @@ cdef class ProbSolution:
 
 
 
-def Run(groups, nodes, arcs, solver, verbose=True):
-    """Run(groups, nodes, arcs, solver, verbose=True)
+def Run(groups, nodes, arcs, solver, verbose=False):
+    """Run(groups, nodes, arcs, solver, verbose=False)
     no docstring for Run, please file a bug report!"""
     cdef cpp_vector[cpp_instance.ExGroup] groups_proxy
     cdef int igroups

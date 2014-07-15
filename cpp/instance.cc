@@ -113,13 +113,12 @@ ExSolution Run(std::vector<ExGroup>& groups, std::vector<ExNode>& nodes,
     s->verbose();
   double start, stop;
   start = getCPUTime();
-  s->cyclus::ExchangeSolver::Solve(&g);
+  double obj = s->cyclus::ExchangeSolver::Solve(&g);
   stop = getCPUTime();
   double dur = stop - start; // in seconds
   delete  s;
-  double objective = 0;
   std::string type = "ResourceExchange";
-  ExSolution soln(dur, objective, type, cyclus::version::core());
+  ExSolution soln(dur, obj, type, cyclus::version::core());
 
   // update flows on ExArcs
   const std::vector<cyclus::Match>& matches = g.matches();
@@ -132,10 +131,8 @@ ExSolution Run(std::vector<ExGroup>& groups, std::vector<ExNode>& nodes,
     ExArc& exa = *ait;
     double flow = flows[ctx.arc_map[exa]];
     soln.flows[exa.id] = flow;
-    objective += flow / exa.pref; // cost metric = 1 / pref
   }
 
-  soln.objective = objective; // update objective
   return soln;
 }
 
