@@ -58,7 +58,7 @@ ls -l
 
 submit_cmd = """
 mkdir -p {remotedir} && cd {remotedir} &&
-tar -xf {tarfile} && cd {cddir} && 
+tar -xf {tarfile} && rm {tarfile} && cd {cddir} && 
 condor_submit -maxidle 1000 {submit};
 """
 

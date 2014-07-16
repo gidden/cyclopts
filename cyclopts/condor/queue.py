@@ -108,7 +108,7 @@ def gen_tar(remotedir, db, instids, solvers, user="gidden", verbose=False):
 
 submit_cmd = """
 mkdir -p {remotedir} && cd {remotedir} &&
-tar -xf {tarfile} && cd {cddir} && 
+tar -xf {tarfile} && rm {tarfile} && cd {cddir} && 
 nohup python -u launch_master.py port={port} user={user} nids={nids} indb={indb} nodes={nodes} &> launch_master.out &
 """
 

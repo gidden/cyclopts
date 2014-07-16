@@ -92,6 +92,8 @@ cyclus::ExchangeSolver* SolverFactory(ExSolver& solver) {
     ret = new cyclus::ProgSolver(type, excl_orders);
   else if (type == "clp")
     ret = new cyclus::ProgSolver(type, !excl_orders);
+  else if (type == "clp-e")
+    ret = new cyclus::ProgSolver("clp", excl_orders);
   else
     ret = new cyclus::GreedySolver(excl_orders);
   return ret;
