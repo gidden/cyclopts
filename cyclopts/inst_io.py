@@ -68,16 +68,30 @@ _dtypes = {
         ]),
     }
 
+# these functions must be kept up to date with cyclopts.instance
+def exgroup_tpl(idbytes, obj):    
+    return(idbytes, obj.id, obj.kind, 
+           np.append(obj.caps, [0] * (_N_CAPS_MAX - len(obj.caps))), obj.qty)
+
+def exnode_tpl(idbytes, obj):    
+    return(idbytes, obj.id, obj.gid, obj.kind, obj.qty, obj.excl, obj.excl_id)
+
+def exarc_tpl(idbytes, obj):    
+    return(idbytes, obj.id, 
+           obj.uid, np.append(obj.ucaps, [0] * (_N_CAPS_MAX - len(obj.ucaps))), 
+           obj.vid, np.append(obj.vcaps, [0] * (_N_CAPS_MAX - len(obj.vcaps))), 
+           obj.pref)
+
+_tpl_funcs = {'ExGroup': exgroup_tpl, 'ExNode': exnode_tpl, 'ExArc': exarc_tpl, }
+    
 _filters = t.Filters(complevel=4)
 
 """returns a list of object members that do not start with '_' or '__'. This is
 specifically useful for listing the variables of an xdressed object.
 """
 def xdvars(obj):
-    return [attr for attr in dir(obj) \
-                if not callable(attr) \
-                and not attr.startswith('__') and not attr.startswith('_')]
-
+    return [x for x in obj.__class__.__dict__.keys() if not x.startswith('_')]
+    
 """Checks if a file has known Exchange-related tables and adds them if not"""
 def check_extables(h5node, names=_in_tbl_names):
     for objname, tname in names.items():
@@ -86,26 +100,23 @@ def check_extables(h5node, names=_in_tbl_names):
         h5node._v_file.create_table(h5node, tname, _dtypes[objname], 
                                     filters=_filters)
 
-def write_exobjs(h5node, instid, objs):
+def write_exobjs(h5node, idbytes, objs):
     cname = objs[0].__class__.__name__
+    dt = _dtypes[cname]
+    names = dt.names[1:] # instid is first and not a attr
+    rows = np.empty(len(objs), dtype=dt)
+    tpl_func = _tpl_funcs[cname]
+    for i in range(len(objs)):
+        rows[i] = tpl_func(idbytes, objs[i])
     tname = _in_tbl_names[cname]
     tbl = getattr(h5node, tname)
-    row = tbl.row
-    for obj in objs:
-        row['instid'] = instid.bytes
-        for var in xdvars(obj):
-            attr = getattr(obj, var)
-            if isinstance(attr, Iterable):
-                zeros = [0] * (_N_CAPS_MAX - len(attr))
-                attr = np.append(attr, zeros) # up the array to len 10 with 0 values
-            row[var] = attr
-        row.append()
+    tbl.append(rows)
     tbl.flush()
 
-def write_exprops(h5node, instid, paramid, groups, nodes, arcs):
+def write_exprops(h5node, idbytes, paramid, groups, nodes, arcs):
     tbl = getattr(h5node, _in_tbl_names['properties'])
     row = tbl.row
-    row['instid'] = instid.bytes
+    row['instid'] = idbytes
     row['paramid'] = paramid.bytes
     row['n_arcs'] = len(arcs)
     excl = {n.id: n.excl for n in nodes}
@@ -136,11 +147,12 @@ def write_exprops(h5node, instid, paramid, groups, nodes, arcs):
     tbl.flush()
 
 def write_exinst(h5node, instid, paramid, groups, nodes, arcs):
+    idbytes = instid.bytes
     check_extables(h5node, _in_tbl_names)
-    write_exobjs(h5node, instid, groups)
-    write_exobjs(h5node, instid, nodes)
-    write_exobjs(h5node, instid, arcs)
-    write_exprops(h5node, instid, paramid, groups, nodes, arcs)
+    write_exobjs(h5node, idbytes, groups)
+    write_exobjs(h5node, idbytes, nodes)
+    write_exobjs(h5node, idbytes, arcs)
+    write_exprops(h5node, idbytes, paramid, groups, nodes, arcs)
 
 def read_exobjs(h5node, instid, ctor):
     inst = ctor()
