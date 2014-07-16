@@ -261,7 +261,18 @@ class ReactorRequestSampler(object):
             if pref_coeff is not None else CoeffParam(1e-10, 1.0) 
 
     def __eq__(self, other):
-        return self.__dict__ == other.__dict__
+        for k, exp in self.__dict__.items():
+            if k not in other.__dict__:
+                return False
+            if k == 'paramid':
+                continue
+            # this is a hack because for some reason for CoeffParams, a == b is
+            # true and a != b is true, but I can't get corresponding behavior in
+            # ipython. weird.
+            if not exp == other.__dict__[k]:
+                print(exp, other.__dict__[k])
+                return False
+        return True
 
     def __str__(self):
         ret = ["{0} = {1}".format(k, getattr(self, k).__str__()) \

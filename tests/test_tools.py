@@ -66,56 +66,20 @@ def test_combine():
         if os.path.exists(f):
             os.remove(f)
 
-def test_simple_sampler_builder():
+def test_sampler_builder():
     rc = RunControl(
-        n_commods=[[1], [True, False]],
-        n_request= [[1, 3]],
-        constr_coeff= [[0, 0.5], [1]],)
-    
+        n_commods={'avg':[1], 'dist':[True, False]},
+        n_request={'avg':[1, 3]},)
     b = SamplerBuilder(rc)
 
-    # params_list = [(k, v) for k, v in b.params_it]
-    # for i in range(len(params_list[0][1])):
-    #     assert_equal(params_list[0][1][i].avg, i * 2 + 1)
-    #     assert_equal(params_list[0][1][i].dist, None)
-    # for i in range(len(params_list[1][1])):
-    #     assert_equal(params_list[1][1][i].avg, 1)
-    #     assert_equal(params_list[1][1][i].dist, True if i == 0 else False)
-    # for i in range(len(params_list[2][1])):
-    #     assert_equal(params_list[2][1][i].ub, 1)
-    #     assert_equal(params_list[2][1][i].lb, 0.5 * i)
-    # print("lst:", params_list)
-
-    #samplers = b._build(rc_params)    
-    #assert_equal(len(samplers), 8)
-    req_exp = [1, 1, 1, 1, 3, 3, 3, 3]
-    commod_exp = [True, True, False, False, True, True, False, False]
-    constr_exp = [1e-10, 0.5, 0, 0.5, 0, 0.5, 0, 0.5]
-    i = 0
-    for s in b.build():
-        assert_equal(s.n_request.avg, req_exp[i])
-        assert_equal(s.n_request.dist, None)
-        assert_equal(s.n_commods.avg, 1)
-        #assert_equal(s.n_commods.dist, commod_exp[i])
-        assert_equal(s.constr_coeff.lb, constr_exp[i])
-        assert_equal(s.constr_coeff.ub, 1)
-        i += 1
-
-def test_parser():
-    class TestRC():
-        def __init__(self):
-            self.n_request = {'avg': range(1, 5), 'dist': [True, False]}
-            self.n_supply = {'avg': range(1, 5)}
-            self._dict = {'n_request': self.n_request, 
-                          'n_supply': self.n_supply,}
-
-    exp_dict = {
-        'n_request': [range(1, 5), [True, False]],
-        'n_supply': [range(1, 5)],
+    exp = {
+        (True, 1): ReactorRequestSampler(n_commods=Param(1, True), n_request=Param(1)),
+        (True, 3): ReactorRequestSampler(n_commods=Param(1, True), n_request=Param(3)),
+        (False, 1): ReactorRequestSampler(n_commods=Param(1, False), n_request=Param(1)),
+        (False, 3): ReactorRequestSampler(n_commods=Param(1, False), n_request=Param(3)),
         }
-
-    b = SamplerBuilder()
-    rc = TestRC()
-    obs_dict = b._parse(rc)
-
-    assert_equal(exp_dict, obs_dict)
+    obs = [s for s in b.build()]
+    
+    assert_equal(len(exp), len(obs))
+    for s in obs:
+        assert_equal(exp[(s.n_commods.dist, s.n_request.avg)], s)

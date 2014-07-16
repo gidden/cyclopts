@@ -39,6 +39,8 @@ def test_def_rxtr_req_sample():
     assert_equal(1, s.n_sup_constr.sample())
     assert_equal(1, s.sup_constr_val.sample())
     assert_true(s.connection.sample())
+    s1 = ReactorRequestSampler()
+    assert_equal(s1, s)
     constr_avg = 0
     pref_avg = 0
     n = 5000
