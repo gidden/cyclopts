@@ -121,7 +121,7 @@ def test_inst():
                prefs[4])
     arcs = [a1, a2, a3, a4, a5]
         
-    stypes = ["cbc", "clp", "greedy"]
+    stypes = ["cbc", "clp-e", "greedy"]
     exp_flows = {0: 1, 1: 0, 2: 1, 3: 0.5, 4: 0.5}
     for t in stypes:
         print("\nTesting with solver: {0}\n".format(t))
