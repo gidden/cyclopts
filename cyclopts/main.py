@@ -145,14 +145,20 @@ def convert(args):
     fout = args.db
     ninst = args.ninst
     rc = tools.parse_rc(fin)
-    h5file = t.open_file(fout, mode='a', filters=_filters)
-    root = h5file.root
     
     # update for new types
     s_types = [('ReactorRequestSampler', params.ReactorRequestSampler),]
     
+    sbuilder = tools.SamplerBuilder(rc)
+    print(('{0} possible (not validated) samplers found from '
+           'input run control').format(sbuilder.n_samplers))
+    if args.count_only:
+        return
+    
     # create leaves
     print('Preparing input database')
+    h5file = t.open_file(fout, mode='a', filters=_filters)
+    root = h5file.root
     for name, ctor in s_types:
         if root.__contains__(name):
             continue
@@ -162,11 +168,9 @@ def convert(args):
                             filters=_filters)
     if not root.__contains__(_inst_grp_name):
         h5file.create_group(root, _inst_grp_name, filters=_filters)
-    
-    sbuilder = tools.SamplerBuilder(rc)
-    print('Building {0} samplers from input run control'.format(sbuilder.n_samplers))
-    s_it = sbuilder.build()
-    
+
+    # build and export each sampler
+    s_it = sbuilder.build()    
     counter = 0
     print('Converting {0} instances'.format(sbuilder.n_samplers * ninst))
     for s in s_it:    
@@ -181,7 +185,7 @@ def convert(args):
             builder.build()
             builder.write(h5node)
             counter += 1
-            if counter % 50 == 0:
+            if counter % 100 == 0:
                 print('{0} instances converted.'.format(counter))
         tbl.flush()
     h5file.close()
@@ -326,6 +330,10 @@ def main():
              "parameter space.")
     conv_parser.add_argument('-n', '--ninstances', type=int, dest='ninst', 
                              default=1, help=ninst)
+    count = ("Only read in the run control file and count the number of "
+             "possible samplers that will be created.")
+    conv_parser.add_argument('--count', dest='count_only', action='store_true', 
+                             default=False, help=count)
 
     #
     # execute instances locally
