@@ -4,10 +4,10 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.lines as lines
 
 def imarkers():
-    return iter(['x', 's', 'o'])
+    return iter(['x', 's', 'o', 'v', '^', '+'])
 
 def icolors():
-    return iter(['g', 'b', 'r'])
+    return iter(['g', 'b', 'r', 'm', 'c', 'y'])
 
 
 def plot_xy(props, xhandle, yvals):
@@ -17,7 +17,9 @@ def plot_xy(props, xhandle, yvals):
     c_it = icolors()
 
     plts = {}
-    for s, l in yvals.iteritems():
+    solvers = sorted(yvals.keys())
+    for s in solvers:
+        l = yvals[s]
         x = [vals[i[0]] for i in l]
         y = [i[1] for i in l]
         plts[s] = plt.scatter(x, y, c=c_it.next(), marker=m_it.next(), label=s)    
@@ -29,8 +31,9 @@ def plot_xy(props, xhandle, yvals):
     ax = plt.subplot(111)
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-    ax.legend([p for _, p in plts.items()], [s for s, _ in plts.items()], 
-              loc='center left', bbox_to_anchor=(1, 0.5))
+    ax.legend([plts[s] for s in solvers], solvers, loc='center left', 
+              bbox_to_anchor=(1, 0.5))
+    return ax
 
 def plot_xyz(xtbl, xhandle, ytbl, yhandle, zvals):
     xvals = {x['instid']: x[xhandle] for x in xtbl.iterrows()}
@@ -43,7 +46,9 @@ def plot_xyz(xtbl, xhandle, ytbl, yhandle, zvals):
     ax = plt.axes(projection='3d')
     plts = {}
     proxy = {}
-    for s, l in zvals.iteritems():
+    solvers = sorted(zvals.keys())
+    for s in solvers:
+        l = zvals[s]
         x = [xvals[i[0]] for i in l]
         y = [yvals[i[0]] for i in l]
         z = [i[1] for i in l]
@@ -58,7 +63,6 @@ def plot_xyz(xtbl, xhandle, ytbl, yhandle, zvals):
     # Put a legend to the right of the current axis
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])  
-    ax.legend([p for _, p in proxy.items()], [s for s, _ in plts.items()], 
-              loc='center left', bbox_to_anchor=(1, 0.5))
-    
+    ax.legend([proxy[s] for s in solvers], solvers, loc='center left', 
+              bbox_to_anchor=(1, 0.5))
     return ax
