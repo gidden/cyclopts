@@ -105,6 +105,8 @@ def condor_submit(args):
     h5file.close()
     instids = [uuid.UUID(bytes=x).hex for x in instids]
     
+    print('Submitting a {kind} job with {n} instances.'.format(
+            kind=args.kind, n=len(instids)))
     # submit job
     if args.kind == 'dag':
         cdag.submit(args.user, args.db, instids, args.solvers,
