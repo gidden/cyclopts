@@ -54,6 +54,9 @@ class Param(object):
         self.avg = avg
         self.dist = dist
 
+    def init(self):
+        pass
+
     def sample(self):
         # if self.dist is None:
         #     return self.avg
@@ -79,6 +82,9 @@ class BoolParam(object):
         """
         self.cutoff = float(cutoff)
         self.dist = dist
+
+    def init(self):
+        pass
 
     def sample(self):
         """Returns True if sampled below the cutoff, False otherwise"""
@@ -109,13 +115,15 @@ class CoeffParam(object):
         self.lb = float(lb)
         self.ub = float(ub)
         self.dist = dist if dist is not None else "uniform"
+        self._dist_func = rnd.uniform # update this for more functions
+
+    def init(self):
+        self._dist_func = rnd.uniform # update this for more functions
 
     def sample(self):
         """Returns a sampled coefficient"""
-        if self.dist == "uniform":
-            return rnd.uniform(self.lb, self.ub)
-        else:
-            raise ValueError("Unrecognized distribution: " + self.dist)
+        #if self.dist == "uniform":
+        return self._dist_func(self.lb, self.ub)
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -146,7 +154,12 @@ class SupConstrParam(object):
         self.rand = bool(rand)
         # possible supply fractions
         fracs = fracs if fracs is not None else [0.25, 0.5, 0.75, 1] 
+        #self.fracs = [frac for frac in fracs if frac >= cutoff] if self.rand \
+        #    else [cutoff]
         self.fracs = [frac for frac in fracs if frac >= cutoff]
+
+    def init(self):
+        pass
 
     def sample(self):
         """Returns a fractional supply constraint value for a commodity"""
@@ -270,7 +283,6 @@ class ReactorRequestSampler(object):
             # true and a != b is true, but I can't get corresponding behavior in
             # ipython. weird.
             if not exp == other.__dict__[k]:
-                print(exp, other.__dict__[k])
                 return False
         return True
 
@@ -306,6 +318,8 @@ class ReactorRequestSampler(object):
                 ret.append((name, ('str', 16)))
                 continue
             for subname, subobj in obj.__dict__.items():
+                if subname.startswith('_'):
+                    continue
                 ret.append(("{0}_{1}".format(name, subname), 
                             self._dt_convert(subobj)))
         return np.dtype(ret)
@@ -320,21 +334,25 @@ class ReactorRequestSampler(object):
                 setattr(obj, name, UUID.uuid(bytes=row[name]))
                 continue
             for subname, subobj in obj.__dict__.items():
+                if subname.startswith('_'):
+                    continue
                 attr = getattr(obj, subname)
                 val = row["{0}_{1}".format(name, subname)]
                 if val == 'None':
                     val = None
                 elif self._is_seq_not_str(attr):
                     val = self._convert_seq(val)
-                #print("setting", "{0}.{1}".format(name, subname), "to", val)
                 setattr(obj, subname, val)
-
+            obj.init()
+                
     def export_h5(self, row):
         for name, obj in self.__dict__.items():
             if name == 'paramid':
                 row[name] = obj.bytes
                 continue
             for subname, subobj in obj.__dict__.items():
+                if subname.startswith('_'):
+                    continue
                 attr = getattr(obj, subname)
                 row["{0}_{1}".format(name, subname)] = \
                     str(attr) if self._is_seq_not_str(attr) else attr
