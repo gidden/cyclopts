@@ -141,6 +141,8 @@ def cyclopts_combine(args):
 
 def memusg(pid):
     """in kb"""
+    # could also use 
+    # resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     fname = os.path.join(os.path.sep, 'proc', str(pid), 'status')
     with io.open(fname) as f:
         lines = f.readlines()
@@ -199,15 +201,13 @@ def convert(args):
             builder.build()
             builder.write(h5node)
             counter += 1
-            gc.collect()
             if counter % update_freq == 0:
                 print('{0} instances converted.'.format(counter))
                 if verbose:
                     print('Memory usage: {0} (kb)'.format(memusg(os.getpid())))
-                    # print('Memory usage: {0} (kb)'.format(
-                    #         resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
                     print('GC objects: {0}'.format(len(gc.get_objects())))
             tbl.flush()
+            gc.collect()
     h5file.close()
     print('Conversion process complete.')
     
