@@ -216,6 +216,9 @@ def finish_queue(q):
     print "all tasks complete!"
 
 def main():
+    print('Work Queue Master has been launched with pid: {0}').format(
+        os.getpid())
+
     # get vars from command line or use defaults
     args = [a.split('=') for a in sys.argv[1:]]
     args = dict((a[0], a[1]) for a in args)
