@@ -18,6 +18,9 @@ import paramiko as pm
 import getpass
 import ast
 import sys
+import resource
+import gc
+import io
 
 import cyclopts
 from cyclopts.condor import dag as cdag
@@ -135,7 +138,14 @@ def cyclopts_combine(args):
     print("Combining {0} files into one master named {1}".format(
             len(args.files), args.outdb))
     tools.combine(iter(args.files), new_file=args.outdb, clean=args.clean)    
-    
+
+def memusg(pid):
+    """in kb"""
+    fname = os.path.join(os.path.sep, 'proc', str(pid), 'status')
+    with io.open(fname) as f:
+        lines = f.readlines()
+    return next(l for l in lines if l.startswith('VmSize')).split()[1]
+
 def convert(args):
     """Converts a contiguous dataspace as defined by an input run control file
     into problem instances in an HDF5 database. Each discrete point, as
@@ -147,7 +157,8 @@ def convert(args):
     fout = args.db
     ninst = args.ninst
     rc = tools.parse_rc(fin)
-    
+    verbose = args.verbose
+
     # update for new types
     s_types = [('ReactorRequestSampler', params.ReactorRequestSampler),]
     
@@ -187,9 +198,15 @@ def convert(args):
             builder.build()
             builder.write(h5node)
             counter += 1
+            gc.collect()
             if counter % 100 == 0:
                 print('{0} instances converted.'.format(counter))
-        tbl.flush()
+                if verbose:
+                    print('Memory usage: {0} (kb)'.format(memusg(os.getpid())))
+                    # print('Memory usage: {0} (kb)'.format(
+                    #         resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
+                    print('GC objects: {0}'.format(len(gc.get_objects())))
+            tbl.flush()
     h5file.close()
     print('Conversion process complete.')
     
@@ -337,6 +354,9 @@ def main():
              "possible samplers that will be created.")
     conv_parser.add_argument('--count', dest='count_only', action='store_true', 
                              default=False, help=count)
+    verbose = ("Print verbose output during the conversion process.")
+    conv_parser.add_argument('-v', '--verbose', dest='verbose', 
+                             action='store_true', default=False, help=verbose)
 
     #
     # execute instances locally
