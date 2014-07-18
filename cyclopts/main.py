@@ -158,6 +158,7 @@ def convert(args):
     ninst = args.ninst
     rc = tools.parse_rc(fin)
     verbose = args.verbose
+    update_freq = args.update_freq
 
     # update for new types
     s_types = [('ReactorRequestSampler', params.ReactorRequestSampler),]
@@ -199,7 +200,7 @@ def convert(args):
             builder.write(h5node)
             counter += 1
             gc.collect()
-            if counter % 100 == 0:
+            if counter % update_freq == 0:
                 print('{0} instances converted.'.format(counter))
                 if verbose:
                     print('Memory usage: {0} (kb)'.format(memusg(os.getpid())))
@@ -357,6 +358,9 @@ def main():
     verbose = ("Print verbose output during the conversion process.")
     conv_parser.add_argument('-v', '--verbose', dest='verbose', 
                              action='store_true', default=False, help=verbose)
+    update_freq = ("The instance frequency with which to update stdout.")
+    conv_parser.add_argument('-u', '--update-freq', type=int, dest='update_freq', 
+                             default=100, help=update_freq)
 
     #
     # execute instances locally
