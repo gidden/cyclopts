@@ -97,10 +97,10 @@ def rm(user, host="submit-3.chtc.wisc.edu", keyfile=None, expr=None):
     
 def collect(localdir, remotedir, user, host="submit-3.chtc.wisc.edu", 
             outdb='cyclopts_results.h5', clean=False, keyfile=None):
-    client = pm.SSHClient()
+        client = pm.SSHClient()
     client.set_missing_host_key_policy(pm.AutoAddPolicy())
-    _, keyfile, pw = tools.ssh_test_connect(client, host, user, keyfile=keyfile, 
-                                            auth=False)
+    _, keyfile, pw = tools.ssh_test_connect(client, host, user, keyfile, auth=True)
+
     client.connect(host, username=user, key_filename=keyfile, password=pw)
     print("connecting to {0}@{1}".format(user, host))
 
