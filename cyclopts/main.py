@@ -191,6 +191,7 @@ def convert(args):
                 print('{0} instances converted.'.format(counter))
         tbl.flush()
     h5file.close()
+    print('Conversion process complete.')
     
 def execute(args):
     indb = args.db
