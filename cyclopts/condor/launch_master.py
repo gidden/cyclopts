@@ -145,41 +145,44 @@ def start_workers(pids, worker_nodes, port, timeout=5):
             done = True
     print("All jobs are done")
 
-def mv_input(indb, path, nodes):
-    pids = {}
+def write_mv(indb, path, nodes):
     shlines = mv_sh.format(loc=path)
     with io.open('mv.sh', 'w') as f:
-        f.write(shlines)
-    
+        f.write(shlines)    
     for node in nodes:
         conds = 'machine=="{0}.chtc.wisc.edu"'.format(node)
         sublines = mv_sub.format(indb=indb, node=node, conds=conds)
         subfile = 'mv_{0}.sub'.format(node)
         with io.open(subfile, 'w') as f:
             f.write(sublines)
-            
+    
+def exec_mv(nodes):
+    pids = {}    
+    for node in nodes:
+        subfile = 'mv_{0}.sub'.format(node)
         cmd = 'condor_submit {0}'.format(subfile)
         lines = condor_cmd(cmd)
         pids[node] = lines[1].split('cluster')[1].split('.')[0].strip()
     return pids
 
-def rm_input(indb, path, nodes):
-    pids = {}
+def write_rm(indb, path, nodes):
     shlines = rm_sh.format(loc=path)
     with io.open('rm.sh', 'w') as f:
         f.write(shlines)
-    
     for node in nodes:
         conds = 'machine=="{0}.chtc.wisc.edu"'.format(node)
         sublines = rm_sub.format(indb=indb, node=node, conds=conds)
         subfile = 'rm_{0}.sub'.format(node)
         with io.open(subfile, 'w') as f:
             f.write(sublines)
-            
+
+def exec_rm(nodes):
+    pids = {}
+    for node in nodes:
+        subfile = 'rm_{0}.sub'.format(node)
         cmd = 'condor_submit {0}'.format(subfile)
         lines = condor_cmd(cmd)
-        pids[node] = lines[1].split('cluster')[1].split('.')[0].strip()
-        
+        pids[node] = lines[1].split('cluster')[1].split('.')[0].strip()    
     return pids
 
 def start_queue(q, n_tasks, idgen, indb, bring_files):
@@ -216,7 +219,7 @@ def finish_queue(q):
     print "all tasks complete!"
 
 def main():
-    print('Work Queue Master has been launched with pid: {0}').format(
+    print('Work Queue Master script has been launched with pid: {0}').format(
         os.getpid())
 
     # get vars from command line or use defaults
@@ -252,8 +255,12 @@ def main():
     print("Assigning {0} tasks to workers in the following configuration: {1}".format(
             nids, config))
     
+    # write mv/rm files
+    write_mv(indb, indbpath, workers.keys())
+    write_rm(indb, indbpath, workers.keys())
+
     # set up nodes with input
-    pids = mv_input(indb, indbpath, workers.keys())
+    pids = exec_mv(workers.keys())
     timeout = 60 * 3 # 3 minutes
     
     # launch q
@@ -268,7 +275,7 @@ def main():
     finish_queue(q)
 
     # tear down nodes with input    
-    pids = rm_input(indb, indbpath, workers.keys())    
+    pids = exec_rm(workers.keys())    
     
 if __name__ == '__main__':
     main()
