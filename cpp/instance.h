@@ -127,6 +127,7 @@ class ExSolution: public ProbSolution {
              std::string cyclus_version = "")
     : ProbSolution(time, objective, type, cyclus_version) { };
   std::map<int, double> flows;
+  double pref_flow; // sum (preferences * flow) 
 };
 
 ExSolution Run(std::vector<ExGroup>& groups, std::vector<ExNode>& nodes,

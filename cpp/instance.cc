@@ -108,7 +108,7 @@ ExSolution Run(std::vector<ExGroup>& groups, std::vector<ExNode>& nodes,
   AddGroups(groups, ctx, g);
   AddNodes(nodes, ctx, g);
   AddArcs(arcs, ctx, g);
-
+  
   // solve and get time
   cyclus::ExchangeSolver* s = SolverFactory(solver);
   if (verbose)
@@ -133,6 +133,7 @@ ExSolution Run(std::vector<ExGroup>& groups, std::vector<ExNode>& nodes,
     ExArc& exa = *ait;
     double flow = flows[ctx.arc_map[exa]];
     soln.flows[exa.id] = flow;
+    soln.pref_flow += exa.pref * flow;
   }
 
   return soln;

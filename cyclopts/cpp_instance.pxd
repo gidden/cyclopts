@@ -141,6 +141,7 @@ cdef extern from "instance.h" namespace "cyclopts":
 
         # attributes
         cpp_map[int, double] flows
+        double pref_flow
 
         # methods
 
