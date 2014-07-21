@@ -41,6 +41,7 @@ _result_tbl_dtype = np.dtype([
         ("solver", ('str', 30)), # 30 seems long enough, right?
         ("time", np.float64),
         ("objective", np.float64),
+        ("pref_flow", np.float64),
         ("cyclus_version", ('str', 12)),
         ("cyclopts_version", ('str', 12)),
         # len(dtime.datetime.now().isoformat(' ')) == 26
@@ -223,6 +224,7 @@ def execute(args):
     rc._update(asteval)
     solvers = args.solvers
     instids = set(uuid.UUID(x).bytes for x in args.instids)
+    verbose = args.verbose
     
     if not os.path.exists(indb):
         raise IOError('Input database {0} does not exist.'.format(indb))
@@ -270,7 +272,8 @@ def execute(args):
         groups, nodes, arcs = iio.read_exinst(ininstnode, instid) # exchange specific
         for s in solvers:
             solver = inst.ExSolver(s)
-            verbose = False
+            print('Solving instance {0} with the {1} solver'.format(
+                    tools.uuidhex(instid), s))
             soln = inst.Run(groups, nodes, arcs, solver, verbose) # exchange specific
             solnid = uuid.uuid4().bytes
             iio.write_soln(outinstnode, instid, soln, solnid) # exchange specific
@@ -280,6 +283,7 @@ def execute(args):
             row["problem"] = soln.type
             row["time"] = soln.time
             row["objective"] = soln.objective
+            row["pref_flow"] = soln.pref_flow
             row["cyclus_version"] = soln.cyclus_version
             row["cyclopts_version"] = cyclopts.__version__
             row["timestamp"] = datetime.now().isoformat(' ')
@@ -395,7 +399,10 @@ def main():
     conds = ("A dictionary representation of execution conditions. This CLI "
              "argument can be used instead of placing them in an RC file.")
     exec_parser.add_argument('--conds', dest='conds', default='{}', help=conds)
-    
+    verbose = ("Print verbose output during execution.")
+    exec_parser.add_argument('-v', '--verbose', dest='verbose', 
+                             action='store_true', default=False, help=verbose)
+        
     #
     # execute instances with condor
     #
@@ -411,7 +418,7 @@ def main():
                                help=instids)    
     submit_parser.add_argument('--solvers', nargs='*', default=['cbc'], 
                                dest='solvers', help=solversh)    
-
+    
     # condor related
     uh = ("The condor user name.")
     submit_parser.add_argument('-u', '--user', dest='user', help=uh, 
