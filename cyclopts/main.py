@@ -162,6 +162,7 @@ def convert(args):
     rc = tools.parse_rc(fin)
     verbose = args.verbose
     update_freq = args.update_freq
+    debug = args.debug
 
     # update for new types
     s_types = [('ReactorRequestSampler', params.ReactorRequestSampler),]
@@ -190,7 +191,11 @@ def convert(args):
     s_it = sbuilder.build()    
     counter = 0
     print('Converting {0} instances'.format(sbuilder.n_samplers * ninst))
+    if debug:
+        import objgraph
     for s in s_it:    
+        if debug:
+            objgraph.show_growth(limit=5)
         tbl = root._f_get_child(s.__class__.__name__)
         row = tbl.row
         s.export_h5(row)
@@ -210,6 +215,9 @@ def convert(args):
             tbl.flush()
             gc.collect()
     h5file.close()
+    if debug:
+        objgraph.show_growth()
+        import pdb; pdb.set_trace()
     print('Conversion process complete.')
     
 def execute(args):
@@ -371,6 +379,9 @@ def main():
     verbose = ("Print verbose output during the conversion process.")
     conv_parser.add_argument('-v', '--verbose', dest='verbose', 
                              action='store_true', default=False, help=verbose)
+    debug = ("Use objgraph and pdb to debug the conversion process.")
+    conv_parser.add_argument('--debug', dest='debug', 
+                             action='store_true', default=False, help=debug)
     update_freq = ("The instance frequency with which to update stdout.")
     conv_parser.add_argument('-u', '--update-freq', type=int, dest='update_freq', 
                              default=100, help=update_freq)
