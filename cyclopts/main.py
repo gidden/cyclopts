@@ -328,6 +328,15 @@ def update_cde(args):
         for rm in rms:
             os.remove(rm)
         shutil.rmtree(pkgdir)
+    
+def dump(args):
+    """Dumps information about instances in a database"""
+    h5file = t.open_file(args.db, mode='r', filters=_filters)
+    instnode = h5file.root._f_get_child(_inst_grp_name)
+    instids = collect_instids(h5node=instnode)
+    for iid in instids:
+        print(uuid.UUID(bytes=iid).hex)
+    h5file.close()
 
 def main():
     """Entry point for Cyclopts runs."""
@@ -515,6 +524,14 @@ def main():
     combine_parser.add_argument('--clean', dest='clean', help=clean,
                                 action='store_true', default=False)    
                 
+
+    #
+    # dump information about an instance db
+    #
+    dumph = ("Dumps information about an instance database.")
+    dump_parser = sp.add_parser('dump', help=dumph)
+    dump_parser.set_defaults(func=dump)
+    dump_parser.add_argument('--db', dest='db', help=db)
     
     #
     # and away we go!
