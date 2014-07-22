@@ -25,7 +25,7 @@ from cyclopts import tools
 batlab_base_dir_template = u"""/home/{user}"""
 
 tar_output_cmd = """
-cd {remotedir} && ls -l && tar -czf {tardir}.tar.gz {re}
+cd {remotedir} && tar -czf {tardir}.tar.gz {re}
 """
         
 def _wait_till_found(client, path, t_sleep=5):
