@@ -8,7 +8,7 @@ import shutil
 import stat
 
 from cyclopts import tools
-from cyclopts.condor.utils import _wait_till_found, batlab_base_dir_template
+from cyclopts.condor.utils import exec_remote_cmd, batlab_base_dir_template
 
 run_lines = u"""#!/bin/bash
 pwd=$PWD

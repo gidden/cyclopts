@@ -92,8 +92,7 @@ def test_get_files():
     touchline = " ".join("/".join([remotedir, f]) for f in tstfiles)
     cmd = "mkdir -p {0} && touch {1}".format(remotedir, touchline)
     client.connect(host, username=user, key_filename=keyfile)
-    client.exec_command(cmd)
-    utils._wait_till_found(client, '/'.join([remotedir, tstfiles[-1]]))
+    stdin, stdout, stderr = utils.exec_remote_cmd(client, cmd, verbose=True)
     print("getting", remotedir)
     nfiles = utils.get_files(client, remotedir, localdir, prefix + '*')
     client.close()
@@ -102,7 +101,7 @@ def test_get_files():
     
     client.connect(host, username=user, key_filename=keyfile)
     cmd = "rm -rf {0}".format(remotedir)
-    client.exec_command(cmd)
+    stdin, stdout, stderr = utils.exec_remote_cmd(client, cmd, verbose=True)
     client.close()
         
     shutil.rmtree(localdir)

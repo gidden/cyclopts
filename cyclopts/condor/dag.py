@@ -9,7 +9,7 @@ import shutil
 import uuid
 
 from cyclopts import tools
-from cyclopts.condor.utils import _wait_till_found, batlab_base_dir_template
+from cyclopts.condor.utils import exec_remote_cmd, batlab_base_dir_template
 
 job_template = u"""JOB J_{0} {0}.sub"""
 
@@ -133,22 +133,11 @@ def _submit(client, remotedir, tarname, subfile="dag.sub",
     cddir = tarname.split(".tar.gz")[0]
     cmd = submit_cmd.format(tarfile=tarname, cddir=cddir, 
                             submit=subfile, remotedir=remotedir)
-    print("Remotely executing '{0}'".format(cmd))
-    stdin, stdout, stderr = client.exec_command(cmd)
-    
-    checkfile = "{remotedir}/{0}/{1}.dagman.out".format(
-        cddir, subfile, remotedir=remotedir)
-    _wait_till_found(client, checkfile)
+    stdin, stdout, stderr = exec_remote_cmd(client, cmd, verbose=verbose)
 
     cmd = "head {0}".format(checkfile)
-    if verbose:
-        print("Remotely executing '{0}'".format(cmd))
-    stdin, stdout, stderr = client.exec_command(cmd)
-    err = stderr.readlines()
-    if len(err) > 0:
-        raise IOError(" ".join(err))
+    stdin, stdout, stderr = exec_remote_cmd(client, cmd, verbose=verbose)
     pid = stdout.readlines()[1].split('condor_scheduniv_exec.')[1].split()[0]
-
     return pid
 
 def gen_tar(rundir, db, instids, solvers, user="gidden", verbose=False):

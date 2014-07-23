@@ -26,27 +26,6 @@ batlab_base_dir_template = u"""/home/{user}"""
 
 tar_output_cmd = """cd {remotedir} && tar -czf {tardir}.tar.gz {re}"""
 
-def _wait_for_cmd(stdout, t_sleep=5):
-    """Returns after a cmd's stdout reports that it has finished"""
-    while not stdout.channel.exit_status_ready():
-        print('Command not complete, checking again in {0} seconds.'.format(
-                t_sleep))
-        time.sleep(t_sleep)
-        
-def _wait_till_found(client, path, t_sleep=5):
-    """Queries a client if a an expected file exists until it does."""
-    print('Waiting for existence of {0}'.format(path))
-    found = False
-    while not found:
-        cmd = "find {0}".format(path)
-        print("Remotely executing '{0}'".format(cmd))
-        stdin, stdout, stderr = client.exec_command(cmd)
-        found = len(stdout.readlines()) > 0
-        if not found:
-            print('Not there yet! Checking again in {0} seconds.'.format(
-                    t_sleep))
-            time.sleep(t_sleep)
-
 def _wait_till_done(client, user, host, keyfile, pid, t_sleep=300):
     """Queries a client if a an expected process is done."""
     done = False
@@ -60,7 +39,7 @@ def _wait_till_done(client, user, host, keyfile, pid, t_sleep=300):
             print('Not done yet! Checking again in {0} minutes.'.format(
                     t_sleep / 60.))
             time.sleep(t_sleep)
-
+    
 def _check_finish(client, pid):
     """Checks the status of a condor run on the client.
     """
@@ -75,6 +54,21 @@ def _check_finish(client, pid):
         done = True
     return done
 
+def exec_remote_cmd(client, cmd, t_sleep=5, verbose=False):
+    """A wrapper function around paramiko.client.exec_command that helps with
+    error handling and returns only once the command has been completed."""
+    if verbose:
+        print("Remotely executing '{0}'".format(cmd))
+    stdin, stdout, stderr = client.exec_command(cmd)
+    while not stdout.channel.exit_status_ready():
+        print('Command not complete, checking again in {0} seconds.'.format(
+                t_sleep))
+        time.sleep(t_sleep)
+    if stdout.channel.recv_exit_status() != 0:
+        raise IOError('Error with command {0}: {1}'.format(
+                cmd, " ".join(stderr)))
+    return stdin, stdout, stderr
+
 def rm(user, host="submit-3.chtc.wisc.edu", keyfile=None, expr=None):
     client = pm.SSHClient()
     client.set_missing_host_key_policy(pm.AutoAddPolicy())
@@ -84,8 +78,7 @@ def rm(user, host="submit-3.chtc.wisc.edu", keyfile=None, expr=None):
     print("connecting to {0}@{1}".format(user, host))
     
     cmd = "condor_q {user}".format(user=user)
-    print("Remotely executing '{0}'".format(cmd))
-    stdin, stdout, stderr = client.exec_command(cmd)
+    stdin, stdout, stderr = exec_remote_cmd(client, cmd, verbose=True)
     
     expr = user if expr is None else expr
     cexpr = re.compile(expr)
@@ -93,8 +86,7 @@ def rm(user, host="submit-3.chtc.wisc.edu", keyfile=None, expr=None):
     
     if len(pids) > 0:
         cmd = "condor_rm {pids}".format(pids=" ".join(pids))
-        print("Remotely executing '{0}'".format(cmd))
-        stdin, stdout, stderr = client.exec_command(cmd)
+        stdin, stdout, stderr = exec_remote_cmd(client, cmd, verbose=True)
     else:
         print("No jobs found matching {0}.".format(expr))
     client.close()
@@ -116,8 +108,7 @@ def collect(localdir, remotedir, user, host="submit-3.chtc.wisc.edu",
     
     if clean:
         cmd = "rm -r {0} && rm {0}.tar.gz".format(remotedir)
-        print("Remotely executing '{0}'".format(cmd))
-        stdin, stdout, stderr = client.exec_command(cmd)
+        stdin, stdout, stderr = exec_remote_cmd(client, cmd, verbose=True)
     client.close()
     
     # combine files and clean up
@@ -142,13 +133,8 @@ def get_files(client, remotedir, localdir, re):
     """
     tardir = 'outfiles'
     cmd = tar_output_cmd.format(remotedir=remotedir, tardir=tardir, re=re)
-    print("Remotely executing '{0}'".format(cmd))
-    stdin, stdout, stderr = client.exec_command(cmd)
-    _wait_for_cmd(stdout)
-    if stdout.channel.recv_exit_status() != 0:
-        raise IOError('Error with command {0}: {1}'.format(
-                cmd, " ".join(stderr)))
-
+    exec_remote_cmd(client, cmd, verbose=True)
+    
     remotetar = os.path.join(remotedir, '{0}.tar.gz'.format(tardir))
     localtar = os.path.join(localdir, '{0}.tar.gz'.format(tardir))
     ftp = client.open_sftp()
