@@ -24,9 +24,7 @@ from cyclopts import tools
 
 batlab_base_dir_template = u"""/home/{user}"""
 
-tar_output_cmd = """
-cd {remotedir} && tar -czf {tardir}.tar.gz {re}
-"""
+tar_output_cmd = """cd {remotedir} && tar -czf {tardir}.tar.gz {re}"""
 
 def _wait_for_cmd(stdout, t_sleep=5):
     """Returns after a cmd's stdout reports that it has finished"""
@@ -147,7 +145,10 @@ def get_files(client, remotedir, localdir, re):
     print("Remotely executing '{0}'".format(cmd))
     stdin, stdout, stderr = client.exec_command(cmd)
     _wait_for_cmd(stdout)
-    
+    if stdout.channel.recv_exit_status() != 0:
+        raise IOError('Error with command {0}: {1}'.format(
+                cmd, " ".join(stderr)))
+
     remotetar = os.path.join(remotedir, '{0}.tar.gz'.format(tardir))
     localtar = os.path.join(localdir, '{0}.tar.gz'.format(tardir))
     ftp = client.open_sftp()
