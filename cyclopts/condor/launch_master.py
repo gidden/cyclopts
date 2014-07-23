@@ -213,7 +213,7 @@ def finish_queue(q):
       print "active workers: {0}".format(q.stats.total_workers_joined)
       if t:
           print "task (id# %d) on host %s complete: %s (return code %d)" % (t.id, t.hostname, t.command, t.return_status)
-          print "task output: {0}".format(t.output)
+          #print "task output: {0}".format(t.output)
           if t.return_status != 0:
             print "task failed: {0}".format(t.result)      
     print "all tasks complete!"
