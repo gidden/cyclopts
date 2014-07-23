@@ -165,8 +165,8 @@ def convert(args):
     debug = args.debug
 
     # change the buffer size to show memory issues
-    t.parameters.IO_BUFFER_SIZE = 1048576 / 10.
-    print("tables IO buffer size: ", t.parameters.IO_BUFFER_SIZE)
+    # t.parameters.IO_BUFFER_SIZE = 1048576 / 10.
+    # print("tables IO buffer size: ", t.parameters.IO_BUFFER_SIZE)
 
     # update for new types
     s_types = [('ReactorRequestSampler', params.ReactorRequestSampler),]
