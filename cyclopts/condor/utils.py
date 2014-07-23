@@ -27,6 +27,13 @@ batlab_base_dir_template = u"""/home/{user}"""
 tar_output_cmd = """
 cd {remotedir} && tar -czf {tardir}.tar.gz {re}
 """
+
+def _wait_for_cmd(stdout, t_sleep=5):
+    """Returns after a cmd's stdout reports that it has finished"""
+    while not stdout.channel.exit_status_ready():
+        print('Command not complete, checking again in {0} seconds.'.format(
+                t_sleep))
+        time.sleep(t_sleep)
         
 def _wait_till_found(client, path, t_sleep=5):
     """Queries a client if a an expected file exists until it does."""
@@ -93,8 +100,7 @@ def rm(user, host="submit-3.chtc.wisc.edu", keyfile=None, expr=None):
     else:
         print("No jobs found matching {0}.".format(expr))
     client.close()
-    
-    
+        
 def collect(localdir, remotedir, user, host="submit-3.chtc.wisc.edu", 
             outdb='cyclopts_results.h5', clean=False, keyfile=None):
     client = pm.SSHClient()
@@ -140,10 +146,10 @@ def get_files(client, remotedir, localdir, re):
     cmd = tar_output_cmd.format(remotedir=remotedir, tardir=tardir, re=re)
     print("Remotely executing '{0}'".format(cmd))
     stdin, stdout, stderr = client.exec_command(cmd)
-
+    _wait_for_cmd(stdout)
+    
     remotetar = os.path.join(remotedir, '{0}.tar.gz'.format(tardir))
     localtar = os.path.join(localdir, '{0}.tar.gz'.format(tardir))
-    _wait_till_found(client, remotetar)
     ftp = client.open_sftp()
     print("Copying {0} from condor submit node to {1}.".format(
             remotetar, localtar))

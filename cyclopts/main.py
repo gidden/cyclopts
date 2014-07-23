@@ -147,7 +147,7 @@ def memusg(pid):
     fname = os.path.join(os.path.sep, 'proc', str(pid), 'status')
     with io.open(fname) as f:
         lines = f.readlines()
-    return next(l for l in lines if l.startswith('VmSize')).split()[1]
+    return float(next(l for l in lines if l.startswith('VmSize')).split()[1])
 
 def convert(args):
     """Converts a contiguous dataspace as defined by an input run control file
@@ -163,6 +163,10 @@ def convert(args):
     verbose = args.verbose
     update_freq = args.update_freq
     debug = args.debug
+
+    # change the buffer size to show memory issues
+    t.parameters.IO_BUFFER_SIZE = 1048576 / 10.
+    print("tables IO buffer size: ", t.parameters.IO_BUFFER_SIZE)
 
     # update for new types
     s_types = [('ReactorRequestSampler', params.ReactorRequestSampler),]
@@ -210,8 +214,10 @@ def convert(args):
             if counter % update_freq == 0:
                 print('{0} instances converted.'.format(counter))
                 if verbose:
-                    print('Memory usage: {0} (kb)'.format(memusg(os.getpid())))
-                    print('GC objects: {0}'.format(len(gc.get_objects())))
+                    usg = memusg(os.getpid())
+                    perobj = usg / len(gc.get_objects())
+                    print('Memory usage in kb: {0}'.format(usg))
+                    print('Memory per object: {0}'.format(perobj))
             tbl.flush()
             gc.collect()
     h5file.close()
@@ -477,7 +483,7 @@ def main():
                                 default=None)    
     localdir = ("The local directory in which to place resulting files.")
     collect_parser.add_argument('-l', '--localdir', dest='localdir',
-                                help=localdir, default='run_results')     
+                                help=localdir, default='.')     
     remotedir = ("The remote directory (relative to the user's home directory)"
                  " in which output files from a run are located.")
     collect_parser.add_argument('-d', '--remotedir', dest='remotedir', 
