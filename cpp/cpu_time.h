@@ -108,4 +108,16 @@ double getCPUTime( )
   return -1;/* Failed. */
 }
 
+
+static inline double CoinCpuTime()
+{
+  double cpu_temp;
+  struct rusage usage;
+  getrusage(RUSAGE_SELF,&usage);
+  cpu_temp = static_cast<double>(usage.ru_utime.tv_sec);
+  cpu_temp += 1.0e-6*(static_cast<double> (usage.ru_utime.tv_usec));
+  return cpu_temp;
+}
+
+
 #endif // CYCLOPTS_CPU_TIME_H_

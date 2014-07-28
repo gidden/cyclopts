@@ -114,9 +114,11 @@ ExSolution Run(std::vector<ExGroup>& groups, std::vector<ExNode>& nodes,
   if (verbose)
     s->verbose();
   double start, stop;
-  start = getCPUTime();
+  // start = getCPUTime();
+  start = CoinCpuTime();
   double obj = s->cyclus::ExchangeSolver::Solve(&g);
-  stop = getCPUTime();
+  // stop = getCPUTime();
+  stop = CoinCpuTime();
   double dur = stop - start; // in seconds
   delete  s;
   std::string type = "ResourceExchange";
