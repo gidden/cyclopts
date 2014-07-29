@@ -342,7 +342,7 @@ def update_cde(args):
     client.close()
 
     if clean:
-        rms = [tarname, db]
+        rms = [tarname, db, 'cde.options']
         for rm in rms:
             os.remove(rm)
         shutil.rmtree(pkgdir)
