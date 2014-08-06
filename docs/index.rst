@@ -48,6 +48,7 @@ Contents
     
     overview   
     install
+    basics
     cli
     pyapi/main
     theory/main
