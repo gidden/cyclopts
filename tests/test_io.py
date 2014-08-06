@@ -7,7 +7,7 @@ import nose
 from nose.tools import assert_true, assert_equal, assert_raises
 from numpy.testing import assert_array_equal
 
-from cyclopts import io as cycio
+from cyclopts import cyclopts_io as cycio
 
 class TestIO:
     def setUp(self):
