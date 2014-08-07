@@ -30,6 +30,8 @@ class Table(object):
         self.dt = dt
         self.chunksize = chunksize if chunksize is not None \
             else math.floor(32 * 1024 / float(dt.itemsize)) 
+        self.where = '/' + '/'.join(self.path.split('/')[:-1])
+        self.name = self.path.split('/')[-1]
         self._data = np.empty(shape=(self.chunksize), dtype=self.dt)
         self._idx = 0
         self.tbl = self.h5file.get_node(self.path) if self.path in self.h5file \
@@ -40,10 +42,8 @@ class Table(object):
 
     def create(self):
         """Creates a table in the h5file. This must be called before writing."""
-        where = '/' + '/'.join(self.path.split('/')[:-1])
-        name = self.path.split('/')[-1]
-        self.h5file.create_table(where, 
-                                 name, 
+        self.h5file.create_table(self.where, 
+                                 self.name, 
                                  description=self.dt, 
                                  filters=_filters, 
                                  chunkshape=(self.chunksize,))
