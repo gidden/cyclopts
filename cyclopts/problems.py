@@ -2,11 +2,6 @@
 
 :author: Matthew Gidden
 """
-import numpy as np
-import tables as t
-from collections import Iterable
-
-from cyclopts import io as cycio
 
 class ProblemFamily(object):
     """A class representing families of problems that share the same
