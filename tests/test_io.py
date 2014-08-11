@@ -34,9 +34,9 @@ class TestIO:
         data = np.empty(2, dtype=self.dt)
         data['data'] = range(2)
         cyctbl.append_data(data)
-        assert_raises(IOError, cyctbl.finalize())
+        assert_raises(IOError, cyctbl.flush())
 
-    def test_write_finalize(self):
+    def test_write_flush(self):
         cyctbl = cycio.Table(self.h5file, self.pth, self.dt, chunksize=3)
         cyctbl.create()
         h5tbl = self.h5file.root.tbl
@@ -44,7 +44,7 @@ class TestIO:
         data['data'] = range(2)
         cyctbl.append_data(data)
         assert_equal(0, h5tbl.nrows)
-        cyctbl.finalize()
+        cyctbl.flush()
         rows = self.h5file.root.tbl[:]
         assert_array_equal(data, rows)
 

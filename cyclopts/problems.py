@@ -46,27 +46,35 @@ class ProblemFamily(object):
         """
         raise NotImplementedError
 
-    def record_inst(self, inst, tables):
+    def record_inst(self, inst, inst_uuid, param_uuid, tables):
         """Derived classes must implement this function.
         
         Parameters
         ----------
         inst : tuple or other
             A representation of a problem instance
+        inst_uuid : uuid
+            The uuid of the instance
+        param_uuid : uuid
+            The uuid of the point in parameter space
         tables : list of cyclopts_io.Table
             The tables that can be written to
         """
         raise NotImplementedError
 
-    def record_soln(self, inst, soln, tables):
+    def record_soln(self, inst, inst_uuid, soln, soln_uuid, tables):
         """Derived classes must implement this function to return a list of
         
         Parameters
         ----------
         inst : tuple or other
             A representation of a problem instance
+        inst_uuid : uuid
+            The uuid of the instance
         soln : ProbSolution or similar
             A representation of a problem solution
+        soln_uuid : uuid
+            The uuid of the solution
         tables : list of cyclopts_io.Table
             The tables that can be written to
         """

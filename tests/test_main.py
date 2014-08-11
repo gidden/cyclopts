@@ -15,6 +15,8 @@ import warnings
 import nose
 from nose.tools import assert_equal, assert_true
 
+from utils import timeout
+
 """this is a print out of uid hexs and their number of arcs taken from
 cyclopts/tests/files/exp_instances.h5 on 6/15/14 via
 
@@ -154,6 +156,7 @@ def test_combine():
     h5file.close()
     os.remove(outdb)
 
+@timeout(20)
 def test_collect():
     user = 'gidden'
     host = 'submit-3.chtc.wisc.edu'

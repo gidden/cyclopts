@@ -18,6 +18,8 @@ from test_main import exp_uuid_arcs
 import nose
 from nose.tools import assert_equal, assert_true
 
+from utils import timeout
+
 def test_gen_dag_tar():
     base = os.path.dirname(os.path.abspath(__file__))
     db = os.path.join(base, 'files', 'exp_instances.h5')
@@ -68,6 +70,7 @@ def test_gen_q_tar():
     assert_equal(set(exp), set(obs))
     os.remove(tarname)
     
+@timeout(20)
 def test_get_files():
     user = 'gidden'
     host = 'submit-3.chtc.wisc.edu'

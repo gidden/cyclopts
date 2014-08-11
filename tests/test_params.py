@@ -2,7 +2,7 @@ from cyclopts.params import Incrementer, Param, BoolParam, \
     ReactorRequestSampler, ReactorRequestBuilder
 from cyclopts.instance import ExGroup, ExNode, ExArc
 
-from test_inst_io import assert_xd_equal
+from utils import assert_xd_equal
 
 from nose.tools import assert_equal, assert_almost_equal, assert_true, \
     assert_false, assert_raises, assert_less, assert_greater, \

@@ -28,13 +28,15 @@ class Table(object):
         self.h5file = h5file
         self.path = path
         self.dt = dt
+        # l1 cache size / row size / 2
+        # factor of 2 is ideal for reading/writing speed (per @scopatz's advice)
         self.chunksize = chunksize if chunksize is not None \
-            else math.floor(32 * 1024 / float(dt.itemsize)) 
-        self.where = '/' + '/'.join(self.path.split('/')[:-1])
+            else math.floor(32 * 1024 / float(dt.itemsize)) / 2
+        self.prefix = '/' + '/'.join(self.path.split('/')[:-1])
         self.name = self.path.split('/')[-1]
         self._data = np.empty(shape=(self.chunksize), dtype=self.dt)
         self._idx = 0
-        self.tbl = self.h5file.get_node(self.path) if self.path in self.h5file \
+        self._tbl = self.h5file.get_node(self.path) if self.path in self.h5file \
             else None
 
     def __del__(self):
@@ -42,12 +44,28 @@ class Table(object):
 
     def create(self):
         """Creates a table in the h5file. This must be called before writing."""
-        self.h5file.create_table(self.where, 
+        self.h5file.create_table(self.prefix, 
                                  self.name, 
                                  description=self.dt, 
                                  filters=_filters, 
                                  chunkshape=(self.chunksize,))
-        self.tbl = self.h5file.get_node(self.path)
+        self._tbl = self.h5file.get_node(self.path)
+
+    # def where(self, pred):
+    #     """Parameters
+    #     ---------
+    #     pred : string
+    #         the search predicate
+        
+    #     Return
+    #     ------
+    #     rows : Pytables.Row iterable
+    #         the rows matching pred
+    #     """
+    #     return self._tbl.where(pred)
+
+    def instid_rows(self, uuid):
+        return self._tbl.where('instid == uuid')
 
     def append_data(self, data):
         """Appends data to the Table. If the chunksize limit is reached, data is
@@ -66,7 +84,7 @@ class Table(object):
             self._idx += ndata
             self._data[idx:self._idx] = data
             return
-        
+
         # writing
         space = chunksize - idx
         nwrites = 1 + int(math.floor(float(ndata - space) / chunksize))
@@ -81,25 +99,25 @@ class Table(object):
         if self._idx > 0:
             self._data[:self._idx] = data[-self._idx:]
             
-    def finalize(self):
+    def flush(self):
         """Writes any remaining data to the table. This must be called before
         closing the h5file."""
         self._write()
-        self._idx = 0
 
     def _write(self, data=None):
         """Writes data up to self.idx"""
-        if self.tbl is None:
+        if self._tbl is None:
             raise IOError('Table must be created before it can be written to.')
         if data is None:
-            self.tbl.append(self._data[:self._idx])
+            self._tbl.append(self._data[:self._idx])
+            self._idx = 0
         else:
-            self.tbl.append(data)
-        self.tbl.flush()        
+            self._tbl.append(data)
+        self._tbl.flush()        
 
 class TableManager(object):
     """A managing class that performs RAII for its tables by creating them if
-    needed upon acquisition and finalizing them upon deletion. Tables can be
+    needed upon acquisition and flushing them upon deletion. Tables can be
     accessed through the manager by its tables member, which is a dictionary
     from table names to Table objects."""
 
@@ -118,5 +136,8 @@ class TableManager(object):
                 tbl.create()
 
     def __del__(self):
+        self.flush_tables()
+    
+    def flush_tables(self):
         for tbl in self.tables.values():
-            tbl.finalize()
+            tbl.flush()

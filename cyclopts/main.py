@@ -22,6 +22,11 @@ import resource
 import gc
 import io
 
+try:
+    import argcomplete
+except ImportError:
+    argcomplete = None
+
 import cyclopts
 from cyclopts.condor import dag as cdag
 from cyclopts.condor import queue as cqueue
@@ -560,6 +565,8 @@ def main():
     #
     # and away we go!
     #
+    if argcomplete is not None and prerc.bash_completion:
+        argcomplete.autocomplete(parser)
     args = parser.parse_args()
     args.func(args)
 
