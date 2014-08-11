@@ -2,6 +2,7 @@ from cyclopts.random_request_species import RandomRequest, RandomRequestPoint, \
     RandomRequestBuilder
 
 import numpy as np
+import os
 
 import nose
 from nose.tools import assert_equal, assert_almost_equal, assert_true, \
@@ -12,11 +13,27 @@ from utils import assert_xd_equal
 from cyclopts.exchange_instance import ExGroup, ExNode, ExArc
 from cyclopts.exchange_family import ResourceExchange
 from cyclopts.params import Param, BoolParam, CoeffParam, SupConstrParam
+from cyclopts.tools import parse_rc
 
 def test_basics():
     sp = RandomRequest()
     assert_equal(sp.name, 'RandomRequest')
     assert_true(isinstance(sp.family, ResourceExchange))
+    
+    base = os.path.dirname(os.path.abspath(__file__))
+    rc = parse_rc(os.path.join(base, 'files', 'obs_valid.rc'))
+    sp.read_space(rc._dict)
+    i = 0
+    for p in sp.points():
+        i += 1
+    assert_equal(i, 5)
+
+def test_valid():
+    n_commods = {'avg': range(1, 3)}
+    n_supply = {'avg': range(1, 3)}
+    n_request = {'avg': range(1, 3)}
+    sp = RandomRequest()
+    
     
 def valid_rr_builder():
     s = RandomRequestPoint()
@@ -150,3 +167,4 @@ def test_rxtr_req_build_changes():
     assert_equal(len(arcs[0].vcaps), 3)
     s.n_sup_constr = Param(1)
     s.n_req_constr = Param(1)
+    

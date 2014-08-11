@@ -5,12 +5,14 @@ import uuid
 import random as rnd
 import numpy as np
 import copy as cp
+import itertools
 
 import cyclopts.exchange_instance as exinst
 from cyclopts.problems import ProblemSpecies
 from cyclopts.cyclopts_io import Table as cycTable
 from cyclopts.exchange_family import ResourceExchange
-from cyclopts.params import Param, BoolParam, CoeffParam, SupConstrParam
+from cyclopts.params import Param, BoolParam, CoeffParam, SupConstrParam, \
+    CONSTR_ARGS
 from cyclopts.tools import Incrementer
 
 class RandomRequestPoint(object):
@@ -615,14 +617,14 @@ class RandomRequest(ProblemSpecies):
         self._tbl_name = 'RandomRequestParameters'
         self._n_points = None
 
-    def _get_param_dict(self, rc):
+    def _get_param_dict(self, rc_dict):
         """Provides a dictionary of parameter names to all constructor arguments
         for a resource exchange range of instances.
         
         Parameters
         ----------
-        rc : RunControl
-            A RunControl object defined by the user's parsed rc file.
+        rc_dict : dict
+            A dictionary of attributes, e.g. from a RunControl object
         
         Returns
         -------
@@ -632,7 +634,7 @@ class RandomRequest(ProblemSpecies):
         """
         params_dict = {}
         s = RandomRequestPoint()
-        for k, v in rc._dict.items():
+        for k, v in rc_dict.items():
             name = k
             attr = v
             if hasattr(s, name):
@@ -651,7 +653,7 @@ class RandomRequest(ProblemSpecies):
 
     def _param_gen(self, params_dict):
         """Returns input for _add_subtree() given input for build()"""
-        params_dict = {k: [i for i in product(*v)] \
+        params_dict = {k: [i for i in itertools.product(*v)] \
                            for k, v in params_dict.items()}
         s = RandomRequestPoint()
         for k, v in params_dict.items():
@@ -733,14 +735,14 @@ class RandomRequest(ProblemSpecies):
             A representation of a point in parameter space to be used by this 
             species
         """
-        for name, params in self.params_it:
-            pairing = [(name, param) for param in params]
-            for prod in product(*pairings):
-                point = RandomRequestPoint()
-                for name, param in prod:
-                    setattr(point, name, param)
-                if point.valid():
-                    yield point
+        pairings = [[(name, param) for param in params] \
+                        for name, params in self._params_it]
+        for prod in itertools.product(*pairings):
+            point = RandomRequestPoint()
+            for name, param in prod:
+                setattr(point, name, param)
+            if point.valid():
+                yield point
 
     def record_point(self, point, tables):
         """Derived classes must implement this function, recording information
