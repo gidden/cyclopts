@@ -137,17 +137,17 @@ class ResourceExchange(ProblemFamily):
         """
         groups, nodes, arcs = inst
         
-        grp_data = [grp_tpl(inst_uuid, x) for x in groups]
-        tables[_tbl_names['ExGroup']].append_data(grp_data)
+        data = [grp_tpl(inst_uuid, x) for x in groups]
+        tables[_tbl_names['ExGroup']].append_data(data)
         
-        node_data = [node_tpl(inst_uuid, x) for x in nodes]
-        tables[_tbl_names['ExNode']].append_data(node_data)
+        data = [node_tpl(inst_uuid, x) for x in nodes]
+        tables[_tbl_names['ExNode']].append_data(data)
         
-        arc_data = [arc_tpl(inst_uuid, x) for x in arcs]
-        tables[_tbl_names['ExArc']].append_data(arc_data)
+        data = [arc_tpl(inst_uuid, x) for x in arcs]
+        tables[_tbl_names['ExArc']].append_data(data)
         
-        tbl = tables[_tbl_names['properties']]
-        tbl.append_data([prop_tpl(inst_uuid, param_uuid, groups, nodes, arcs)])
+        data = [prop_tpl(inst_uuid, param_uuid, groups, nodes, arcs)]
+        tables[_tbl_names['properties']].append_data(data)
 
     def record_soln(self, inst, inst_uuid, soln, soln_uuid, tables):
         """Derived classes must implement this function to return a list of
