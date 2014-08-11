@@ -137,7 +137,7 @@ class RandomRequestPoint(object):
         return isinstance(attr, collections.Sequence) \
             and not isinstance(attr, basestring)
 
-    def describe_h5(self):
+    def dtype(self):
         """Returns a numpy dtype describing all composed objects."""
         ret = []
         for name, obj in self.__dict__.items():
@@ -695,7 +695,7 @@ class RandomRequest(ProblemSpecies):
         """
         return [cycio.Table(h5file, 
                             '/'.join([prefix, self.tbl_name]),
-                            RandomRequestPoint().describe_h5())]
+                            RandomRequestPoint().dtype())]
 
     def read_space(self, space_dict):
         """Derived classes must implement this function.
