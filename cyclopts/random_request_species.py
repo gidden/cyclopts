@@ -1,8 +1,17 @@
+import operator
+import re
+import collections
+import uuid
+import random as rnd
+import numpy as np
+import copy as cp
 
+import cyclopts.exchange_instance as exinst
 from cyclopts.problems import ProblemSpecies
 from cyclopts.cyclopts_io import Table as cycTable
 from cyclopts.exchange_family import ResourceExchange
 from cyclopts.params import Param, BoolParam, CoeffParam, SupConstrParam
+from cyclopts.tools import Incrementer
 
 class RandomRequestPoint(object):
     """A container class representing a point in parameter space for
@@ -318,7 +327,7 @@ class RandomRequestBuilder(object):
             n_constr = s.n_req_constr.sample()
             # add qty as first constraint -- required for clp/cbc
             caps = np.append(total_grp_qty, self._req_constr_vals(n_constr, multi_reqs))
-            self.groups.append(inst.ExGroup(g_id, req, caps, total_grp_qty))
+            self.groups.append(exinst.ExGroup(g_id, req, caps, total_grp_qty))
             
             exid = Incrementer()
             for reqs in multi_reqs: # mutually satisfying requests
@@ -328,7 +337,7 @@ class RandomRequestBuilder(object):
                     excl = s.exclusive.sample() # exclusive or not
                     excl_id = exid.next() if excl else -1 # need unique exclusive id
                     self.nodes.append(
-                        inst.ExNode(n_id, g_id, req, req_qty, excl, excl_id))
+                        exinst.ExNode(n_id, g_id, req, req_qty, excl, excl_id))
                     req_qtys[n_id] = req_qty
     
         # populate supply params and arc relations
@@ -339,11 +348,11 @@ class RandomRequestBuilder(object):
         for g_id, sups in supply.items():
             caps = self._sup_constr_vals(supplier_capacity[g_id], 
                                          s.n_sup_constr.sample())
-            self.groups.append(inst.ExGroup(g_id, bid, caps))
+            self.groups.append(exinst.ExGroup(g_id, bid, caps))
             for v_id, u_id in sups:
                 req_qty = req_qtys[u_id]
                 n_node_ucaps[v_id] = len(caps)
-                self.nodes.append(inst.ExNode(v_id, g_id, bid, req_qty))
+                self.nodes.append(exinst.ExNode(v_id, g_id, bid, req_qty))
                 # arc from u-v node
                 # add qty as first constraint -- required for clp/cbc
                 ucaps = np.append(
@@ -351,8 +360,8 @@ class RandomRequestBuilder(object):
                     [s.constr_coeff.sample() for i in range(n_node_ucaps[u_id])])
                 vcaps = [s.constr_coeff.sample() for i in range(n_node_ucaps[v_id])]
                 self.arcs.append(
-                    inst.ExArc(a_ids.next(), u_id, ucaps, 
-                               v_id, vcaps, s.pref_coeff.sample()))
+                    exinst.ExArc(a_ids.next(), u_id, ucaps, 
+                                 v_id, vcaps, s.pref_coeff.sample()))
 
         return self.groups, self.nodes, self.arcs
 
@@ -602,7 +611,7 @@ class RandomRequest(ProblemSpecies):
     def __init__(self):
         super(RandomRequest, self).__init__()
         self._pnt = RandomRequestPoint()
-        self.self._params_it = None
+        self._params_it = None
         self._tbl_name = 'RandomRequestParameters'
         self._n_points = None
 

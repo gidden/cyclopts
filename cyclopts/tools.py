@@ -27,6 +27,21 @@ from cyclopts.params import CONSTR_ARGS, Param, BoolParam, SupConstrParam, Coeff
 
 cyclopts_remote_run_dir = 'cyclopts-runs'
 
+class Incrementer(object):
+    """A simple helper class to increment a value"""
+    def __init__(self, start = 0):
+        """Parameters
+        ----------
+        start : int, optional
+            an initial value
+        """
+        self._val = start - 1
+
+    def next(self):
+        """Returns an incremented value"""
+        self._val += 1
+        return self._val
+
 class NotSpecified(object):
     """A helper class singleton for run control meaning that a 'real' value
     has not been given."""

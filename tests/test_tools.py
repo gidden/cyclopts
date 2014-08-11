@@ -17,6 +17,13 @@ exec_cmd = """cyclopts exec --db {indb} --outdb {outdb} \
 --conds "{{'inst_queries':{{'ExchangeInstProperties':['n_arcs=={narcs}']}}}}"
 """
 
+def test_incr():
+    i = Incrementer()
+    assert_equal(i.next(), 0)
+    i = Incrementer(5)
+    assert_equal(i.next(), 5)
+    assert_equal(i.next(), 6)
+
 def test_combine():    
     base = os.path.dirname(os.path.abspath(__file__))
     workdir = os.path.join(base, 'files')

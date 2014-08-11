@@ -1,31 +1,32 @@
-from cyclopts.params import Incrementer, Param, BoolParam, \
-    ReactorRequestSampler, ReactorRequestBuilder
-from cyclopts.exchange_instance import ExGroup, ExNode, ExArc
+from cyclopts.random_request_species import RandomRequest, RandomRequestPoint, \
+    RandomRequestBuilder
 
-from utils import assert_xd_equal
+import numpy as np
 
+import nose
 from nose.tools import assert_equal, assert_almost_equal, assert_true, \
     assert_false, assert_raises, assert_less, assert_greater, \
     assert_less_equal, assert_greater_equal
-import nose
-import numpy as np
 
-def test_incr():
-    i = Incrementer()
-    assert_equal(i.next(), 0)
-    i = Incrementer(5)
-    assert_equal(i.next(), 5)
-    assert_equal(i.next(), 6)
+from utils import assert_xd_equal
+from cyclopts.exchange_instance import ExGroup, ExNode, ExArc
+from cyclopts.exchange_family import ResourceExchange
+from cyclopts.params import Param, BoolParam, CoeffParam, SupConstrParam
 
+def test_basics():
+    sp = RandomRequest()
+    assert_equal(sp.name, 'RandomRequest')
+    assert_true(isinstance(sp.family, ResourceExchange))
+    
 def valid_rr_builder():
-    s = ReactorRequestSampler()
+    s = RandomRequestPoint()
     assert_equal(2, s.n_commods.sample())
     assert_equal(1, s.n_supply.sample())
-    b = ReactorRequestBuilder(s, p)
+    b = RandomRequestBuilder(s, p)
     assert_false(b.valid())
 
 def test_def_rxtr_req_sample():
-    s = ReactorRequestSampler()
+    s = RandomRequestPoint()
     assert_equal(1, s.n_commods.sample())
     assert_equal(1, s.n_request.sample())
     assert_equal(1, s.assem_per_req.sample())
@@ -39,7 +40,7 @@ def test_def_rxtr_req_sample():
     assert_equal(1, s.n_sup_constr.sample())
     assert_equal(1, s.sup_constr_val.sample())
     assert_true(s.connection.sample())
-    s1 = ReactorRequestSampler()
+    s1 = RandomRequestPoint()
     assert_equal(s1, s)
     constr_avg = 0
     pref_avg = 0
@@ -57,8 +58,8 @@ def test_def_rxtr_req_sample():
     assert_almost_equal(0.5, pref_avg / n, places=1)
 
 def test_def_rxtr_req_build():
-    s = ReactorRequestSampler()
-    b = ReactorRequestBuilder(s)
+    s = RandomRequestPoint()
+    b = RandomRequestBuilder(s)
     groups, nodes, arcs = b.build()
     req = True
     bid = False
@@ -91,17 +92,17 @@ def test_def_rxtr_req_build():
     assert_less_equal(arcs[0].pref,  1)
 
 def test_rxtr_req_build_changes():
-    s = ReactorRequestSampler()
+    s = RandomRequestPoint()
     
     # more than one commod without more than one supplier
     s.n_commods = Param(2)
-    b = ReactorRequestBuilder(s)
+    b = RandomRequestBuilder(s)
     assert_raises(ValueError, b.build)
     s.n_commods = Param(1)
 
     # exclusive request node
     s.exclusive = BoolParam(1)
-    b = ReactorRequestBuilder(s)
+    b = RandomRequestBuilder(s)
     groups, nodes, arcs = b.build()
     excls = [n.id for n in nodes if n.excl]
     assert_equal(len(excls), 1)
@@ -111,7 +112,7 @@ def test_rxtr_req_build_changes():
     # 2 suppliers 0 connection prob
     s.connection = BoolParam(0)
     s.n_supply = Param(2)
-    b = ReactorRequestBuilder(s)
+    b = RandomRequestBuilder(s)
     groups, nodes, arcs = b.build()
     assert_equal(len(arcs), 1)
     s.connection = BoolParam(1)
@@ -124,7 +125,7 @@ def test_rxtr_req_build_changes():
     s.req_multi_commods = Param(1)
     s.sup_multi = BoolParam(1)
     s.sup_multi_commods = Param(1)
-    b = ReactorRequestBuilder(s)
+    b = RandomRequestBuilder(s)
     groups, nodes, arcs = b.build()
     assert_equal(len(arcs), 4)
     commods = b._assem_commods(set([0, 1]))
@@ -141,7 +142,7 @@ def test_rxtr_req_build_changes():
     # n constraints
     s.n_req_constr = Param(2)
     s.n_sup_constr = Param(3)
-    b = ReactorRequestBuilder(s)
+    b = RandomRequestBuilder(s)
     groups, nodes, arcs = b.build()
     assert_equal(len(groups[0].caps), 2 + 1) # +1 for default constraint
     assert_equal(len(groups[1].caps), 3)
@@ -149,6 +150,3 @@ def test_rxtr_req_build_changes():
     assert_equal(len(arcs[0].vcaps), 3)
     s.n_sup_constr = Param(1)
     s.n_req_constr = Param(1)
-
-def test_io():
-    pass
