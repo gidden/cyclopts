@@ -565,7 +565,7 @@ def main():
     #
     # and away we go!
     #
-    if argcomplete is not None and prerc.bash_completion:
+    if argcomplete is not None:
         argcomplete.autocomplete(parser)
     args = parser.parse_args()
     args.func(args)
