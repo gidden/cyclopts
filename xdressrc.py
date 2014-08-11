@@ -32,13 +32,14 @@ includes = [
     ]
 
 classes = [
+    apiname('ProbSolution', 'cpp/problem.*', incfiles='problem.h'),
     apiname('ExGroup', 'cpp/exchange_instance.*', incfiles='exchange_instance.h'),
     apiname('ExNode', 'cpp/exchange_instance.*', incfiles='exchange_instance.h'),
     apiname('ExArc', 'cpp/exchange_instance.*', incfiles='exchange_instance.h'),
     apiname('ExSolver', 'cpp/exchange_instance.*', incfiles='exchange_instance.h'),
     apiname('ExSolution', 'cpp/exchange_instance.*', incfiles='exchange_instance.h'),
-    apiname('ProbSolution', 'cpp/exchange_instance.*', incfiles='exchange_instance.h'),
     ]
+
 functions = [
     apiname('Run', 'cpp/exchange_instance.*', incfiles='exchange_instance.h'),
     ]

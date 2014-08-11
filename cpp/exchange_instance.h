@@ -6,6 +6,8 @@
 #include <utility>
 #include <map>
 
+#include "problem.h"
+
 namespace cyclopts {
 
 /// A struct of POD and STL of PODs representation of a Cyclus ExchangeNodeGroup
@@ -104,28 +106,15 @@ class ExSolver {
   std::string type;
 };
 
-/// a generic container for problem instance solutions
-class ProbSolution {
- public:
-  ProbSolution(double time = 0, double objective = 0, std::string type = "",
-               std::string cyclus_version = "")
-    : time(time),
-      objective(objective), 
-      type(type),
-      cyclus_version(cyclus_version) { };
-  
-  double time;
-  double objective;
-  std::string type;
-  std::string cyclus_version;
-};
-
 /// A simple container class for exchange solutions.
 class ExSolution: public ProbSolution {
  public:
   ExSolution(double time = 0, double objective = 0, std::string type = "",
              std::string cyclus_version = "")
-    : ProbSolution(time, objective, type, cyclus_version) { };
+    : ProbSolution(time, objective, type),
+      cyclus_version(cyclus_version) { };
+
+  std::string cyclus_version;
   std::map<int, double> flows;
   double pref_flow; // sum (preferences * flow) 
 };
