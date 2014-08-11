@@ -196,16 +196,16 @@ class ProblemSpecies(object):
         """
         raise NotImplementedError
     
-    def next_point(self):
+    def points(self):
         """Derived classes must implement this function returning a
         representation of a point in its parameter space to be used by other
         class member functions.
         
         Returns
         -------
-        point : tuple or other
-            A representation of a point in parameter space to be used by this 
-            species
+        point_generator : generator
+            A generator for representation of a point in parameter space to be 
+            used by this species
         """
         raise NotImplementedError    
 

@@ -220,16 +220,6 @@ class SamplerBuilder(object):
                 print("Found an entry named {0} that "
                       "is unknown to the parser.".format(k))
                 
-        # for name in s.__dict__:
-        #     if hasattr(rc, name):
-        #         vals = []
-        #         args = CONSTR_ARGS[type(getattr(s, name))]
-        #         attr = getattr(rc, name)
-        #         for arg in args:
-        #             if arg in attr:
-        #                 vals += [attr[arg]]
-        #         if len(vals) > 0:
-        #             params_dict[name] = vals
         return params_dict
 
     def _param_gen(self, params_dict):
