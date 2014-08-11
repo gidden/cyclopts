@@ -1,6 +1,6 @@
-from cyclopts.tools import combine, RunControl, SamplerBuilder
+from cyclopts.tools import Incrementer, combine, RunControl, SamplerBuilder
 
-from cyclopts.params import Incrementer, Param, BoolParam, \
+from cyclopts.params import Param, BoolParam, \
     ReactorRequestSampler, ReactorRequestBuilder
 
 import operator
