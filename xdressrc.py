@@ -32,7 +32,7 @@ includes = [
     ]
 
 classes = [
-    apiname('ProbSolution', 'cpp/problem.*', incfiles='problem.h'),
+    apiname('ProbSolution', 'cpp/problem.*', incfiles='problem.h', tarbase='_cproblem'),
     apiname('ExGroup', 'cpp/exchange_instance.*', incfiles='exchange_instance.h'),
     apiname('ExNode', 'cpp/exchange_instance.*', incfiles='exchange_instance.h'),
     apiname('ExArc', 'cpp/exchange_instance.*', incfiles='exchange_instance.h'),

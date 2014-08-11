@@ -188,7 +188,6 @@ CONSTR_ARGS = {
     SupConstrParam: ['cutoff', 'rand', 'fracs'],
 }        
 
-
 class ReactorRequestSampler(object):
     """A container class for holding all sampling objects for reactor request
     scenarios.

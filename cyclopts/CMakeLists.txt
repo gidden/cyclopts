@@ -35,10 +35,10 @@ SET_TARGET_PROPERTIES(
   )
 
 # problem
-set_source_files_properties("${PROJECT_SOURCE_DIR}/cyclopts/problem.pyx"
+set_source_files_properties("${PROJECT_SOURCE_DIR}/cyclopts/_cproblem.pyx"
                             PROPERTIES CYTHON_IS_CXX TRUE)
-cython_add_module(problem problem.pyx ${PROBLEM_SRC})
-target_link_libraries(problem dl ${LIBS})
+cython_add_module(_cproblem _cproblem.pyx ${PROBLEM_SRC})
+target_link_libraries(_cproblem dl ${LIBS})
 
 # exchange_instance
 set_source_files_properties("${PROJECT_SOURCE_DIR}/cyclopts/exchange_instance.pyx"

@@ -8,7 +8,7 @@
 ################################################
 
 
-from cyclopts cimport cpp_problem
+from cyclopts cimport cpp__cproblem
 
 
 

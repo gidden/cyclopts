@@ -8,8 +8,8 @@
 ################################################
 
 
+from cyclopts cimport cpp__cproblem
 from cyclopts cimport cpp_exchange_instance
-from cyclopts cimport cpp_problem
 from libcpp cimport bool as cpp_bool
 from libcpp.map cimport map as cpp_map
 from libcpp.string cimport string as std_string
@@ -17,7 +17,7 @@ from libcpp.vector cimport vector as cpp_vector
 
 cdef extern from "exchange_instance.h" namespace "cyclopts":
 
-    cdef cppclass ExSolution(cpp_problem.ProbSolution):
+    cdef cppclass ExSolution(cpp__cproblem.ProbSolution):
         # constructors
         ExSolution() except +
         ExSolution(double) except +

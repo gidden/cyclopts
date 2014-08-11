@@ -8,24 +8,24 @@
 ################################################
 """
 """
+cimport _cproblem
 cimport cpp_exchange_instance
 cimport dtypes
 cimport exchange_instance
 cimport numpy as np
-cimport problem
 cimport stlcontainers
+from cyclopts cimport cpp__cproblem
 from cyclopts cimport cpp_exchange_instance
-from cyclopts cimport cpp_problem
 from libc.stdlib cimport free
 from libcpp cimport bool as cpp_bool
 from libcpp.map cimport map as cpp_map
 from libcpp.string cimport string as std_string
 from libcpp.vector cimport vector as cpp_vector
 
+import _cproblem
 import collections
 import dtypes
 import numpy as np
-import problem
 import stlcontainers
 
 np.import_array()
@@ -228,7 +228,7 @@ cdef class ExNode:
 
 
 
-cdef class ExSolution(problem.ProbSolution):
+cdef class ExSolution(_cproblem.ProbSolution):
     """no docstring for {'tarbase': 'exchange_instance', 'tarname': 'ExSolution', 'language': 'c++', 'srcname': 'ExSolution', 'sidecars': (), 'incfiles': ('exchange_instance.h',), 'srcfiles': ('cpp/exchange_instance.cc', 'cpp/exchange_instance.h')}, please file a bug report!"""
 
 

@@ -8,9 +8,9 @@
 ################################################
 
 
+cimport _cproblem
 cimport dtypes
 cimport numpy as np
-cimport problem
 cimport stlcontainers
 from cyclopts cimport cpp_exchange_instance
 from libcpp.map cimport map as cpp_map
@@ -57,7 +57,7 @@ cdef class ExNode:
 
 
 
-cdef class ExSolution(problem.ProbSolution):
+cdef class ExSolution(_cproblem.ProbSolution):
     cdef public stlcontainers._MapIntDouble _flows
     pass
 

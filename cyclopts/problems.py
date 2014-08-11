@@ -3,6 +3,8 @@
 :author: Matthew Gidden
 """
 
+from cyclopts._cproblem import *
+
 class ProblemFamily(object):
     """A class representing families of problems that share the same
     structure.

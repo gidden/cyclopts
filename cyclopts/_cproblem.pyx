@@ -16,7 +16,7 @@ from libcpp.string cimport string as std_string
 
 
 cdef class ProbSolution:
-    """no docstring for {'tarbase': 'problem', 'tarname': 'ProbSolution', 'language': 'c++', 'srcname': 'ProbSolution', 'sidecars': (), 'incfiles': ('problem.h',), 'srcfiles': ('cpp/problem.cc', 'cpp/problem.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': '_cproblem', 'tarname': 'ProbSolution', 'language': 'c++', 'srcname': 'ProbSolution', 'sidecars': (), 'incfiles': ('problem.h',), 'srcfiles': ('cpp/problem.cc', 'cpp/problem.h')}, please file a bug report!"""
 
 
 
@@ -33,7 +33,7 @@ cdef class ProbSolution:
         """
         cdef char * type_proxy
         type_bytes = type.encode()
-        self._inst = new cpp_problem.ProbSolution(<double> time, <double> objective, std_string(<char *> type_bytes))
+        self._inst = new cpp__cproblem.ProbSolution(<double> time, <double> objective, std_string(<char *> type_bytes))
     
     
     def __dealloc__(self):
@@ -44,30 +44,30 @@ cdef class ProbSolution:
     property objective:
         """no docstring for objective, please file a bug report!"""
         def __get__(self):
-            return float((<cpp_problem.ProbSolution *> self._inst).objective)
+            return float((<cpp__cproblem.ProbSolution *> self._inst).objective)
     
         def __set__(self, value):
-            (<cpp_problem.ProbSolution *> self._inst).objective = <double> value
+            (<cpp__cproblem.ProbSolution *> self._inst).objective = <double> value
     
     
     property time:
         """no docstring for time, please file a bug report!"""
         def __get__(self):
-            return float((<cpp_problem.ProbSolution *> self._inst).time)
+            return float((<cpp__cproblem.ProbSolution *> self._inst).time)
     
         def __set__(self, value):
-            (<cpp_problem.ProbSolution *> self._inst).time = <double> value
+            (<cpp__cproblem.ProbSolution *> self._inst).time = <double> value
     
     
     property type:
         """no docstring for type, please file a bug report!"""
         def __get__(self):
-            return bytes(<char *> (<cpp_problem.ProbSolution *> self._inst).type.c_str()).decode()
+            return bytes(<char *> (<cpp__cproblem.ProbSolution *> self._inst).type.c_str()).decode()
     
         def __set__(self, value):
             cdef char * value_proxy
             value_bytes = value.encode()
-            (<cpp_problem.ProbSolution *> self._inst).type = std_string(<char *> value_bytes)
+            (<cpp__cproblem.ProbSolution *> self._inst).type = std_string(<char *> value_bytes)
     
     
     # methods
