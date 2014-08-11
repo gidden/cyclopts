@@ -3,7 +3,7 @@ from collections import Iterable
 
 from cyclopts.problems import ProblemFamily
 import cyclopts.cyclopts_io as cycio
-import cyclopts.exchange_instance as inst
+import cyclopts.exchange_instance as exinst
 
 _N_CAPS_MAX = 10
 
@@ -189,9 +189,9 @@ class ResourceExchange(ProblemFamily):
         """
         xdattrs = lambda obj: [x for x in obj.__class__.__dict__.keys() \
                                    if not x.startswith('_')]
-        ctors = {'ExGroup': inst.ExGroup, 
-                 'ExNode': inst.ExNode, 
-                 'ExArc': inst.ExArc}
+        ctors = {'ExGroup': exinst.ExGroup, 
+                 'ExNode': exinst.ExNode, 
+                 'ExArc': exinst.ExArc}
         objs = {'ExGroup': [], 'ExNode': [], 'ExArc': []}
         for name in ctors.keys():
             tbl = tables[_tbl_names[name]]
@@ -230,4 +230,4 @@ class ResourceExchange(ProblemFamily):
             A representation of a problem solution
         """
         groups, nodes, arcs = inst
-        return inst.Run(groups, nodes, arcs, solver, verbose)
+        return exinst.Run(groups, nodes, arcs, solver, verbose)
