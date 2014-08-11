@@ -15,7 +15,7 @@ import warnings
 import nose
 from nose.tools import assert_equal, assert_true
 
-from utils import timeout
+from utils import timeout, TimeoutError
 
 """this is a print out of uid hexs and their number of arcs taken from
 cyclopts/tests/files/exp_instances.h5 on 6/15/14 via
@@ -160,6 +160,14 @@ def test_combine():
 def test_collect():
     user = 'gidden'
     host = 'submit-3.chtc.wisc.edu'
+    try: 
+        client = pm.SSHClient()
+        client.set_missing_host_key_policy(pm.AutoAddPolicy())
+        can_connect, keyfile, pw = tools.ssh_test_connect(client, host, user, 
+                                                          auth=False)
+    except TimeoutError:
+        warnings.warn('could not connect via ssh to {0}@{1}'.format(user, host))
+        return
     
     localbase = os.path.dirname(os.path.abspath(__file__))
     localdir = 'example_run'
@@ -178,13 +186,6 @@ def test_collect():
     remotepath = '/'.join([remotebase, tools.cyclopts_remote_run_dir, 
                            remotedir])
     
-    client = pm.SSHClient()
-    client.set_missing_host_key_policy(pm.AutoAddPolicy())
-    can_connect, keyfile, pw = tools.ssh_test_connect(client, host, user, auth=False)
-    if not can_connect:
-        warnings.warn(("This test requires your public key to be added to"
-                       " {0}@{1}'s authorized keys.").format(user, host))
-        return
 
     client.connect(host, username=user, key_filename=keyfile)
     ftp = client.open_sftp()

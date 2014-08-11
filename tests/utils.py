@@ -6,6 +6,7 @@ from functools import wraps
 import errno
 import os
 import signal
+import warnings
 
 xdattrs = lambda obj: [x for x in obj.__class__.__dict__.keys() \
                            if not x.startswith('_')]
