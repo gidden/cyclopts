@@ -23,8 +23,8 @@ set_source_files_properties("${PROJECT_SOURCE_DIR}/cyclopts/stlcontainers.pyx"
                             PROPERTIES CYTHON_IS_CXX TRUE)
 cython_add_module(stlcontainers stlcontainers.pyx)
 
-# instance
-set_source_files_properties("${PROJECT_SOURCE_DIR}/cyclopts/instance.pyx"
+# exchange_instance
+set_source_files_properties("${PROJECT_SOURCE_DIR}/cyclopts/exchange_instance.pyx"
                             PROPERTIES CYTHON_IS_CXX TRUE)
-cython_add_module(instance instance.pyx ${INSTANCE_SRC})
-target_link_libraries(instance dl ${LIBS})
+cython_add_module(exchange_instance exchange_instance.pyx ${EXCHANGE_INSTANCE_SRC})
+target_link_libraries(exchange_instance dl ${LIBS})

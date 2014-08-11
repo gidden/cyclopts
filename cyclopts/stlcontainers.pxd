@@ -27,9 +27,9 @@ cimport numpy as np
 
 # Cython Imports For Types
 from libcpp.map cimport map as cpp_map
-from libcpp.vector cimport vector as cpp_vector
 from libcpp cimport bool as cpp_bool
-from cyclopts cimport cpp_instance
+from libcpp.vector cimport vector as cpp_vector
+from cyclopts cimport cpp_exchange_instance
 
 # int vector
 
@@ -37,13 +37,13 @@ from cyclopts cimport cpp_instance
 # double vector
 
 
-# cpp_instance.ExGroup vector
+# cpp_exchange_instance.ExGroup vector
 
 
-# cpp_instance.ExNode vector
+# cpp_exchange_instance.ExNode vector
 
 
-# cpp_instance.ExArc vector
+# cpp_exchange_instance.ExArc vector
 
 
 # cpp_vector[int] vector

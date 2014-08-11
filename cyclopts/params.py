@@ -25,8 +25,8 @@ import collections
 import uuid
 
 try:
-    import cyclopts.instance as inst
-    import cyclopts.inst_io as iio
+    import cyclopts.exchange_instance as inst
+    import cyclopts.inst_io as iio 
 except ImportError as e:
     print("Caught import error, "
           "are you running from the root Cyclopts directory?")

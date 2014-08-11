@@ -70,7 +70,7 @@ def test_gen_q_tar():
     assert_equal(set(exp), set(obs))
     os.remove(tarname)
     
-@timeout(20)
+@timeout()
 def test_get_files():
     user = 'gidden'
     host = 'submit-3.chtc.wisc.edu'

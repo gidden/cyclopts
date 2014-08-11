@@ -28,16 +28,16 @@ cimport xdress_extra_types
 
 # Cython Imports For Types
 from libcpp.map cimport map as cpp_map
-from libcpp cimport bool as cpp_bool
+cimport exchange_instance
 cimport dtypes
-from cyclopts cimport cpp_instance
+from libcpp cimport bool as cpp_bool
+from cyclopts cimport cpp_exchange_instance
 from libcpp.vector cimport vector as cpp_vector
-cimport instance
 cimport numpy as np
 
 # Imports For Types
+import exchange_instance
 import numpy as np
-import instance
 import collections
 import dtypes
 
@@ -58,13 +58,13 @@ cdef extern from *:
 # double vector
 
 
-# cpp_instance.ExGroup vector
+# cpp_exchange_instance.ExGroup vector
 
 
-# cpp_instance.ExNode vector
+# cpp_exchange_instance.ExNode vector
 
 
-# cpp_instance.ExArc vector
+# cpp_exchange_instance.ExArc vector
 
 
 # cpp_vector[int] vector

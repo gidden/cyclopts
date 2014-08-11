@@ -16,7 +16,7 @@ SET(
   )
 
 SET(
-  INSTANCE_SRC "${CMAKE_CURRENT_SOURCE_DIR}/instance.cc"
+  EXCHANGE_INSTANCE_SRC "${CMAKE_CURRENT_SOURCE_DIR}/exchange_instance.cc"
   PARENT_SCOPE
   )
 

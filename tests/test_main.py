@@ -156,7 +156,7 @@ def test_combine():
     h5file.close()
     os.remove(outdb)
 
-@timeout(20)
+@timeout()
 def test_collect():
     user = 'gidden'
     host = 'submit-3.chtc.wisc.edu'

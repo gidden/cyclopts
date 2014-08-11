@@ -33,7 +33,7 @@ from cyclopts.condor import queue as cqueue
 from cyclopts.condor import utils as cutils 
 import cyclopts.tools as tools
 import cyclopts.inst_io as iio
-import cyclopts.instance as inst
+import cyclopts.exchange_instance as inst
 import cyclopts.params as params
 
 _inst_grp_name = 'Instances'

@@ -32,15 +32,13 @@ includes = [
     ]
 
 classes = [
-    apiname('ExGroup', 'cpp/instance.*', incfiles='instance.h'),
-    apiname('ExNode', 'cpp/instance.*', incfiles='instance.h'),
-    apiname('ExArc', 'cpp/instance.*', incfiles='instance.h'),
-    apiname('ExSolver', 'cpp/instance.*', incfiles='instance.h'),
-    apiname('ExSolution', 'cpp/instance.*', incfiles='instance.h'),
-    apiname('ProbSolution', 'cpp/instance.*', incfiles='instance.h'),
+    apiname('ExGroup', 'cpp/exchange_instance.*', incfiles='exchange_instance.h'),
+    apiname('ExNode', 'cpp/exchange_instance.*', incfiles='exchange_instance.h'),
+    apiname('ExArc', 'cpp/exchange_instance.*', incfiles='exchange_instance.h'),
+    apiname('ExSolver', 'cpp/exchange_instance.*', incfiles='exchange_instance.h'),
+    apiname('ExSolution', 'cpp/exchange_instance.*', incfiles='exchange_instance.h'),
+    apiname('ProbSolution', 'cpp/exchange_instance.*', incfiles='exchange_instance.h'),
     ]
 functions = [
-    apiname('Run', 'cpp/instance.*', incfiles='instance.h'),
-    apiname('Incr', 'cpp/instance.*', incfiles='instance.h'),
-    apiname('IncrOne', 'cpp/instance.*', incfiles='instance.h'),
+    apiname('Run', 'cpp/exchange_instance.*', incfiles='exchange_instance.h'),
     ]

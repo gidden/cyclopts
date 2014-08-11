@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from cyclopts.instance import ExGroup, ExNode, ExArc, ExSolution, ExSolver, Run
+from cyclopts.exchange_instance import ExGroup, ExNode, ExArc, ExSolution, ExSolver, Run
 from cyclopts.params import Incrementer
 from cyclopts.dtypes import xd_exgroup, xd_exnode, xd_exarc
 

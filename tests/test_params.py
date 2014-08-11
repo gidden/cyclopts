@@ -1,6 +1,6 @@
 from cyclopts.params import Incrementer, Param, BoolParam, \
     ReactorRequestSampler, ReactorRequestBuilder
-from cyclopts.instance import ExGroup, ExNode, ExArc
+from cyclopts.exchange_instance import ExGroup, ExNode, ExArc
 
 from utils import assert_xd_equal
 

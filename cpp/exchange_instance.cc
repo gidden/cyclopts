@@ -1,4 +1,4 @@
-#include "instance.h"
+#include "exchange_instance.h"
 
 #include "exchange_graph.h"
 #include "greedy_solver.h"

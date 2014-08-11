@@ -3,7 +3,7 @@ from collections import Iterable
 
 from cyclopts.problems import ProblemFamily
 import cyclopts.cyclopts_io as cycio
-import cyclopts.instance as inst
+import cyclopts.exchange_instance as inst
 
 _N_CAPS_MAX = 10
 

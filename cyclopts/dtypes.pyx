@@ -23,14 +23,14 @@ np.import_array()
 cimport xdress_extra_types
 
 # Cython imports for types
-from libcpp.vector cimport vector as cpp_vector
-from cyclopts cimport cpp_instance
 cimport numpy as np
-cimport instance
+cimport exchange_instance
+from libcpp.vector cimport vector as cpp_vector
+from cyclopts cimport cpp_exchange_instance
 
 # imports for types
+import exchange_instance
 import numpy as np
-import instance
 
 dtypes = {}
 
@@ -527,24 +527,24 @@ dtypes[xd_double_num] = xd_double
 
 
 
-# cpp_instance.ExGroup dtype
-cdef MemoryKnight[cpp_instance.ExGroup] mk_exgroup = MemoryKnight[cpp_instance.ExGroup]()
+# cpp_exchange_instance.ExGroup dtype
+cdef MemoryKnight[cpp_exchange_instance.ExGroup] mk_exgroup = MemoryKnight[cpp_exchange_instance.ExGroup]()
 cdef MemoryKnight[PyXDExGroup_Type] mk_exgroup_type = MemoryKnight[PyXDExGroup_Type]()
 
 cdef object pyxd_exgroup_getitem(void * data, void * arr):
-    cdef instance.ExGroup data_proxy
-    data_proxy = instance.ExGroup()
-    (<cpp_instance.ExGroup *> data_proxy._inst)[0] = (<cpp_instance.ExGroup *> data)[0]
+    cdef exchange_instance.ExGroup data_proxy
+    data_proxy = exchange_instance.ExGroup()
+    (<cpp_exchange_instance.ExGroup *> data_proxy._inst)[0] = (<cpp_exchange_instance.ExGroup *> data)[0]
     pyval = data_proxy
     return pyval
 
 cdef int pyxd_exgroup_setitem(object value, void * data, void * arr):
-    cdef cpp_instance.ExGroup * new_data
-    cdef instance.ExGroup value_proxy
-    if isinstance(value, instance.ExGroup):
-        value_proxy = <instance.ExGroup> value
+    cdef cpp_exchange_instance.ExGroup * new_data
+    cdef exchange_instance.ExGroup value_proxy
+    if isinstance(value, exchange_instance.ExGroup):
+        value_proxy = <exchange_instance.ExGroup> value
         new_data = mk_exgroup.renew(data)
-        new_data[0] = (<cpp_instance.ExGroup *> value_proxy._inst)[0]
+        new_data[0] = (<cpp_exchange_instance.ExGroup *> value_proxy._inst)[0]
         return 0
     else:
         return -1
@@ -556,25 +556,25 @@ cdef void pyxd_exgroup_copyswapn(void * dest, np.npy_intp dstride, void * src, n
     cdef char c = 0
     cdef int j
     cdef int m
-    cdef cpp_instance.ExGroup * new_dest
+    cdef cpp_exchange_instance.ExGroup * new_dest
 
     if src != NULL:
-        if (sstride == sizeof(cpp_instance.ExGroup) and dstride == sizeof(cpp_instance.ExGroup)):
+        if (sstride == sizeof(cpp_exchange_instance.ExGroup) and dstride == sizeof(cpp_exchange_instance.ExGroup)):
             new_dest = mk_exgroup.renew(dest)
-            new_dest[0] = deref(<cpp_instance.ExGroup *> src)
+            new_dest[0] = deref(<cpp_exchange_instance.ExGroup *> src)
         else:
             a = <char *> dest
             b = <char *> src
             for i in range(n):
                 new_dest = mk_exgroup.renew(<void *> a)
-                new_dest[0] = deref(<cpp_instance.ExGroup *> b)
+                new_dest[0] = deref(<cpp_exchange_instance.ExGroup *> b)
                 a += dstride
                 b += sstride
     if swap: 
-        m = sizeof(cpp_instance.ExGroup) / 2
+        m = sizeof(cpp_exchange_instance.ExGroup) / 2
         a = <char *> dest
         for i in range(n, 0, -1):
-            b = a + (sizeof(cpp_instance.ExGroup) - 1);
+            b = a + (sizeof(cpp_exchange_instance.ExGroup) - 1);
             for j in range(m):
                 c = a[0]
                 a[0] = b[0]
@@ -589,14 +589,14 @@ cdef void pyxd_exgroup_copyswap(void * dest, void * src, int swap, void * arr):
     cdef char c = 0
     cdef int j
     cdef int m
-    cdef cpp_instance.ExGroup * new_dest
+    cdef cpp_exchange_instance.ExGroup * new_dest
     if src != NULL:
         new_dest = mk_exgroup.renew(dest)
-        new_dest[0] = (<cpp_instance.ExGroup *> src)[0]
+        new_dest[0] = (<cpp_exchange_instance.ExGroup *> src)[0]
     if swap:
-        m = sizeof(cpp_instance.ExGroup) / 2
+        m = sizeof(cpp_exchange_instance.ExGroup) / 2
         a = <char *> dest
-        b = a + (sizeof(cpp_instance.ExGroup) - 1);
+        b = a + (sizeof(cpp_exchange_instance.ExGroup) - 1);
         for j in range(m):
             c = a[0]
             a[0] = b[0]
@@ -607,13 +607,13 @@ cdef void pyxd_exgroup_copyswap(void * dest, void * src, int swap, void * arr):
 cdef np.npy_bool pyxd_exgroup_nonzero(void * data, void * arr):
     return (data != NULL)
     # FIXME comparisons not defined for arbitrary types
-    #cdef cpp_instance.ExGroup zero = cpp_instance.ExGroup()
-    #return ((<cpp_instance.ExGroup *> data)[0] != zero)
+    #cdef cpp_exchange_instance.ExGroup zero = cpp_exchange_instance.ExGroup()
+    #return ((<cpp_exchange_instance.ExGroup *> data)[0] != zero)
 
 cdef int pyxd_exgroup_compare(const void * d1, const void * d2, void * arr):
     return (d1 == d2) - 1
     # FIXME comparisons not defined for arbitrary types
-    #if deref(<cpp_instance.ExGroup *> d1) == deref(<cpp_instance.ExGroup *> d2):
+    #if deref(<cpp_exchange_instance.ExGroup *> d1) == deref(<cpp_exchange_instance.ExGroup *> d2):
     #    return 0
     #else:
     #    return -1
@@ -648,18 +648,18 @@ cdef void pyxd_exgroup_type_free(void * self):
 
 cdef object pyxd_exgroup_type_str(object self):
     cdef PyXDExGroup_Type * cself = <PyXDExGroup_Type *> self
-    cdef instance.ExGroup val_proxy
-    val_proxy = instance.ExGroup()
-    (<cpp_instance.ExGroup *> val_proxy._inst)[0] = (cself.obval)
+    cdef exchange_instance.ExGroup val_proxy
+    val_proxy = exchange_instance.ExGroup()
+    (<cpp_exchange_instance.ExGroup *> val_proxy._inst)[0] = (cself.obval)
     pyval = val_proxy
     s = str(pyval)
     return s
 
 cdef object pyxd_exgroup_type_repr(object self):
     cdef PyXDExGroup_Type * cself = <PyXDExGroup_Type *> self
-    cdef instance.ExGroup val_proxy
-    val_proxy = instance.ExGroup()
-    (<cpp_instance.ExGroup *> val_proxy._inst)[0] = (cself.obval)
+    cdef exchange_instance.ExGroup val_proxy
+    val_proxy = exchange_instance.ExGroup()
+    (<cpp_exchange_instance.ExGroup *> val_proxy._inst)[0] = (cself.obval)
     pyval = val_proxy
     s = repr(pyval)
     return s
@@ -725,7 +725,7 @@ cdef type PyXD_ExGroup = type("xd_exgroup", ((<object> PyArray_API[10]),), {})
 pyxd_exgroup_is_ready = PyType_Ready(<object> PyXD_ExGroup)
 (<PyTypeObject *> PyXD_ExGroup).tp_basicsize = sizeof(PyXDExGroup_Type)
 (<PyTypeObject *> PyXD_ExGroup).tp_itemsize = 0
-(<PyTypeObject *> PyXD_ExGroup).tp_doc = "Python scalar type for cpp_instance.ExGroup"
+(<PyTypeObject *> PyXD_ExGroup).tp_doc = "Python scalar type for cpp_exchange_instance.ExGroup"
 (<PyTypeObject *> PyXD_ExGroup).tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_CHECKTYPES | Py_TPFLAGS_HEAPTYPE
 (<PyTypeObject *> PyXD_ExGroup).tp_alloc = pyxd_exgroup_type_alloc
 (<PyTypeObject *> PyXD_ExGroup).tp_dealloc = pyxd_exgroup_type_dealloc
@@ -754,7 +754,7 @@ c_xd_exgroup_descr.type = 'x'  # type
 c_xd_exgroup_descr.byteorder = '='  # byteorder
 c_xd_exgroup_descr.flags = 0    # flags
 c_xd_exgroup_descr.type_num = 0    # type_num, assigned at registration
-c_xd_exgroup_descr.elsize = sizeof(cpp_instance.ExGroup)  # elsize, 
+c_xd_exgroup_descr.elsize = sizeof(cpp_exchange_instance.ExGroup)  # elsize, 
 c_xd_exgroup_descr.alignment = 8  # alignment
 c_xd_exgroup_descr.subarray = NULL  # subarray
 c_xd_exgroup_descr.fields = NULL  # fields
@@ -771,24 +771,24 @@ dtypes[xd_exgroup_num] = xd_exgroup
 
 
 
-# cpp_instance.ExNode dtype
-cdef MemoryKnight[cpp_instance.ExNode] mk_exnode = MemoryKnight[cpp_instance.ExNode]()
+# cpp_exchange_instance.ExNode dtype
+cdef MemoryKnight[cpp_exchange_instance.ExNode] mk_exnode = MemoryKnight[cpp_exchange_instance.ExNode]()
 cdef MemoryKnight[PyXDExNode_Type] mk_exnode_type = MemoryKnight[PyXDExNode_Type]()
 
 cdef object pyxd_exnode_getitem(void * data, void * arr):
-    cdef instance.ExNode data_proxy
-    data_proxy = instance.ExNode()
-    (<cpp_instance.ExNode *> data_proxy._inst)[0] = (<cpp_instance.ExNode *> data)[0]
+    cdef exchange_instance.ExNode data_proxy
+    data_proxy = exchange_instance.ExNode()
+    (<cpp_exchange_instance.ExNode *> data_proxy._inst)[0] = (<cpp_exchange_instance.ExNode *> data)[0]
     pyval = data_proxy
     return pyval
 
 cdef int pyxd_exnode_setitem(object value, void * data, void * arr):
-    cdef cpp_instance.ExNode * new_data
-    cdef instance.ExNode value_proxy
-    if isinstance(value, instance.ExNode):
-        value_proxy = <instance.ExNode> value
+    cdef cpp_exchange_instance.ExNode * new_data
+    cdef exchange_instance.ExNode value_proxy
+    if isinstance(value, exchange_instance.ExNode):
+        value_proxy = <exchange_instance.ExNode> value
         new_data = mk_exnode.renew(data)
-        new_data[0] = (<cpp_instance.ExNode *> value_proxy._inst)[0]
+        new_data[0] = (<cpp_exchange_instance.ExNode *> value_proxy._inst)[0]
         return 0
     else:
         return -1
@@ -800,25 +800,25 @@ cdef void pyxd_exnode_copyswapn(void * dest, np.npy_intp dstride, void * src, np
     cdef char c = 0
     cdef int j
     cdef int m
-    cdef cpp_instance.ExNode * new_dest
+    cdef cpp_exchange_instance.ExNode * new_dest
 
     if src != NULL:
-        if (sstride == sizeof(cpp_instance.ExNode) and dstride == sizeof(cpp_instance.ExNode)):
+        if (sstride == sizeof(cpp_exchange_instance.ExNode) and dstride == sizeof(cpp_exchange_instance.ExNode)):
             new_dest = mk_exnode.renew(dest)
-            new_dest[0] = deref(<cpp_instance.ExNode *> src)
+            new_dest[0] = deref(<cpp_exchange_instance.ExNode *> src)
         else:
             a = <char *> dest
             b = <char *> src
             for i in range(n):
                 new_dest = mk_exnode.renew(<void *> a)
-                new_dest[0] = deref(<cpp_instance.ExNode *> b)
+                new_dest[0] = deref(<cpp_exchange_instance.ExNode *> b)
                 a += dstride
                 b += sstride
     if swap: 
-        m = sizeof(cpp_instance.ExNode) / 2
+        m = sizeof(cpp_exchange_instance.ExNode) / 2
         a = <char *> dest
         for i in range(n, 0, -1):
-            b = a + (sizeof(cpp_instance.ExNode) - 1);
+            b = a + (sizeof(cpp_exchange_instance.ExNode) - 1);
             for j in range(m):
                 c = a[0]
                 a[0] = b[0]
@@ -833,14 +833,14 @@ cdef void pyxd_exnode_copyswap(void * dest, void * src, int swap, void * arr):
     cdef char c = 0
     cdef int j
     cdef int m
-    cdef cpp_instance.ExNode * new_dest
+    cdef cpp_exchange_instance.ExNode * new_dest
     if src != NULL:
         new_dest = mk_exnode.renew(dest)
-        new_dest[0] = (<cpp_instance.ExNode *> src)[0]
+        new_dest[0] = (<cpp_exchange_instance.ExNode *> src)[0]
     if swap:
-        m = sizeof(cpp_instance.ExNode) / 2
+        m = sizeof(cpp_exchange_instance.ExNode) / 2
         a = <char *> dest
-        b = a + (sizeof(cpp_instance.ExNode) - 1);
+        b = a + (sizeof(cpp_exchange_instance.ExNode) - 1);
         for j in range(m):
             c = a[0]
             a[0] = b[0]
@@ -851,13 +851,13 @@ cdef void pyxd_exnode_copyswap(void * dest, void * src, int swap, void * arr):
 cdef np.npy_bool pyxd_exnode_nonzero(void * data, void * arr):
     return (data != NULL)
     # FIXME comparisons not defined for arbitrary types
-    #cdef cpp_instance.ExNode zero = cpp_instance.ExNode()
-    #return ((<cpp_instance.ExNode *> data)[0] != zero)
+    #cdef cpp_exchange_instance.ExNode zero = cpp_exchange_instance.ExNode()
+    #return ((<cpp_exchange_instance.ExNode *> data)[0] != zero)
 
 cdef int pyxd_exnode_compare(const void * d1, const void * d2, void * arr):
     return (d1 == d2) - 1
     # FIXME comparisons not defined for arbitrary types
-    #if deref(<cpp_instance.ExNode *> d1) == deref(<cpp_instance.ExNode *> d2):
+    #if deref(<cpp_exchange_instance.ExNode *> d1) == deref(<cpp_exchange_instance.ExNode *> d2):
     #    return 0
     #else:
     #    return -1
@@ -892,18 +892,18 @@ cdef void pyxd_exnode_type_free(void * self):
 
 cdef object pyxd_exnode_type_str(object self):
     cdef PyXDExNode_Type * cself = <PyXDExNode_Type *> self
-    cdef instance.ExNode val_proxy
-    val_proxy = instance.ExNode()
-    (<cpp_instance.ExNode *> val_proxy._inst)[0] = (cself.obval)
+    cdef exchange_instance.ExNode val_proxy
+    val_proxy = exchange_instance.ExNode()
+    (<cpp_exchange_instance.ExNode *> val_proxy._inst)[0] = (cself.obval)
     pyval = val_proxy
     s = str(pyval)
     return s
 
 cdef object pyxd_exnode_type_repr(object self):
     cdef PyXDExNode_Type * cself = <PyXDExNode_Type *> self
-    cdef instance.ExNode val_proxy
-    val_proxy = instance.ExNode()
-    (<cpp_instance.ExNode *> val_proxy._inst)[0] = (cself.obval)
+    cdef exchange_instance.ExNode val_proxy
+    val_proxy = exchange_instance.ExNode()
+    (<cpp_exchange_instance.ExNode *> val_proxy._inst)[0] = (cself.obval)
     pyval = val_proxy
     s = repr(pyval)
     return s
@@ -969,7 +969,7 @@ cdef type PyXD_ExNode = type("xd_exnode", ((<object> PyArray_API[10]),), {})
 pyxd_exnode_is_ready = PyType_Ready(<object> PyXD_ExNode)
 (<PyTypeObject *> PyXD_ExNode).tp_basicsize = sizeof(PyXDExNode_Type)
 (<PyTypeObject *> PyXD_ExNode).tp_itemsize = 0
-(<PyTypeObject *> PyXD_ExNode).tp_doc = "Python scalar type for cpp_instance.ExNode"
+(<PyTypeObject *> PyXD_ExNode).tp_doc = "Python scalar type for cpp_exchange_instance.ExNode"
 (<PyTypeObject *> PyXD_ExNode).tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_CHECKTYPES | Py_TPFLAGS_HEAPTYPE
 (<PyTypeObject *> PyXD_ExNode).tp_alloc = pyxd_exnode_type_alloc
 (<PyTypeObject *> PyXD_ExNode).tp_dealloc = pyxd_exnode_type_dealloc
@@ -998,7 +998,7 @@ c_xd_exnode_descr.type = 'x'  # type
 c_xd_exnode_descr.byteorder = '='  # byteorder
 c_xd_exnode_descr.flags = 0    # flags
 c_xd_exnode_descr.type_num = 0    # type_num, assigned at registration
-c_xd_exnode_descr.elsize = sizeof(cpp_instance.ExNode)  # elsize, 
+c_xd_exnode_descr.elsize = sizeof(cpp_exchange_instance.ExNode)  # elsize, 
 c_xd_exnode_descr.alignment = 8  # alignment
 c_xd_exnode_descr.subarray = NULL  # subarray
 c_xd_exnode_descr.fields = NULL  # fields
@@ -1015,24 +1015,24 @@ dtypes[xd_exnode_num] = xd_exnode
 
 
 
-# cpp_instance.ExArc dtype
-cdef MemoryKnight[cpp_instance.ExArc] mk_exarc = MemoryKnight[cpp_instance.ExArc]()
+# cpp_exchange_instance.ExArc dtype
+cdef MemoryKnight[cpp_exchange_instance.ExArc] mk_exarc = MemoryKnight[cpp_exchange_instance.ExArc]()
 cdef MemoryKnight[PyXDExArc_Type] mk_exarc_type = MemoryKnight[PyXDExArc_Type]()
 
 cdef object pyxd_exarc_getitem(void * data, void * arr):
-    cdef instance.ExArc data_proxy
-    data_proxy = instance.ExArc()
-    (<cpp_instance.ExArc *> data_proxy._inst)[0] = (<cpp_instance.ExArc *> data)[0]
+    cdef exchange_instance.ExArc data_proxy
+    data_proxy = exchange_instance.ExArc()
+    (<cpp_exchange_instance.ExArc *> data_proxy._inst)[0] = (<cpp_exchange_instance.ExArc *> data)[0]
     pyval = data_proxy
     return pyval
 
 cdef int pyxd_exarc_setitem(object value, void * data, void * arr):
-    cdef cpp_instance.ExArc * new_data
-    cdef instance.ExArc value_proxy
-    if isinstance(value, instance.ExArc):
-        value_proxy = <instance.ExArc> value
+    cdef cpp_exchange_instance.ExArc * new_data
+    cdef exchange_instance.ExArc value_proxy
+    if isinstance(value, exchange_instance.ExArc):
+        value_proxy = <exchange_instance.ExArc> value
         new_data = mk_exarc.renew(data)
-        new_data[0] = (<cpp_instance.ExArc *> value_proxy._inst)[0]
+        new_data[0] = (<cpp_exchange_instance.ExArc *> value_proxy._inst)[0]
         return 0
     else:
         return -1
@@ -1044,25 +1044,25 @@ cdef void pyxd_exarc_copyswapn(void * dest, np.npy_intp dstride, void * src, np.
     cdef char c = 0
     cdef int j
     cdef int m
-    cdef cpp_instance.ExArc * new_dest
+    cdef cpp_exchange_instance.ExArc * new_dest
 
     if src != NULL:
-        if (sstride == sizeof(cpp_instance.ExArc) and dstride == sizeof(cpp_instance.ExArc)):
+        if (sstride == sizeof(cpp_exchange_instance.ExArc) and dstride == sizeof(cpp_exchange_instance.ExArc)):
             new_dest = mk_exarc.renew(dest)
-            new_dest[0] = deref(<cpp_instance.ExArc *> src)
+            new_dest[0] = deref(<cpp_exchange_instance.ExArc *> src)
         else:
             a = <char *> dest
             b = <char *> src
             for i in range(n):
                 new_dest = mk_exarc.renew(<void *> a)
-                new_dest[0] = deref(<cpp_instance.ExArc *> b)
+                new_dest[0] = deref(<cpp_exchange_instance.ExArc *> b)
                 a += dstride
                 b += sstride
     if swap: 
-        m = sizeof(cpp_instance.ExArc) / 2
+        m = sizeof(cpp_exchange_instance.ExArc) / 2
         a = <char *> dest
         for i in range(n, 0, -1):
-            b = a + (sizeof(cpp_instance.ExArc) - 1);
+            b = a + (sizeof(cpp_exchange_instance.ExArc) - 1);
             for j in range(m):
                 c = a[0]
                 a[0] = b[0]
@@ -1077,14 +1077,14 @@ cdef void pyxd_exarc_copyswap(void * dest, void * src, int swap, void * arr):
     cdef char c = 0
     cdef int j
     cdef int m
-    cdef cpp_instance.ExArc * new_dest
+    cdef cpp_exchange_instance.ExArc * new_dest
     if src != NULL:
         new_dest = mk_exarc.renew(dest)
-        new_dest[0] = (<cpp_instance.ExArc *> src)[0]
+        new_dest[0] = (<cpp_exchange_instance.ExArc *> src)[0]
     if swap:
-        m = sizeof(cpp_instance.ExArc) / 2
+        m = sizeof(cpp_exchange_instance.ExArc) / 2
         a = <char *> dest
-        b = a + (sizeof(cpp_instance.ExArc) - 1);
+        b = a + (sizeof(cpp_exchange_instance.ExArc) - 1);
         for j in range(m):
             c = a[0]
             a[0] = b[0]
@@ -1095,13 +1095,13 @@ cdef void pyxd_exarc_copyswap(void * dest, void * src, int swap, void * arr):
 cdef np.npy_bool pyxd_exarc_nonzero(void * data, void * arr):
     return (data != NULL)
     # FIXME comparisons not defined for arbitrary types
-    #cdef cpp_instance.ExArc zero = cpp_instance.ExArc()
-    #return ((<cpp_instance.ExArc *> data)[0] != zero)
+    #cdef cpp_exchange_instance.ExArc zero = cpp_exchange_instance.ExArc()
+    #return ((<cpp_exchange_instance.ExArc *> data)[0] != zero)
 
 cdef int pyxd_exarc_compare(const void * d1, const void * d2, void * arr):
     return (d1 == d2) - 1
     # FIXME comparisons not defined for arbitrary types
-    #if deref(<cpp_instance.ExArc *> d1) == deref(<cpp_instance.ExArc *> d2):
+    #if deref(<cpp_exchange_instance.ExArc *> d1) == deref(<cpp_exchange_instance.ExArc *> d2):
     #    return 0
     #else:
     #    return -1
@@ -1136,18 +1136,18 @@ cdef void pyxd_exarc_type_free(void * self):
 
 cdef object pyxd_exarc_type_str(object self):
     cdef PyXDExArc_Type * cself = <PyXDExArc_Type *> self
-    cdef instance.ExArc val_proxy
-    val_proxy = instance.ExArc()
-    (<cpp_instance.ExArc *> val_proxy._inst)[0] = (cself.obval)
+    cdef exchange_instance.ExArc val_proxy
+    val_proxy = exchange_instance.ExArc()
+    (<cpp_exchange_instance.ExArc *> val_proxy._inst)[0] = (cself.obval)
     pyval = val_proxy
     s = str(pyval)
     return s
 
 cdef object pyxd_exarc_type_repr(object self):
     cdef PyXDExArc_Type * cself = <PyXDExArc_Type *> self
-    cdef instance.ExArc val_proxy
-    val_proxy = instance.ExArc()
-    (<cpp_instance.ExArc *> val_proxy._inst)[0] = (cself.obval)
+    cdef exchange_instance.ExArc val_proxy
+    val_proxy = exchange_instance.ExArc()
+    (<cpp_exchange_instance.ExArc *> val_proxy._inst)[0] = (cself.obval)
     pyval = val_proxy
     s = repr(pyval)
     return s
@@ -1213,7 +1213,7 @@ cdef type PyXD_ExArc = type("xd_exarc", ((<object> PyArray_API[10]),), {})
 pyxd_exarc_is_ready = PyType_Ready(<object> PyXD_ExArc)
 (<PyTypeObject *> PyXD_ExArc).tp_basicsize = sizeof(PyXDExArc_Type)
 (<PyTypeObject *> PyXD_ExArc).tp_itemsize = 0
-(<PyTypeObject *> PyXD_ExArc).tp_doc = "Python scalar type for cpp_instance.ExArc"
+(<PyTypeObject *> PyXD_ExArc).tp_doc = "Python scalar type for cpp_exchange_instance.ExArc"
 (<PyTypeObject *> PyXD_ExArc).tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_CHECKTYPES | Py_TPFLAGS_HEAPTYPE
 (<PyTypeObject *> PyXD_ExArc).tp_alloc = pyxd_exarc_type_alloc
 (<PyTypeObject *> PyXD_ExArc).tp_dealloc = pyxd_exarc_type_dealloc
@@ -1242,7 +1242,7 @@ c_xd_exarc_descr.type = 'x'  # type
 c_xd_exarc_descr.byteorder = '='  # byteorder
 c_xd_exarc_descr.flags = 0    # flags
 c_xd_exarc_descr.type_num = 0    # type_num, assigned at registration
-c_xd_exarc_descr.elsize = sizeof(cpp_instance.ExArc)  # elsize, 
+c_xd_exarc_descr.elsize = sizeof(cpp_exchange_instance.ExArc)  # elsize, 
 c_xd_exarc_descr.alignment = 8  # alignment
 c_xd_exarc_descr.subarray = NULL  # subarray
 c_xd_exarc_descr.fields = NULL  # fields

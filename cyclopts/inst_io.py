@@ -7,7 +7,7 @@ import numpy as np
 import tables as t
 from collections import Iterable
 
-import cyclopts.instance as inst
+import cyclopts.exchange_instance as inst
 
 _N_CAPS_MAX = 10
 
