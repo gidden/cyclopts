@@ -179,7 +179,7 @@ def execute(args):
             solver = Solver(kind)
             if verbose:
                 print('Solving instance {0} with the {1} solver'.format(
-                        instid.hex, s))
+                        instid.hex, kind))
             soln = fam.run_inst(inst, solver)
             solnid = uuid.uuid4()
             fam.record_soln(soln, solnid, inst, instid, out_manager.tables)
@@ -187,6 +187,8 @@ def execute(args):
             tbl.record_soln(soln, solnid, instid, solver)
             
     # clean up
+    out_manager.flush_tables()
+    result_manager.flush_tables()
     h5in.close()
     if h5out.isopen:
         h5out.close()
