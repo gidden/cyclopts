@@ -5,7 +5,9 @@
 import numpy as np
 import tables as t
 import math
+from datetime import datetime
 
+import cyclopts
 import cyclopts.tools as tools
         
 class Table(object):
@@ -115,6 +117,18 @@ class Table(object):
         else:
             self._tbl.append(data)
         self._tbl.flush()        
+
+_result_dt = np.dtype([
+                ("solnid", ('str', 16)), # 16 bytes for uuid
+                ("instid", ('str', 16)), # 16 bytes for uuid
+                ("solver", ('str', 30)), # 30 seems long enough, right?
+                ("problem", ('str', 30)), # 30 seems long enough, right?
+                ("time", np.float64),
+                ("objective", np.float64),
+                ("cyclopts_version", ('str', 12)),
+                # len(dtime.datetime.now().isoformat(' ')) == 26
+                ("timestamp", ('str', 26)), 
+                ])
         
 class ResultTable(Table):
     """A Cyclopts Table for generic results.
@@ -131,18 +145,7 @@ class ResultTable(Table):
             the table chunksize, Cyclopts will optimize for a 32Kb L1 cache by
             default
         """
-        super(ResultTable, self).__init__(h5file, path, None, chunksize)
-        self.dt = np.dtype([
-                ("solnid", ('str', 16)), # 16 bytes for uuid
-                ("instid", ('str', 16)), # 16 bytes for uuid
-                ("solver", ('str', 30)), # 30 seems long enough, right?
-                ("problem", ('str', 30)), # 30 seems long enough, right?
-                ("time", np.float64),
-                ("objective", np.float64),
-                ("cyclopts_version", ('str', 12)),
-                # len(dtime.datetime.now().isoformat(' ')) == 26
-                ("timestamp", ('str', 26)), 
-                ])
+        super(ResultTable, self).__init__(h5file, path, _result_dt, chunksize)
 
     def record_soln(self, soln, soln_uuid, inst_uuid, solver):
         self.append_data([(
