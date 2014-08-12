@@ -165,7 +165,7 @@ def execute(args):
     result_manager = cycio.TableManager(
         h5out, [cycio.ResultTable(h5out, path='/{0}'.format(result_tbl_name))])
 
-    # refactor, should be uuid objects
+    # get instids to run
     path = '{0}/{1}'.format(fam.table_prefix, fam.property_table_name)
     instids = tools.collect_instids(h5file=h5in, path=path, rc=rc, 
                                     instids=instids)
