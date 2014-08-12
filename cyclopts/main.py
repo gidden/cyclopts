@@ -117,7 +117,8 @@ def convert(args):
         for i in range(ninst):
             inst_uuid = uuid.uuid4()
             inst = sp.gen_instance(point)
-            fam.record_inst(inst, inst_uuid, param_uuid, fam_manager.tables)
+            fam.record_inst(inst, inst_uuid, param_uuid, sp.name, 
+                            fam_manager.tables)
 
     # clean up
     sp_manager.flush_tables()

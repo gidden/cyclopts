@@ -47,6 +47,7 @@ _dtypes = {
     "properties": np.dtype([
         ("paramid", ('str', 16)), # 16 bytes for uuid
         ("instid", ('str', 16)), # 16 bytes for uuid
+        ("species", ('str', 30)), # 30 is long enough..
         ("n_arcs", np.int64),
         ("n_u_grps", np.int64),
         ("n_v_grps", np.int64),
@@ -82,7 +83,7 @@ def arc_tpl(instid, obj):
            obj.vid, np.append(obj.vcaps, [0] * (_N_CAPS_MAX - len(obj.vcaps))), 
            obj.pref)
 
-def prop_tpl(instid, paramid, groups, nodes, arcs):
+def prop_tpl(instid, paramid, species, groups, nodes, arcs):
     nu_grps = sum(1 for g in groups if int(g.kind))
     nv_grps = len(groups) - nu_grps
     nu_nodes = sum(1 for n in nodes if n.kind)
@@ -90,8 +91,8 @@ def prop_tpl(instid, paramid, groups, nodes, arcs):
     excl = {n.id: n.excl for n in nodes}
     excl_frac = sum(1.0 for a in arcs if excl[a.uid] or excl[a.vid]) / len(arcs)
     nconstr = sum(len(g.caps) for g in groups)
-    return (paramid.bytes, instid.bytes, len(arcs), nu_grps, nv_grps, nu_nodes, 
-            nv_nodes, nconstr, excl_frac)
+    return (paramid.bytes, instid.bytes, species, len(arcs), nu_grps, nv_grps, 
+            nu_nodes, nv_nodes, nconstr, excl_frac)
 
 class ResourceExchange(ProblemFamily):
     """A class representing families of resource exchange problems."""
@@ -139,7 +140,7 @@ class ResourceExchange(ProblemFamily):
                             '/'.join([prefix, _tbl_names[x]]), 
                             _dtypes[x]) for x in _tbl_names.keys()]
 
-    def record_inst(self, inst, inst_uuid, param_uuid, tables):
+    def record_inst(self, inst, inst_uuid, param_uuid, species, tables):
         """Parameters
         ----------
         inst : tuple or other
@@ -148,6 +149,8 @@ class ResourceExchange(ProblemFamily):
             The uuid of the instance
         param_uuid : uuid
             The uuid of the point in parameter space
+        species : str
+            The name of the species that generated this instance
         tables : list of cyclopts_io.Table
             The tables that can be written to
         """
@@ -162,7 +165,7 @@ class ResourceExchange(ProblemFamily):
         data = [arc_tpl(inst_uuid, x) for x in arcs]
         tables[_tbl_names['ExArc']].append_data(data)
         
-        data = [prop_tpl(inst_uuid, param_uuid, groups, nodes, arcs)]
+        data = [prop_tpl(inst_uuid, param_uuid, species, groups, nodes, arcs)]
         tables[_tbl_names['properties']].append_data(data)
 
     def record_soln(self, soln, soln_uuid, inst, inst_uuid, tables):

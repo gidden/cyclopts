@@ -60,7 +60,7 @@ class ProblemFamily(object):
         """
         raise NotImplementedError
 
-    def record_inst(self, inst, inst_uuid, param_uuid, tables):
+    def record_inst(self, inst, inst_uuid, param_uuid, species, tables):
         """Derived classes must implement this function.
         
         Parameters
@@ -71,6 +71,8 @@ class ProblemFamily(object):
             The uuid of the instance
         param_uuid : uuid
             The uuid of the point in parameter space
+        species : str
+            The name of the species that generated this instance
         tables : list of cyclopts_io.Table
             The tables that can be written to
         """
