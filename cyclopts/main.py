@@ -242,6 +242,16 @@ def dump(args):
 def main():
     """Entry point for Cyclopts runs."""
     parser = argparse.ArgumentParser("Cyclopts", add_help=True)    
+
+    fam_mod = ('The module for the problem family')
+    parser.add_argument('--family_module', default=None, help=fam_mod)
+    fam_class = ('The problem family class')
+    parser.add_argument('--family_class', default=None, help=fam_class)
+    sp_mod = ('The module for the problem species')
+    parser.add_argument('--species_module', default=None, help=sp_mod)
+    sp_class = ('The problem species class')
+    parser.add_argument('--species_class', default=None, help=sp_class)
+    
     sp = parser.add_subparsers()
 
     #

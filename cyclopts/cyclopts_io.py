@@ -5,7 +5,7 @@
 import numpy as np
 import tables as t
 import math
-from datetime import datetime
+import datetime
 
 import cyclopts
 import cyclopts.tools as tools
@@ -156,7 +156,7 @@ class ResultTable(Table):
                     soln.time, 
                     soln.objective, 
                     cyclopts.__version__, 
-                    datetime.now().isoformat(' '),
+                    datetime.datetime.now().isoformat(' '),
                     )])
         
         
