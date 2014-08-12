@@ -19,65 +19,6 @@ from nose.tools import assert_equal, assert_true
 
 from utils import timeout, TimeoutError
 
-"""this is a print out of uid hexs and their number of arcs taken from
-cyclopts/tests/files/exp_instances.h5 on 6/15/14 via
-
-.. code-block::
-
-  import tables as t
-  h5f = t.open_file('cyclopts/tests/files/exp_instances.h5', 'r')
-  h5n = h5f.root.Instances.ExchangeInstProperties
-  for row in h5n.iterrows():
-    print(uuid.UUID(bytes=row['instid']).hex, row['n_arcs'])
-
-"""
-_exp_uuid_arcs = []
-def exp_uuid_arcs():
-    global _exp_uuid_arcs    
-    if len(_exp_uuid_arcs) == 0:
-        base = os.path.dirname(os.path.abspath(__file__))
-        pth = os.path.join(base, 'files', 'exp_instances.h5')
-        h5file = t.open_file(pth, 'r')
-        tbl = h5file.root.Instances.ExchangeInstProperties
-        _exp_uuid_arcs = [(uuid.UUID(bytes=row['instid']).hex, row['n_arcs']) \
-                              for row in tbl.iterrows()]
-        h5file.close()
-    return _exp_uuid_arcs
-
-def test_instids():
-    base = os.path.dirname(os.path.abspath(__file__))
-    pth = os.path.join(base, 'files', 'exp_instances.h5')
-    h5file = t.open_file(pth, 'r')
-    h5node = h5file.root.Instances
-    
-    rc = tools.RunControl()
-    obs = main.collect_instids(h5node=h5node, rc=rc)
-    exp = exp_uuid_arcs()
-    exp = set(uuid.UUID(x[0]).bytes for x in exp)
-    assert_equal(len(exp), len(obs))
-    assert_equal(exp, obs)
-    
-    exp_uuid_hex = exp_uuid_arcs()[0][0]
-    rc = tools.RunControl()
-    rc._update({'inst_ids': [exp_uuid_hex]})
-    print("rc:", rc)
-    obs = main.collect_instids(h5node=h5node, rc=rc)
-    exp = set([uuid.UUID(exp_uuid_hex).bytes])
-    assert_equal(len(exp), len(obs))
-    assert_equal(exp, obs)
-
-    bounds = (3, 12)
-    conds = ['n_arcs > {0}'.format(bounds[0]), '&', 
-             'n_arcs < {0}'.format(bounds[1])]
-    rc = tools.RunControl()
-    rc._update({'inst_queries': {'ExchangeInstProperties': conds}})
-    obs = main.collect_instids(h5node=h5node, rc=rc)
-    exp = set(uuid.UUID(x[0]).bytes \
-                  for x in exp_uuid_arcs() \
-                  if x[1] > bounds[0] and x[1] < bounds[1])
-    assert_equal(exp, obs)
-    h5file.close()
-
 def test_exec():
     infile = 'obs_valid_in.h5'
     ninst = 5
