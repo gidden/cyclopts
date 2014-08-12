@@ -29,15 +29,6 @@ cdef class ExArc:
 
 
 
-cdef class ExSolver:
-    cdef void * _inst
-    cdef public bint _free_inst
-    pass
-
-
-
-
-
 cdef class ExGroup:
     cdef void * _inst
     cdef public bint _free_inst

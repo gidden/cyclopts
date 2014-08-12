@@ -45,7 +45,7 @@ def Run(groups, nodes, arcs, solver, verbose=False):
     cdef int iarcs
     cdef int arcs_size
     cdef cpp_exchange_instance.ExArc * arcs_data
-    cdef ExSolver solver_proxy
+    cdef _cproblem.Solver solver_proxy
     cdef cpp_exchange_instance.ExSolution rtnval
     # groups is a (('vector', 'ExGroup', 0), '&')
     groups_size = len(groups)
@@ -80,8 +80,8 @@ def Run(groups, nodes, arcs, solver, verbose=False):
         arcs_proxy = cpp_vector[cpp_exchange_instance.ExArc](<size_t> arcs_size)
         for iarcs in range(arcs_size):
             arcs_proxy[iarcs] = (<cpp_exchange_instance.ExArc *> (<ExArc> arcs[iarcs])._inst)[0]
-    solver_proxy = <ExSolver> solver
-    rtnval = cpp_exchange_instance.Run(groups_proxy, nodes_proxy, arcs_proxy, (<cpp_exchange_instance.ExSolver *> solver_proxy._inst)[0], <bint> verbose)
+    solver_proxy = <_cproblem.Solver> solver
+    rtnval = cpp_exchange_instance.Run(groups_proxy, nodes_proxy, arcs_proxy, (<cpp__cproblem.Solver *> solver_proxy._inst)[0], <bint> verbose)
     rtnval_proxy = ExSolution()
     (<cpp_exchange_instance.ExSolution *> rtnval_proxy._inst)[0] = rtnval
     return rtnval_proxy
@@ -445,52 +445,6 @@ cdef class ExGroup:
     
         def __set__(self, value):
             (<cpp_exchange_instance.ExGroup *> self._inst).qty = <double> value
-    
-    
-    # methods
-    
-
-    pass
-
-
-
-
-
-cdef class ExSolver:
-    """no docstring for {'tarbase': 'exchange_instance', 'tarname': 'ExSolver', 'language': 'c++', 'srcname': 'ExSolver', 'sidecars': (), 'incfiles': ('exchange_instance.h',), 'srcfiles': ('cpp/exchange_instance.cc', 'cpp/exchange_instance.h')}, please file a bug report!"""
-
-
-
-    # constuctors
-    def __cinit__(self, *args, **kwargs):
-        self._inst = NULL
-        self._free_inst = True
-
-        # cached property defaults
-
-
-    def __init__(self, type='cbc'):
-        """ExSolver(self, type='cbc')
-        """
-        cdef char * type_proxy
-        type_bytes = type.encode()
-        self._inst = new cpp_exchange_instance.ExSolver(std_string(<char *> type_bytes))
-    
-    
-    def __dealloc__(self):
-        if self._free_inst and self._inst is not NULL:
-            free(self._inst)
-
-    # attributes
-    property type:
-        """no docstring for type, please file a bug report!"""
-        def __get__(self):
-            return bytes(<char *> (<cpp_exchange_instance.ExSolver *> self._inst).type.c_str()).decode()
-    
-        def __set__(self, value):
-            cdef char * value_proxy
-            value_bytes = value.encode()
-            (<cpp_exchange_instance.ExSolver *> self._inst).type = std_string(<char *> value_bytes)
     
     
     # methods

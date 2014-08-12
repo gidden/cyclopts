@@ -20,4 +20,13 @@ cdef class ProbSolution:
 
 
 
+
+cdef class Solver:
+    cdef void * _inst
+    cdef public bint _free_inst
+    pass
+
+
+
+
 {'cpppxd_footer': '', 'pyx_header': '', 'pxd_header': '', 'pxd_footer': '', 'cpppxd_header': '', 'pyx_footer': ''}

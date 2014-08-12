@@ -15,6 +15,13 @@ class ProbSolution {
   std::string type;
 };
 
+/// A container class for solver indentifying parameters.
+class Solver {
+ public:
+  explicit Solver(std::string type = "cbc") : type(type) { };
+  std::string type;
+};
+
 } // namespace cyclopts
 
 #endif // CYCLOPTS_PROBLEM_SOLUTION_H_

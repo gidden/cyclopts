@@ -15,6 +15,52 @@ from libcpp.string cimport string as std_string
 
 
 
+cdef class Solver:
+    """no docstring for {'tarbase': '_cproblem', 'tarname': 'Solver', 'language': 'c++', 'srcname': 'Solver', 'sidecars': (), 'incfiles': ('problem.h',), 'srcfiles': ('cpp/problem.cc', 'cpp/problem.h')}, please file a bug report!"""
+
+
+
+    # constuctors
+    def __cinit__(self, *args, **kwargs):
+        self._inst = NULL
+        self._free_inst = True
+
+        # cached property defaults
+
+
+    def __init__(self, type='cbc'):
+        """Solver(self, type='cbc')
+        """
+        cdef char * type_proxy
+        type_bytes = type.encode()
+        self._inst = new cpp__cproblem.Solver(std_string(<char *> type_bytes))
+    
+    
+    def __dealloc__(self):
+        if self._free_inst and self._inst is not NULL:
+            free(self._inst)
+
+    # attributes
+    property type:
+        """no docstring for type, please file a bug report!"""
+        def __get__(self):
+            return bytes(<char *> (<cpp__cproblem.Solver *> self._inst).type.c_str()).decode()
+    
+        def __set__(self, value):
+            cdef char * value_proxy
+            value_bytes = value.encode()
+            (<cpp__cproblem.Solver *> self._inst).type = std_string(<char *> value_bytes)
+    
+    
+    # methods
+    
+
+    pass
+
+
+
+
+
 cdef class ProbSolution:
     """no docstring for {'tarbase': '_cproblem', 'tarname': 'ProbSolution', 'language': 'c++', 'srcname': 'ProbSolution', 'sidecars': (), 'incfiles': ('problem.h',), 'srcfiles': ('cpp/problem.cc', 'cpp/problem.h')}, please file a bug report!"""
 

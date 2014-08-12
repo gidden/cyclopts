@@ -14,6 +14,7 @@ _tbl_names = {
     "ExArc": "ExchangeArcs",
     "properties": "ExchangeInstProperties",
     "solutions": "ExchangeInstSolutions",    
+    "solution_properties": "ExchangeInstSolutionProperties",    
 }
 
 # this must be kept up to date with the cyclopts.instance classes
@@ -56,9 +57,14 @@ _dtypes = {
         ]),
     "solutions": np.dtype([
         ("solnid", ('str', 16)), # 16 bytes for uuid
-        ("instid", ('str', 16)), # 16 bytes for uuid
         ("arc_id", np.int64),
         ("flow", np.float64),
+        ]),
+    "solution_properties": np.dtype([
+        ("solnid", ('str', 16)), # 16 bytes for uuid
+        ("instid", ('str', 16)), # 16 bytes for uuid
+        ("pref_flow", np.float64),
+        ("cyclus_version", ('str', 12)),
         ]),
     }
 
@@ -149,28 +155,31 @@ class ResourceExchange(ProblemFamily):
         data = [prop_tpl(inst_uuid, param_uuid, groups, nodes, arcs)]
         tables[_tbl_names['properties']].append_data(data)
 
-    def record_soln(self, inst, inst_uuid, soln, soln_uuid, tables):
+    def record_soln(self, soln, soln_uuid, inst, inst_uuid, tables):
         """Derived classes must implement this function to return a list of
         
         Parameters
         ----------
-        inst : tuple or other
-            A representation of a problem instance
-        inst_uuid : uuid
-            The uuid of the instance
         soln : ProbSolution or similar
             A representation of a problem solution
         soln_uuid : uuid
             The uuid of the solution
+        inst : tuple or other
+            A representation of a problem instance
+        inst_uuid : uuid
+            The uuid of the instance
         tables : list of cyclopts_io.Table
             The tables that can be written to
         """
         groups, nodes, arcs = inst
-        tbl = tables[_tbl_names['solutions']]    
+        tbl = tables[_tbl_names['solutions']]
         for arcid, flow in soln.flows.iteritems():
             if flow > 0:
-                tbl.append_data((soln_uuid.bytes, inst_uuid.bytes, arcid, flow))
-
+                tbl.append_data([(soln_uuid.bytes, arcid, flow)])
+        tbl = tables[_tbl_names['solution_properties']]
+        tbl.append_data([(soln_uuid.bytes, inst_uuid.bytes, soln.pref_flow, 
+                          soln.cyclus_version)])
+            
     def read_inst(self, uuid, tables):
         """Derived classes must implement this function to return a tuple
         instance structures that can be provided to the run_inst function.

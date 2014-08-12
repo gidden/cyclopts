@@ -37,23 +37,9 @@ import cyclopts.inst_io as iio
 import cyclopts.exchange_instance as inst
 import cyclopts.params as params
 import cyclopts.cyclopts_io as cycio
+from cyclopts.problems import Solver
 
 _inst_grp_name = 'Instances'
-_result_grp_name = 'Results'
-_result_tbl_name = 'General'
-_result_tbl_dtype = np.dtype([
-        ("solnid", ('str', 16)), # 16 bytes for uuid
-        ("instid", ('str', 16)), # 16 bytes for uuid
-        ("problem", ('str', 30)), # 30 seems long enough, right?
-        ("solver", ('str', 30)), # 30 seems long enough, right?
-        ("time", np.float64),
-        ("objective", np.float64),
-        ("pref_flow", np.float64),
-        ("cyclus_version", ('str', 12)),
-        ("cyclopts_version", ('str', 12)),
-        # len(dtime.datetime.now().isoformat(' ')) == 26
-        ("timestamp", ('str', 26)), 
-        ])
 
 def collect_instids(h5node=None, rc=None, instids=None):
     """Collects all instids. If only a database node is given, all instids found
@@ -146,33 +132,6 @@ def cyclopts_combine(args):
             len(args.files), args.outdb))
     tools.combine(iter(args.files), new_file=args.outdb, clean=args.clean)    
 
-def memusg(pid):
-    """in kb"""
-    # could also use 
-    # resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    fname = os.path.join(os.path.sep, 'proc', str(pid), 'status')
-    with io.open(fname) as f:
-        lines = f.readlines()
-    return float(next(l for l in lines if l.startswith('VmSize')).split()[1])
-
-def get_obj(rc=None, args=None, kind=None):
-    print(rc)
-    mod = None
-    obj = None
-    pack = None
-    if rc is not None and kind == 'species':
-        pack = None
-        if hasattr(rc, 'species_package'):
-            pack = rc.species_package
-            rc._dict.pop('species_package')
-        mod = rc.species_module
-        rc._dict.pop('species_module')
-        obj = rc.species_class
-        rc._dict.pop('species_class')
-        
-    mod = importlib.import_module(mod, package=pack)
-    return getattr(mod, obj)()
-
 def convert(args):
     """Converts a contiguous dataspace as defined by an input run control file
     into problem instances in an HDF5 database. Each discrete point, as
@@ -189,7 +148,7 @@ def convert(args):
     debug = args.debug
     h5file = t.open_file(fout, 'a', filters=tools.FILTERS)
     
-    sp = get_obj(rc, args, kind='species')
+    sp = tools.get_obj(kind='species', rc=rc, args=args)
     sp_manager = cycio.TableManager(h5file, 
                                     sp.register_tables(h5file, 
                                                        sp.table_prefix))
@@ -229,6 +188,9 @@ def execute(args):
     if not os.path.exists(indb):
         raise IOError('Input database {0} does not exist.'.format(indb))
 
+    # execution object
+    fam = tools.get_obj(kind='family', rc=rc, args=args)
+
     # if a separate db is requested, open it, otherwise use only 
     h5in = t.open_file(indb, mode='r', filters=tools.FILTERS)
     if outdb is not None:
@@ -238,60 +200,39 @@ def execute(args):
         h5in = t.open_file(indb, mode='a', filters=tools.FILTERS)
         h5out = h5in
 
-    inroot = h5in.root
-    outroot = h5out.root if h5out is not None else h5in.root
-    
-    ininstnode = inroot._f_get_child(_inst_grp_name)
-    if not outroot.__contains__(_inst_grp_name):
-        print("creating group {0}".format(_inst_grp_name))
-        outroot._v_file.create_group(outroot, _inst_grp_name, 
-                                     filters=tools.FILTERS)
-    outinstnode = outroot._f_get_child(_inst_grp_name)
+    # table set up
+    in_manager = cycio.TableManager(h5in, 
+                                    fam.register_tables(h5in, 
+                                                        fam.table_prefix))
+    out_manager = cycio.TableManager(h5out, 
+                                     fam.register_tables(h5out, 
+                                                         fam.table_prefix))
+    result_tbl_name = 'Results'
+    result_manager = cycio.TableManager(
+        h5out, [cycio.ResultTable(h5out, path='/{0}'.format(result_tbl_name))])
 
-    # read rc if it exists and we don't already have insts
+    # refactor, should be uuid objects
     instids = collect_instids(h5node=ininstnode, rc=rc, instids=instids)
-    print("Executing {0} instances.".format(len(instids)))
+    if verbose: 
+        print("Executing {0} instances.".format(len(instids)))
 
-    # create output leaves
-    if not outroot.__contains__(_result_grp_name):
-        print("creating group {0}".format(_result_grp_name))
-        outroot._v_file.create_group(outroot, _result_grp_name, 
-                                     filters=tools.FILTERS)
-    resultnode = outroot._f_get_child(_result_grp_name)
-
-    if not resultnode.__contains__(_result_tbl_name):
-        outroot._v_file.create_table(resultnode, _result_tbl_name, 
-                                     _result_tbl_dtype, filters=tools.FILTERS)    
-    tbl = resultnode._f_get_child(_result_tbl_name) 
-
-    # run each instance note that the running and reporting is specific to
-    # exchange problems, and future problem instances will need this section to
-    # be refactored
-    row = tbl.row
+    # run each instance for each solver
     for instid in instids:
-        groups, nodes, arcs = iio.read_exinst(ininstnode, instid) # exchange specific
-        for s in solvers:
-            solver = inst.ExSolver(s)
-            print('Solving instance {0} with the {1} solver'.format(
-                    tools.uuidhex(instid), s))
-            soln = inst.Run(groups, nodes, arcs, solver, verbose) # exchange specific
-            solnid = uuid.uuid4().bytes
-            iio.write_soln(outinstnode, instid, soln, solnid) # exchange specific
-            row['solnid'] = solnid
-            row['instid'] = instid
-            row["solver"] = solver.type
-            row["problem"] = soln.type
-            row["time"] = soln.time
-            row["objective"] = soln.objective
-            row["pref_flow"] = soln.pref_flow
-            row["cyclus_version"] = soln.cyclus_version
-            row["cyclopts_version"] = cyclopts.__version__
-            row["timestamp"] = datetime.now().isoformat(' ')
-            row.append()
-            tbl.flush()        
-    
+        inst = fam.read_inst(instid, in_manager.tables)
+        for kind in solvers:
+            solver = Solver(kind)
+            if verbose:
+                print('Solving instance {0} with the {1} solver'.format(
+                        instid.hex, s))
+            soln = fam.run_inst(inst, solver)
+            solnid = uuid.uuid4()
+            fam.record_soln(soln, solnid, inst, instid, out_manager.tables)
+            tbl = result_manager.tables[result_tbl_name]
+            tbl.record_soln(soln, solnid, instid, solver)
+            
+    # clean up
     h5in.close()
-    if h5out is not None:
+    if h5out.isopen:
         h5out.close()
 
 def update_cde(args):

@@ -84,7 +84,7 @@ void AddArcs(std::vector<ExArc>& arcs,
   }
 }
 
-cyclus::ExchangeSolver* SolverFactory(ExSolver& solver) {
+cyclus::ExchangeSolver* SolverFactory(Solver& solver) {
   std::string type = solver.type == "" ? "cbc" : solver.type;
   cyclus::ExchangeSolver* ret;
   bool excl_orders = true;
@@ -100,7 +100,7 @@ cyclus::ExchangeSolver* SolverFactory(ExSolver& solver) {
 }
 
 ExSolution Run(std::vector<ExGroup>& groups, std::vector<ExNode>& nodes,
-               std::vector<ExArc>& arcs, ExSolver& solver, bool verbose) {
+               std::vector<ExArc>& arcs, Solver& solver, bool verbose) {
   ExXlationCtx ctx;
   cyclus::ExchangeGraph g;
 

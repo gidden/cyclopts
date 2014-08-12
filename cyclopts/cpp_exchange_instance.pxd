@@ -113,22 +113,6 @@ cdef extern from "exchange_instance.h" namespace "cyclopts":
 
 
 
-cdef extern from "exchange_instance.h" namespace "cyclopts":
-
-    cdef cppclass ExSolver:
-        # constructors
-        ExSolver() except +
-        ExSolver(std_string) except +
-
-        # attributes
-        std_string type
-
-        # methods
-
-        pass
-
-
-
 # function signatures
 cdef extern from "exchange_instance.h" namespace "cyclopts":
 
@@ -136,8 +120,8 @@ cdef extern from "exchange_instance.h" namespace "cyclopts":
     ExSolution Run(cpp_vector[ExGroup] &) except +
     ExSolution Run(cpp_vector[ExGroup] &, cpp_vector[ExNode] &) except +
     ExSolution Run(cpp_vector[ExGroup] &, cpp_vector[ExNode] &, cpp_vector[ExArc] &) except +
-    ExSolution Run(cpp_vector[ExGroup] &, cpp_vector[ExNode] &, cpp_vector[ExArc] &, ExSolver &) except +
-    ExSolution Run(cpp_vector[ExGroup] &, cpp_vector[ExNode] &, cpp_vector[ExArc] &, ExSolver &, cpp_bool) except +
+    ExSolution Run(cpp_vector[ExGroup] &, cpp_vector[ExNode] &, cpp_vector[ExArc] &, cpp__cproblem.Solver &) except +
+    ExSolution Run(cpp_vector[ExGroup] &, cpp_vector[ExNode] &, cpp_vector[ExArc] &, cpp__cproblem.Solver &, cpp_bool) except +
 
 
 

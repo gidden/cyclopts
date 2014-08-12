@@ -10,7 +10,8 @@ import tables as t
 import os
 
 import cyclopts.cyclopts_io as cycio
-from cyclopts.exchange_instance import ExGroup, ExNode, ExArc, ExSolver
+from cyclopts.problems import Solver
+from cyclopts.exchange_instance import ExGroup, ExNode, ExArc
 from cyclopts.tools import Incrementer
 
 from utils import assert_xd_equal
@@ -128,7 +129,7 @@ def test_run():
     exp_flows = {0: 1, 1: 0, 2: 1, 3: 0.5, 4: 0.5}
     for t in stypes:
         print("\nTesting with solver: {0}\n".format(t))
-        solver = ExSolver(t)
+        solver = Solver(t)
         soln = ResourceExchange().run_inst((grps, nodes, arcs), solver)
         for id, flow in soln.flows.iteritems():
             assert_equal(exp_flows[id], flow)

@@ -64,19 +64,19 @@ class ProblemFamily(object):
         """
         raise NotImplementedError
 
-    def record_soln(self, inst, inst_uuid, soln, soln_uuid, tables):
+    def record_soln(self, soln, soln_uuid, inst, inst_uuid, tables):
         """Derived classes must implement this function to return a list of
         
         Parameters
         ----------
-        inst : tuple or other
-            A representation of a problem instance
-        inst_uuid : uuid
-            The uuid of the instance
         soln : ProbSolution or similar
             A representation of a problem solution
         soln_uuid : uuid
             The uuid of the solution
+        inst : tuple or other
+            A representation of a problem instance
+        inst_uuid : uuid
+            The uuid of the instance
         tables : list of cyclopts_io.Table
             The tables that can be written to
         """
@@ -240,3 +240,4 @@ class ProblemSpecies(object):
             family
         """
         raise NotImplementedError
+    

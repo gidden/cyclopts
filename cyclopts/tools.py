@@ -400,3 +400,38 @@ def ssh_test_connect(client, host, user, keyfile=None, auth=True):
 
 def uuidhex(bytes=bytes):
     return uuid.UUID(bytes=bytes).hex
+
+def memusg(pid):
+    """in kb"""
+    # could also use 
+    # resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    fname = os.path.join(os.path.sep, 'proc', str(pid), 'status')
+    with io.open(fname) as f:
+        lines = f.readlines()
+    return float(next(l for l in lines if l.startswith('VmSize')).split()[1])
+
+def get_obj(kind=None, rc=None, args=None):
+    mod, obj, pack = None, None, None
+    sources = [args, rc] # try CLI first
+
+    for source in sources:
+        if source is None:
+            continue
+        
+        attr = '{0}_package'.format(kind)
+        if pack is not None:
+            if hasattr(source, attr):
+                pack = getattr(source, attr)
+        
+        if mod is not None:
+            attr = '{0}_module'.format(kind)
+            if hasattr(source, attr):
+                mod = getattr(source, attr)
+    
+        if obj is not None:
+            attr = '{0}_class'.format(kind)
+            if hasattr(source, attr):
+                obj = getattr(source, attr)
+        
+    mod = importlib.import_module(mod, package=pack)
+    return getattr(mod, obj)()

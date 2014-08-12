@@ -12,14 +12,14 @@ class Table(object):
     """A thin wrapper for a PyTables Table to be used by Cyclopts.
     """
 
-    def __init__(self, h5file, path, dt, chunksize=None):
+    def __init__(self, h5file, path, dt=None, chunksize=None):
         """Parameters
         ----------
         h5file : PyTables File
             the hdf5 file
         path : string
             the absolute path to the table
-        dt : np.dtype
+        dt : np.dtype, optional
             the dtype for the table
         chunksize : int, optional
             the table chunksize, Cyclopts will optimize for a 32Kb L1 cache by
@@ -115,7 +115,48 @@ class Table(object):
         else:
             self._tbl.append(data)
         self._tbl.flush()        
+        
+class ResultTable(Table):
+    """A Cyclopts Table for generic results.
+    """
 
+    def __init__(self, h5file, path='/Results', chunksize=None):
+        """Parameters
+        ----------
+        h5file : PyTables File
+            the hdf5 file
+        path : string
+            the absolute path to the table
+        chunksize : int, optional
+            the table chunksize, Cyclopts will optimize for a 32Kb L1 cache by
+            default
+        """
+        super(ResultTable, self).__init__(h5file, path, None, chunksize)
+        self.dt = np.dtype([
+                ("solnid", ('str', 16)), # 16 bytes for uuid
+                ("instid", ('str', 16)), # 16 bytes for uuid
+                ("solver", ('str', 30)), # 30 seems long enough, right?
+                ("problem", ('str', 30)), # 30 seems long enough, right?
+                ("time", np.float64),
+                ("objective", np.float64),
+                ("cyclopts_version", ('str', 12)),
+                # len(dtime.datetime.now().isoformat(' ')) == 26
+                ("timestamp", ('str', 26)), 
+                ])
+
+    def record_soln(self, soln, soln_uuid, inst_uuid, solver):
+        self.append_data([(
+                    soln_uuid.bytes, 
+                    inst_uuid.bytes, 
+                    solver.type, 
+                    soln.type, 
+                    soln.time, 
+                    soln.objective, 
+                    cyclopts.__version__, 
+                    datetime.now().isoformat(' '),
+                    )])
+        
+        
 class TableManager(object):
     """A managing class that performs RAII for its tables by creating them if
     needed upon acquisition and flushing them upon deletion. Tables can be

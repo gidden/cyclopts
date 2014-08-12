@@ -30,5 +30,21 @@ cdef extern from "problem.h" namespace "cyclopts":
 
 
 
+cdef extern from "problem.h" namespace "cyclopts":
+
+    cdef cppclass Solver:
+        # constructors
+        Solver() except +
+        Solver(std_string) except +
+
+        # attributes
+        std_string type
+
+        # methods
+
+        pass
+
+
+
 
 {'cpppxd_footer': '', 'pyx_header': '', 'pxd_header': '', 'pxd_footer': '', 'cpppxd_header': '', 'pyx_footer': ''}

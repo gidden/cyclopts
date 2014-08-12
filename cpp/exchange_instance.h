@@ -98,14 +98,6 @@ class ExArc {
   double pref;
 };
 
-/// A container class for all parameters required to construct an instance of a
-/// Cyclus ExchangeSolver.
-class ExSolver {
- public:
-  explicit ExSolver(std::string type = "cbc") : type(type) { };
-  std::string type;
-};
-
 /// A simple container class for exchange solutions.
 class ExSolution: public ProbSolution {
  public:
@@ -120,7 +112,7 @@ class ExSolution: public ProbSolution {
 };
 
 ExSolution Run(std::vector<ExGroup>& groups, std::vector<ExNode>& nodes,
-               std::vector<ExArc>& arcs, ExSolver& solver, bool verbose=false);
+               std::vector<ExArc>& arcs, Solver& solver, bool verbose=false);
 
 } // namespace cyclopts
 
