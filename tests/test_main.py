@@ -125,11 +125,16 @@ def test_convert():
     cmd = "cyclopts convert --rc {0} --db {1} -n {2}".format(rc, db, ninst)
     assert_equal(0, subprocess.call(cmd.split(), shell=(os.name == 'nt')))
     h5file = t.open_file(db, 'r')
+    
     sp = RandomRequest()
     path = '/'.join(['', 'Species', sp.name])
     h5node = h5file.get_node(path, sp.tbl_name)
-    assert_equal(h5node.nrows, ninst * nvalid)
-    h5file.close()
+    assert_equal(h5node.nrows, nvalid)
+    
+    fam = sp.family
+    path = '/'.join(['', 'Family', fam.name])
+    h5node = h5file.get_node(path, 'ExchangeInstProperties') # a little hacky...
+    assert_equal(h5node.nrows, nvalid * ninst)
 
     if os.path.exists(db):
         os.remove(db)

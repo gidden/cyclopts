@@ -161,9 +161,14 @@ def get_obj(rc=None, args=None, kind=None):
     obj = None
     pack = None
     if rc is not None and kind == 'species':
-        pack = rc.species_package if hasattr(rc, 'species_package') else None
+        pack = None
+        if hasattr(rc, 'species_package'):
+            pack = rc.species_package
+            rc._dict.pop('species_package')
         mod = rc.species_module
+        rc._dict.pop('species_module')
         obj = rc.species_class
+        rc._dict.pop('species_class')
         
     mod = importlib.import_module(mod, package=pack)
     return getattr(mod, obj)()

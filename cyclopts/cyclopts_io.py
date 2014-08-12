@@ -47,15 +47,15 @@ class Table(object):
     def create(self):
         """Creates a table in the h5file. This must be called before writing."""
         groups = [x for x in self.prefix.split('/') if x]
-        prefix = '/'
+        prefix = ''
         for name in groups:
-            path = '{0}/{1}'.format(prefix, name) \
-                if prefix != '/' else '/{0}'.format(name)
+            path = '/'.join([prefix, name])
+            prefix = '/' if not prefix else prefix
             if not path in self.h5file:
                 self.h5file.create_group(prefix, name, title=name, 
                                          filters=tools.FILTERS)
                 self.h5file.flush()
-                prefix = path
+            prefix = path
 
         self.h5file.create_table(self.prefix, 
                                  self.name, 
@@ -137,7 +137,8 @@ class TableManager(object):
                 tbl.create()
 
     def __del__(self):
-        self.flush_tables()
+        if self.h5file.isopen:
+            self.flush_tables()
     
     def flush_tables(self):
         for tbl in self.tables.values():

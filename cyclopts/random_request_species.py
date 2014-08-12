@@ -136,7 +136,7 @@ class RandomRequestPoint(object):
 
     def dtype(self):
         """Returns a numpy dtype describing all composed objects."""
-        ret = [('paramid', ('str', 16))] # uuid
+        ret = [('paramid', ('str', 16)), ('family', ('str', 30))] # uuid
         for name, obj in self.__dict__.items():
             for subname, subobj in obj.__dict__.items():
                 if subname.startswith('_'):
@@ -145,8 +145,8 @@ class RandomRequestPoint(object):
                             self._dt_convert(subobj)))
         return np.dtype(ret)
                 
-    def export_h5(self, uuid):
-        ret = [uuid.bytes]
+    def export_h5(self, uuid, fam_name):
+        ret = [uuid.bytes, fam_name]
         for name, obj in self.__dict__.items():
             for subname, subobj in obj.__dict__.items():
                 if subname.startswith('_'):
@@ -747,7 +747,8 @@ class RandomRequest(ProblemSpecies):
         tables : list of cyclopts_io.Table
             The tables that can be written to
         """
-        tables[self.tbl_name].append_data([point.export_h5(param_uuid)])
+        tables[self.tbl_name].append_data(
+            [point.export_h5(param_uuid, self.family.name)])
         
     def gen_instance(self, point):
         """Derived classes must implement this function, returning a
