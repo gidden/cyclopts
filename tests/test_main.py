@@ -79,38 +79,27 @@ def test_instids():
     h5file.close()
 
 def test_exec():
+    infile = 'obs_valid_in.h5'
+    ninst = 5
+    
     base = os.path.dirname(os.path.abspath(__file__))
     db = os.path.join(base, "tmp_{0}.h5".format(str(uuid.uuid4())))
-    shutil.copy(os.path.join(base, 'files', 'exp_instances.h5'), db)
-    ninst = len(exp_uuid_arcs())
+    shutil.copy(os.path.join(base, 'files', infile), db)
     solvers = "greedy clp cbc"
-    
-    cmd = "cyclopts exec --db={0} --solvers {1}".format(db, solvers)
+    cmd = ("cyclopts exec --db={0} --family_class ResourceExchange "
+           "--family_module cyclopts.exchange_family "
+           "--solvers {1}").format(db, solvers)
     assert_equal(0, subprocess.call(cmd.split(), shell=(os.name == 'nt')))
+    
     h5file = t.open_file(db, 'r')
-    h5node = h5file.root.Results.General
+    path = '/Results'
+    h5node = h5file.get_node(path)
     assert_equal(h5node.nrows, ninst * len(solvers.split()))
     for row in h5node.iterrows():
         assert_true(row['objective'] > 0)
         assert_true(row['time'] > 0)
     h5file.close()
-
-    uuid_hex = exp_uuid_arcs()[0][0]
-    newdb = os.path.join(base, "tmp_{0}.h5".format(str(uuid.uuid4())))
-    cmd = "cyclopts exec --db={0} --instids {1} --outdb {2}".format(
-        db, uuid_hex, newdb)
-    print("executing: {0}".format(cmd))
-    assert_equal(0, subprocess.call(cmd.split(), shell=(os.name == 'nt')))
-    h5file = t.open_file(newdb, 'r')
-    h5node = h5file.root.Results.General
-    assert_equal(h5node.nrows, 1)
-    for row in h5node.iterrows():
-        assert_equal(row['instid'], uuid.UUID(uuid_hex).bytes)
-    h5file.close()
     
-    if os.path.exists(newdb):
-        os.remove(newdb)
-
     if os.path.exists(db):
         os.remove(db)
 

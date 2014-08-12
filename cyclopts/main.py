@@ -245,14 +245,19 @@ def main():
     """Entry point for Cyclopts runs."""
     parser = argparse.ArgumentParser("Cyclopts", add_help=True)    
 
+    # parser for family info
+    family_parser = argparse.ArgumentParser(add_help=False)    
     fam_mod = ('The module for the problem family')
-    parser.add_argument('--family_module', default=None, help=fam_mod)
+    family_parser.add_argument('--family_module', default=None, help=fam_mod)
     fam_class = ('The problem family class')
-    parser.add_argument('--family_class', default=None, help=fam_class)
+    family_parser.add_argument('--family_class', default=None, help=fam_class)
+    
+    # parser for species info
+    species_parser = argparse.ArgumentParser(add_help=False)    
     sp_mod = ('The module for the problem species')
-    parser.add_argument('--species_module', default=None, help=sp_mod)
+    species_parser.add_argument('--species_module', default=None, help=sp_mod)
     sp_class = ('The problem species class')
-    parser.add_argument('--species_class', default=None, help=sp_class)
+    species_parser.add_argument('--species_class', default=None, help=sp_class)
     
     sp = parser.add_subparsers()
 
@@ -262,7 +267,7 @@ def main():
     converth = ("Convert a parameter space defined by an "
                 "input run control file into an HDF5 database for a Cyclopts "
                 "execution run.")
-    conv_parser = sp.add_parser('convert', help=converth)
+    conv_parser = sp.add_parser('convert', parents=[species_parser], help=converth)
     conv_parser.set_defaults(func=convert)
     rc = ("The run control file to use that defines a continguous parameter space.")
     conv_parser.add_argument('--rc', dest='rc', help=rc)
@@ -292,7 +297,7 @@ def main():
     #
     exech = ("Executes a parameter sweep as defined "
              "by the input database and other command line arguments.")
-    exec_parser = sp.add_parser('exec', help=exech)
+    exec_parser = sp.add_parser('exec', parents=[family_parser], help=exech)
     exec_parser.set_defaults(func=execute)
     db = ("An HDF5 Cyclopts database (e.g., the result of 'cyclopts convert').")
     exec_parser.add_argument('--db', dest='db', help=db)
@@ -320,7 +325,7 @@ def main():
     #
     submit = ("Submits a job to condor, retrieves output when it has completed, "
                "and cleans up the condor user space after.")
-    submit_parser = sp.add_parser('condor-submit', help=submit)
+    submit_parser = sp.add_parser('condor-submit', parents=[family_parser], help=submit)
     submit_parser.set_defaults(func=condor_submit)
     
     # exec related
@@ -410,7 +415,7 @@ def main():
     # build a cde tarball for condor
     #
     cde = ("Updates the Cyclopts CDE tarfile on a Condor submit node.")
-    cde_parser = sp.add_parser('cde', help=cde)
+    cde_parser = sp.add_parser('cde', parents=[family_parser], help=cde)
     cde_parser.set_defaults(func=update_cde)
 
     # cde related
@@ -448,7 +453,7 @@ def main():
     # dump information about an instance db
     #
     dumph = ("Dumps information about an instance database.")
-    dump_parser = sp.add_parser('dump', help=dumph)
+    dump_parser = sp.add_parser('dump', parents=[family_parser], help=dumph)
     dump_parser.set_defaults(func=dump)
     dump_parser.add_argument('--db', dest='db', help=db)
     
