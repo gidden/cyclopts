@@ -13,6 +13,9 @@ from functools import reduce
 from nose.tools import assert_equal, assert_true, assert_false
 import subprocess
 
+from cyclopts import exchange_family
+from cyclopts import tools
+
 exec_cmd = """cyclopts exec --db {indb} --outdb {outdb} \
 --conds "{{'inst_queries':{{'ExchangeInstProperties':['n_arcs=={narcs}']}}}}"
 """
@@ -72,6 +75,29 @@ def test_combine():
     for _, f in tmpfiles.items():
         if os.path.exists(f):
             os.remove(f)
+
+def test_get_obj():    
+    class Args(object):
+        def __init__(self, package=None, module='cyclopts.exchange_family', 
+                     cl='ResourceExchange'):
+            self.family_package = package
+            self.family_module = module
+            self.family_class = cl
+    
+    exp_obj = exchange_family.ResourceExchange
+    kind = 'family'
+
+    args = Args()
+    rc = Args(None, None, None)
+    assert_true(exp_obj, tools.get_obj(kind=kind, rc=rc, args=args))
+
+    args = Args(None, None, None)
+    rc = Args()
+    assert_true(exp_obj, tools.get_obj(kind=kind, rc=rc, args=args))
+
+    args = Args(None, 'cyclopts.exchange_family', None)
+    rc = Args()
+    assert_true(exp_obj, tools.get_obj(kind=kind, rc=rc, args=args))
 
 def test_sampler_builder():
     rc = RunControl(

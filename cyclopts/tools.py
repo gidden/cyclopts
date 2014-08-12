@@ -20,6 +20,7 @@ from os import kill
 from signal import alarm, signal, SIGALRM, SIGKILL
 from subprocess import PIPE, Popen
 import getpass
+import importlib
 
 import cyclopts
 from cyclopts.params import CONSTR_ARGS, Param, BoolParam, SupConstrParam, CoeffParam, \
@@ -411,6 +412,24 @@ def memusg(pid):
     return float(next(l for l in lines if l.startswith('VmSize')).split()[1])
 
 def get_obj(kind=None, rc=None, args=None):
+    """Get an object of certain kind, e.g. species or family. Both the rc and
+    args argument will be searched for attributes named <kind>_package,
+    <kind>_module, and <kind>_class. The package/module is then imported and an
+    instance of the class is returned. The CLI is searched before the rc.
+
+    Parameters
+    ----------
+    kind : str
+        the kind of object
+    rc : RunControl object, optional
+        a run control object
+    args : argparse args, optional
+        CLI args
+
+    Return
+    ------
+    inst : an object instance
+    """
     mod, obj, pack = None, None, None
     sources = [args, rc] # try CLI first
 
@@ -419,19 +438,84 @@ def get_obj(kind=None, rc=None, args=None):
             continue
         
         attr = '{0}_package'.format(kind)
-        if pack is not None:
+        if pack is None and mod is None and obj is None:
             if hasattr(source, attr):
                 pack = getattr(source, attr)
         
-        if mod is not None:
+        if mod is None:
             attr = '{0}_module'.format(kind)
             if hasattr(source, attr):
                 mod = getattr(source, attr)
     
-        if obj is not None:
+        if obj is None:
             attr = '{0}_class'.format(kind)
             if hasattr(source, attr):
                 obj = getattr(source, attr)
-        
+
+    print(mod, pack, obj)
     mod = importlib.import_module(mod, package=pack)
     return getattr(mod, obj)()
+
+def collect_instids(h5file, path, rc=None, instids=None, colname='instids'):
+    """Collects all instids as specified. 
+    
+    If rc and instids is None, all ids found in the h5file's path are collected.
+    Otherwise, instids provided by the instid listing and the paramater space
+    defined by the run control `inst_queries` parameter are collected.
+
+    Parameters
+    ----------
+    h5file : PyTables File object
+        the file to collect ids from
+    path : str
+        the path to a property table node
+    rc : RunControl object, optional
+        a run control object specifying a subset of instids to collect
+    instids : collection of uuids
+        explicit instids to collect
+    colname : str
+        the instance id column name
+
+    Return
+    ------
+    instids : set of uuids
+    """
+    instids = set(uuid.UUID(x) for x in instids) if instids is not None else set()
+    rc = rc if rc is not None else tools.RunControl()
+    instids |= set(uuid.UUID(x) for x in rc.inst_ids) \
+        if 'inst_ids' in rc else set()
+    
+    # inst queries are a mapping from instance table names to queryable
+    # conditions, the result of which is a collection of instids that meet those
+    # conditions
+    h5node = h5file.get_node(path)
+    inst_queries = rc.inst_queries if 'inst_queries' in rc else {}
+    for tbl_name, conds in inst_queries.items():
+        if isinstance(conds, basestring):
+            conds = [conds]
+        if h5node is None:
+            continue
+        tbl = h5node._f_get_child(tbl_name)
+        ops = conds[1::2]
+        conds = ['({0})'.format(c) if \
+                     not c.lstrip().startswith('(') and \
+                     not c.rstrip().endswith(')') else c for c in conds[::2]]
+        cond = ' '.join(
+                [' '.join(i) for i in \
+                     itertools.izip_longest(conds, ops, fillvalue='')]).strip()
+        rows = tbl.where(cond)
+        for row in rows:
+            iid = row[col_name]
+            if len(iid) == 15:
+                iid += '\0'
+            instids.add(iid)
+        
+    # if no ids, then run everything
+    if len(instids) == 0:
+        for row in h5node.iterrows():
+            iid = row[col_name]
+            if len(iid) == 15:
+                iid += '\0'
+            instids.add(uuid.UUID(iid))
+    
+    return instids

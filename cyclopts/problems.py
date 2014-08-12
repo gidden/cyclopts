@@ -21,7 +21,7 @@ class ProblemFamily(object):
         Returns
         -------
         name : string
-            The name of this species
+            The name of this family
         """
         raise NotImplementedError
 
@@ -29,6 +29,18 @@ class ProblemFamily(object):
     def table_prefix(self):
         """Returns the HDF5 group location for tables of this family"""
         return '/{0}/{1}'.format('Family', self.name)
+
+    @property            
+    def property_table_name(self):
+        """Derived classes must implement this function and return the name of
+        the table associated with aggregate instance properties
+
+        Returns
+        -------
+        name : string
+            The name of this family's instance property table
+        """
+        raise NotImplementedError
 
     def register_tables(self, h5file, prefix):
         """Derived classes must implement this function and return their list of

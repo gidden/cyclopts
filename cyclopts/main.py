@@ -21,7 +21,6 @@ import sys
 import resource
 import gc
 import io
-import importlib
 
 try:
     import argcomplete
@@ -40,56 +39,6 @@ import cyclopts.cyclopts_io as cycio
 from cyclopts.problems import Solver
 
 _inst_grp_name = 'Instances'
-
-def collect_instids(h5node=None, rc=None, instids=None):
-    """Collects all instids. If only a database node is given, all instids found
-    in any table with any spelling of 'properties' in it are
-    collected. Otherwise, instids provided by the instid listing and the
-    paramater space defined by the run control are collected.
-    """
-    instids = instids if instids is not None else set()
-    rc = rc if rc is not None else tools.RunControl()
-    instids |= set(uuid.UUID(x).bytes for x in rc.inst_ids) \
-        if 'inst_ids' in rc else set()
-    
-    # inst queries are a mapping from instance table names to queryable
-    # conditions, the result of which is a collection of instids that meet those
-    # conditions
-    inst_queries = rc.inst_queries if 'inst_queries' in rc else {}
-    for tbl_name, conds in inst_queries.items():
-        if isinstance(conds, basestring):
-            conds = [conds]
-        if h5node is None:
-            continue
-        tbl = h5node._f_get_child(tbl_name)
-        ops = conds[1::2]
-        conds = ['({0})'.format(c) if \
-                     not c.lstrip().startswith('(') and \
-                     not c.rstrip().endswith(')') else c for c in conds[::2]]
-        cond = ' '.join(
-                [' '.join(i) for i in \
-                     itertools.izip_longest(conds, ops, fillvalue='')]).strip()
-        rows = tbl.where(cond)
-        for row in rows:
-            iid = row['instid']
-            if len(iid) == 15:
-                iid += '\0'
-            instids.add(iid)
-        
-    # if no ids, then run everything
-    if len(instids) == 0 and h5node is not None:
-        names = [node._v_name \
-                     for node in h5node._f_iter_nodes(classname='Table') \
-                     if 'properties' in node._v_name.lower()]
-        for tbl_name in names:
-            tbl = h5node._f_get_child(tbl_name)
-            for row in tbl.iterrows():
-                iid = row['instid']
-                if len(iid) == 15:
-                    iid += '\0'
-                instids.add(iid)
-    
-    return instids
 
 def condor_submit(args):
     # collect instance ids
@@ -147,16 +96,20 @@ def convert(args):
     update_freq = args.update_freq
     debug = args.debug
     h5file = t.open_file(fout, 'a', filters=tools.FILTERS)
-    
+
+    # conversion objects
     sp = tools.get_obj(kind='species', rc=rc, args=args)
+    fam = sp.family
+
+    # table set up
     sp_manager = cycio.TableManager(h5file, 
                                     sp.register_tables(h5file, 
                                                        sp.table_prefix))
-    fam = sp.family
     fam_manager = cycio.TableManager(h5file, 
                                      fam.register_tables(h5file, 
                                                          fam.table_prefix))
-
+    
+    # convert
     sp.read_space(rc._dict)
     for point in sp.points():
         param_uuid = uuid.uuid4()
@@ -166,9 +119,9 @@ def convert(args):
             inst = sp.gen_instance(point)
             fam.record_inst(inst, inst_uuid, param_uuid, fam_manager.tables)
 
+    # clean up
     sp_manager.flush_tables()
     fam_manager.flush_tables()
-    
     h5file.close()
 
 def execute(args):
@@ -191,7 +144,7 @@ def execute(args):
     # execution object
     fam = tools.get_obj(kind='family', rc=rc, args=args)
 
-    # if a separate db is requested, open it, otherwise use only 
+    # get in/out dbs 
     h5in = t.open_file(indb, mode='r', filters=tools.FILTERS)
     if outdb is not None:
         h5out = t.open_file(outdb, mode='a', filters=tools.FILTERS)
@@ -212,7 +165,9 @@ def execute(args):
         h5out, [cycio.ResultTable(h5out, path='/{0}'.format(result_tbl_name))])
 
     # refactor, should be uuid objects
-    instids = collect_instids(h5node=ininstnode, rc=rc, instids=instids)
+    path = '{0}/{1}'.format(fam.table_prefix, fam.property_table_name)
+    instids = tools.collect_instids(h5file=h5in, path=path, rc=rc, 
+                                    instids=instids)
     if verbose: 
         print("Executing {0} instances.".format(len(instids)))
 

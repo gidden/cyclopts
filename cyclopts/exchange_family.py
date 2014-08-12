@@ -109,6 +109,16 @@ class ResourceExchange(ProblemFamily):
         """
         return 'ResourceExchange'
 
+    @property
+    def property_table_name(self):
+        """
+        Returns
+        -------
+        name : string
+            The name of this family's instance property table
+        """
+        return _tbl_names['properties']
+
     def register_tables(self, h5file, prefix):
         """Derived classes must implement this function and return their list of
         tables
