@@ -18,7 +18,8 @@ from cyclopts import exchange_family
 from cyclopts import tools
 
 exec_cmd = """cyclopts exec --db {indb} --outdb {outdb} \
---conds "{{'inst_queries':{{'ExchangeInstProperties':['n_arcs=={narcs}']}}}}"
+--conds "{{'inst_queries':['n_arcs=={narcs}']}}" \
+ --family_class ResourceExchange --family_module cyclopts.exchange_family
 """
 
 def test_incr():
@@ -31,7 +32,7 @@ def test_incr():
 def test_combine():    
     base = os.path.dirname(os.path.abspath(__file__))
     workdir = os.path.join(base, 'files')
-    orig_in = 'exp_instances.h5'
+    orig_in = 'obs_valid_in.h5'
     cp_in = 'cp_instances.h5'
     tmp_out = 'tmp_out.h5'
     out1 = '1arcs.h5'
@@ -67,10 +68,12 @@ def test_combine():
     for f in chkfiles:
         print("checking {0}".format(f))
         db = t.open_file(f, 'r')
-        assert_equal(db.root.Instances.ExchangeInstProperties.nrows, ninsts)
-        assert_equal(db.root.Instances.ExchangeInstSolutions.nrows, 
-                     nsoln1 + nsoln4)
-        assert_equal(db.root.Results.General.nrows, 2) # 2 runs were performed
+        path = '/Family/ResourceExchange/ExchangeInstProperties'
+        assert_equal(db.get_node(path).nrows, ninsts)
+        path = '/Family/ResourceExchange/ExchangeInstSolutions'
+        assert_equal(db.get_node(path).nrows, nsoln1 + nsoln4)
+        path = '/Results'
+        assert_equal(db.get_node(path).nrows, 2) # 2 runs were performed
     
     # teardown
     for _, f in tmpfiles.items():
@@ -102,9 +105,9 @@ def test_get_obj():
 
 def test_collect_instids():
     base = os.path.dirname(os.path.abspath(__file__))
-    fpth = os.path.join(base, 'files', 'exp_instances.h5')
+    fpth = os.path.join(base, 'files', 'obs_valid_in.h5')
     h5file = t.open_file(fpth, 'r')
-    path = '/Instances/ExchangeInstProperties'
+    path = '/Family/ResourceExchange/ExchangeInstProperties'
     
     # test all
     vals = [x['instid'] for x in h5file.get_node(path).iterrows()]
