@@ -12,6 +12,7 @@ import tables as t
 from functools import reduce
 from nose.tools import assert_equal, assert_true, assert_false
 import subprocess
+import uuid
 
 from cyclopts import exchange_family
 from cyclopts import tools
@@ -98,6 +99,41 @@ def test_get_obj():
     args = Args(None, 'cyclopts.exchange_family', None)
     rc = Args()
     assert_true(exp_obj, tools.get_obj(kind=kind, rc=rc, args=args))
+
+def test_collect_instids():
+    base = os.path.dirname(os.path.abspath(__file__))
+    fpth = os.path.join(base, 'files', 'exp_instances.h5')
+    h5file = t.open_file(fpth, 'r')
+    path = '/Instances/ExchangeInstProperties'
+    
+    # test all
+    vals = [x['instid'] for x in h5file.get_node(path).iterrows()]
+    vals = [x + '\0' if len(x) == 15 else x for x in vals]
+    exp_uuids = [uuid.UUID(bytes=x) for x in vals]
+    obs_uuids = tools.collect_instids(h5file, path)    
+    assert_equal(set(exp_uuids), obs_uuids)
+
+    # test subset
+    instids = [uuid.UUID(bytes=x).hex for x in vals[:-2]]
+    exp_uuids = exp_uuids[:-2]
+    obs_uuids = tools.collect_instids(h5file, path, instids=instids)    
+    assert_equal(set(exp_uuids), obs_uuids)
+
+    # test rc
+    vals = [x['instid'] for x in h5file.get_node(path).iterrows() \
+                if x['n_arcs'] == 2 and x['n_u_grps'] == 2]
+    vals = [x + '\0' if len(x) == 15 else x for x in vals]
+    exp_uuids = [uuid.UUID(bytes=x) for x in vals]
+    rc = RunControl(inst_queries=['n_arcs == 2', '&', 'n_u_grps == 2'])
+    obs_uuids = tools.collect_instids(h5file, path, rc)    
+    assert_equal(set(exp_uuids), obs_uuids)
+    
+    # test combined
+    obs_uuids = tools.collect_instids(h5file, path, rc=rc, instids=[instids[0]])    
+    exp_uuids += [uuid.UUID(instids[0])]
+    assert_equal(set(exp_uuids), obs_uuids)
+    
+    h5file.close()    
 
 def test_sampler_builder():
     rc = RunControl(

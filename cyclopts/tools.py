@@ -21,6 +21,7 @@ from signal import alarm, signal, SIGALRM, SIGKILL
 from subprocess import PIPE, Popen
 import getpass
 import importlib
+import itertools
 
 import cyclopts
 from cyclopts.params import CONSTR_ARGS, Param, BoolParam, SupConstrParam, CoeffParam, \
@@ -456,7 +457,7 @@ def get_obj(kind=None, rc=None, args=None):
     mod = importlib.import_module(mod, package=pack)
     return getattr(mod, obj)()
 
-def collect_instids(h5file, path, rc=None, instids=None, colname='instids'):
+def collect_instids(h5file, path, rc=None, instids=None, colname='instid'):
     """Collects all instids as specified. 
     
     If rc and instids is None, all ids found in the h5file's path are collected.
@@ -481,7 +482,7 @@ def collect_instids(h5file, path, rc=None, instids=None, colname='instids'):
     instids : set of uuids
     """
     instids = set(uuid.UUID(x) for x in instids) if instids is not None else set()
-    rc = rc if rc is not None else tools.RunControl()
+    rc = rc if rc is not None else RunControl()
     instids |= set(uuid.UUID(x) for x in rc.inst_ids) \
         if 'inst_ids' in rc else set()
     
@@ -489,33 +490,27 @@ def collect_instids(h5file, path, rc=None, instids=None, colname='instids'):
     # conditions, the result of which is a collection of instids that meet those
     # conditions
     h5node = h5file.get_node(path)
-    inst_queries = rc.inst_queries if 'inst_queries' in rc else {}
-    for tbl_name, conds in inst_queries.items():
-        if isinstance(conds, basestring):
-            conds = [conds]
-        if h5node is None:
-            continue
-        tbl = h5node._f_get_child(tbl_name)
+    conds = rc.inst_queries if 'inst_queries' in rc else []
+    if isinstance(conds, basestring):
+        conds = [conds]
+    if len(conds) > 0:
         ops = conds[1::2]
         conds = ['({0})'.format(c) if \
                      not c.lstrip().startswith('(') and \
                      not c.rstrip().endswith(')') else c for c in conds[::2]]
         cond = ' '.join(
-                [' '.join(i) for i in \
-                     itertools.izip_longest(conds, ops, fillvalue='')]).strip()
-        rows = tbl.where(cond)
-        for row in rows:
-            iid = row[col_name]
-            if len(iid) == 15:
-                iid += '\0'
-            instids.add(iid)
+            [' '.join(i) for i in \
+                 itertools.izip_longest(conds, ops, fillvalue='')]).strip()
+        vals = [x[colname] for x in h5node.where(cond)]
+        vals = [x + '\0' if len(x) == 15 else x for x in vals]
+        instids |= set(uuid.UUID(bytes=x) for x in vals)
         
     # if no ids, then run everything
     if len(instids) == 0:
         for row in h5node.iterrows():
-            iid = row[col_name]
+            iid = row[colname]
             if len(iid) == 15:
                 iid += '\0'
-            instids.add(uuid.UUID(iid))
+            instids.add(uuid.UUID(bytes=iid))
     
     return instids
