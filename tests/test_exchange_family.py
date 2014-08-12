@@ -162,7 +162,7 @@ class TestExchangeIO:
 
         # work
         fam.record_inst((exp_groups, exp_nodes, exp_arcs), instid, paramid, 
-                        manager.tables)
+                        'species', manager.tables)
         manager.flush_tables()
         obs_groups, obs_nodes, obs_arcs = fam.read_inst(instid, 
                                                         manager.tables)
