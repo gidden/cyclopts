@@ -209,7 +209,7 @@ class ProblemSpecies(object):
         """
         raise NotImplementedError    
 
-    def record_point(self, point, tables):
+    def record_point(self, point, param_uuid, tables):
         """Derived classes must implement this function, recording information
         about a parameter point in the appropriate tables.
         
@@ -217,6 +217,8 @@ class ProblemSpecies(object):
         ----------
         point : tuple or other
             A representation of a point in parameter space
+        param_uuid : uuid
+            The uuid of the point in parameter space
         tables : list of cyclopts_io.Table
             The tables that can be written to
         """

@@ -25,6 +25,8 @@ import cyclopts
 from cyclopts.params import CONSTR_ARGS, Param, BoolParam, SupConstrParam, CoeffParam, \
     ReactorRequestSampler, ReactorRequestBuilder #, ReactorSupplySampler
 
+FILTERS = t.Filters(complevel=4)
+
 cyclopts_remote_run_dir = 'cyclopts-runs'
 
 class Incrementer(object):

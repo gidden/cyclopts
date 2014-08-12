@@ -2,6 +2,8 @@ from cyclopts import main
 from cyclopts import tools
 from cyclopts import condor
 
+from cyclopts.random_request_species import RandomRequest
+
 import os
 import shutil
 import tables as t
@@ -111,7 +113,7 @@ def test_exec():
 
     if os.path.exists(db):
         os.remove(db)
-    
+
 def test_convert():
     base = os.path.dirname(os.path.abspath(__file__))
     rc = os.path.join(base, 'files', 'obs_valid.rc')    
@@ -119,12 +121,13 @@ def test_convert():
 
     ninst = 2
     nvalid = 5 # visual confirmation of obs_valid.rc
-    solvers = "greedy cbc"
 
     cmd = "cyclopts convert --rc {0} --db {1} -n {2}".format(rc, db, ninst)
     assert_equal(0, subprocess.call(cmd.split(), shell=(os.name == 'nt')))
     h5file = t.open_file(db, 'r')
-    h5node = h5file.root.Instances.ExchangeInstProperties
+    sp = RandomRequest()
+    path = '/'.join(['', 'Species', sp.name])
+    h5node = h5file.get_node(path, sp.tbl_name)
     assert_equal(h5node.nrows, ninst * nvalid)
     h5file.close()
 

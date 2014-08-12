@@ -5,8 +5,8 @@
 import numpy as np
 import tables as t
 import math
-    
-_filters = t.Filters(complevel=4)
+
+import cyclopts.tools as tools
         
 class Table(object):
     """A thin wrapper for a PyTables Table to be used by Cyclopts.
@@ -32,7 +32,9 @@ class Table(object):
         # factor of 2 is ideal for reading/writing speed (per @scopatz's advice)
         self.chunksize = chunksize if chunksize is not None \
             else math.floor(32 * 1024 / float(dt.itemsize)) / 2
-        self.prefix = '/' + '/'.join(self.path.split('/')[:-1])
+        self.prefix = '/'.join(self.path.split('/')[:-1])
+        if not self.prefix.startswith('/'):
+            self.prefix = '/{0}'.format(self.prefix)
         self.name = self.path.split('/')[-1]
         self._data = np.empty(shape=(self.chunksize), dtype=self.dt)
         self._idx = 0
@@ -44,25 +46,24 @@ class Table(object):
 
     def create(self):
         """Creates a table in the h5file. This must be called before writing."""
+        groups = [x for x in self.prefix.split('/') if x]
+        prefix = '/'
+        for name in groups:
+            path = '{0}/{1}'.format(prefix, name) \
+                if prefix != '/' else '/{0}'.format(name)
+            if not path in self.h5file:
+                self.h5file.create_group(prefix, name, title=name, 
+                                         filters=tools.FILTERS)
+                self.h5file.flush()
+                prefix = path
+
         self.h5file.create_table(self.prefix, 
                                  self.name, 
                                  description=self.dt, 
-                                 filters=_filters, 
+                                 filters=tools.FILTERS, 
                                  chunkshape=(self.chunksize,))
-        self._tbl = self.h5file.get_node(self.path)
 
-    # def where(self, pred):
-    #     """Parameters
-    #     ---------
-    #     pred : string
-    #         the search predicate
-        
-    #     Return
-    #     ------
-    #     rows : Pytables.Row iterable
-    #         the rows matching pred
-    #     """
-    #     return self._tbl.where(pred)
+        self._tbl = self.h5file.get_node(self.path)
 
     def instid_rows(self, uuid):
         return self._tbl.where('instid == uuid')

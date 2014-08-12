@@ -27,13 +27,6 @@ def test_basics():
     for p in sp.points():
         i += 1
     assert_equal(i, 5)
-
-def test_valid():
-    n_commods = {'avg': range(1, 3)}
-    n_supply = {'avg': range(1, 3)}
-    n_request = {'avg': range(1, 3)}
-    sp = RandomRequest()
-    
     
 def valid_rr_builder():
     s = RandomRequestPoint()

@@ -9,7 +9,7 @@ import itertools
 
 import cyclopts.exchange_instance as exinst
 from cyclopts.problems import ProblemSpecies
-from cyclopts.cyclopts_io import Table as cycTable
+import cyclopts.cyclopts_io as cycio
 from cyclopts.exchange_family import ResourceExchange
 from cyclopts.params import Param, BoolParam, CoeffParam, SupConstrParam, \
     CONSTR_ARGS
@@ -64,7 +64,6 @@ class RandomRequestPoint(object):
         pref_coeff : CoeffParam or similar, optional
             preference coefficients
         """
-        self.paramid = uuid.uuid4()
         self.n_commods = n_commods \
             if n_commods is not None else Param(1)
         self.n_request = n_request \
@@ -103,8 +102,6 @@ class RandomRequestPoint(object):
         for k, exp in self.__dict__.items():
             if k not in other.__dict__:
                 return False
-            if k == 'paramid':
-                continue
             # this is a hack because for some reason for CoeffParams, a == b is
             # true and a != b is true, but I can't get corresponding behavior in
             # ipython. weird.
@@ -139,11 +136,8 @@ class RandomRequestPoint(object):
 
     def dtype(self):
         """Returns a numpy dtype describing all composed objects."""
-        ret = []
+        ret = [('paramid', ('str', 16))] # uuid
         for name, obj in self.__dict__.items():
-            if name == 'paramid':
-                ret.append((name, ('str', 16)))
-                continue
             for subname, subobj in obj.__dict__.items():
                 if subname.startswith('_'):
                     continue
@@ -151,12 +145,9 @@ class RandomRequestPoint(object):
                             self._dt_convert(subobj)))
         return np.dtype(ret)
                 
-    def export_h5(self):
-        ret = []
+    def export_h5(self, uuid):
+        ret = [uuid.bytes]
         for name, obj in self.__dict__.items():
-            if name == 'paramid':
-                ret.append(obj.bytes)
-                continue
             for subname, subobj in obj.__dict__.items():
                 if subname.startswith('_'):
                     continue
@@ -612,10 +603,9 @@ class RandomRequest(ProblemSpecies):
 
     def __init__(self):
         super(RandomRequest, self).__init__()
-        self._pnt = RandomRequestPoint()
         self._params_it = None
-        self._tbl_name = 'RandomRequestParameters'
         self._n_points = None
+        self.tbl_name = 'RandomRequestParameters'
 
     def _get_param_dict(self, rc_dict):
         """Provides a dictionary of parameter names to all constructor arguments
@@ -744,7 +734,7 @@ class RandomRequest(ProblemSpecies):
             if point.valid():
                 yield point
 
-    def record_point(self, point, tables):
+    def record_point(self, point, param_uuid, tables):
         """Derived classes must implement this function, recording information
         about a parameter point in the appropriate tables.
         
@@ -752,10 +742,12 @@ class RandomRequest(ProblemSpecies):
         ----------
         point : tuple or other
             A representation of a point in parameter space
+        param_uuid : uuid
+            The uuid of the point in parameter space
         tables : list of cyclopts_io.Table
             The tables that can be written to
         """
-        tables[self.tbl_name].append_data([point.export_h5()])
+        tables[self.tbl_name].append_data([point.export_h5(param_uuid)])
         
     def gen_instance(self, point):
         """Derived classes must implement this function, returning a

@@ -21,6 +21,7 @@ import sys
 import resource
 import gc
 import io
+import importlib
 
 try:
     import argcomplete
@@ -35,6 +36,7 @@ import cyclopts.tools as tools
 import cyclopts.inst_io as iio
 import cyclopts.exchange_instance as inst
 import cyclopts.params as params
+import cyclopts.cyclopts_io as cycio
 
 _inst_grp_name = 'Instances'
 _result_grp_name = 'Results'
@@ -52,7 +54,6 @@ _result_tbl_dtype = np.dtype([
         # len(dtime.datetime.now().isoformat(' ')) == 26
         ("timestamp", ('str', 26)), 
         ])
-_filters = t.Filters(complevel=4)
 
 def collect_instids(h5node=None, rc=None, instids=None):
     """Collects all instids. If only a database node is given, all instids found
@@ -106,7 +107,7 @@ def collect_instids(h5node=None, rc=None, instids=None):
 
 def condor_submit(args):
     # collect instance ids
-    h5file = t.open_file(args.db, mode='r', filters=_filters)
+    h5file = t.open_file(args.db, mode='r', filters=tools.FILTERS)
     instnode = h5file.root._f_get_child(_inst_grp_name)
     instids = set(uuid.UUID(x).bytes for x in args.instids)
     rc = tools.parse_rc(args.rc) if args.rc is not None else tools.RunControl()
@@ -154,6 +155,19 @@ def memusg(pid):
         lines = f.readlines()
     return float(next(l for l in lines if l.startswith('VmSize')).split()[1])
 
+def get_obj(rc=None, args=None, kind=None):
+    print(rc)
+    mod = None
+    obj = None
+    pack = None
+    if rc is not None and kind == 'species':
+        pack = rc.species_package if hasattr(rc, 'species_package') else None
+        mod = rc.species_module
+        obj = rc.species_class
+        
+    mod = importlib.import_module(mod, package=pack)
+    return getattr(mod, obj)()
+
 def convert(args):
     """Converts a contiguous dataspace as defined by an input run control file
     into problem instances in an HDF5 database. Each discrete point, as
@@ -168,69 +182,31 @@ def convert(args):
     verbose = args.verbose
     update_freq = args.update_freq
     debug = args.debug
-
-    # change the buffer size to show memory issues
-    # t.parameters.IO_BUFFER_SIZE = 1048576 / 10.
-    # print("tables IO buffer size: ", t.parameters.IO_BUFFER_SIZE)
-
-    # update for new types
-    s_types = [('ReactorRequestSampler', params.ReactorRequestSampler),]
+    h5file = t.open_file(fout, 'a', filters=tools.FILTERS)
     
-    sbuilder = tools.SamplerBuilder(rc)
-    print(('{0} possible (not validated) samplers found from '
-           'input run control').format(sbuilder.n_samplers))
-    if args.count_only:
-        return
-    
-    # create leaves
-    print('Preparing input database')
-    h5file = t.open_file(fout, mode='a', filters=_filters)
-    root = h5file.root
-    for name, ctor in s_types:
-        if root.__contains__(name):
-            continue
-        inst = ctor()
-        h5file.create_table(root, name, 
-                            description=inst.describe_h5(), 
-                            filters=_filters)
-    if not root.__contains__(_inst_grp_name):
-        h5file.create_group(root, _inst_grp_name, filters=_filters)
+    sp = get_obj(rc, args, kind='species')
+    sp_manager = cycio.TableManager(h5file, 
+                                    sp.register_tables(h5file, 
+                                                       sp.table_prefix))
+    fam = sp.family
+    fam_manager = cycio.TableManager(h5file, 
+                                     fam.register_tables(h5file, 
+                                                         fam.table_prefix))
 
-    # build and export each sampler
-    s_it = sbuilder.build()    
-    counter = 0
-    print('Converting {0} instances'.format(sbuilder.n_samplers * ninst))
-    if debug:
-        import objgraph
-    for s in s_it:    
-        if debug:
-            objgraph.show_growth(limit=5)
-        tbl = root._f_get_child(s.__class__.__name__)
-        row = tbl.row
-        s.export_h5(row)
-        row.append()
-        inst_builder_ctor = s.inst_builder_ctor()
-        builder = inst_builder_ctor(s)
-        h5node = root._f_get_child(_inst_grp_name)
+    sp.read_space(rc._dict)
+    for point in sp.points():
+        param_uuid = uuid.uuid4()
+        sp.record_point(point, param_uuid, sp_manager.tables)
         for i in range(ninst):
-            builder.build()
-            builder.write(h5node)
-            counter += 1
-            if counter % update_freq == 0:
-                print('{0} instances converted.'.format(counter))
-                if verbose:
-                    usg = memusg(os.getpid())
-                    perobj = usg / len(gc.get_objects())
-                    print('Memory usage in kb: {0}'.format(usg))
-                    print('Memory per object: {0}'.format(perobj))
-            tbl.flush()
-            gc.collect()
-    h5file.close()
-    if debug:
-        objgraph.show_growth()
-        import pdb; pdb.set_trace()
-    print('Conversion process complete.')
+            inst_uuid = uuid.uuid4()
+            inst = sp.gen_instance(point)
+            fam.record_inst(inst, inst_uuid, param_uuid, fam_manager.tables)
+
+    sp_manager.flush_tables()
+    fam_manager.flush_tables()
     
+    h5file.close()
+
 def execute(args):
     indb = args.db
     outdb = args.outdb
@@ -249,12 +225,12 @@ def execute(args):
         raise IOError('Input database {0} does not exist.'.format(indb))
 
     # if a separate db is requested, open it, otherwise use only 
-    h5in = t.open_file(indb, mode='r', filters=_filters)
+    h5in = t.open_file(indb, mode='r', filters=tools.FILTERS)
     if outdb is not None:
-        h5out = t.open_file(outdb, mode='a', filters=_filters)
+        h5out = t.open_file(outdb, mode='a', filters=tools.FILTERS)
     else:
         h5in.close()
-        h5in = t.open_file(indb, mode='a', filters=_filters)
+        h5in = t.open_file(indb, mode='a', filters=tools.FILTERS)
         h5out = h5in
 
     inroot = h5in.root
@@ -264,7 +240,7 @@ def execute(args):
     if not outroot.__contains__(_inst_grp_name):
         print("creating group {0}".format(_inst_grp_name))
         outroot._v_file.create_group(outroot, _inst_grp_name, 
-                                     filters=_filters)
+                                     filters=tools.FILTERS)
     outinstnode = outroot._f_get_child(_inst_grp_name)
 
     # read rc if it exists and we don't already have insts
@@ -275,12 +251,12 @@ def execute(args):
     if not outroot.__contains__(_result_grp_name):
         print("creating group {0}".format(_result_grp_name))
         outroot._v_file.create_group(outroot, _result_grp_name, 
-                                     filters=_filters)
+                                     filters=tools.FILTERS)
     resultnode = outroot._f_get_child(_result_grp_name)
 
     if not resultnode.__contains__(_result_tbl_name):
         outroot._v_file.create_table(resultnode, _result_tbl_name, 
-                                     _result_tbl_dtype, filters=_filters)    
+                                     _result_tbl_dtype, filters=tools.FILTERS)    
     tbl = resultnode._f_get_child(_result_tbl_name) 
 
     # run each instance note that the running and reporting is specific to
@@ -354,7 +330,7 @@ def update_cde(args):
     
 def dump(args):
     """Dumps information about instances in a database"""
-    h5file = t.open_file(args.db, mode='r', filters=_filters)
+    h5file = t.open_file(args.db, mode='r', filters=tools.FILTERS)
     instnode = h5file.root._f_get_child(_inst_grp_name)
     instids = collect_instids(h5node=instnode)
     for iid in instids:
