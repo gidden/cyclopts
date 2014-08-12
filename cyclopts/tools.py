@@ -453,7 +453,6 @@ def get_obj(kind=None, rc=None, args=None):
             if hasattr(source, attr):
                 obj = getattr(source, attr)
 
-    print(mod, pack, obj)
     mod = importlib.import_module(mod, package=pack)
     return getattr(mod, obj)()
 
