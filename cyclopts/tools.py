@@ -412,18 +412,18 @@ def memusg(pid):
         lines = f.readlines()
     return float(next(l for l in lines if l.startswith('VmSize')).split()[1])
 
-def get_obj(kind=None, rc=None, args=None):
+def get_obj(kind=None, rcs=None, args=None):
     """Get an object of certain kind, e.g. species or family. Both the rc and
     args argument will be searched for attributes named <kind>_package,
     <kind>_module, and <kind>_class. The package/module is then imported and an
-    instance of the class is returned. The CLI is searched before the rc.
+    instance of the class is returned. The CLI is searched before the rcs.
 
     Parameters
     ----------
     kind : str
         the kind of object
-    rc : RunControl object, optional
-        a run control object
+    rcs : list of RunControl objects or single object, optional
+        rcs are checked in order
     args : argparse args, optional
         CLI args
 
@@ -432,7 +432,9 @@ def get_obj(kind=None, rc=None, args=None):
     inst : an object instance
     """
     mod, obj, pack = None, None, None
-    sources = [args, rc] # try CLI first
+    
+    rcs = [rcs] if not isinstance(rcs, Iterable) else rcs
+    sources = [args] + rcs # try CLI first, then rcs in order
 
     for source in sources:
         if source is None:

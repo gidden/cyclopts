@@ -29,57 +29,62 @@ def test_incr():
     assert_equal(i.next(), 5)
     assert_equal(i.next(), 6)
 
-def test_combine():    
-    base = os.path.dirname(os.path.abspath(__file__))
-    workdir = os.path.join(base, 'files')
-    orig_in = 'obs_valid_in.h5'
-    cp_in = 'cp_instances.h5'
-    tmp_out = 'tmp_out.h5'
-    out1 = '1arcs.h5'
-    nsoln1 = 1
-    out4 = '4arcs.h5'
-    nsoln4 = 2
-    ninsts = 5
-    tmpfiles = {out1: os.path.join(workdir, out1), 
-                out4: os.path.join(workdir, out4), 
-                cp_in: os.path.join(workdir, cp_in), 
-                tmp_out: os.path.join(workdir, tmp_out)}
-    
-    # setup
-    for _, f in tmpfiles.items():
-        if os.path.exists(f):
-            os.remove(f)
-    cmd = exec_cmd.format(indb=os.path.join(workdir, orig_in), 
-                          outdb=os.path.join(workdir, out1), narcs=1)
-    print("executing cmd", cmd)
-    subprocess.call(cmd.split(), shell=(os.name == 'nt'))
-    cmd = exec_cmd.format(indb=os.path.join(workdir, orig_in), 
-                          outdb=os.path.join(workdir, out4), narcs=4)
-    print("executing cmd", cmd)
-    subprocess.call(cmd.split(), shell=(os.name == 'nt'))
-    shutil.copyfile(os.path.join(workdir, orig_in), tmpfiles[cp_in])
-    
-    # operations
-    combine(iter([tmpfiles[cp_in], tmpfiles[out4], tmpfiles[out1]]), 
-            new_file=tmpfiles[tmp_out])
-    combine(iter([tmpfiles[cp_in], tmpfiles[out4], tmpfiles[out1]]))
-    
-    chkfiles = [tmpfiles[tmp_out], tmpfiles[cp_in]]
-    for f in chkfiles:
-        print("checking {0}".format(f))
-        db = t.open_file(f, 'r')
-        path = '/Family/ResourceExchange/ExchangeInstProperties'
-        assert_equal(db.get_node(path).nrows, ninsts)
-        path = '/Family/ResourceExchange/ExchangeInstSolutions'
-        assert_equal(db.get_node(path).nrows, nsoln1 + nsoln4)
-        path = '/Results'
-        assert_equal(db.get_node(path).nrows, 2) # 2 runs were performed
-        db.close()
+# this can be cleaned up in the future...
+class TestCombine:
 
-    # teardown
-    for _, f in tmpfiles.items():
-        if os.path.exists(f):
-            os.remove(f)
+    def setup(self):
+        base = os.path.dirname(os.path.abspath(__file__))
+        self.workdir = os.path.join(base, 'files')
+        self.orig_in = 'obs_valid_in.h5'
+        self.cp_in = 'cp_instances.h5'
+        self.tmp_out = 'tmp_out.h5'
+        self.out1 = '1arcs.h5'
+        self.nsoln1 = 1
+        self.out4 = '4arcs.h5'
+        self.nsoln4 = 2
+        self.ninsts = 5
+        self.tmpfiles = {self.out1: os.path.join(self.workdir, self.out1), 
+                         self.out4: os.path.join(self.workdir, self.out4), 
+                         self.cp_in: os.path.join(self.workdir, self.cp_in), 
+                         self.tmp_out: os.path.join(self.workdir, self.tmp_out)}
+        
+    def teardown(self):
+        # teardown
+        for _, f in self.tmpfiles.items():
+            if os.path.exists(f):
+                os.remove(f)
+
+
+    def test_combine(self):    
+        cmd = exec_cmd.format(indb=os.path.join(self.workdir, self.orig_in), 
+                              outdb=os.path.join(self.workdir, self.out1), narcs=1)
+        print("executing cmd", cmd)
+        subprocess.call(cmd.split(), shell=(os.name == 'nt'))
+        cmd = exec_cmd.format(indb=os.path.join(self.workdir, self.orig_in), 
+                              outdb=os.path.join(self.workdir, self.out4), narcs=4)
+        print("executing cmd", cmd)
+        subprocess.call(cmd.split(), shell=(os.name == 'nt'))
+        shutil.copyfile(os.path.join(self.workdir, self.orig_in), 
+                        self.tmpfiles[self.cp_in])
+        
+        # operations
+        combine(iter([self.tmpfiles[self.cp_in], self.tmpfiles[self.out4], 
+                      self.tmpfiles[self.out1]]), 
+                new_file=self.tmpfiles[self.tmp_out])
+        combine(iter([self.tmpfiles[self.cp_in], self.tmpfiles[self.out4], 
+                      self.tmpfiles[self.out1]]))
+    
+        chkfiles = [self.tmpfiles[self.tmp_out], self.tmpfiles[self.cp_in]]
+        for f in chkfiles:
+            print("checking {0}".format(f))
+            db = t.open_file(f, 'r')
+            path = '/Family/ResourceExchange/ExchangeInstProperties'
+            assert_equal(db.get_node(path).nrows, self.ninsts)
+            path = '/Family/ResourceExchange/ExchangeInstSolutions'
+            assert_equal(db.get_node(path).nrows, self.nsoln1 + self.nsoln4)
+            path = '/Results'
+            assert_equal(db.get_node(path).nrows, 2) # 2 runs were performed
+            db.close()
 
 def test_get_obj():    
     class Args(object):
@@ -94,15 +99,15 @@ def test_get_obj():
 
     args = Args()
     rc = Args(None, None, None)
-    assert_true(exp_obj, tools.get_obj(kind=kind, rc=rc, args=args))
+    assert_true(exp_obj, tools.get_obj(kind=kind, rcs=rc, args=args))
 
     args = Args(None, None, None)
     rc = Args()
-    assert_true(exp_obj, tools.get_obj(kind=kind, rc=rc, args=args))
+    assert_true(exp_obj, tools.get_obj(kind=kind, rcs=rc, args=args))
 
     args = Args(None, 'cyclopts.exchange_family', None)
     rc = Args()
-    assert_true(exp_obj, tools.get_obj(kind=kind, rc=rc, args=args))
+    assert_true(exp_obj, tools.get_obj(kind=kind, rcs=rc, args=args))
 
 def test_collect_instids():
     base = os.path.dirname(os.path.abspath(__file__))
@@ -146,10 +151,14 @@ def test_sampler_builder():
     b = SamplerBuilder(rc)
 
     exp = {
-        (True, 1): ReactorRequestSampler(n_commods=Param(1, True), n_request=Param(1)),
-        (True, 3): ReactorRequestSampler(n_commods=Param(1, True), n_request=Param(3)),
-        (False, 1): ReactorRequestSampler(n_commods=Param(1, False), n_request=Param(1)),
-        (False, 3): ReactorRequestSampler(n_commods=Param(1, False), n_request=Param(3)),
+        (True, 1): ReactorRequestSampler(n_commods=Param(1, True), 
+                                         n_request=Param(1)),
+        (True, 3): ReactorRequestSampler(n_commods=Param(1, True), 
+                                         n_request=Param(3)),
+        (False, 1): ReactorRequestSampler(n_commods=Param(1, False), 
+                                          n_request=Param(1)),
+        (False, 3): ReactorRequestSampler(n_commods=Param(1, False), 
+                                          n_request=Param(3)),
         }
     obs = [s for s in b.build()]
     
