@@ -74,7 +74,8 @@ def test_combine():
         assert_equal(db.get_node(path).nrows, nsoln1 + nsoln4)
         path = '/Results'
         assert_equal(db.get_node(path).nrows, 2) # 2 runs were performed
-    
+        db.close()
+
     # teardown
     for _, f in tmpfiles.items():
         if os.path.exists(f):
