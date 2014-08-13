@@ -1,0 +1,3 @@
+n_commods = {'avg': range(1, 3)}
+n_supply = {'avg': range(1, 3)}
+n_request = {'avg': range(1, 3)}

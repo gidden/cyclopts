@@ -10,7 +10,7 @@ import uuid
 import nose
 import tables as t
 from functools import reduce
-from nose.tools import assert_equal, assert_true, assert_false
+from nose.tools import assert_equal, assert_true, assert_false, assert_raises
 import subprocess
 import uuid
 
@@ -108,6 +108,17 @@ def test_get_obj():
     args = Args(None, 'cyclopts.exchange_family', None)
     rc = Args()
     assert_true(exp_obj, tools.get_obj(kind=kind, rcs=rc, args=args))
+
+    args = Args(None, None, None)
+    rc1 = Args(None, None, None)
+    rc = Args()
+    assert_true(exp_obj, tools.get_obj(kind=kind, rcs=[rc1, rc], args=args))
+
+    rc = Args(None, None, None)
+    assert_raises(RuntimeError, tools.get_obj, kind=kind, rcs=rc)
+
+    rc = Args(None, 'cyclopts.exchange_family', 'blah')
+    assert_raises(RuntimeError, tools.get_obj, kind=kind, rcs=rc)
 
 def test_collect_instids():
     base = os.path.dirname(os.path.abspath(__file__))

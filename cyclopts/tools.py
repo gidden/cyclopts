@@ -455,8 +455,19 @@ def get_obj(kind=None, rcs=None, args=None):
             if hasattr(source, attr):
                 obj = getattr(source, attr)
 
-    mod = importlib.import_module(mod, package=pack)
-    return getattr(mod, obj)()
+    try:
+        mod = importlib.import_module(mod, package=pack)
+    except AttributeError:
+        raise RuntimeError('Could not find {0} module {1}. Make sure to add '
+                           'a {0}_module entry to a run control file or the '
+                           'CLI.'.format(kind, mod))
+    try: 
+        inst = getattr(mod, obj)() 
+    except AttributeError:
+        raise RuntimeError('Could not find {0} class {1}. Make sure to add '
+                           'a {0}_class entry to a run control file or the '
+                           'CLI.'.format(kind, obj))
+    return inst
 
 def collect_instids(h5file, path, rc=None, instids=None, colname='instid'):
     """Collects all instids as specified. 

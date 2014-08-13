@@ -97,8 +97,11 @@ def convert(args):
     debug = args.debug
     h5file = t.open_file(fout, 'a', filters=tools.FILTERS)
 
+    obj_rcs = [rc, tools.parse_rc(args.cycrc)] \
+        if os.path.exists(args.cycrc) else [rc]
+    
     # conversion objects
-    sp = tools.get_obj(kind='species', rcs=rc, args=args)
+    sp = tools.get_obj(kind='species', rcs=obj_rcs, args=args)
     fam = sp.family
 
     # table set up
@@ -138,12 +141,15 @@ def execute(args):
     solvers = args.solvers
     instids = set(uuid.UUID(x).bytes for x in args.instids)
     verbose = args.verbose
+
+    obj_rcs = [rc, tools.parse_rc(args.cycrc)] \
+        if os.path.exists(args.cycrc) else [rc]        
     
     if not os.path.exists(indb):
         raise IOError('Input database {0} does not exist.'.format(indb))
 
     # execution object
-    fam = tools.get_obj(kind='family', rcs=rc, args=args)
+    fam = tools.get_obj(kind='family', rcs=obj_rcs, args=args)
 
     # get in/out dbs 
     h5in = t.open_file(indb, mode='r', filters=tools.FILTERS)
@@ -247,10 +253,11 @@ def main():
 
     # parser for family info
     cyclopts_parser = argparse.ArgumentParser(add_help=False)
-    cyc_rc = ('A global run control file, defaults to $HOME/.cycloptsrc')
+    cycrc = ('A global run control file, defaults to $HOME/.cyclopts.rc '
+             'useful for declaring global family/species information.')
     cyclopts_parser.add_argument('--cycrc', 
-                                 default=os.path.expanduser('~/.cycloptsrc'),
-                                 help=cyc_rc)
+                                 default=os.path.expanduser('~/.cyclopts.rc'),
+                                 help=cycrc)
     family_parser = argparse.ArgumentParser(add_help=False)    
     fam_mod = ('The module for the problem family')
     family_parser.add_argument('--family_module', default=None, help=fam_mod)
