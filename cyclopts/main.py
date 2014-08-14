@@ -115,7 +115,11 @@ def convert(args):
                                                          fam.table_prefix))
     
     # convert
+    n = 0
     sp.read_space(rc._dict)
+    if verbose:
+        print('{0} possible (not validated) points to be converted.'.format(
+                sp.n_points))
     for point in sp.points():
         param_uuid = uuid.uuid4()
         sp.record_point(point, param_uuid, sp_manager.tables)
@@ -124,6 +128,9 @@ def convert(args):
             inst = sp.gen_instance(point)
             fam.record_inst(inst, inst_uuid, param_uuid, sp.name, 
                             fam_manager.tables)
+            if verbose and n % update_freq == 0:
+                print('{0} instances have been converted'.format(n))
+            n += 1
 
     # clean up
     sp_manager.flush_tables()
