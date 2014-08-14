@@ -1,8 +1,8 @@
-.. _params:
+.. _problems:
 
 =====================================================
-Parameter Module -- :mod:`cyclopts.params`
+Problem Definition Module -- :mod:`cyclopts.problems`
 =====================================================
 
-.. automodule:: cyclopts.params
+.. automodule:: cyclopts.problems
    :members:

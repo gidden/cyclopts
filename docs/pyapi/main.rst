@@ -3,13 +3,24 @@
 Python API
 ===================
 
-This section covers the Python API in Cyclopts.
+This section covers the general Python API in Cyclopts.
 
 .. toctree::
     :maxdepth: 2
    
     params
-    condor
-    analysis
+    problems
+    io
     tools
-      
+    condor
+
+Cyclus-Related Problem API
+================================
+
+This section covers the Cyclus-related Python API in Cyclopts.
+
+.. toctree::
+    :maxdepth: 2
+   
+    exchange_family
+    random_request_species

@@ -1,18 +1,5 @@
-"""Implements a robust interface for translating scaling parameters into a full
-parameter definition of a resource exchange graph in Cyclus.
-
-This module's core objects are the ReactorRequestBuilder and
-ReactorSupplyBuilder, which provide functionality to build instances of resource
-exchanges parameters that can be used to execute exchanges in Cyclus via the
-execute module.
-
-The Builders are provided sampling parameters via Sampler container objects,
-which are populated with Param (or similar) objects. The Builders sample
-required values through their Sampler in order to build the exchange parameter
-instance.
-
-Key modeling assumptions regarding how exchange instances are built are
-separated into individual functions on the Builder's interface.  
+"""This module defines a series of objects that represent entities that can be
+composed into a representation of a parameter space.
 
 :author: Matthew Gidden <matthew.gidden _at_ gmail.com>
 """
@@ -24,33 +11,17 @@ import re
 import collections
 import uuid
 
-try:
-    import cyclopts.exchange_instance as inst
-    import cyclopts.inst_io as iio 
-except ImportError as e:
-    print("Caught import error, "
-          "are you running from the root Cyclopts directory?")
-    raise e
-
-class Incrementer(object):
-    """A simple helper class to increment a value"""
-    def __init__(self, start = 0):
-        """Parameters
-        ----------
-        start : int, optional
-            an initial value
-        """
-        self._val = start - 1
-
-    def next(self):
-        """Returns an incremented value"""
-        self._val += 1
-        return self._val
-
 class Param(object):
-    """A base class for sampled parameters.
+    """A class to sample events.
     """
     def __init__(self, avg, dist = None):
+        """Parameters
+        ----------
+        avg : float
+            average value
+        dist : str
+            string representation of a distribution
+        """
         self.avg = avg
         self.dist = dist
 
@@ -58,6 +29,7 @@ class Param(object):
         pass
 
     def sample(self):
+        """Return a value sampled from the distribution"""
         # if self.dist is None:
         #     return self.avg
         return self.avg

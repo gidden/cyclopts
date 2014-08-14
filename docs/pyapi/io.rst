@@ -1,8 +1,8 @@
-.. _params:
+.. _io:
 
 =====================================================
-Parameter Module -- :mod:`cyclopts.params`
+I/O Module -- :mod:`cyclopts.cyclopts_io`
 =====================================================
 
-.. automodule:: cyclopts.params
+.. automodule:: cyclopts.cyclopts_io
    :members:

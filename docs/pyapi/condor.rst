@@ -1,10 +1,26 @@
 .. _condor:
 
 =====================================================
-Condor Interaction Module -- :mod:`cyclopts.condor`
+Condor Interaction Modules
 =====================================================
 
-This module provides an API to launch jobs to condor and receive related output.
+-----------------------------------------------------
+Utility Module -- :mod:`cyclopts.condor.utils`
+-----------------------------------------------------
 
-.. automodule:: cyclopts.condor
+.. automodule:: cyclopts.condor.utils
+   :members:
+
+-----------------------------------------------------
+Work Queue Module -- :mod:`cyclopts.condor.queue`
+-----------------------------------------------------
+
+.. automodule:: cyclopts.condor.queue
+   :members:
+
+-----------------------------------------------------
+DAG Module -- :mod:`cyclopts.condor.dag`
+-----------------------------------------------------
+
+.. automodule:: cyclopts.condor.dag
    :members:

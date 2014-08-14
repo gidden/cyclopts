@@ -125,7 +125,7 @@ def test_get_files():
         client.connect(host, username=user, key_filename=keyfile)
         stdin, stdout, stderr = utils.exec_remote_cmd(client, cmd, verbose=True)
         print("getting", remotedir)
-        nfiles = utils.get_files(client, remotedir, localdir, prefix + '*')
+        nfiles = utils._get_files(client, remotedir, localdir, prefix + '*')
         client.close()
     except TimeoutError:
         warnings.warn('could not connect via ssh to {0}@{1}'.format(user, host))

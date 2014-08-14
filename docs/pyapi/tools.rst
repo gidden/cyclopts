@@ -1,10 +1,11 @@
 .. _tools:
 
 =====================================================
-Cyclopts Utility Module -- :mod:`cyclopts.tools`
+Cyclopts Tools Module -- :mod:`cyclopts.tools`
 =====================================================
 
-This module provides a variety of utilities that help work with Cyclopts.
+This module provides a variety of utilities that are useful when working with
+Cyclopts.
 
 .. automodule:: cyclopts.tools
    :members:
