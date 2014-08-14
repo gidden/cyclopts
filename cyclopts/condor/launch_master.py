@@ -89,7 +89,7 @@ def ncores(node):
     conds = 'machine=="{0}.chtc.wisc.edu"'.format(node)
     cmd = "condor_status -constraint {conds}".format(conds=conds)
     lines = condor_cmd(cmd)
-    if 'Drained' in lines[2]:
+    if len(lines) > 1 and 'Drained' in lines[2]:
         return 0
     slots = [line for line in lines if line.startswith('slot') and '_' in line.split()[0].split('@')[0]]
     return len(slots)

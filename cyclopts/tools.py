@@ -432,8 +432,8 @@ def get_obj(kind=None, rcs=None, args=None):
     inst : an object instance
     """
     mod, obj, pack = None, None, None
-    
-    rcs = [rcs] if not isinstance(rcs, Iterable) else rcs
+
+    rcs = [rcs] if not isinstance(rcs, list) else rcs
     sources = [args] + rcs # try CLI first, then rcs in order
 
     for source in sources:

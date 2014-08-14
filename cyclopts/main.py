@@ -38,17 +38,19 @@ import cyclopts.params as params
 import cyclopts.cyclopts_io as cycio
 from cyclopts.problems import Solver
 
-_inst_grp_name = 'Instances'
-
 def condor_submit(args):
     # collect instance ids
     h5file = t.open_file(args.db, mode='r', filters=tools.FILTERS)
-    instnode = h5file.root._f_get_child(_inst_grp_name)
     instids = set(uuid.UUID(x).bytes for x in args.instids)
     rc = tools.parse_rc(args.rc) if args.rc is not None else tools.RunControl()
-    instids = collect_instids(h5node=instnode, rc=rc, instids=instids)
+    fam = tools.get_obj(kind='family', rcs=tools.parse_rc(args.cycrc), 
+                        args=args)
+    path = '{0}/{1}'.format(fam.table_prefix, fam.property_table_name)
+    instids = tools.collect_instids(h5file=h5file, path=path, rc=rc, 
+                                    instids=instids)
     h5file.close()
-    instids = [uuid.UUID(bytes=x).hex for x in instids]
+
+    instids = [x.hex for x in instids]
     
     print('Submitting a {kind} job with {n} instances.'.format(
             kind=args.kind, n=len(instids)))
@@ -241,10 +243,15 @@ def update_cde(args):
 def dump(args):
     """Dumps information about instances in a database"""
     h5file = t.open_file(args.db, mode='r', filters=tools.FILTERS)
-    instnode = h5file.root._f_get_child(_inst_grp_name)
-    instids = collect_instids(h5node=instnode)
+
+    fam = tools.get_obj(kind='family', rcs=tools.parse_rc(args.cycrc), 
+                        args=args)
+    path = '{0}/{1}'.format(fam.table_prefix, fam.property_table_name)
+    instids = tools.collect_instids(h5file=h5file, path=path)
+
     for iid in instids:
-        print(uuid.UUID(bytes=iid).hex)
+        print(iid.hex)
+
     h5file.close()
 
 def main():
