@@ -208,7 +208,7 @@ def update_cde(args):
     keyfile = args.keyfile
 
     db = '.tmp.h5'
-    shutil.copy(os.path.join('tests', 'files', 'exp_instances.h5'), db)    
+    shutil.copy(os.path.join('tests', 'files', 'obs_valid_in.h5'), db)    
     cmd = "cde cyclopts exec --db {db} --solvers cbc greedy clp"
     cmd = cmd.format(db=db)
     subprocess.call(cmd.split(), shell=(os.name == 'nt'))
