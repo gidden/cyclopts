@@ -12,7 +12,7 @@ from cyclopts.problems import ProblemSpecies
 import cyclopts.cyclopts_io as cycio
 from cyclopts.exchange_family import ResourceExchange
 from cyclopts.params import Param, BoolParam, CoeffParam, SupConstrParam, \
-    CONSTR_ARGS
+    PARAM_CTOR_ARGS
 from cyclopts.tools import Incrementer
 
 class RandomRequestPoint(object):
@@ -629,7 +629,7 @@ class RandomRequest(ProblemSpecies):
             attr = v
             if hasattr(s, name):
                 vals = []
-                args = CONSTR_ARGS[type(getattr(s, name))]
+                args = PARAM_CTOR_ARGS[type(getattr(s, name))]
                 for arg in args:
                     if arg in attr:
                         vals += [attr[arg]]

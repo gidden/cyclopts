@@ -24,7 +24,7 @@ import importlib
 import itertools
 
 import cyclopts
-from cyclopts.params import CONSTR_ARGS, Param, BoolParam, SupConstrParam, \
+from cyclopts.params import PARAM_CTOR_ARGS, Param, BoolParam, SupConstrParam, \
     CoeffParam
 
 FILTERS = t.Filters(complevel=4)
