@@ -45,7 +45,7 @@ Problem Results
 Implementing a New Problem Family
 ----------------------------------
 
-A problem family class must implement the following functions:
+A problem family class must implement the following basic functions:
 
 * ``record_instance`` 
 * ``read_instance``

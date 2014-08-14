@@ -28,11 +28,11 @@ def test_basics():
         i += 1
     assert_equal(i, 5)
     
-def valid_rr_builder():
+def invalid_rr_builder():
     s = RandomRequestPoint()
     assert_equal(2, s.n_commods.sample())
     assert_equal(1, s.n_supply.sample())
-    b = RandomRequestBuilder(s, p)
+    b = RandomRequestBuilder(s)
     assert_false(b.valid())
 
 def test_def_rxtr_req_sample():

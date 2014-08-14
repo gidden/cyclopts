@@ -24,8 +24,8 @@ import importlib
 import itertools
 
 import cyclopts
-from cyclopts.params import CONSTR_ARGS, Param, BoolParam, SupConstrParam, CoeffParam, \
-    ReactorRequestSampler, ReactorRequestBuilder #, ReactorSupplySampler
+from cyclopts.params import CONSTR_ARGS, Param, BoolParam, SupConstrParam, \
+    CoeffParam
 
 FILTERS = t.Filters(complevel=4)
 
@@ -181,75 +181,8 @@ def exec_file(filename, glb=None, loc=None):
     with io.open(filename, 'r') as f:
         src = f.read()
     exec(compile(src, filename, "exec"), glb, loc)
-        
-class SamplerBuilder(object):
-    """A helper class to build configure instances of parameter samplers
-    """
-    def __init__(self, rc):
-        pdict = self._get_param_dict(rc)
-        self.n_samplers = reduce(operator.mul, 
-                                 (len(l) for _, val in pdict.iteritems() \
-                                      for l in val), 1)
-        self.params_it = self._param_gen(pdict)
-        
-    def build(self):
-        """Builds all permutations of samplers.
-        """
-        ## for supply implementation
-        # samplers = [ReactorRequestSampler() if params_dict['request'] \
-        #                 else ReactorSupplySampler() for range(n_samplers)]
-        s_ctor = ReactorRequestSampler
-        pairings = [[(name, param) for param in params] for name, params in self.params_it]
-        for p in product(*pairings):
-            s = s_ctor()
-            for name, param in p:
-                setattr(s, name, param)
-            if s.valid():
-                yield s
-        
-    def _get_param_dict(self, rc):
-        """Provides a dictionary of parameter names to all constructor arguments
-        for a resource exchange range of instances.
-        
-        Parameters
-        ----------
-        rc : RunControl
-            A RunControl object defined by the user's parsed rc file.
-        
-        Returns
-        -------
-        params_dict : dict
-            A dictionary whose keys are parameter names and values are lists of
-            ranges of constructor arguments.
-        """
-        params_dict = {}
-        s = ReactorRequestSampler() # only works for reactor requests for now
-        for k, v in rc._dict.items():
-            name = k
-            attr = v
-            if hasattr(s, name):
-                vals = []
-                args = CONSTR_ARGS[type(getattr(s, name))]
-                for arg in args:
-                    if arg in attr:
-                        vals += [attr[arg]]
-                if len(vals) > 0:
-                    params_dict[name] = vals
-            else:
-                print("Found an entry named {0} that "
-                      "is unknown to the parser.".format(k))
-                
-        return params_dict
 
-    def _param_gen(self, params_dict):
-        """Returns input for _add_subtree() given input for build()"""
-        params_dict = {k: [i for i in product(*v)] \
-                           for k, v in params_dict.items()}
-        s = ReactorRequestSampler()
-        for k, v in params_dict.items():
-            yield k, [type(getattr(s, k))(*args) for args in v]
-
-def merge_leaf(node, dest_file):
+def _merge_leaf(node, dest_file):
     src = node
     dest = dest_file.get_node(node._v_pathname)
     if isinstance(node, t.Table):
@@ -264,7 +197,7 @@ def merge_leaf(node, dest_file):
             dest_row.append()
         dest.flush()
         
-def merge_node(node, dest_file):
+def _merge_node(node, dest_file):
     if not dest_file.__contains__(node._v_pathname):
         node._v_file.copy_node(
             node._v_pathname, 
@@ -274,11 +207,11 @@ def merge_node(node, dest_file):
         return 
 
     if isinstance(node, t.Leaf):
-        merge_leaf(node, dest_file)
+        _merge_leaf(node, dest_file)
     else:
         for child in node._v_children:
-            merge_node(node._v_file.get_node(node._v_pathname + '/' + child), 
-                       dest_file)
+            _merge_node(node._v_file.get_node(node._v_pathname + '/' + child), 
+                        dest_file)
             
 def combine(files, new_file=None, clean=False):
     """Combines two or more databases with identical layout, writing their
@@ -309,7 +242,7 @@ def combine(files, new_file=None, clean=False):
     aggdb = t.open_file(fname, 'a')
     for f in files:
         db = t.open_file(f, 'r')
-        merge_node(db.root, aggdb)
+        _merge_node(db.root, aggdb)
         aggdb.flush()
         db.close()
         if clean:

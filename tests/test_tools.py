@@ -1,7 +1,5 @@
-from cyclopts.tools import Incrementer, combine, RunControl, SamplerBuilder
-
-from cyclopts.params import Param, BoolParam, \
-    ReactorRequestSampler, ReactorRequestBuilder
+from cyclopts.tools import Incrementer, combine, RunControl
+from cyclopts.params import Param, BoolParam
 
 import operator
 import shutil
@@ -154,25 +152,3 @@ def test_collect_instids():
     assert_equal(set(exp_uuids), obs_uuids)
     
     h5file.close()    
-
-def test_sampler_builder():
-    rc = RunControl(
-        n_commods={'avg':[1], 'dist':[True, False]},
-        n_request={'avg':[1, 3]},)
-    b = SamplerBuilder(rc)
-
-    exp = {
-        (True, 1): ReactorRequestSampler(n_commods=Param(1, True), 
-                                         n_request=Param(1)),
-        (True, 3): ReactorRequestSampler(n_commods=Param(1, True), 
-                                         n_request=Param(3)),
-        (False, 1): ReactorRequestSampler(n_commods=Param(1, False), 
-                                          n_request=Param(1)),
-        (False, 3): ReactorRequestSampler(n_commods=Param(1, False), 
-                                          n_request=Param(3)),
-        }
-    obs = [s for s in b.build()]
-    
-    assert_equal(len(exp), len(obs))
-    for s in obs:
-        assert_equal(exp[(s.n_commods.dist, s.n_request.avg)], s)
