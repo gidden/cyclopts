@@ -32,8 +32,9 @@ class Table(object):
         self.dt = dt
         # l1 cache size / row size / 2
         # factor of 2 is ideal for reading/writing speed (per @scopatz's advice)
-        self.chunksize = chunksize if chunksize is not None \
-            else math.floor(32 * 1024 / float(dt.itemsize)) / 2
+        chunksize = chunksize if chunksize is not None \
+            else math.floor(32 * 1024 / float(dt.itemsize) / 2)
+        self.chunksize = int(chunksize)
         self.prefix = '/'.join(self.path.split('/')[:-1])
         if not self.prefix.startswith('/'):
             self.prefix = '/{0}'.format(self.prefix)
