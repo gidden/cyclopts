@@ -215,7 +215,9 @@ def update_cde(args):
     keyfile = args.keyfile
 
     db = '.tmp.h5'
-    shutil.copy(os.path.join('tests', 'files', 'obs_valid_in.h5'), db)    
+    
+    shutil.copy(os.path.join(args.prefix, 'tests', 'files', 'obs_valid_in.h5'), 
+                db)    
     cmd = "cde cyclopts exec --db {db} --solvers cbc greedy clp"
     cmd = cmd.format(db=db)
     subprocess.call(cmd.split(), shell=(os.name == 'nt'))
@@ -269,9 +271,10 @@ def main():
     cyclopts_parser = argparse.ArgumentParser(add_help=False)
     cycrc = ('A global run control file, defaults to $HOME/.cyclopts.rc '
              'useful for declaring global family/species information.')
-    cyclopts_parser.add_argument('--cycrc', 
-                                 default=os.path.expanduser('~/.cyclopts.rc'),
-                                 help=cycrc)
+    cyclopts_parser.add_argument(
+        '--cycrc', 
+        default=os.path.expanduser(os.path.join('~', '.cyclopts.rc')),
+        help=cycrc)
     family_parser = argparse.ArgumentParser(add_help=False)    
     fam_mod = ('The module for the problem family')
     family_parser.add_argument('--family_module', default=None, help=fam_mod)
@@ -454,6 +457,13 @@ def main():
 
     # cde related
     uh = ("The cde user name.")
+    source_path = ("The path to cyclopts source.")
+    cde_parser.add_argument(
+        '--source-path', 
+        dest='prefix', 
+        help=source_path, 
+        default=os.path.expanduser(os.path.join('~', 'phd', 'cyclopts', 
+                                                'cyclopts')))  
     cde_parser.add_argument('-u', '--user', dest='user', help=uh, 
                             default='gidden')
     hosth = ("The remote cde submit host.")
