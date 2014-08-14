@@ -91,7 +91,7 @@ def Run(groups, nodes, arcs, solver, verbose=False):
 
 
 cdef class ExNode:
-    """no docstring for {'tarbase': 'exchange_instance', 'tarname': 'ExNode', 'language': 'c++', 'srcname': 'ExNode', 'sidecars': (), 'incfiles': ('exchange_instance.h',), 'srcfiles': ('cpp/exchange_instance.cc', 'cpp/exchange_instance.h')}, please file a bug report!"""
+    """no docstring for {'sidecars': (), 'tarbase': 'exchange_instance', 'tarname': 'ExNode', 'language': 'c++', 'srcname': 'ExNode', 'incfiles': ('exchange_instance.h',), 'srcfiles': ('cpp/exchange_instance.cc', 'cpp/exchange_instance.h')}, please file a bug report!"""
 
 
 
@@ -229,7 +229,7 @@ cdef class ExNode:
 
 
 cdef class ExSolution(_cproblem.ProbSolution):
-    """no docstring for {'tarbase': 'exchange_instance', 'tarname': 'ExSolution', 'language': 'c++', 'srcname': 'ExSolution', 'sidecars': (), 'incfiles': ('exchange_instance.h',), 'srcfiles': ('cpp/exchange_instance.cc', 'cpp/exchange_instance.h')}, please file a bug report!"""
+    """no docstring for {'sidecars': (), 'tarbase': 'exchange_instance', 'tarname': 'ExSolution', 'language': 'c++', 'srcname': 'ExSolution', 'incfiles': ('exchange_instance.h',), 'srcfiles': ('cpp/exchange_instance.cc', 'cpp/exchange_instance.h')}, please file a bug report!"""
 
 
 
@@ -300,7 +300,7 @@ cdef class ExSolution(_cproblem.ProbSolution):
 
 
 cdef class ExGroup:
-    """no docstring for {'tarbase': 'exchange_instance', 'tarname': 'ExGroup', 'language': 'c++', 'srcname': 'ExGroup', 'sidecars': (), 'incfiles': ('exchange_instance.h',), 'srcfiles': ('cpp/exchange_instance.cc', 'cpp/exchange_instance.h')}, please file a bug report!"""
+    """no docstring for {'sidecars': (), 'tarbase': 'exchange_instance', 'tarname': 'ExGroup', 'language': 'c++', 'srcname': 'ExGroup', 'incfiles': ('exchange_instance.h',), 'srcfiles': ('cpp/exchange_instance.cc', 'cpp/exchange_instance.h')}, please file a bug report!"""
 
 
 
@@ -457,7 +457,7 @@ cdef class ExGroup:
 
 
 cdef class ExArc:
-    """no docstring for {'tarbase': 'exchange_instance', 'tarname': 'ExArc', 'language': 'c++', 'srcname': 'ExArc', 'sidecars': (), 'incfiles': ('exchange_instance.h',), 'srcfiles': ('cpp/exchange_instance.cc', 'cpp/exchange_instance.h')}, please file a bug report!"""
+    """no docstring for {'sidecars': (), 'tarbase': 'exchange_instance', 'tarname': 'ExArc', 'language': 'c++', 'srcname': 'ExArc', 'incfiles': ('exchange_instance.h',), 'srcfiles': ('cpp/exchange_instance.cc', 'cpp/exchange_instance.h')}, please file a bug report!"""
 
 
 

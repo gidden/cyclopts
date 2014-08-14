@@ -1,11 +1,22 @@
 from xdress.utils import apiname
 from xdress.clang.cindex import Config
+from xdress.doxygen import default_doxygen_config
 
 import os
 
 package = 'cyclopts'     # top-level python package name
 packagedir = 'cyclopts'  # location of the python package
 testdir = '.'            # location of root dir for tests, i.e., root/tests
+
+# # uncomment these to get doxygen support
+# plugins = ('xdress.autoall', 'xdress.autodescribe',
+#             'xdress.doxygen', 'xdress.cythongen')
+
+# doxygen_config = {'PROJECT_NAME': 'CYCLOPTS',
+#                   'EXTRACT_ALL': False,  # Note usage of python False
+#                   'GENERATE_DOCBOOK': False,
+#                   'GENERATE_LATEX': True  # Could be 'YES' or True
+#                   }
 
 extra_types = 'xdress_extra_types'
 

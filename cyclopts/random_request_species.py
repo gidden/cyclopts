@@ -1,3 +1,9 @@
+"""This module defines a ProblemSpecies subclass and related classes for
+reactor-request-based resources exchanges that are randomly populated (i.e., not
+related to a specific fuel cycle).
+
+:author: Matthew Gidden <matthew.gidden _at_ gmail.com>
+"""
 import operator
 import re
 import collections

@@ -1,3 +1,7 @@
+"""This module defines methods to lauch DAGman Cyclopts jobs.
+
+:author: Matthew Gidden <matthew.gidden _at_ gmail.com>
+"""
 from __future__ import print_function
 
 import os

@@ -13,6 +13,7 @@ This section covers the general Python API in Cyclopts.
     io
     tools
     condor
+    analysis
 
 Cyclus-Related Problem API
 ================================

@@ -1,6 +1,6 @@
-"""This module provides base classes for Problem Families, Species, and Instances.
+"""This module provides base classes for Problem Families, Species, and Solvers.
 
-:author: Matthew Gidden
+:author: Matthew Gidden <matthew.gidden _at_ gmail.com>
 """
 
 from cyclopts._cproblem import *

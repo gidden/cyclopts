@@ -1,3 +1,7 @@
+"""This module defines a ProblemFamily subclass for Cyclus Resource Exchanges.
+
+:author: Matthew Gidden <matthew.gidden _at_ gmail.com>
+"""
 import numpy as np
 from collections import Iterable
 

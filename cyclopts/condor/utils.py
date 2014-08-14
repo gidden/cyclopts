@@ -1,3 +1,8 @@
+"""This module defines methods that assist in interacting with condor on a
+remote machine.
+
+:author: Matthew Gidden <matthew.gidden _at_ gmail.com>
+"""
 from __future__ import print_function
 
 import warnings

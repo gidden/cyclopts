@@ -1,6 +1,6 @@
 """This module provides I/O classes and routines for Cyclopts-related functionality.
 
-:author: Matthew Gidden
+:author: Matthew Gidden <matthew.gidden _at_ gmail.com>
 """
 import numpy as np
 import tables as t
