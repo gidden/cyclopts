@@ -379,7 +379,7 @@ def main():
         default='run_{0}'.format(timestamp))      
     kind = ("The kind of condor submission to use.")
     submit_parser.add_argument('-k', '--kind', choices=['dag', 'queue'], 
-                               default='dag', help=kind)
+                               default='queue', help=kind)
     port = ("The port to use for a condor queue submission.")
     submit_parser.add_argument('-p', '--port', default='5422', help=port)
     nodes = ("The execute nodes to target.")
