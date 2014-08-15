@@ -96,6 +96,17 @@ def test_gen_q_tar():
     os.remove(tarname)
     
 @timeout()
+def exec_timeout(client, host, user, keyfile, cmd):
+    client.connect(host, username=user, key_filename=keyfile)
+    stdin, stdout, stderr = utils.exec_remote_cmd(client, cmd, verbose=True)
+    client.close()
+
+@timeout()
+def get_files_timeout(client, host, user, keyfile, remotedir, localdir, re):
+    client.connect(host, username=user, key_filename=keyfile)
+    nfiles = utils._get_files(client, remotedir, localdir, re)
+    client.close()
+    
 def test_get_files():
     user = 'gidden'
     host = 'submit-3.chtc.wisc.edu'
@@ -120,22 +131,23 @@ def test_get_files():
     tstfiles = [prefix + 'test_file', prefix + 'other_file']
     touchline = " ".join("/".join([remotedir, f]) for f in tstfiles)
     cmd = "mkdir -p {0} && touch {1}".format(remotedir, touchline)
-    
+   
     try:
-        client.connect(host, username=user, key_filename=keyfile)
-        stdin, stdout, stderr = utils.exec_remote_cmd(client, cmd, verbose=True)
-        print("getting", remotedir)
-        nfiles = utils._get_files(client, remotedir, localdir, prefix + '*')
-        client.close()
+        exec_timeout(client, host, user, keyfile, cmd)
     except TimeoutError:
-        warnings.warn('could not connect via ssh to {0}@{1}'.format(user, host))
-        return
-    
-    assert_equal(set(os.listdir(localdir)), set(tstfiles))
-    
-    client.connect(host, username=user, key_filename=keyfile)
+        warnings.warn('connection via ssh to {0}@{1} timed out'.format(user, host))
+            
+    try:
+        get_files_timeout(client, host, user, keyfile, remotedir, 
+                          localdir, prefix + '*')
+        assert_equal(set(os.listdir(localdir)), set(tstfiles))
+    except TimeoutError:
+        warnings.warn('connection via ssh to {0}@{1} timed out'.format(user, host))
+        
     cmd = "rm -rf {0}".format(remotedir)
-    stdin, stdout, stderr = utils.exec_remote_cmd(client, cmd, verbose=True)
-    client.close()
+    try:
+        exec_timeout(client, host, user, keyfile, cmd)
+    except TimeoutError:
+        warnings.warn('connection via ssh to {0}@{1} timed out'.format(user, host))
         
     shutil.rmtree(localdir)
