@@ -757,7 +757,7 @@ class RandomRequest(ProblemSpecies):
         tables[self.tbl_name].append_data(
             [point.export_h5(param_uuid, self.family.name)])
         
-    def gen_instance(self, point):
+    def gen_inst(self, point):
         """Derived classes must implement this function, returning a
         representation of a problem instance.
         

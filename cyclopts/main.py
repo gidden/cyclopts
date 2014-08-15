@@ -124,7 +124,7 @@ def convert(args):
         sp.record_point(point, param_uuid, sp_manager.tables)
         for i in range(ninst):
             inst_uuid = uuid.uuid4()
-            inst = sp.gen_instance(point)
+            inst = sp.gen_inst(point)
             fam.record_inst(inst, inst_uuid, param_uuid, sp.name, 
                             fam_manager.tables)
             if verbose and n % update_freq == 0:

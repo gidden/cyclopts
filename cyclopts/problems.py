@@ -238,7 +238,7 @@ class ProblemSpecies(object):
         """
         raise NotImplementedError
 
-    def gen_instance(self, point):
+    def gen_inst(self, point):
         """Derived classes must implement this function, returning a
         representation of a problem instance.
         
