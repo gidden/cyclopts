@@ -6,6 +6,10 @@
 Cyclopts Theory
 ***************
 
+================================
+Resource Exchange Problem Family
+================================
+
 Cyclus is a nuclear fuel cycle simulator, and the primary consumer of fuel in
 such cycles are nuclear reactors. Used fuel eventually leaves reactors and can
 be stored or processed.
@@ -39,7 +43,10 @@ facility, and fuel fabrication facility each with a high affinity for trade with
 the other. The first example can be avoided by the bidding facility delineating
 between mox fuel for reactors and byproducts for storage.
 
-Resource Exchange Generation Parameters
+.. include:: parameter_formulation_effects.rst
+    
+========================================
+Resource Exchange Species
 ========================================
 
 In order to generate random cases of resource exchanges, a parameter space must
@@ -50,9 +57,6 @@ depends on the exchange being generated:
 .. toctree::
     :maxdepth: 1
    
-    reactor_request
-    reactor_supply
-    full_xchange    
-
-.. include:: parameter_formulation_effects.rst
-    
+    random_reactor_request
+    random_reactor_supply
+    random_full_xchange    

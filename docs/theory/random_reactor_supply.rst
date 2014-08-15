@@ -1,7 +1,7 @@
 :tocdepth: 2
 
-Reactor Supply-Based Exchange
-==============================
+Random Reactor Supply-Based Exchange
+======================================
 
 This section describes the resource exchange generation for the case where
 reactors are supplying used fuel to supporting facilities. The primary goal is

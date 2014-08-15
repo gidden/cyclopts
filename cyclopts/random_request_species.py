@@ -675,10 +675,7 @@ class RandomRequest(ProblemSpecies):
         return 'RandomRequest'
 
     def register_tables(self, h5file, prefix):
-        """Derived classes must implement this function and return their list of
-        tables
-        
-        Parameters
+        """Parameters
         ----------
         h5file : PyTables File
             the hdf5 file
@@ -695,9 +692,7 @@ class RandomRequest(ProblemSpecies):
                             RandomRequestPoint().dtype())]
 
     def read_space(self, space_dict):
-        """Derived classes must implement this function.
-
-        Parameters
+        """Parameters
         ----------
         space_dict : dict
             A dictionary container resulting from the reading in of a run 
@@ -711,10 +706,7 @@ class RandomRequest(ProblemSpecies):
         
     @property
     def n_points(self):
-        """Derived classes must implement this function returning the number of
-        points in its parameter space.
-        
-        Returns
+        """Returns
         -------
         n : int
             The total number of points in the parameter space
@@ -722,13 +714,9 @@ class RandomRequest(ProblemSpecies):
         return self._n_points
     
     def points(self):
-        """Derived classes must implement this function returning a
-        representation of a point in its parameter space to be used by other
-        class member functions.
-        
-        Returns
+        """Returns
         -------
-        point : tuple or other
+        point : RandomRequestPoint
             A representation of a point in parameter space to be used by this 
             species
         """
@@ -742,12 +730,9 @@ class RandomRequest(ProblemSpecies):
                 yield point
 
     def record_point(self, point, param_uuid, tables):
-        """Derived classes must implement this function, recording information
-        about a parameter point in the appropriate tables.
-        
-        Parameters
+        """Parameters
         ----------
-        point : tuple or other
+        point : RandomRequestPoint
             A representation of a point in parameter space
         param_uuid : uuid
             The uuid of the point in parameter space
@@ -758,17 +743,14 @@ class RandomRequest(ProblemSpecies):
             [point.export_h5(param_uuid, self.family.name)])
         
     def gen_inst(self, point):
-        """Derived classes must implement this function, returning a
-        representation of a problem instance.
-        
-        Parameters
+        """Parameters
         ----------
-        point : tuple or other
+        point :  RandomRequestPoint
             A representation of a point in parameter space
            
         Returns
         -------
-        inst : tuple or other
+        inst : tuple of lists of ExGroups, ExNodes, and ExArgs
             A representation of a problem instance to be used by this species' 
             family
         """

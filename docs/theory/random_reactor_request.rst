@@ -1,7 +1,7 @@
 :tocdepth: 2
 
-Reactor Request-Based Exchange
-==============================
+Random Reactor Request-Based Exchange
+======================================
 
 This section describes the resource exchange generation for the case where
 reactors are ordering fuel from suppliers. The primary goal is to discern what

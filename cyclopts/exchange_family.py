@@ -125,10 +125,7 @@ class ResourceExchange(ProblemFamily):
         return _tbl_names['properties']
 
     def register_tables(self, h5file, prefix):
-        """Derived classes must implement this function and return their list of
-        tables
-        
-        Parameters
+        """Parameters
         ----------
         h5file : PyTables File
             the hdf5 file
@@ -147,7 +144,7 @@ class ResourceExchange(ProblemFamily):
     def record_inst(self, inst, inst_uuid, param_uuid, species, tables):
         """Parameters
         ----------
-        inst : tuple or other
+        inst : tuple of lists of ExGroups, ExNodes, and ExArgs
             A representation of a problem instance
         inst_uuid : uuid
             The uuid of the instance
@@ -173,15 +170,13 @@ class ResourceExchange(ProblemFamily):
         tables[_tbl_names['properties']].append_data(data)
 
     def record_soln(self, soln, soln_uuid, inst, inst_uuid, tables):
-        """Derived classes must implement this function to return a list of
-        
-        Parameters
+        """Parameters
         ----------
-        soln : ProbSolution or similar
+        soln : ExSolution
             A representation of a problem solution
         soln_uuid : uuid
             The uuid of the solution
-        inst : tuple or other
+        inst : tuple of lists of ExGroups, ExNodes, and ExArgs
             A representation of a problem instance
         inst_uuid : uuid
             The uuid of the instance
@@ -198,10 +193,7 @@ class ResourceExchange(ProblemFamily):
                           soln.cyclus_version)])
             
     def read_inst(self, uuid, tables):
-        """Derived classes must implement this function to return a tuple
-        instance structures that can be provided to the run_inst function.
-          
-        Parameters
+        """Parameters
         ----------
         uuid : uuid
             The uuid of the instance to read
@@ -210,7 +202,7 @@ class ResourceExchange(ProblemFamily):
 
         Returns
         -------
-        inst : tuple or other
+        inst : tuple of lists of ExGroups, ExNodes, and ExArgs
             A representation of a problem instance
         """
         xdattrs = lambda obj: [x for x in obj.__class__.__dict__.keys() \
@@ -237,13 +229,9 @@ class ResourceExchange(ProblemFamily):
         return objs['ExGroup'], objs['ExNode'], objs['ExArc']
             
     def run_inst(self, inst, solver, verbose=False):
-        """Derived classes must implement this function to take a tuple instance
-        structures provided by the exec_inst function and return a ProblemResult
-        or similar object.
-        
-        Parameters
+        """Parameters
         ----------
-        inst : tuple or other
+        inst : tuple of lists of ExGroups, ExNodes, and ExArgs
             A representation of a problem instance
         solver : ProbSolver or similar
             A representation of a problem solver
@@ -252,7 +240,7 @@ class ResourceExchange(ProblemFamily):
 
         Returns
         -------
-        soln : ProbSolution or similar
+        soln : ExSolution
             A representation of a problem solution
         """
         groups, nodes, arcs = inst

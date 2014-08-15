@@ -3,6 +3,9 @@
 Python API
 ===================
 
+Cyclopts Kernel API
+--------------------
+
 This section covers the general Python API in Cyclopts.
 
 .. toctree::
@@ -13,10 +16,9 @@ This section covers the general Python API in Cyclopts.
     io
     tools
     condor
-    analysis
 
 Cyclus-Related Problem API
-================================
+---------------------------
 
 This section covers the Cyclus-related Python API in Cyclopts.
 

@@ -181,7 +181,8 @@ def parse_rc(files):
     return rc
 
 def exec_file(filename, glb=None, loc=None):
-    """A function equivalent to the Python 2.x execfile statement."""
+    """A function equivalent to the Python 2.x execfile statement. Taken from
+    xdress/utils.py"""
     with io.open(filename, 'r') as f:
         src = f.read()
     exec(compile(src, filename, "exec"), glb, loc)

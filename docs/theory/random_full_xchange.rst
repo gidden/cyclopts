@@ -1,7 +1,7 @@
 :tocdepth: 2
 
-A Full (Combined) Exchange
-===========================
+A Full (Combined) Random Exchange
+==================================
 
 The full exchange incorporates both the reactor requset parameters and the
 reactor supply parameters and adds a notion of repositories. In general, a

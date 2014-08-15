@@ -69,3 +69,32 @@ A problem species class must implement the following functions:
 * ``family``
 * ``name``
 
+Workflow
+--------
+
+After implementing a custom problem family and species, the Cyclopts workflow is
+as follows.
+
+* Write a parameter space run control file
+
+* ``cyclopts convert`` the space into instances
+
+* either 
+
+  * ``cyclopts exec`` the instances locally or 
+
+  * ``cyclopts condor-submit`` them, wait for their completion, and 
+    ``cyclopts condor-collect`` the results
+
+* ``cyclopts combine`` the input and output databases
+
+* analyze the results
+
+Tips
+----
+
+Having to declare the family/species module and class names on the command line
+or in every run control file can be rather annoying. You can set global run
+control parameters by adding a ``~/.cyclopts.rc`` file to your system. If no
+other class or module entries are found in either the CLI or declared run
+control file, this location is searched.
