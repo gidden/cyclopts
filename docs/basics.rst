@@ -45,20 +45,27 @@ Problem Results
 Implementing a New Problem Family
 ----------------------------------
 
-A problem family class must implement the following basic functions:
+A problem family class must implement the following methods:
 
-* ``record_instance`` 
-* ``read_instance``
-* ``exec_instance``
-* ``record_solution``
+* ``register_tables``
+* ``record_inst`` 
+* ``read_inst``
+* ``run_inst``
+* ``record_soln``
+* ``name``
+* ``property_table_name``
 
 Implementing a New Problem Species
 ----------------------------------
 
 A problem species class must implement the following functions:
 
+* ``register_tables``
 * ``read_space``
 * ``record_point``
-* ``gen_instance``
-
+* ``points``
+* ``n_points``
+* ``gen_inst``
+* ``family``
+* ``name``
 

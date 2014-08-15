@@ -46,6 +46,7 @@ Contents
     install
     basics
     cli
+    submit_node
     pyapi/main
     theory/main
    
