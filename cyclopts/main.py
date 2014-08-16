@@ -53,8 +53,9 @@ def condor_submit(args):
     _, module, cname = tools.obj_info(kind='family', rcs=cycrc, args=args)
 
 
-    print('Submitting a {kind} job with {n} instances.'.format(
-            kind=args.kind, n=len(instids)))
+    print('Submitting a {kind} job with {n} instances of the '
+          'ProblemFamily {cname}.'.format(
+            kind=args.kind, n=len(instids), cname=cname))
     # submit job
     if args.kind == 'dag':
         cdag.submit(args.user, args.db, instids, module, cname, args.solvers,
