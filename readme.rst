@@ -31,6 +31,7 @@ Cyclopts has the following dependencies:
    #. `CMake <http://www.cmake.org/>`_ (>= 2.8.5)
    #. `HDF5 <http://www.hdfgroup.org/HDF5/>`_
    #. `Cyclus <https://github.com/cyclus/cyclus>`_ (1.0)
+   #. `CDE <http://www.pgbovine.net/cde.html>`_
    #. `Python 2.7 <http://www.python.org/>`_
    #. `NumPy <http://www.numpy.org/>`_ (>= 1.8.0)
    #. `SciPy <http://www.scipy.org/>`_
