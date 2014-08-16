@@ -65,7 +65,7 @@ ls -l
 submit_cmd = """
 mkdir -p {remotedir} && cd {remotedir} &&
 tar -xf {tarfile} && rm {tarfile} && cd {cddir} && 
-condor_submit -maxidle 1000 {submit};
+condor_submit_dag -maxidle 1000 {submit};
 """
 
 def _gen_files(prepdir, dbname, instids, module, cname, solvers, 
@@ -141,7 +141,8 @@ def _submit(client, remotedir, tarname, subfile="dag.sub",
     cmd = submit_cmd.format(tarfile=tarname, cddir=cddir, 
                             submit=subfile, remotedir=remotedir)
     stdin, stdout, stderr = exec_remote_cmd(client, cmd, verbose=verbose)
-
+    
+    checkfile = '/'.join([remotedir, cddir, subfile + '.dagman.out'])
     cmd = "head {0}".format(checkfile)
     stdin, stdout, stderr = exec_remote_cmd(client, cmd, verbose=verbose)
     pid = stdout.readlines()[1].split('condor_scheduniv_exec.')[1].split()[0]
