@@ -53,7 +53,9 @@ mv exp_instances.h5 cde-package/cde-root
 cd cde-package/cde-root
 sed -i 's/..\/cde-exec/cde-exec/g' ../cyclopts.cde
 ls -l
-../cyclopts.cde exec --db {db} --solvers {solvers} --outdb $1 --instids $2
+../cyclopts.cde exec --db {db} --solvers {solvers} \
+--solvers {solvers} --family_module {module} --family_class {cname} \
+--outdb $1 --instids $2
 mv $1 $pwd
 
 cd $pwd
@@ -66,8 +68,8 @@ tar -xf {tarfile} && rm {tarfile} && cd {cddir} &&
 condor_submit -maxidle 1000 {submit};
 """
 
-def _gen_files(prepdir, dbname, instids, solvers, remotehome, subfile="dag.sub", 
-                   max_time=None, verbose=False):
+def _gen_files(prepdir, dbname, instids, module, cname, solvers, 
+               remotehome, subfile="dag.sub", max_time=None, verbose=False):
     """Generates all files needed to run a DAGMan instance of the given input
     database.
     """    
@@ -98,7 +100,8 @@ def _gen_files(prepdir, dbname, instids, solvers, remotehome, subfile="dag.sub",
     runfile = os.path.join(prepdir, "run.sh")
     nfiles += 1 
     with io.open(runfile, 'w') as f:
-        f.write(run_template.format(db=dbname, solvers=" ".join(solvers)))
+        f.write(run_template.format(db=dbname, module=module, cname=cname,
+                                    solvers=" ".join(solvers)))
     
     return nfiles
 
@@ -144,18 +147,19 @@ def _submit(client, remotedir, tarname, subfile="dag.sub",
     pid = stdout.readlines()[1].split('condor_scheduniv_exec.')[1].split()[0]
     return pid
 
-def gen_tar(rundir, db, instids, solvers, user="gidden", verbose=False):
+def gen_tar(rundir, db, instids, module, cname, solvers, 
+            user="gidden", verbose=False):
     prepdir = '.tmp_{0}'.format(rundir)
     if not os.path.exists(prepdir):
         os.makedirs(prepdir)
     else:
         raise IOError("File preparation directory {0} already exists".format(
                 prepdir))
-    print(prepdir)
+    
     max_time = 60 * 60 * 5 # 5 hours
     remotehome = batlab_base_dir_template.format(user=user)
-    nfiles = _gen_files(prepdir, os.path.basename(db), instids, solvers, 
-                            remotehome, max_time=max_time, verbose=verbose)
+    nfiles = _gen_files(prepdir, os.path.basename(db), instids, module, cname, 
+                        solvers, remotehome, max_time=max_time, verbose=verbose)
     
     subfiles = glob.iglob(os.path.join(prepdir, '*.sub'))
     shfiles = glob.iglob(os.path.join(prepdir, '*.sh'))
@@ -175,8 +179,8 @@ def gen_tar(rundir, db, instids, solvers, user="gidden", verbose=False):
     shutil.rmtree(prepdir)
     return tarname
 
-def submit(user, db, instids, solvers, remotedir, 
-               host="submit-3.chtc.wisc.edu", keyfile=None, verbose=False):
+def submit(user, db, instids, module, cname, solvers, remotedir, 
+           host="submit-3.chtc.wisc.edu", keyfile=None, verbose=False):
     """Connects via SSH to a condor submit node, and executes a Cyclopts DAG
     run.
     
@@ -188,6 +192,10 @@ def submit(user, db, instids, solvers, remotedir,
         the problem instance database
     instids : set
         the set of instances to run
+    module : str
+        the ProblemFamily module
+    cname : str
+        the ProblemFamily cname
     solvers : list
         the solvers to use
     remotedir : str
@@ -204,7 +212,7 @@ def submit(user, db, instids, solvers, remotedir,
     client.set_missing_host_key_policy(pm.AutoAddPolicy())
     _, keyfile, pw = tools.ssh_test_connect(client, host, user, keyfile, auth=True)
 
-    localtar = gen_tar(remotedir, db, instids, solvers, user, 
+    localtar = gen_tar(remotedir, db, instids, module, cname, solvers, user, 
                        verbose=verbose)
 
     if verbose:

@@ -52,7 +52,7 @@ def test_gen_dag_tar():
     instids = [x[0] for x in exp_uuid_arcs()[:2]] # 2 ids
     solvers = ['s1', 's2']
     
-    dag.gen_tar(prefix, db, instids, solvers)   
+    dag.gen_tar(prefix, db, instids, 'foo', 'bar', solvers)   
     
     if os.path.exists(prefix):
         shutil.rmtree(prefix)    
@@ -77,7 +77,7 @@ def test_gen_q_tar():
     instids = [x[0] for x in exp_uuid_arcs()[:2]] # 2 ids
     solvers = ['s1', 's2']
     
-    queue.gen_tar(prefix, db, 'foo', 'bar', instids, solvers)   
+    queue.gen_tar(prefix, db, instids, 'foo', 'bar', solvers)   
     
     if os.path.exists(prefix):
         shutil.rmtree(prefix)    

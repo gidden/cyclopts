@@ -57,7 +57,7 @@ def condor_submit(args):
             kind=args.kind, n=len(instids)))
     # submit job
     if args.kind == 'dag':
-        cdag.submit(args.user, args.db, instids, args.solvers,
+        cdag.submit(args.user, args.db, instids, module, cname, args.solvers,
                     host=args.host, remotedir=args.remotedir, 
                     keyfile=args.keyfile, verbose=args.verbose)
     elif args.kind == 'queue':
