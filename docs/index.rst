@@ -1,7 +1,7 @@
 
-####################################################
-Cyclopts: Optimization Analysis Framework for Cyclus
-####################################################
+#######################################################
+Cyclopts: HTCondor-Aware Stochastic Analysis Framework
+#######################################################
 
 Cyclopts is an `HTCondor-aware <http://research.cs.wisc.edu/htcondor/>`_
 platform designed to enable large-scale parameter space exploration of
@@ -13,7 +13,7 @@ wrappings are automatically generated via `XDress <http://xdress.org/>`_.
 .. warning::
 
   Cyclopts is currently under heavy development and purely experimental! With
-  great power comes great responsibility!
+  great Condor power comes great Condor responsibility!
 
 ********
 Overview
