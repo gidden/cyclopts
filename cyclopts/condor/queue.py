@@ -59,7 +59,8 @@ echo "execute dir pre-execute"
 ls -l
 
 echo "Executing ../cyclopts.cde exec --db $indb --outdb $outdb --instids $instids"
-../cyclopts.cde exec --db $indb --outdb $outdb --instids $instids --solvers {solvers}
+../cyclopts.cde exec --db $indb --outdb $outdb --instids $instids \
+--solvers {solvers} --family_module {module} --family_class {cname}
 echo "execute dir post-execute"
 ls -l
 
@@ -69,7 +70,8 @@ echo "pwd dir post-execute"
 ls -l
 """
 
-def gen_tar(remotedir, db, instids, solvers, user="gidden", verbose=False):
+def gen_tar(remotedir, db, instids, module, cname, solvers, 
+            user="gidden", verbose=False):
     prepdir = '.tmp_{0}'.format(remotedir)
     if not os.path.exists(prepdir):
         os.makedirs(prepdir)
@@ -79,7 +81,8 @@ def gen_tar(remotedir, db, instids, solvers, user="gidden", verbose=False):
     remotehome = batlab_base_dir_template.format(user=user)
     
     nfiles = 0
-    runlines = run_lines.format(solvers=" ".join(solvers))
+    runlines = run_lines.format(solvers=" ".join(solvers), module=module, 
+                                cname=cname)
     runfile = os.path.join(prepdir, 'run.sh')
     with io.open(runfile, mode='w') as f:
         f.write(runlines)
@@ -165,7 +168,7 @@ def _submit(client, remotedir, tarname, nids, indb,
     stdin, stdout, stderr = client.exec_command(cmd)
     return stdout.channel.recv_exit_status()
 
-def submit(user, db, instids, solvers, remotedir, 
+def submit(user, db, instids, module, cname, solvers, remotedir, 
            host="submit-3.chtc.wisc.edu", keyfile=None, 
            nodes=None,
            port='5422', verbose=False):
@@ -180,6 +183,10 @@ def submit(user, db, instids, solvers, remotedir,
         the problem instance database
     instids : set
         the set of instances to run
+    module : str
+        the ProblemFamily module
+    cname : str
+        the ProblemFamily cname
     solvers : list
         the solvers to use
     remotedir : str
@@ -200,7 +207,7 @@ def submit(user, db, instids, solvers, remotedir,
     client.set_missing_host_key_policy(pm.AutoAddPolicy())
     _, keyfile, pw = tools.ssh_test_connect(client, host, user, keyfile, auth=True)
     
-    localtar = gen_tar(remotedir, db, instids, solvers, user, 
+    localtar = gen_tar(remotedir, db, instids, module, cname, solvers, user, 
                        verbose=verbose)
 
     if verbose:
@@ -212,7 +219,8 @@ def submit(user, db, instids, solvers, remotedir,
                   port=port, verbose=verbose)
     client.close()
     if verbose:
-        print("Submitted job in {0}@{1}:~/cyclopts-runs/{2} with exit code: {rtn}".format(
+        print("Submitted job in {0}@{1}:~/cyclopts-runs/{2} with exit "
+              "code: {rtn}".format(
                 user, host, remotedir, rtn=rtn)) 
 
     os.remove(localtar)

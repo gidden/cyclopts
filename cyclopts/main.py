@@ -42,15 +42,17 @@ def condor_submit(args):
     h5file = t.open_file(args.db, mode='r', filters=tools.FILTERS)
     instids = set(uuid.UUID(x).bytes for x in args.instids)
     rc = tools.parse_rc(args.rc) if args.rc is not None else tools.RunControl()
-    fam = tools.get_obj(kind='family', rcs=tools.parse_rc(args.cycrc), 
-                        args=args)
+    cycrc = tools.parse_rc(args.cycrc)
+    fam = tools.get_obj(kind='family', rcs=cycrc, args=args)
     path = '{0}/{1}'.format(fam.table_prefix, fam.property_table_name)
     instids = tools.collect_instids(h5file=h5file, path=path, rc=rc, 
                                     instids=instids)
     h5file.close()
 
     instids = [x.hex for x in instids]
-    
+    _, module, cname = tools.obj_info(kind='family', rcs=cycrc, args=args)
+
+
     print('Submitting a {kind} job with {n} instances.'.format(
             kind=args.kind, n=len(instids)))
     # submit job
@@ -59,7 +61,7 @@ def condor_submit(args):
                     host=args.host, remotedir=args.remotedir, 
                     keyfile=args.keyfile, verbose=args.verbose)
     elif args.kind == 'queue':
-        cqueue.submit(args.user, args.db, instids, args.solvers, 
+        cqueue.submit(args.user, args.db, instids, module, cname, args.solvers, 
                       host=args.host, remotedir=args.remotedir, 
                       keyfile=args.keyfile, verbose=args.verbose,
                       nodes=args.nodes, port=args.port)        

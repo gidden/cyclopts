@@ -77,7 +77,7 @@ def test_gen_q_tar():
     instids = [x[0] for x in exp_uuid_arcs()[:2]] # 2 ids
     solvers = ['s1', 's2']
     
-    queue.gen_tar(prefix, db, instids, solvers)   
+    queue.gen_tar(prefix, db, 'foo', 'bar', instids, solvers)   
     
     if os.path.exists(prefix):
         shutil.rmtree(prefix)    
@@ -97,16 +97,19 @@ def test_gen_q_tar():
     
 @timeout()
 def exec_timeout(client, host, user, keyfile, cmd):
+    print('executing {0} with timeout'.format(cmd))
     client.connect(host, username=user, key_filename=keyfile)
     stdin, stdout, stderr = utils.exec_remote_cmd(client, cmd, verbose=True)
     client.close()
 
 @timeout()
 def get_files_timeout(client, host, user, keyfile, remotedir, localdir, re):
+    print('getting files with timeout')
     client.connect(host, username=user, key_filename=keyfile)
     nfiles = utils._get_files(client, remotedir, localdir, re)
     client.close()
-    
+
+@timeout(20)    
 def test_get_files():
     user = 'gidden'
     host = 'submit-3.chtc.wisc.edu'
@@ -125,13 +128,13 @@ def test_get_files():
     except TimeoutError:
         warnings.warn('could not connect via ssh to {0}@{1}'.format(user, host))
         return
-    
+        
     os.makedirs(localdir)
     prefix='tmp_'
     tstfiles = [prefix + 'test_file', prefix + 'other_file']
     touchline = " ".join("/".join([remotedir, f]) for f in tstfiles)
     cmd = "mkdir -p {0} && touch {1}".format(remotedir, touchline)
-   
+       
     try:
         exec_timeout(client, host, user, keyfile, cmd)
     except TimeoutError:

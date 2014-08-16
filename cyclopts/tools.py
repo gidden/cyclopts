@@ -324,11 +324,53 @@ def memusg(pid):
         lines = f.readlines()
     return float(next(l for l in lines if l.startswith('VmSize')).split()[1])
 
+def obj_info(kind=None, rcs=None, args=None):
+    """Get information about an importable object
+
+    Parameters
+    ----------
+    kind : str
+        the kind of object
+    rcs : list of RunControl objects or single object, optional
+        rcs are checked in order
+    args : argparse args, optional
+        CLI args
+    
+    Return
+    ------
+    info : tuple of package, module, and class names
+    """
+    mod, cname, pack = None, None, None
+
+    rcs = [rcs] if not isinstance(rcs, list) else rcs
+    sources = [args] + rcs # try CLI first, then rcs in order
+
+    for source in sources:
+        if source is None:
+            continue
+        
+        attr = '{0}_package'.format(kind)
+        if pack is None and mod is None and cname is None:
+            if hasattr(source, attr):
+                pack = getattr(source, attr)
+        
+        if mod is None:
+            attr = '{0}_module'.format(kind)
+            if hasattr(source, attr):
+                mod = getattr(source, attr)
+    
+        if cname is None:
+            attr = '{0}_class'.format(kind)
+            if hasattr(source, attr):
+                cname = getattr(source, attr)
+                
+    return pack, mod, cname
+    
 def get_obj(kind=None, rcs=None, args=None):
     """Get an object of certain kind, e.g. species or family. Both the rc and
     args argument will be searched for attributes named <kind>_package,
-    <kind>_module, and <kind>_class. The package/module is then imported and an
-    instance of the class is returned. The CLI is searched before the rcs.
+    <kind>_module, and <kind>_cname. The package/module is then imported and an
+    instance of the cname is returned. The CLI is searched before the rcs.
 
     Parameters
     ----------
@@ -343,42 +385,21 @@ def get_obj(kind=None, rcs=None, args=None):
     ------
     inst : an object instance
     """
-    mod, obj, pack = None, None, None
-
-    rcs = [rcs] if not isinstance(rcs, list) else rcs
-    sources = [args] + rcs # try CLI first, then rcs in order
-
-    for source in sources:
-        if source is None:
-            continue
-        
-        attr = '{0}_package'.format(kind)
-        if pack is None and mod is None and obj is None:
-            if hasattr(source, attr):
-                pack = getattr(source, attr)
-        
-        if mod is None:
-            attr = '{0}_module'.format(kind)
-            if hasattr(source, attr):
-                mod = getattr(source, attr)
+    pack, mod, cname = obj_info(kind=kind, rcs=rcs, args=args)
     
-        if obj is None:
-            attr = '{0}_class'.format(kind)
-            if hasattr(source, attr):
-                obj = getattr(source, attr)
-
     try:
         mod = importlib.import_module(mod, package=pack)
     except AttributeError:
         raise RuntimeError('Could not find {0} module {1}. Make sure to add '
                            'a {0}_module entry to a run control file or the '
                            'CLI.'.format(kind, mod))
-    try: 
-        inst = getattr(mod, obj)() 
-    except AttributeError:
+    
+    if cname is None or not hasattr(mod, cname):
         raise RuntimeError('Could not find {0} class {1}. Make sure to add '
                            'a {0}_class entry to a run control file or the '
-                           'CLI.'.format(kind, obj))
+                           'CLI.'.format(kind, cname))
+    
+    inst = getattr(mod, cname)() 
     return inst
 
 def collect_instids(h5file, path, rc=None, instids=None, colname='instid'):
