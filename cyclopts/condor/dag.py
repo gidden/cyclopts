@@ -49,7 +49,7 @@ tar -xf cde-cyclopts.tar.gz
 export PATH=$pwd/CDE/:$PATH
 ls -l
 
-mv exp_instances.h5 cde-package/cde-root
+mv {db} cde-package/cde-root
 cd cde-package/cde-root
 sed -i 's/..\/cde-exec/cde-exec/g' ../cyclopts.cde
 ls -l
