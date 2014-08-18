@@ -8,6 +8,7 @@ import work_queue as wq
 import io
 import time
 import re
+import math
 
 mv_sh = u"""#!/bin/bash
 echo "pwd: $PWD"
@@ -52,8 +53,8 @@ notification = never
 queue
 """
 
-def mem_per_core():
-    """returns memory per core in kb"""
+def mem_per_core(units='kB'):
+    """returns memory per core in kb (default) or another desired unit"""
     with io.open('/proc/meminfo') as f:
         lines = [x for x in f.readlines() \
                      if re.search('MemTotal', x) is not None]
@@ -62,7 +63,10 @@ def mem_per_core():
         lines = [x for x in f.readlines() \
                      if re.search('processor', x) is not None]
     ncores = len(lines)
-    return mem / ncores
+    mpc = mem / ncores
+    if units.lower() == 'mb':
+        mpc *= 1e6 / 1e9 # MB to kB
+    return int(math.floor(mpc))
 
 def condor_cmd(cmd, timeout=10):
     rtn = -1
@@ -126,14 +130,20 @@ def assign_workers(open_cores, n_tasks=1):
     return dict((node, n) for node, n in workers.items() if n > 0)
 
 def _start_workers(node, n, port, memory=None):
-    worker_cmd = ("""condor_submit_workers -t 600 -r {conds}""" 
-                  """{machine}.chtc.wisc.edu {port} {n}"""
-                  """ --cores 1""") # machine is the submit node
+    cmd_pre = ("""condor_submit_workers -t 600 --cores 1""")
+    cmd_post = ("""{machine}.chtc.wisc.edu {port} {n}""") # machine is the submit node
+
+    # fill in pre
     if memory is not None:
-        worker_cmd = '{0} --memory {1}'.format(worker_cmd, memory)
-    print("Starting {0} workers or node {1}.".format(n, node))
+        cmd_pre = '{0} --memory {1}'.format(cmd_pre, memory)
     conds = '(machine=="{0}.chtc.wisc.edu")'.format(node) # machine is the exec node
-    cmd = worker_cmd.format(conds=conds, machine='submit-3', port=port, n=n)
+    cmd_pre = '{0} -r {1}'.format(cmd_pre, conds)
+
+    # fill in post
+    cmd_post = cmd_post.format(machine='submit-3', port=port, n=n)
+    
+    cmd = " ".join([cmd_pre, cmd_post])
+    print("Starting {0} workers or node {1}.".format(n, node))
     print "executing cmd: {0}".format(cmd)
     subprocess.call(cmd.split(), shell=(os.name == 'nt'))
 
@@ -142,6 +152,8 @@ def start_workers(pids, worker_nodes, port, memory=None, timeout=5):
     started = set()
     nodes = dict((pid, node) for node, pid in pids.iteritems())
     pids = set(pids.values())
+    if memory is None:
+        memory = int(math.floor(125 * 1e3 / 16.0)) # 125 GB per 16 cores (in Mbs)
     while not done:
         cmd = 'condor_q {0}'.format(" ".join(pids))
         out = condor_cmd(cmd)
@@ -202,11 +214,12 @@ def exec_rm(nodes):
         pids[node] = lines[1].split('cluster')[1].split('.')[0].strip()    
     return pids
 
-def start_queue(q, n_tasks, idgen, indb, bring_files):
+def start_queue(q, n_tasks, idgen, indb, bring_files, memory=None):
     runfile = bring_files['run_file']
     exec_cmd = """./{runfile} {outdb} {uuid} {indb}"""
     q.specify_log('wq_log')
-    memory = mem_per_core()
+    if memory is None:
+        memory = int(math.floor(125 * 1e3 / 16.0)) # 125 GB per 16 cores (in Mbs)
     for i in range(n_tasks):
         outdb = '{0}_out.h5'.format(i)
         cmd = exec_cmd.format(runfile=runfile, indb=indb, uuid=idgen.next().strip(), outdb=outdb)
@@ -252,7 +265,7 @@ def main():
     exec_nodes = ['e121', 'e122', 'e123', 'e124', 'e125', 'e126'] \
         if 'nodes' not in args.keys() else args['nodes'].split(',')
     nids = 2 if 'nids' not in args.keys() else int(args['nids'])
-    memory = mem_per_core() if 'memory' not in args.keys() else float(args['memory'])
+    memory = None if 'memory' not in args.keys() else float(args['memory'])
 
     # generally use defaults
     run_file = 'run.sh' if 'run_file' not in args.keys() else args['run_file']
@@ -285,7 +298,8 @@ def main():
     # launch q
     print("Starting work queue master on port {0}".format(port))
     q = wq.WorkQueue(port)
-    start_queue(q, nids, idgen, '/'.join([indbpath, indb]), bring_files)
+    q.specify_log('queue.log')
+    start_queue(q, nids, idgen, '/'.join([indbpath, indb]), bring_files, memory=memory)
 
     # wait till each mv is done and then launch its workers
     start_workers(pids, workers, port, memory=memory, timeout=timeout)    
