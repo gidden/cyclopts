@@ -60,3 +60,4 @@ depends on the exchange being generated:
     random_reactor_request
     random_reactor_supply
     random_full_xchange    
+    f_th_reactor_request
