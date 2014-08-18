@@ -7,6 +7,7 @@ import subprocess
 import work_queue as wq
 import io
 import time
+import re
 
 mv_sh = u"""#!/bin/bash
 echo "pwd: $PWD"
@@ -50,6 +51,18 @@ request_cpus = 1
 notification = never
 queue
 """
+
+def mem_per_core():
+    """returns memory per core in kb"""
+    with io.open('/proc/meminfo') as f:
+        lines = [x for x in f.readlines() \
+                     if re.search('MemTotal', x) is not None]
+    mem = float(lines[0].split()[1]) # memory in kb
+    with io.open('/proc/cpuinfo') as f:
+        lines = [x for x in f.readlines() \
+                     if re.search('processor', x) is not None]
+    ncores = len(lines)
+    return mem / ncores
 
 def condor_cmd(cmd, timeout=10):
     rtn = -1
@@ -112,15 +125,19 @@ def assign_workers(open_cores, n_tasks=1):
         open_cores[node] -= 1
     return dict((node, n) for node, n in workers.items() if n > 0)
 
-def _start_workers(node, n, port):
-    worker_cmd = """condor_submit_workers -t 600 -r {conds} {machine}.chtc.wisc.edu {port} {n}"""
+def _start_workers(node, n, port, memory=None):
+    worker_cmd = ("""condor_submit_workers -t 600 -r {conds}""" 
+                  """{machine}.chtc.wisc.edu {port} {n}"""
+                  """ --cores 1""") # machine is the submit node
+    if memory is not None:
+        worker_cmd = '{0} --memory {1}'.format(worker_cmd, memory)
     print("Starting {0} workers or node {1}.".format(n, node))
-    conds = '(ForGidden==true&&machine=="{0}.chtc.wisc.edu")'.format(node)
+    conds = '(machine=="{0}.chtc.wisc.edu")'.format(node) # machine is the exec node
     cmd = worker_cmd.format(conds=conds, machine='submit-3', port=port, n=n)
     print "executing cmd: {0}".format(cmd)
     subprocess.call(cmd.split(), shell=(os.name == 'nt'))
 
-def start_workers(pids, worker_nodes, port, timeout=5):
+def start_workers(pids, worker_nodes, port, memory=None, timeout=5):
     done = False
     started = set()
     nodes = dict((pid, node) for node, pid in pids.iteritems())
@@ -134,7 +151,7 @@ def start_workers(pids, worker_nodes, port, timeout=5):
             tostart = pids - waiting - started
             for pid in tostart:
                 node = nodes[pid]
-                _start_workers(node, worker_nodes[node], port)
+                _start_workers(node, worker_nodes[node], port, memory=memory)
                 started.add(pid)
             if len(waiting) == 0:
                 done = True
@@ -189,12 +206,13 @@ def start_queue(q, n_tasks, idgen, indb, bring_files):
     runfile = bring_files['run_file']
     exec_cmd = """./{runfile} {outdb} {uuid} {indb}"""
     q.specify_log('wq_log')
+    memory = mem_per_core()
     for i in range(n_tasks):
         outdb = '{0}_out.h5'.format(i)
         cmd = exec_cmd.format(runfile=runfile, indb=indb, uuid=idgen.next().strip(), outdb=outdb)
         t = wq.Task(cmd)
         t.specify_cores(1) # 1 core
-        t.specify_memory(4096) # 4 GB
+        t.specify_memory(memory)
         f = bring_files['cyclopts_tar']
         t.specify_input_file(f, os.path.basename(f), cache=True)
         f = bring_files['cde_tar']
@@ -234,7 +252,8 @@ def main():
     exec_nodes = ['e121', 'e122', 'e123', 'e124', 'e125', 'e126'] \
         if 'nodes' not in args.keys() else args['nodes'].split(',')
     nids = 2 if 'nids' not in args.keys() else int(args['nids'])
-    
+    memory = mem_per_core() if 'memory' not in args.keys() else float(args['memory'])
+
     # generally use defaults
     run_file = 'run.sh' if 'run_file' not in args.keys() else args['run_file']
     uuidfile = 'uuids' if 'uuids' not in args.keys() else args['uuids']
@@ -269,7 +288,7 @@ def main():
     start_queue(q, nids, idgen, '/'.join([indbpath, indb]), bring_files)
 
     # wait till each mv is done and then launch its workers
-    start_workers(pids, workers, port, timeout=timeout)    
+    start_workers(pids, workers, port, memory=memory, timeout=timeout)    
 
     # wait till its done
     finish_queue(q)
