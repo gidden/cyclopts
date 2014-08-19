@@ -150,7 +150,7 @@ def execute(args):
         asteval = ast.literal_eval(asteval) 
     rc._update(asteval)
     solvers = args.solvers
-    instids = set(uuid.UUID(x).bytes for x in args.instids)
+    instids = set(uuid.UUID(x) for x in args.instids)
     verbose = args.verbose
 
     obj_rcs = [rc, tools.parse_rc(args.cycrc)] \

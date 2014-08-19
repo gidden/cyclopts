@@ -426,7 +426,7 @@ def collect_instids(h5file, path, rc=None, instids=None, colname='instid'):
     ------
     instids : set of uuids
     """
-    instids = set(uuid.UUID(x) for x in instids) if instids is not None else set()
+    instids = set(instids) if instids is not None else set()
     rc = rc if rc is not None else RunControl()
     instids |= set(uuid.UUID(x) for x in rc.inst_ids) \
         if 'inst_ids' in rc else set()
