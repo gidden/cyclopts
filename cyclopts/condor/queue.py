@@ -116,10 +116,10 @@ def gen_tar(remotedir, db, instids, module, cname, solvers,
 submit_cmd = """
 mkdir -p {remotedir} && cd {remotedir} &&
 tar -xf {tarfile} && rm {tarfile} && cd {cddir} && 
-nohup python -u launch_master.py port={port} user={user} nids={nids} indb={indb} nodes={nodes} &> launch_master.out &
+nohup python -u launch_master.py port={port} user={user} nids={nids} indb={indb} nodes={nodes} --log={log} &> launch_master.out &
 """
 
-def _submit(client, remotedir, tarname, nids, indb,
+def _submit(client, remotedir, tarname, nids, indb, log=False,
             port='5422', user='gidden', nodes=None, verbose=False):
     """Performs a condor Work Queue sumbission on a client using a tarball of all
     submission-related data.
@@ -134,6 +134,10 @@ def _submit(client, remotedir, tarname, nids, indb,
         the name of the tarfile
     nids : int
         the number of ids being run
+    indb : str
+        the name of the input database
+    log : bool
+        whether or not to keep worker/queue logs
     port : str, optional
         the port for the workers and master to communicate on
     user : str, optional
@@ -163,12 +167,13 @@ def _submit(client, remotedir, tarname, nids, indb,
 
     cmd = submit_cmd.format(tarfile=tarname, cddir=cddir, 
                             remotedir=remotedir, port=port, user=user, 
-                            nids=nids, indb=indb, nodes=",".join(nodes))    
+                            nids=nids, indb=indb, log=log, 
+                            nodes=",".join(nodes))    
     print("Remotely executing '{0}'".format(cmd))
     stdin, stdout, stderr = client.exec_command(cmd)
     return stdout.channel.recv_exit_status()
 
-def submit(user, db, instids, module, cname, solvers, remotedir, 
+def submit(user, db, instids, module, cname, solvers, remotedir, log=False,
            host="submit-3.chtc.wisc.edu", keyfile=None, 
            nodes=None,
            port='5422', verbose=False):
@@ -192,6 +197,8 @@ def submit(user, db, instids, module, cname, solvers, remotedir,
     remotedir : str
         the base run directory on the condor submit node, relative to 
         ~/cyclopts-runs
+    log : bool
+        whether or not to keep worker/queue logs
     host : str, optional
         the condor submit host
     keyfile : str, optional
@@ -215,7 +222,7 @@ def submit(user, db, instids, module, cname, solvers, remotedir,
     client.connect(host, username=user, key_filename=keyfile, password=pw)
     
     rtn = _submit(client, tools.cyclopts_remote_run_dir, localtar, 
-                  len(instids), os.path.basename(db), nodes=nodes,
+                  len(instids), os.path.basename(db), log=log, nodes=nodes,
                   port=port, verbose=verbose)
     client.close()
     if verbose:

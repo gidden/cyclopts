@@ -217,7 +217,6 @@ def exec_rm(nodes):
 def start_queue(q, n_tasks, idgen, indb, bring_files, memory=None):
     runfile = bring_files['run_file']
     exec_cmd = """./{runfile} {outdb} {uuid} {indb}"""
-    q.specify_log('wq_log')
     if memory is None:
         memory = int(math.floor(125 * 1e3 / 16.0)) # 125 GB per 16 cores (in Mbs)
     for i in range(n_tasks):
@@ -266,6 +265,7 @@ def main():
         if 'nodes' not in args.keys() else args['nodes'].split(',')
     nids = 2 if 'nids' not in args.keys() else int(args['nids'])
     memory = None if 'memory' not in args.keys() else float(args['memory'])
+    log = False if 'log' not in args.keys() else bool(args['log'])
 
     # generally use defaults
     run_file = 'run.sh' if 'run_file' not in args.keys() else args['run_file']
@@ -298,7 +298,9 @@ def main():
     # launch q
     print("Starting work queue master on port {0}".format(port))
     q = wq.WorkQueue(port)
-    q.specify_log('queue.log')
+    if log:
+        q.specify_log("queue.log")
+        q.enable_monitoring("tasks.log");
     start_queue(q, nids, idgen, '/'.join([indbpath, indb]), bring_files, memory=memory)
 
     # wait till each mv is done and then launch its workers

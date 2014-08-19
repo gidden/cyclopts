@@ -63,7 +63,7 @@ def condor_submit(args):
                     keyfile=args.keyfile, verbose=args.verbose)
     elif args.kind == 'queue':
         cqueue.submit(args.user, args.db, instids, module, cname, args.solvers, 
-                      host=args.host, remotedir=args.remotedir, 
+                      log=args.log, host=args.host, remotedir=args.remotedir, 
                       keyfile=args.keyfile, verbose=args.verbose,
                       nodes=args.nodes, port=args.port)        
 
@@ -392,6 +392,9 @@ def main():
     kind = ("The kind of condor submission to use.")
     submit_parser.add_argument('-k', '--kind', choices=['dag', 'queue'], 
                                default='queue', help=kind)
+    log = ("Whether to keep a log of worker queue data.")
+    submit_parser.add_argument('--log', dest='log', default=False, 
+                               action='store_true', help=log) 
     port = ("The port to use for a condor queue submission.")
     submit_parser.add_argument('-p', '--port', default='5422', help=port)
     nodes = ("The execute nodes to target.")
