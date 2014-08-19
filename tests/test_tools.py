@@ -132,7 +132,7 @@ def test_collect_instids():
     assert_equal(set(exp_uuids), obs_uuids)
 
     # test subset
-    instids = [uuid.UUID(bytes=x).hex for x in vals[:-2]]
+    instids = [uuid.UUID(bytes=x) for x in vals[:-2]]
     exp_uuids = exp_uuids[:-2]
     obs_uuids = tools.collect_instids(h5file, path, instids=instids)    
     assert_equal(set(exp_uuids), obs_uuids)
@@ -148,7 +148,7 @@ def test_collect_instids():
     
     # test combined
     obs_uuids = tools.collect_instids(h5file, path, rc=rc, instids=[instids[0]])    
-    exp_uuids += [uuid.UUID(instids[0])]
+    exp_uuids += [instids[0]]
     assert_equal(set(exp_uuids), obs_uuids)
     
     h5file.close()    
