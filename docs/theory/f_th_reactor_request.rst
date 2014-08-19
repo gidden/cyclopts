@@ -89,7 +89,7 @@ Where :math:`loc_i` is either a bin number or continuous location proxy.
 Parameters
 ++++++++++
 
-    n_bins : the number of bins if coarse
+    :math:`n_{bins}` : the number of bins if coarse
 
 Surrogate Models
 ++++++++++++++++
