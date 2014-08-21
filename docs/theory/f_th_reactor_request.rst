@@ -10,6 +10,10 @@ designed to target a specific set of cases that focus randomness in the
 domain-related values and defines domain-specific translations from those values
 to the associated coefficients.
 
+The goal of this document is to provide a basis for the values used in modeling
+the request-based exchange and to explore the effects of increasing various
+kinds of fidelity on the general performance of the formulation.
+
 Model Fidelity
 --------------
 
