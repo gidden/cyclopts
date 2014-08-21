@@ -110,3 +110,9 @@ Questions
 * What heat proxy should be used?
 * Do preferences match reality? Would every facility want to process UOX?
 
+
+Geospatial Assignment
+---------------------
+
+Geospatial considerations will be handled in the same manner as the request
+case.

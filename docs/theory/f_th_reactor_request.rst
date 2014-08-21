@@ -221,7 +221,14 @@ Parameters
 
     :math:`f_{demand}` : the fraction of demand that should be supplied
 
-    :math:`f_{inv, proc}` : the relative supply of inventory to process
+    :math:`f_{inv, proc}` : the ratio of the inventory RHS to the process RHS
+
+Surrogate Models
+::::::::::::::::
+
+    :math:`conv_{inv}(\epsilon, q)` : an inventory-based constraint
+
+    :math:`conv_{process}(\epsilon, q)` : an process-based constraint
 
 Questions
 ~~~~~~~~~
@@ -319,10 +326,10 @@ Surrogate Models
 Preference Determination
 ------------------------
 
-Given that facilities have preference assignments based on commodity matching
-and, optionally, a valid question is whether the formulation is affected by
-their relative magnitude. Therefore a final parameter is added to determine the
-total preference
+Given that facilities have preference assignments based on commodity matching,
+:math:`p_c`, and, optionally, location, :math:`p_l`, a valid question is whether
+the formulation is affected by their relative magnitude. Therefore a final
+parameter is added to determine the total preference
 
 .. math::
 
