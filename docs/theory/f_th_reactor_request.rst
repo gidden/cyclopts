@@ -17,6 +17,8 @@ Furthermore, this species is specifically targeted at investigating the effects
 of model fidelity on a given formulation. Eight different fidelity "levels" have
 been defined in three categories.
 
+.. fidelity-start
+
 ===================  =====================================
 Category             Subcategory
 ===================  =====================================
@@ -36,6 +38,8 @@ Geospatial           - None
 		     
                      - Fine
 ===================  =====================================
+
+.. fidelity-end
 
 Commodities
 -----------
@@ -147,7 +151,7 @@ Commodity Preferences
     ============  ======= ======= ======= =======
     Reactor Type  EUOX    Th MOX  F MOX   F ThOX
     ============  ======= ======= ======= =======
-    Thermal       1       2       0.5     N/A
+    Thermal       0.5     1       0.1     N/A
     F MOX         0.1     0.5     1       0.25
     F ThOX        0.1     0.25    0.5     1
     ============  ======= ======= ======= =======
@@ -257,9 +261,9 @@ French LWR refueling practices.
 Parameters
 ~~~~~~~~~~
 
-    :math:`f_{t, f}` : the fraction of thermal reactors to fast reactors
+    :math:`f_{t, f}` : the ratio of thermal reactors to fast reactors
 
-    :math:`f_{re} \in [0, \frac{1}{3}]` : the fraction of thermal reactor
+    :math:`f_{mox} \in [0, \frac{1}{3}]` : the fraction of thermal reactor
     requests that can be met with recycled fuel
 
 Questions
@@ -280,7 +284,7 @@ Fabricator is added to the pool of suppliers.
 Parameters
 ~~~~~~~~~~
 
-    :math:`f_{th, pu}` : the fraction of fast reactors that are Thorium-based
+    :math:`f_{th, pu}` : the ratio of Thorium to Plutonium-based fast reactors
 
 Geospatial Assignment
 ---------------------
