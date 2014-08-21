@@ -266,10 +266,11 @@ def main():
     nids = 2 if 'nids' not in args.keys() else int(args['nids'])
     memory = None if 'memory' not in args.keys() else float(args['memory'])
     log = False if 'log' not in args.keys() else bool(args['log'])
-
-    # generally use defaults
     run_file = 'run.sh' if 'run_file' not in args.keys() else args['run_file']
     uuidfile = 'uuids' if 'uuids' not in args.keys() else args['uuids']
+    
+    msg = 'logging output' if log else 'not logging output'
+    print(msg)
     
     idgen = open(uuidfile)
     bring_files = {
