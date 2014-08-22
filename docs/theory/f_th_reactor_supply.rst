@@ -59,7 +59,7 @@ constraints.
 
 Repostories will employ a simple linear combination quantity processing
 constraint based on the total fuel exiting a reactor via its relative quantity
-measure.
+measure, :math:`r_{rxtr, commod}`.
 
 .. math::
 
