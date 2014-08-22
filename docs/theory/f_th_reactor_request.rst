@@ -178,6 +178,9 @@ Questions
 
 * What critiques are there regarding reactory enrichment generation?
 
+  - start simple with one enrichment per reactor, a possible upgrade is to
+    introduce 2 or 3 bins around an average enrichment to emulate enrichment
+    zones
 
 Supporting Facilities
 +++++++++++++++++++++
@@ -278,7 +281,7 @@ are formulated as follows
 
     S_{proc}, given
 
-    S_{inv} = \frac{S_{proc} f_{inv, proc} conv_{proc}(\bar{\epsilon}, 1)}{conv_{inv}(\bar{\epsilon}, 1)}
+    S_{inv} = S_{proc} f_{inv, proc} \frac{conv_{proc}(\bar{\epsilon}, 1)}{conv_{inv}(\bar{\epsilon}, 1)}
 
 Parameters
 ::::::::::
