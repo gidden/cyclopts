@@ -104,6 +104,17 @@ Under these assumptions, each fast reactor will request 1 unit of fuel and each
 thermal reactor will request 12.5 units of fuel. Each may be further binned into
 smaller quantities to more accurately model assemblies.
 
+As a rough approximation using the figures from active core size, and assuming
+that a single AP-1000 fuel assembly holds [450
+kg](http://books.google.com/books/about/Nuclear_Engineering_Handbook.html?id=EMy2OyUrqbUC)
+of Uranium, a unit of fuel is roughly
+
+.. math::
+
+   \frac{450 \frac{kg}{assembly} * 157 assemblies * \frac{1}{4} core}{12.5 units} = 1.4 \frac{tonnes}{fuel unit}
+
+Again one fuel unit is approximately equal to a quarter of a BN-600 reactor core.
+
 Thermal Reactors
 ~~~~~~~~~~~~~~~~
 
@@ -162,6 +173,9 @@ Questions
 ~~~~~~~~~
 
 * What critiques are there regarding the commodity-preference mapping?
+
+  - functional form effects (e.g., linear vs. exp) could be added
+
 * What critiques are there regarding reactory enrichment generation?
 
 
@@ -180,8 +194,17 @@ surrogate material, i.e., an enrichment and quantity.
 UOX Supplier
 ~~~~~~~~~~~~
 
-The UOX supplier has well-known conversion functions, where basic additional
-parameters, e.g., feed and tails assays, can be safely assumed
+The UOX supplier has basic parameters, e.g., feed and tails assays, can be
+safely assumed as follows
+
+===========   =======
+Parameter     Value
+===========   =======
+feed assay    0.711
+tails assay   0.3
+===========   =======
+
+The conversion functions are also well known. 
 
 .. math::
 
@@ -203,36 +226,45 @@ constraint is considered.
 
     conv_{inv}(\epsilon, q) = \epsilon q
 
-    conv_{proc}(\epsilon, q) = q
+    conv_{proc}(\epsilon, q) = \frac{q}{rel_request_size}
 
 Supplier Constraint RHS Values
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Supporting facilities have a nominal throughput capacity. The proposed Eagle
+Rock Enrichment Plant
+(purports)[http://www.areva.com/EN/operations-779/the-eagle-rock-project-construction-of-an-enrichment-plant-in-the-united-states.html]
+to have a capacity of 3.5M SWU per year. From previous conversations with
+industry representatives, a reasonable size for a processing plant is 800 tonnes
+per year.
+
+Assuming a monthly time step and a request basis of a single unit of fuel, the
+process constraint RHS are determined as
+
+.. math::
+
+   S_{proc, SWU} = \frac{3.5e6 \frac{SWU}{year}}{12 {month}{year} * fuel unit} = ~210 \frac{SWU}{month * fuel unit} 
+
+   S_{proc, recycle} = \frac{800 \frac{t}{year}}{12 {month}{year} * fuel unit} = ~47 \frac{t}{month * fuel unit} 
+
 From the formulation point of view, interesting cases arise when either
 constraint is dominated by the other and when neither is dominant. Furthermore,
 instanes should be investigated in which supply is generally constrained and
-when it is not. In order to accomplish these goals, the supply constraint values
+when it is not. 
+
+In order to accomplish these goals, the supply constraint values
 are formulated as follows
 
 .. math::
 
-    S_{inv} = f_{demand} \frac{demand}{conv_{inv}(\bar{\epsilon}, demand)}
+    S_{proc}, given
 
-    S_{proc} = S_{inv} \frac{conv_{inv}(\bar{\epsilon}, demand)}{conv_{proc}(\bar{\epsilon}, demand)} f_{inv, proc}
+    S_{inv} = \frac{S_{proc} f_{inv, proc} conv_{proc}(\bar{\epsilon}, 1)}{conv_{inv}(\bar{\epsilon}, 1)}
 
 Parameters
 ::::::::::
 
-    :math:`f_{demand}` : the fraction of demand that should be supplied
-
     :math:`f_{inv, proc}` : the ratio of the inventory RHS to the process RHS
-
-Surrogate Models
-::::::::::::::::
-
-    :math:`conv_{inv}(\epsilon, q)` : an inventory-based constraint
-
-    :math:`conv_{process}(\epsilon, q)` : an process-based constraint
 
 Fuel Cycles
 -----------
@@ -272,11 +304,7 @@ Parameters
     :math:`f_{mox} \in [0, \frac{1}{3}]` : the fraction of thermal reactor
     requests that can be met with recycled fuel
 
-Questions
-~~~~~~~~~
-
-* Should suppliers be treated similarly to reactors (i.e., :math:`f_{t, f}`)?
-  This increases the parameter space by :math:`n - 1` dimensions.
+    :math:`f_{s, r}` : the ratio of primary suppliers to their primary requesters
 
 Recycle + Thorium
 +++++++++++++++++
