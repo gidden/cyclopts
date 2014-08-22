@@ -36,7 +36,7 @@ Fuel Cycle           - Once-Through
 
                      - UOX + MOX F/Th Recycle + Thorium F Recycle
 -------------------  -------------------------------------
-Geospatial           - None
+Location             - None
 
                      - Coarse
 		     
@@ -297,16 +297,16 @@ Parameters
 
     :math:`f_{th, pu}` : the ratio of Thorium to Plutonium-based fast reactors
 
-Geospatial Assignment
+Location Assignment
 ---------------------
 
-Geospatial values can be assigned in either a coarse or fine fashion. In both
+Location values can be assigned in either a coarse or fine fashion. In both
 cases, a location proxy is assigned uniformly, e.g., on :math:`[0,
 1]`. Locations are binned, representing regions. If coarse, only regional
 relationships are taken into account; if fine, regional relationships are taken
 into account as well as total proximity.
 
-Once geospatial values are assigned, they can then affect preferences. A
+Once location values are assigned, they can then affect preferences. A
 surrogate model function is required, and one suggestion is 
 
 .. math::

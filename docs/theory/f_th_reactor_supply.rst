@@ -111,8 +111,8 @@ Questions
 * Do preferences match reality? Would every facility want to process UOX?
 
 
-Geospatial Assignment
+Location Assignment
 ---------------------
 
-Geospatial considerations will be handled in the same manner as the request
+Location considerations will be handled in the same manner as the request
 case.
