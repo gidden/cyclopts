@@ -36,6 +36,9 @@ enrichment_ranges = {
         },
 }
 
+"""fuel unit in kgs"""
+fuel_unit = 1400.0
+
 """fast reactor requests are unity, thermal reactors are larger by an active
 core volume fraction"""
 request_qtys = {
@@ -87,3 +90,4 @@ pref_basis = {
         thox : 1.0,
         },
 }
+
