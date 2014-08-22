@@ -59,11 +59,11 @@ In the low-fidelity version, each facility type will have a linear conversion co
 
     conv_{inv}(\epsilon, q) = \epsilon q
 
-For higher model fideltiy, a heat-generation process constraint is added
+A process constraint is added as in the request case
 
 .. math::
 
-    conv_{proc}(\epsilon, q) = Heat(\epsilon, q)
+    conv_{proc}(\epsilon, q) = q
 
 Constraint RHS
 ~~~~~~~~~~~~~~~~~~~~~~~

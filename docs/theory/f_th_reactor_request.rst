@@ -27,8 +27,6 @@ been defined in three categories.
 Category             Subcategory
 ===================  =====================================
 Facilities           - Reactor Requests (batch/assem)
-
-                     - Supply Constraints (inv/inv + process)
 -------------------  -------------------------------------
 Fuel Cycle           - Once-Through
 
@@ -197,13 +195,15 @@ MOX and ThOX Suppliers
 Due to the lack of commercially viable, well documented fast reactor fuel
 suppliers, a simple linear surrogate model is assumed for an inventory
 constraint. There are many possible process surrogate models that could be used,
-such as heat production or radiotoxicity.
+such as heat production or radiotoxicity; however, each of these requires a
+detailed isotopic composition to be relevant. Accordingly, a simple throughput
+constraint is considered.
 
 .. math::
 
     conv_{inv}(\epsilon, q) = \epsilon q
 
-    conv_{proc}(\epsilon, q) = Dose(\epsilon, q)
+    conv_{proc}(\epsilon, q) = q
 
 Supplier Constraint RHS Values
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -233,11 +233,6 @@ Surrogate Models
     :math:`conv_{inv}(\epsilon, q)` : an inventory-based constraint
 
     :math:`conv_{process}(\epsilon, q)` : an process-based constraint
-
-Questions
-~~~~~~~~~
-
-* What process conversion function for fast reactors makes the most sense?
 
 Fuel Cycles
 -----------
