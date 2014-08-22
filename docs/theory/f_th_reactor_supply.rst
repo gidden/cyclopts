@@ -50,26 +50,28 @@ Four types of supportin facilities will be modeled:
 * Fast ThOX Recycle
 * Repository
 
-Constraint Coefficients
-~~~~~~~~~~~~~~~~~~~~~~~
+Constraints
+~~~~~~~~~~~
 
-In the low-fidelity version, each facility type will have a linear conversion constraint
+Recycle facilities will maintain the same constraint coefficients and RHS values
+as the reactor request, except they are interpreted as demand
+constraints. 
+
+Repostories will employ a simple linear combination quantity processing
+constraint based on the total fuel exiting a reactor via its relative quantity
+measure.
 
 .. math::
 
-    conv_{inv}(\epsilon, q) = \epsilon q
+    conv_{proc}(\epsilon, q) = \frac{q}{r_{rxtr, commod}}
 
-A process constraint is added as in the request case
+To determine an appropriate RHS, I assume a Yucca Mountain statutory limit of
+17,000 tonnes and a 30 year lifetime, resulting in ~575 t per year processing
+capacity. In fuel units, the RHS value becomes 
 
 .. math::
 
-    conv_{proc}(\epsilon, q) = q
-
-Constraint RHS
-~~~~~~~~~~~~~~~~~~~~~~~
-
-The constraint RHS values will be determined in the same manner as in the
-request case.
+    S_{proc} = \frac{575 \frac{t}{year}}{12 \frac{month}{year} * 1.4 \frac{t}{fuel unit}} = ~35 \frac{fuel unit}{month}
 
 Commodity Preferences
 ~~~~~~~~~~~~~~~~~~~~~
