@@ -86,8 +86,8 @@ material to be sent to processing facilities over repositories.
     Facility Type       EUOX    Th MOX  F MOX   F ThOX
     ==================  ======= ======= ======= =======
     Thermal Recycle     1       1       0.5     N/A
-    Fast MOX Recycle    1       0.5     1       N/A
-    Fast ThOX Recycle   1       N/A     N/A     1
+    Fast MOX Recycle    0.5     0.5     1       N/A
+    Fast ThOX Recycle   0.5     N/A     N/A     1
     Repository          0.1     0.1     0.1     0.1
     ==================  ======= ======= ======= =======
 
@@ -102,14 +102,6 @@ Parameters
 
     :math:`f_{mox, th}` : the ratio of MOX fast recycle facilities to ThOX fast
     recycle facilities
-
-
-Questions
-~~~~~~~~~
-
-* What heat proxy should be used?
-* Do preferences match reality? Would every facility want to process UOX?
-
 
 Location Assignment
 ---------------------
