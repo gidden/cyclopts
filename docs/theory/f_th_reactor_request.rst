@@ -105,8 +105,8 @@ thermal reactor will request 12.5 units of fuel. Each may be further binned into
 smaller quantities to more accurately model assemblies.
 
 As a rough approximation using the figures from active core size, and assuming
-that a single AP-1000 fuel assembly holds [450
-kg](http://books.google.com/books/about/Nuclear_Engineering_Handbook.html?id=EMy2OyUrqbUC)
+that a single AP-1000 fuel assembly holds `450 kg
+<http://books.google.com/books/about/Nuclear_Engineering_Handbook.html?id=EMy2OyUrqbUC>`_
 of Uranium, a unit of fuel is roughly
 
 .. math::
@@ -220,20 +220,21 @@ suppliers, a simple linear surrogate model is assumed for an inventory
 constraint. There are many possible process surrogate models that could be used,
 such as heat production or radiotoxicity; however, each of these requires a
 detailed isotopic composition to be relevant. Accordingly, a simple throughput
-constraint is considered.
+constraint is considered, assuming a relative request size (from above)
+:math:`r_q`.
 
 .. math::
 
     conv_{inv}(\epsilon, q) = \epsilon q
 
-    conv_{proc}(\epsilon, q) = \frac{q}{rel_request_size}
+    conv_{proc}(\epsilon, q) = \frac{q}{r_q}
 
 Supplier Constraint RHS Values
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Supporting facilities have a nominal throughput capacity. The proposed Eagle
-Rock Enrichment Plant
-(purports)[http://www.areva.com/EN/operations-779/the-eagle-rock-project-construction-of-an-enrichment-plant-in-the-united-states.html]
+Rock Enrichment Plant `purports
+<http://www.areva.com/EN/operations-779/the-eagle-rock-project-construction-of-an-enrichment-plant-in-the-united-states.html>`_
 to have a capacity of 3.5M SWU per year. From previous conversations with
 industry representatives, a reasonable size for a processing plant is 800 tonnes
 per year.
@@ -243,9 +244,9 @@ process constraint RHS are determined as
 
 .. math::
 
-   S_{proc, SWU} = \frac{3.5e6 \frac{SWU}{year}}{12 {month}{year} * fuel unit} = ~210 \frac{SWU}{month * fuel unit} 
+   S_{proc, SWU} = \frac{3.5e6 \frac{SWU}{year}}{12 \frac{month}{year} * fuel unit} = ~210 \frac{SWU}{month * fuel unit} 
 
-   S_{proc, recycle} = \frac{800 \frac{t}{year}}{12 {month}{year} * fuel unit} = ~47 \frac{t}{month * fuel unit} 
+   S_{proc, recycle} = \frac{800 \frac{t}{year}}{12 \frac{month}{year} * fuel unit} = ~47 \frac{t}{month * fuel unit} 
 
 From the formulation point of view, interesting cases arise when either
 constraint is dominated by the other and when neither is dominant. Furthermore,
