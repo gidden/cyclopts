@@ -35,6 +35,7 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
     'sphinx.ext.pngmath',
+    'sphinx.ext.mathjax',
     'sphinx.ext.autosummary',  # autosummary doesn't work with numpydoc...
     'sphinx.ext.viewcode', 
     'scisphinx.numpydoc', 
