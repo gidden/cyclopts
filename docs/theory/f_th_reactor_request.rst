@@ -219,15 +219,23 @@ Due to the lack of commercially viable, well documented fast reactor fuel
 suppliers, a simple linear surrogate model is assumed for an inventory
 constraint. There are many possible process surrogate models that could be used,
 such as heat production or radiotoxicity; however, each of these requires a
-detailed isotopic composition to be relevant. Accordingly, a simple throughput
-constraint is considered, assuming a relative request size (from above)
-:math:`r_q`.
+detailed isotopic composition to be relevant. Per the current `IAEA practice
+<http://ec.europa.eu/dgs/jrc/downloads/jrc_20100615_safeguards_heinonen.pdf>`_,
+and extrapolating the same effect for reprocessing U-233, a factor,
+:math:`f_{commod}`, of 100 is added for for Plutonium and Thorium-based
+commodities.
 
 .. math::
 
     conv_{inv}(\epsilon, q) = \epsilon q
 
-    conv_{proc}(\epsilon, q) = \frac{q}{r_q}
+    f_{commod} = 
+    \begin{cases}
+    1,& \text{if UOX}\\
+    100,              & \text{otherwise}
+    \end{cases}
+
+    conv_{proc}(\epsilon, q, commod) = q f_{commod}
 
 Supplier Constraint RHS Values
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -238,7 +246,11 @@ Rock Enrichment Plant `purports
 a capacity of 3.3M SWU per year, which is enough to support 25 reactors. This
 work assumes a new facility could serve 25 thermal reactors requesting an
 average enrichment. From previous conversations with industry representatives, a
-reasonable size for a processing plant is 800 tonnes per year.
+reasonable size for a processing plant is 800 tonnes per year, which is similar
+to `Rokkassho
+<http://ec.europa.eu/dgs/jrc/downloads/jrc_20100615_safeguards_heinonen.pdf>`_. With
+the factor of 100 discussed above, a 800 t U/ 8 t Pu facility could service
+on the order of 2-3 fast reactors.
 
 Using the following assumptions
 
@@ -248,9 +260,9 @@ Using the following assumptions
 
 .. math::
 
-   SWU_{lwr} = SWU(\bar{\epislon}, 12.5 * fuel unit) = ~1.1e5
+   SWU_{lwr} = SWU(\bar{\epsilon}, 12.5 * fuel unit) = ~1.1e5
 
-   S_{proc, SWU} = \frac{25 {SWU_{lwr}{12 \frac{month}{year}} = ~2.3e5 \frac{SWU}{month} 
+   S_{proc, SWU} = \frac{25 SWU_{lwr}}{12 \frac{month}{year}} = ~2.3e5 \frac{SWU}{month} 
 
    S_{proc, recycle} = \frac{800 \frac{t}{year}}{12 \frac{month}{year} * 1.4 \frac{t}{fuel unit}} = ~47 \frac{fuel unit}{month} 
 
