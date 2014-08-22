@@ -59,11 +59,11 @@ In the low-fidelity version, each facility type will have a linear conversion co
 
     conv_{inv}(\epsilon, q) = \epsilon q
 
-For higher model fideltiy, a heat-generation process constraint is added
+A process constraint is added as in the request case
 
 .. math::
 
-    conv_{proc}(\epsilon, q) = Heat(\epsilon, q)
+    conv_{proc}(\epsilon, q) = q
 
 Constraint RHS
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -86,8 +86,8 @@ material to be sent to processing facilities over repositories.
     Facility Type       EUOX    Th MOX  F MOX   F ThOX
     ==================  ======= ======= ======= =======
     Thermal Recycle     1       1       0.5     N/A
-    Fast MOX Recycle    1       0.5     1       N/A
-    Fast ThOX Recycle   1       N/A     N/A     1
+    Fast MOX Recycle    0.5     0.5     1       N/A
+    Fast ThOX Recycle   0.5     N/A     N/A     1
     Repository          0.1     0.1     0.1     0.1
     ==================  ======= ======= ======= =======
 
@@ -103,16 +103,8 @@ Parameters
     :math:`f_{mox, th}` : the ratio of MOX fast recycle facilities to ThOX fast
     recycle facilities
 
-
-Questions
-~~~~~~~~~
-
-* What heat proxy should be used?
-* Do preferences match reality? Would every facility want to process UOX?
-
-
-Geospatial Assignment
+Location Assignment
 ---------------------
 
-Geospatial considerations will be handled in the same manner as the request
+Location considerations will be handled in the same manner as the request
 case.
