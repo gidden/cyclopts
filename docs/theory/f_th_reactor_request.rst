@@ -111,7 +111,7 @@ of Uranium, a unit of fuel is roughly
 
 .. math::
 
-   \frac{450 \frac{kg}{assembly} * 157 assemblies * \frac{1}{4} core}{12.5 units} = 1.4 \frac{tonnes}{fuel unit}
+   \frac{450 \frac{kg}{assembly} * 157 assemblies * \frac{1}{4} core}{12.5 units} = ~1.4 \frac{tonnes}{fuel unit}
 
 Again one fuel unit is approximately equal to a quarter of a BN-600 reactor core.
 
@@ -234,19 +234,25 @@ Supplier Constraint RHS Values
 
 Supporting facilities have a nominal throughput capacity. The proposed Eagle
 Rock Enrichment Plant `purports
-<http://www.areva.com/EN/operations-779/the-eagle-rock-project-construction-of-an-enrichment-plant-in-the-united-states.html>`_
-to have a capacity of 3.5M SWU per year. From previous conversations with
-industry representatives, a reasonable size for a processing plant is 800 tonnes
-per year.
+<http://us.areva.com/EN/home-203/eagle-rock-enrichment-facility.html>`_ to have
+a capacity of 3.3M SWU per year, which is enough to support 25 reactors. This
+work assumes a new facility could serve 25 thermal reactors requesting an
+average enrichment. From previous conversations with industry representatives, a
+reasonable size for a processing plant is 800 tonnes per year.
 
-Assuming a monthly time step and a request basis of a single unit of fuel, the
-process constraint RHS are determined as
+Using the following assumptions
+
+* enrichment facilities primarily service thermal reactors
+* an exchange represents a monthly timestep
+* requests are based on a single unit of fuel (rather than kilograms, etc.)
 
 .. math::
 
-   S_{proc, SWU} = \frac{3.5e6 \frac{SWU}{year}}{12 \frac{month}{year} * fuel unit} = ~210 \frac{SWU}{month * fuel unit} 
+   SWU_{lwr} = SWU(\bar{\epislon}, 12.5 * fuel unit) = ~1.1e5
 
-   S_{proc, recycle} = \frac{800 \frac{t}{year}}{12 \frac{month}{year} * fuel unit} = ~47 \frac{t}{month * fuel unit} 
+   S_{proc, SWU} = \frac{25 {SWU_{lwr}{12 \frac{month}{year}} = ~2.3e5 \frac{SWU}{month} 
+
+   S_{proc, recycle} = \frac{800 \frac{t}{year}}{12 \frac{month}{year} * 1.4 \frac{t}{fuel unit}} = ~47 \frac{fuel unit}{month} 
 
 From the formulation point of view, interesting cases arise when either
 constraint is dominated by the other and when neither is dominant. Furthermore,
