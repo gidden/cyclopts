@@ -459,3 +459,18 @@ def collect_instids(h5file, path, rc=None, instids=None, colname='instid'):
             instids.add(uuid.UUID(bytes=iid))
     
     return instids
+
+def n_permutations(d):
+    """Parameters
+    ----------
+    d : dict or recursive dict
+    
+    Returns
+    -------
+    n : int
+        the total number of permutations of values in the dictionary, if d has 
+        dictionaries as keys, those are recusively interrogated as well
+    """
+    return reduce(operator.mul, 
+                  (len(v) if not isinstance(v, dict) \
+                       else n_permutations(v) for v in d.values()))

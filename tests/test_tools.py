@@ -152,3 +152,10 @@ def test_collect_instids():
     assert_equal(set(exp_uuids), obs_uuids)
     
     h5file.close()    
+
+def test_n_permutations():
+    d = {"foo": range(10), "bar": ["42", 42]}
+    assert_equal(20, tools.n_permutations(d))
+
+    d = {"foo": {"foobar": range(10), "foobaz": range(5)}, "bar": ["42", 42]}
+    assert_equal(100, tools.n_permutations(d))
