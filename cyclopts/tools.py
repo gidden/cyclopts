@@ -471,7 +471,6 @@ def n_permutations(x):
         the total number of permutations of values in x, if x has 
         container values, those are recusively interrogated as well
     """
-    print(x)
     n = 1
     if isinstance(x, Sequence) and not isinstance(x, basestring):
         if isinstance(x[0], Sequence) and not isinstance(x[0], basestring):
