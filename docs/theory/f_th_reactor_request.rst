@@ -26,7 +26,9 @@ been defined in three categories.
 ===================  =====================================
 Category             Subcategory
 ===================  =====================================
-Facilities           - Reactor Requests (batch/assem)
+Reactor              - batch
+
+                     - assembly
 -------------------  -------------------------------------
 Fuel Cycle           - Once-Through
 
@@ -316,7 +318,9 @@ included, and a ratio between the two is set as a parameter. Supporting
 facilities include Enrichment, Thermal, and Fast Fuel Fabricators. The amount of
 thermal reactors requests that can be satisfied by recycled fuel is set as a
 parameter. The fraction is capped at :math:`\frac{1}{3}`, in line with current
-French LWR refueling practices.
+French LWR refueling practices. In the low-fidelity reactor scenario,
+:math:`f_{mox}` acts a probability that the batch request will be for thermal
+mox fuel.
 
 Parameters
 ~~~~~~~~~~
@@ -399,6 +403,9 @@ All of the parameters that can be set for this species are listed below:
     ===================== ================================================================== ==========================
     Handle                Full Name                                                          Possible Values
     ===================== ================================================================== ==========================
+    :math:`f_{rxtr}`      reactor fidelity                                                   :math:`\{0, 1\}`
+    :math:`f_{fc}`        fuel cycle fidelity                                                :math:`\{0, 1, 2\}`
+    :math:`f_{loc}`       location fidelity                                                  :math:`\{0, 1, 2\}`
     :math:`n_{rxtr}`      number of reactors                                                 any
     :math:`f_{t, f}`      ratio of thermal reactors to fast reactors                         :math:`[0, \frac{1}{4}]`
     :math:`f_{th, pu}`    ratio of Thorium to Plutonium-based fast reactors                  :math:`[0, 1]`
