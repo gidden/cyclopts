@@ -17,20 +17,30 @@ parameters = {
     "f_fc": Param(0, np.int8),
     "f_loc": Param(0, np.int8),
     "n_rxtr": Param(0, np.uint32), # use a different tool for more than 4294967295 rxtrs! 
-    "r_t_f": Param(1, np.float32),
-    "r_th_pu": Param(0, np.float32), 
-    "r_s_r": Param(0.5, np.float32),
-    "f_mox": Param(1.0/3, np.float32),
+    "r_t_f": Param(1.0, np.float32),
+    "r_th_pu": Param(0.0, np.float32), 
+    "r_s_r": Param(1.0 / 2, np.float32),
+    "f_mox": Param(1.0 / 3, np.float32),
     "r_inv_proc": Param(1.0, np.float32), 
     "n_reg": Param(0, np.uint32), # use a different tool for more than 4294967295 regions! 
     "r_l_c": Param(1.0, np.float32),
 }
 parameters = OrderedDict(sorted(parameters.items(), key=lambda t: t[0]))
 
-# class Point(RunControl):
-#     """A container class representing a point in parameter space"""
+class Point(RunControl):
+    """A container class representing a point in parameter space"""
     
-#     def __init__()
+    def __init__(self, d):
+        """Parameters
+        ----------
+        d : dict
+            a dictionary with key value pairs of parameter name, parameter 
+            value
+        """
+        # init with dict-specified value else default
+        for name, param in parameters:
+            val = d[name] if name in d else param.val
+            setattr(self, name, val)
 
 class Reactor(object):
     """A simplified reactor model for Structured Request Species"""
@@ -63,8 +73,13 @@ class StructuredRequest(ProblemSpecies):
     def __init__(self):
         super(StructuredRequest, self).__init__()
         self.tbl_name = 'StructuredRequestParameters'
+        self._family = ResourceExchange()
         self.space = None
         self._n_points = None
+        # 16 bytes for uuid
+        self._dtype = np.dtype(
+            [('paramid', ('str', 16)), ('family', ('str', 30))] + \
+                [(name, param.dtype) for name, param in parameters.items()])
 
     @property
     def family(self):
@@ -73,7 +88,7 @@ class StructuredRequest(ProblemSpecies):
         family : ResourceExchange
             An instance of this species' family
         """
-        return ResourceExchange()        
+        return self._family        
 
     @property
     def name(self):
@@ -97,8 +112,8 @@ class StructuredRequest(ProblemSpecies):
         tables : list of cyclopts_io.Tables
             All tables that could be written to by this species.
         """
-        dtype = np.dtype([(k, v[1]) for k, v in parameters.items()])
-        return [cycio.Table(h5file, '/'.join([prefix, self.tbl_name]), dtype)]
+        return [cycio.Table(h5file, '/'.join([prefix, self.tbl_name]), 
+                            self._dtype)]
 
     def read_space(self, space_dict):
         """Parameters
@@ -116,8 +131,8 @@ class StructuredRequest(ProblemSpecies):
         n : int
             The total number of points in the parameter space
         """
-        if self._n_points is None:
-            pass
+        if self._n_points is None: # lazy evaluation
+            self._n_points = tools.n_permutations(self.space)
         return self._n_points
     
     def points(self):
@@ -131,13 +146,14 @@ class StructuredRequest(ProblemSpecies):
             A generator for representation of a point in parameter space to be 
             used by this species
         """
-        raise NotImplementedError    
+        keys = self.space.keys()
+        vals = self.space.values()
+        for tup in itertools.product(vals):
+            d = {keys[i]: tup[i] for i in range(len(tup))}
+            yield Point(d)    
 
     def record_point(self, point, param_uuid, tables):
-        """Derived classes must implement this function, recording information
-        about a parameter point in the appropriate tables.
-        
-        Parameters
+        """Parameters
         ----------
         point : tuple or other
             A representation of a point in parameter space
@@ -146,10 +162,31 @@ class StructuredRequest(ProblemSpecies):
         tables : list of cyclopts_io.Table
             The tables that can be written to
         """
-        raise NotImplementedError
+        data = [param_uuid.bytes, self._family.name]
+        data += [getattr(point, k) for k in parameters.keys()]
+        tables[self.tbl_name].append_data(tuple(data))
 
     def _reactor_breakdown(self, point):
-        pass
+        """Returns
+        -------
+        n_uox, n_mox, n_thox : tuple
+            the number of each reactor type
+        """
+        n_rxtr = point.n_rxtr
+        fidelity = point.f_rxtr
+        r_t_f = point.r_t_f # thermal to fast
+        r_th_pu = point.r_th_pu # thox to mox
+        n_uox, n_mox, n_thox = 0, 0, 0
+        if fidelity == 0: # once through
+            n_uox = n_rxtr
+        elif fidelity == 1: # uox + fast mox
+            n_uox = int(math.ceil(r_t_f * n_rxtr))
+            n_mox = n_rxtr - n_uox
+        else: # uox + fast mox + fast thox
+            n_uox = int(math.ceil(r_t_f * n_rxtr))
+            n_thox = int(math.ceil(r_th_pu * (n_rxtr - n_uox)))
+            n_mox = n_rxtr - n_uox - n_thox
+        return n_uox, n_mox, n_thox
 
     def _get_reactors(self, point):
         n_uox, n_mox, n_thox = self._reactor_breakdown(point)
@@ -176,7 +213,16 @@ class StructuredRequest(ProblemSpecies):
         return reactors
 
     def _supplier_breakdown(self, point):
-        pass
+        n_uox_r, n_mox_r, n_thox_r = self._reactor_breakdown(point)
+        # number thermal suppliers
+        n_s_t = int(math.ceil(point.s_r_uox * n_uox_r)) 
+        n_uox = int(math.ceil(r_s_th * n_s_t))
+        n_t_mox = n_s_t - n_uox
+        # number f_mox suppliers
+        n_f_mox = int(math.ceil(point.s_r_mox * n_mox_r))
+        # number f_thox suppliers
+        n_f_thox = int(math.ceil(point.s_r_thox * n_thox_r)) 
+        retun n_uox, n_t_mox, n_f_mox, n_thox
 
     def _get_suppliers(self, point):
         n_uox, n_t_mox, n_f_mox, n_thox = self._supplier_breakdown(point)
