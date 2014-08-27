@@ -24,6 +24,7 @@ def test_basics():
     rc = parse_rc(os.path.join(base, 'files', 'obs_valid.rc'))
     sp.read_space(rc._dict)
     i = 0
+    assert_equal(len(range(1, 3)) ** 3, sp.n_points)
     for p in sp.points():
         i += 1
     assert_equal(i, 5)

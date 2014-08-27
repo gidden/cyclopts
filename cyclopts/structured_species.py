@@ -2,9 +2,35 @@
 
 :author: Matthew Gidden <matthew.gidden _at_ gmail.com>
 """
+import numpy as np
+
+from collections import OrderedDict, namedtuple
 
 from cyclopts.problems import ProblemSpecies
 from cyclopts import structured_species_data as data
+
+"""ordered mapping from input parameters to default values and np.dtypes, see
+the theory manual for further explanation of the parameter names"""
+Param = namedtuple('Param', ['val', 'dtype'])
+parameters = {
+    "f_rxtr": Param(0, np.int8),
+    "f_fc": Param(0, np.int8),
+    "f_loc": Param(0, np.int8),
+    "n_rxtr": Param(0, np.uint32), # use a different tool for more than 4294967295 rxtrs! 
+    "r_t_f": Param(1, np.float32),
+    "r_th_pu": Param(0, np.float32), 
+    "r_s_r": Param(0.5, np.float32),
+    "f_mox": Param(1.0/3, np.float32),
+    "r_inv_proc": Param(1.0, np.float32), 
+    "n_reg": Param(0, np.uint32), # use a different tool for more than 4294967295 regions! 
+    "r_l_c": Param(1.0, np.float32),
+}
+parameters = OrderedDict(sorted(parameters.items(), key=lambda t: t[0]))
+
+# class Point(RunControl):
+#     """A container class representing a point in parameter space"""
+    
+#     def __init__()
 
 class Reactor(object):
     """A simplified reactor model for Structured Request Species"""
@@ -37,7 +63,9 @@ class StructuredRequest(ProblemSpecies):
     def __init__(self):
         super(StructuredRequest, self).__init__()
         self.tbl_name = 'StructuredRequestParameters'
-        
+        self.space = None
+        self._n_points = None
+
     @property
     def family(self):
         """Returns
@@ -57,10 +85,7 @@ class StructuredRequest(ProblemSpecies):
         return 'StructuredRequest'
 
     def register_tables(self, h5file, prefix):
-        """Derived classes must implement this function and return their list of
-        tables
-        
-        Parameters
+        """Parameters
         ----------
         h5file : PyTables File
             the hdf5 file
@@ -72,30 +97,28 @@ class StructuredRequest(ProblemSpecies):
         tables : list of cyclopts_io.Tables
             All tables that could be written to by this species.
         """
-        raise NotImplementedError
+        dtype = np.dtype([(k, v[1]) for k, v in parameters.items()])
+        return [cycio.Table(h5file, '/'.join([prefix, self.tbl_name]), dtype)]
 
     def read_space(self, space_dict):
-        """Derived classes must implement this function.
-
-        Parameters
+        """Parameters
         ----------
         space_dict : dict
             A dictionary container resulting from the reading in of a run 
             control file
         """
-        raise NotImplementedError
+        self.space = {k: v for k, v in space_dict.items() if k in parameters}
 
     @property
     def n_points(self):
-        """Derived classes must implement this function returning the number of
-        points in its parameter space.
-        
-        Returns
+        """Returns
         -------
         n : int
             The total number of points in the parameter space
         """
-        raise NotImplementedError
+        if self._n_points is None:
+            pass
+        return self._n_points
     
     def points(self):
         """Derived classes must implement this function returning a
@@ -178,10 +201,10 @@ class StructuredRequest(ProblemSpecies):
                                  for i in range(n_uox)]), 
             dtype=Supplier)
         suppliers = {
-            Suppliers.uox = uox_s,
-            Suppliers.th_mox = mox_t_s,
-            Suppliers.f_mox = mox_f_s,
-            Suppliers.f_thox = thox_s,
+            Suppliers.uox: uox_s,
+            Suppliers.th_mox: mox_t_s,
+            Suppliers.f_mox: mox_f_s,
+            Suppliers.f_thox: thox_s,
             }
         return suppliers
 

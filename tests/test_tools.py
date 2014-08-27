@@ -154,8 +154,32 @@ def test_collect_instids():
     h5file.close()    
 
 def test_n_permutations():
-    d = {"foo": range(10), "bar": ["42", 42]}
-    assert_equal(20, tools.n_permutations(d))
+    x = "foo"
+    assert_equal(1, tools.n_permutations(x))
+    
+    x = 42
+    assert_equal(1, tools.n_permutations(x))
+    
+    x = ["foo", 42]
+    assert_equal(2, tools.n_permutations(x))
+    
+    x = [[1, 2]]
+    assert_equal(2, tools.n_permutations(x))
+    
+    x = {"foo": [[1, 2]], "bar": [[1, 2]]}
+    assert_equal(4, tools.n_permutations(x))
 
-    d = {"foo": {"foobar": range(10), "foobaz": range(5)}, "bar": ["42", 42]}
-    assert_equal(100, tools.n_permutations(d))
+    x = {'foo': [[1, 2]], 'bar': [[1, 2]], 'baz': [[1, 2]]}
+    assert_equal(2 ** 3, tools.n_permutations(x))
+
+    x = {'foo': [[1, 2], [1]], 'bar': [[1, 2]], 'baz': [[1, 2]]}
+    assert_equal(2 ** 3, tools.n_permutations(x))
+    
+    x = {"foo": range(10), "bar": ["42", 42]}
+    assert_equal(20, tools.n_permutations(x))
+
+    x = {"foo": {"foobar": range(10), "foobaz": range(5)}, "bar": ["42", 42]}
+    assert_equal(100, tools.n_permutations(x))
+
+    x = {"foo": [range(10), range(5)], "bar": ["42", 42]}
+    assert_equal(100, tools.n_permutations(x))

@@ -14,7 +14,7 @@ import tables as t
 import numpy as np
 from functools import reduce
 from itertools import product
-from collections import defaultdict, Iterable
+from collections import defaultdict, Iterable, Sequence, Mapping
 import paramiko as pm
 from os import kill
 from signal import alarm, signal, SIGALRM, SIGKILL
@@ -460,17 +460,26 @@ def collect_instids(h5file, path, rc=None, instids=None, colname='instid'):
     
     return instids
 
-def n_permutations(d):
+def n_permutations(x):
     """Parameters
     ----------
-    d : dict or recursive dict
+    x : dict, list, or other
     
     Returns
     -------
     n : int
-        the total number of permutations of values in the dictionary, if d has 
-        dictionaries as keys, those are recusively interrogated as well
+        the total number of permutations of values in x, if x has 
+        container values, those are recusively interrogated as well
     """
-    return reduce(operator.mul, 
-                  (len(v) if not isinstance(v, dict) \
-                       else n_permutations(v) for v in d.values()))
+    print(x)
+    n = 1
+    if isinstance(x, Sequence) and not isinstance(x, basestring):
+        if isinstance(x[0], Sequence) and not isinstance(x[0], basestring):
+            for y in x:
+                n *= n_permutations(y)
+        else:
+            n *= len(x)
+    elif isinstance(x, Mapping):
+        for v in x.values():
+            n *= n_permutations(v)
+    return n
