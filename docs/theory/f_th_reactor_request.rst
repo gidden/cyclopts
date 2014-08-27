@@ -283,12 +283,12 @@ are formulated as follows
 
     S_{proc}, given
 
-    S_{inv} = S_{proc} f_{inv, proc} \frac{conv_{proc}(\bar{\epsilon}, 1)}{conv_{inv}(\bar{\epsilon}, 1)}
+    S_{inv} = S_{proc} r_{inv, proc} \frac{conv_{proc}(\bar{\epsilon}, 1)}{conv_{inv}(\bar{\epsilon}, 1)}
 
 Parameters
 ::::::::::
 
-    :math:`f_{inv, proc}` : the ratio of the inventory RHS to the process RHS
+    :math:`r_{inv, proc}` : the ratio of the inventory RHS to the process RHS
 
 Fuel Cycles
 -----------
@@ -325,12 +325,12 @@ mox fuel.
 Parameters
 ~~~~~~~~~~
 
-    :math:`f_{t, f}` : the ratio of thermal reactors to fast reactors
+    :math:`r_{t, f}` : the ratio of thermal reactors to fast reactors
 
     :math:`f_{mox} \in [0, \frac{1}{3}]` : the fraction of thermal reactor
     requests that can be met with recycled fuel
 
-    :math:`f_{s, r}` : the ratio of primary suppliers to their primary requesters
+    :math:`r_{s, r}` : the ratio of primary suppliers to their primary requesters
 
 Recycle + Thorium
 +++++++++++++++++
@@ -344,7 +344,7 @@ Fabricator is added to the pool of suppliers.
 Parameters
 ~~~~~~~~~~
 
-    :math:`f_{th, pu}` : the ratio of Thorium to Plutonium-based fast reactors
+    :math:`r_{th, pu}` : the ratio of Thorium to Plutonium-based fast reactors
 
 Location Assignment
 ---------------------
@@ -407,11 +407,11 @@ All of the parameters that can be set for this species are listed below:
     :math:`f_{fc}`        fuel cycle fidelity                                                :math:`\{0, 1, 2\}`
     :math:`f_{loc}`       location fidelity                                                  :math:`\{0, 1, 2\}`
     :math:`n_{rxtr}`      number of reactors                                                 any
-    :math:`f_{t, f}`      ratio of thermal reactors to fast reactors                         :math:`[0, \frac{1}{4}]`
-    :math:`f_{th, pu}`    ratio of Thorium to Plutonium-based fast reactors                  :math:`[0, 1]`
-    :math:`f_{s, r}`      ratio of primary suppliers to their primary requesters             :math:`[0, \frac{1}{2}]`
+    :math:`r_{t, f}`      ratio of thermal reactors to fast reactors                         :math:`[0, \frac{1}{4}]`
+    :math:`r_{th, pu}`    ratio of Thorium to Plutonium-based fast reactors                  :math:`[0, 1]`
+    :math:`r_{s, r}`      ratio of primary suppliers to their primary requesters             :math:`[0, \frac{1}{2}]`
     :math:`f_{mox}`       fraction of thermal reactor requests that can be met with mox fuel :math:`[0, \frac{1}{3}]`
-    :math:`f_{inv, proc}` ratio of the inventory RHS to the process RHS                      :math:`\{0.5, 1, 2\}`
+    :math:`r_{inv, proc}` ratio of the inventory RHS to the process RHS                      :math:`\{0.5, 1, 2\}`
     :math:`\delta_{l}`    whether to include a location preference                           :math:`\{0, 1\}`
     :math:`\delta_{fine}` whether to include a fine location proxy                           :math:`\{0, 1\}`
     :math:`n_{reg}`       number of regions                                                  any
