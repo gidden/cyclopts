@@ -396,7 +396,8 @@ Parameters
 Parameter Summary
 -----------------
 
-All of the parameters that can be set for this species are listed below:
+All of the parameters that can be set in a run control for this species are
+listed below:
 
 .. table:: Structured Request Species Parameters
 
