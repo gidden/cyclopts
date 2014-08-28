@@ -65,10 +65,10 @@ class Point(object):
 class Reactor(object):
     """A simplified reactor model for Structured Request Species"""
     
-    def __init__(self, kind, point, gid=0, nid=0):
+    def __init__(self, kind, point, gids, nids):
         self.kind = kind
         self.n_assems = n = 1 if point.f_rxtr == 1 else data.n_assemblies[kind]        
-        
+
         self.nodes = []
         self.commod_to_nodes = defaultdict(list)
         self.enr = {}
@@ -76,13 +76,14 @@ class Reactor(object):
         req = True
         excl = True
         qty = data.fuel_unit * data.request_qtys[kind]
-        req_qty = qty / n
+        self.req_qty = qty / n
+        gid = gids.next()
         for commod in data.enr_ranges[kind].keys():
+            req_qty = self.req_qty * data.relative_qtys[kind][commod]
             lb, ub = data.enr_ranges[kind][commod]
             self.enr[commod] = random.uniform(lb, ub) # one enr per commod per reactor
             for i in range(n):
-                node = exinst.ExNode(nid, gid, req, req_qty, excl)
-                nid += 1
+                node = exinst.ExNode(nids.next(), gid, req, req_qty, excl)
                 self.nodes.append(node)
                 self.commod_to_nodes[commod].append(node)
 
@@ -92,7 +93,7 @@ class Reactor(object):
 class Supplier(object):
     """A simplified supplier model for Structured Request Species"""
     
-    def __init__(self, kind, point, gid=0):
+    def __init__(self, kind, point, gids):
         # this init function should set up structured species members 
         # it should *not* generate ExNodes
         self.kind = kind
@@ -101,7 +102,7 @@ class Supplier(object):
         req = True
         rhs = [data.sup_rhs[kind], 
                data.sup_rhs[kind] * point.r_inv_proc * data.conv_ratio(kind)]
-        self.group = exinst.ExGroup(gid, not req, rhs)
+        self.group = exinst.ExGroup(gids.next(), not req, rhs)
         self.loc = data.loc()
 
 class StructuredRequest(ProblemSpecies):
@@ -117,6 +118,10 @@ class StructuredRequest(ProblemSpecies):
         self._dtype = np.dtype(
             [('paramid', ('str', 16)), ('family', ('str', 30))] + \
                 [(name, param.dtype) for name, param in parameters.items()])
+    
+        self.nids = tools.Incrementer()
+        self.gids = tools.Incrementer()
+        self.arcids = tools.Incrementer()
 
     @property
     def family(self):
@@ -231,17 +236,20 @@ class StructuredRequest(ProblemSpecies):
         n_uox, n_mox, n_thox = self._reactor_breakdown(point)
         uox_th_r = np.ndarray(
             shape=(n_uox,), 
-            buffer=np.array([Reactor(data.Reactors.th, point) \
+            buffer=np.array([Reactor(data.Reactors.th, point, 
+                                     self.gids, self.nids) \
                                  for i in range(n_uox)]), 
             dtype=Reactor)
         mox_f_r = np.ndarray(
             shape=(n_mox,), 
-            buffer=np.array([Reactor(data.Reactors.f_mox, point) \
+            buffer=np.array([Reactor(data.Reactors.f_mox, point, 
+                                     self.gids, self.nids) \
                                  for i in range(n_uox)]), 
             dtype=Reactor)
         thox_f_r = np.ndarray(
             shape=(n_thox,), 
-            buffer=np.array([Reactor(data.Reactors.f_thox, point) \
+            buffer=np.array([Reactor(data.Reactors.f_thox, point, 
+                                     self.gids, self.nids) \
                                  for i in range(n_uox)]), 
             dtype=Reactor)
         reactors = {
@@ -272,17 +280,17 @@ class StructuredRequest(ProblemSpecies):
             dtype=Supplier)
         mox_th_s = np.ndarray(
             shape=(n_t_mox), 
-            buffer=np.array([Supplier(data.Suppliers.th_mox, point) \
+            buffer=np.array([Supplier(data.Suppliers.th_mox, point, self.gids) \
                                  for i in range(n_uox)]), 
             dtype=Supplier)
         mox_f_s = np.ndarray(
             shape=(n_f_mox), 
-            buffer=np.array([Supplier(data.Suppliers.f_mox, point) \
+            buffer=np.array([Supplier(data.Suppliers.f_mox, point, self.gids) \
                                  for i in range(n_uox)]), 
             dtype=Supplier)
         thox_s = np.ndarray(
             shape=(n_f_thox), 
-            buffer=np.array([Supplier(data.Suppliers.f_thox, point) \
+            buffer=np.array([Supplier(data.Suppliers.f_thox, point, self.gids) \
                                  for i in range(n_uox)]), 
             dtype=Supplier)
         suppliers = {
@@ -293,11 +301,31 @@ class StructuredRequest(ProblemSpecies):
             }
         return suppliers
 
-    def _generate_supply(self, point, commod, requester, supplier):
-        # this function should generate the supply for a single reactor from a single supplier
-        # supplier nodes should be added
-        # arcs should be generated and returned (as an nd array), preferences should be generated here 
+    def _pref(self, point, requester, supplier):
         pass
+
+    def _generate_supply(self, point, commod, requester, supplier):
+        r = requester
+        s = supplier
+        pref = self._pref(point, r, s)
+        rnodes = r.commod_to_nodes[commod]
+        arcs = []
+        enr = requester.enr[commod]
+        req_coeffs = [r.req_qty / data.relative_qtys[r.kind][commod]]
+        converters = data.converter[kind]
+        sup_coeffs = [c[k](r.req_qty * data.relative_qtys[r.kind][commod], 
+                           enr, commod) for k in ['proc', 'inv']]
+        for i in range(len(rnodes)):
+            req = True
+            nid = self.nids.next()
+            node = exinst.ExNode(nid, s.group.id, not req)
+            s.nodes.append(node)
+            arcs.append(exinst.ExArc(
+                    self.arcids.next(),
+                    rnodes[i].id, req_coeffs,
+                    nid, sup_coeffs,
+                    pref))
+        return arcs
 
     def _get_arcs(self, point, reactors, suppliers):
         arcs = []

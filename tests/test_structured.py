@@ -4,6 +4,7 @@ import uuid
 
 from nose.tools import assert_equal, assert_almost_equal, assert_true, assert_false
 
+from cyclopts import tools
 from cyclopts.exchange_family import ResourceExchange
 from cyclopts import structured_species_data as data
 
@@ -120,11 +121,12 @@ def test_supplier_breakdown():
 
 def test_reactor():
     p = strsp.Point()
-        
-    r = strsp.Reactor(data.Reactors.th, p)
+    gids = tools.Incrementer()
+    nids = tools.Incrementer()    
+    r = strsp.Reactor(data.Reactors.th, p, gids, nids)
 
 def test_supplier():
     p = strsp.Point()
-        
-    r = strsp.Supplier(data.Suppliers.uox, p)
+    gids = tools.Incrementer()
+    s = strsp.Supplier(data.Suppliers.uox, p, gids)
     
