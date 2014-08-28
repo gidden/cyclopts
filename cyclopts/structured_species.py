@@ -222,7 +222,7 @@ class StructuredRequest(ProblemSpecies):
         n_f_mox = int(math.ceil(point.s_r_mox * n_mox_r))
         # number f_thox suppliers
         n_f_thox = int(math.ceil(point.s_r_thox * n_thox_r)) 
-        retun n_uox, n_t_mox, n_f_mox, n_thox
+        return n_uox, n_t_mox, n_f_mox, n_thox
 
     def _get_suppliers(self, point):
         n_uox, n_t_mox, n_f_mox, n_thox = self._supplier_breakdown(point)
