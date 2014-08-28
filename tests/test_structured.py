@@ -5,6 +5,7 @@ import uuid
 from nose.tools import assert_equal, assert_almost_equal, assert_true, assert_false
 
 from cyclopts.exchange_family import ResourceExchange
+from cyclopts import structured_species_data as data
 
 def test_pnt():
     p = strsp.Point({'foo': 'bar', 'n_rxtr': 100})
@@ -52,7 +53,10 @@ def test_request_write_point():
     # n_rxtr
     # r_inv_proc
     # r_l_c
-    # r_s_r
+    # r_s_mox
+    # r_s_th
+    # r_s_thox
+    # r_s_uox_mox
     # r_t_f
     # r_th_pu    
     exp = (
@@ -62,19 +66,51 @@ def test_request_write_point():
         0,
         1.0/3,
         0,
-        1,
+        10,
         100, # non defaults
         1,
         1,
         0.5,
+        0.5,
+        0.5,
+        1,
         1,
         0,
         )
     obs = tbl._data[0]
-    keys = strsp.parameters.keys()
-    for i in range(len(exp)):
+    for i, k in enumerate(strsp.parameters):
+        print(k)
         if isinstance(exp[i], float):
             assert_almost_equal(obs[i], exp[i])
         else:
             assert_equal(obs[i], exp[i])
+    
+def test_reactor_breakdown():
+    sp = strsp.StructuredRequest()
+    p = strsp.Point({
+            'n_rxtr': 101,
+            'f_fc': 2,
+            'r_t_f': 0.23,
+            'r_th_pu': 0.15,
+            })    
+    obs = sp._reactor_breakdown(p)
+    exp = (23, 66, 12)
+    assert_equal(obs, exp)
+
+# def test_supplier_breakdown():
+#     sp = strsp.StructuredRequest()
+#     p = strsp.Point({
+#             'n_rxtr': 101,
+#             'f_fc': 2,
+#             'f_t_f': 0.23,
+#             'r_th_pu': 0.15,
+#             })
+    
+#     obs = sp._get_suppliers(p) 
+#     exp = {
+#         Suppliers.uox: uox_s,
+#         Suppliers.th_mox: mox_t_s,
+#         Suppliers.f_mox: mox_f_s,
+#         Suppliers.f_thox: thox_s,
+#         }
     

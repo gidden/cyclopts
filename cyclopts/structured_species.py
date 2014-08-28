@@ -23,10 +23,13 @@ parameters = {
     "n_rxtr": Param(0, np.uint32), # use a different tool for more than 4294967295 rxtrs! 
     "r_t_f": Param(1.0, np.float32),
     "r_th_pu": Param(0.0, np.float32), 
-    "r_s_r": Param(1.0 / 2, np.float32),
+    "r_s_th": Param(1.0 / 2, np.float32),
+    "r_s_uox_mox": Param(1.0, np.float32),
+    "r_s_mox": Param(1.0 / 2, np.float32),
+    "r_s_thox": Param(1.0 / 2, np.float32),
     "f_mox": Param(1.0 / 3, np.float32),
     "r_inv_proc": Param(1.0, np.float32), 
-    "n_reg": Param(1, np.uint32), # use a different tool for more than 4294967295 regions! 
+    "n_reg": Param(10, np.uint32), # use a different tool for more than 4294967295 regions! 
     "r_l_c": Param(1.0, np.float32),
 }
 parameters = OrderedDict(sorted(parameters.items(), key=lambda t: t[0]))
@@ -173,6 +176,8 @@ class StructuredRequest(ProblemSpecies):
         tables : list of cyclopts_io.Table
             The tables that can be written to
         """
+        for k in parameters.keys():
+            print(k)
         data = [param_uuid.bytes, self._family.name]
         data += [getattr(point, k) for k in parameters.keys()]
         tables[self.tbl_name].append_data(tuple(data))
@@ -184,18 +189,18 @@ class StructuredRequest(ProblemSpecies):
             the number of each reactor type
         """
         n_rxtr = point.n_rxtr
-        fidelity = point.f_rxtr
+        fidelity = point.f_fc
         r_t_f = point.r_t_f # thermal to fast
         r_th_pu = point.r_th_pu # thox to mox
         n_uox, n_mox, n_thox = 0, 0, 0
         if fidelity == 0: # once through
             n_uox = n_rxtr
         elif fidelity == 1: # uox + fast mox
-            n_uox = int(math.ceil(r_t_f * n_rxtr))
+            n_uox = int(round(r_t_f * n_rxtr))
             n_mox = n_rxtr - n_uox
         else: # uox + fast mox + fast thox
-            n_uox = int(math.ceil(r_t_f * n_rxtr))
-            n_thox = int(math.ceil(r_th_pu * (n_rxtr - n_uox)))
+            n_uox = int(round(r_t_f * n_rxtr))
+            n_thox = int(round(r_th_pu * (n_rxtr - n_uox)))
             n_mox = n_rxtr - n_uox - n_thox
         return n_uox, n_mox, n_thox
 
@@ -218,7 +223,7 @@ class StructuredRequest(ProblemSpecies):
             dtype=Reactor)
         reactors = {
             data.Reactors.th: uox_th_r,
-            data.Reactors.f_mox: mox_th_r,
+            data.Reactors.f_mox: mox_f_r,
             data.Reactors.f_thox: thox_f_r,
             }
         return reactors
@@ -226,13 +231,13 @@ class StructuredRequest(ProblemSpecies):
     def _supplier_breakdown(self, point):
         n_uox_r, n_mox_r, n_thox_r = self._reactor_breakdown(point)
         # number thermal suppliers
-        n_s_t = int(math.ceil(point.s_r_uox * n_uox_r)) 
-        n_uox = int(math.ceil(r_s_th * n_s_t))
+        n_s_t = int(round(point.s_r_uox * n_uox_r)) 
+        n_uox = int(round(r_s_th * n_s_t))
         n_t_mox = n_s_t - n_uox
         # number f_mox suppliers
-        n_f_mox = int(math.ceil(point.s_r_mox * n_mox_r))
+        n_f_mox = int(round(point.s_r_mox * n_mox_r))
         # number f_thox suppliers
-        n_f_thox = int(math.ceil(point.s_r_thox * n_thox_r)) 
+        n_f_thox = int(round(point.s_r_thox * n_thox_r)) 
         return n_uox, n_t_mox, n_f_mox, n_thox
 
     def _get_suppliers(self, point):
