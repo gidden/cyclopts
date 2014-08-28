@@ -114,3 +114,10 @@ def test_supplier_breakdown():
     obs = sp._supplier_breakdown(p) 
     exp = (2, 1, 30, 5)    
     assert_equal(obs, exp)
+
+
+def test_reactor():
+    p = strsp.Point()
+        
+    r = strsp.Reactor(data.Reactors.th, p)
+    

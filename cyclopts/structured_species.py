@@ -37,13 +37,14 @@ parameters = OrderedDict(sorted(parameters.items(), key=lambda t: t[0]))
 class Point(object):
     """A container class representing a point in parameter space"""
     
-    def __init__(self, d):
+    def __init__(self, d=None):
         """Parameters
         ----------
-        d : dict
+        d : dict, optional
             a dictionary with key value pairs of parameter name, parameter 
             value
         """
+        d = d if d is not None else {}
         # init with dict-specified value else default
         for name, param in parameters.items():
             val = d[name] if name in d else param.val
@@ -292,7 +293,7 @@ class StructuredRequest(ProblemSpecies):
     def gen_inst(self, point):
         """Parameters
         ----------
-        point :  RandomRequestPoint
+        point :  structured_species.Point
             A representation of a point in parameter space
            
         Returns
