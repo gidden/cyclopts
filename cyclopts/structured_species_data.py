@@ -126,27 +126,53 @@ pref_basis = {
 """supplier limiting values"""
 sup_rhs = {
     Suppliers.uox: 2.3e5,
-    Suppliers.th_mox: 800./12, # 800t/yr / 12 months/yr
-    Suppliers.f_mox: 800./12,
-    Suppliers.f_thox: 800./12,
+    Suppliers.th_mox: 800e3/12, # 800t/yr / 12 months/yr
+    Suppliers.f_mox: 800e3/12,
+    Suppliers.f_thox: 800e3/12,
     }
+
+class Converter(object):
+    """pure virtual class for conversion functions"""
+    def __call__(self, qty, enr, commod=None):
+        """derived classes must return a value representing a constraint
+        coefficient"""
+        raise NotImplementedError
+
+# todo
+class NatU(Converter):
+    def __call__(self, qty, enr, commod=None):
+        pass
+
+#todo
+class SWU(Converter):
+    def __call__(self, qty, enr, commod=None):
+        pass
+
+class RecycleProc(Converter):
+    def __call__(self, qty, enr, commod=None):
+        factor = 1 if commod == Commodities.uox else 100
+        return qty * factor
+
+class RecycleInv(Converter):
+    def __call__(self, qty, enr, commod=None):
+        return qty * enr
 
 converters = {
     Suppliers.uox: {
-        'proc': None, 
-        'inv': None
+        'proc': SWU(), 
+        'inv': NatU(),
         },
     Suppliers.th_mox: {
-        'proc': None, 
-        'inv': None
+        'proc': RecycleProc(), 
+        'inv': RecycleInv(),
         },
     Suppliers.f_mox: {
-        'proc': None, 
-        'inv': None
+        'proc': RecycleProc(), 
+        'inv': RecycleInv(),
         },
     Suppliers.f_thox: {
-        'proc': None, 
-        'inv': None
+        'proc': RecycleProc(), 
+        'inv': RecycleInv(),
         },
 }
 
