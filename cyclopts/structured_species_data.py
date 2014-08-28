@@ -1,6 +1,7 @@
 """Data for structured species"""
 import random
 from enum import Enum
+import numpy as np
 
 class Commodities(Enum):
     uox = 1
@@ -141,12 +142,12 @@ class Converter(object):
 # todo
 class NatU(Converter):
     def __call__(self, qty, enr, commod=None):
-        pass
+        return 1
 
 #todo
 class SWU(Converter):
     def __call__(self, qty, enr, commod=None):
-        pass
+        return 1
 
 class RecycleProc(Converter):
     def __call__(self, qty, enr, commod=None):
@@ -175,6 +176,12 @@ converters = {
         'inv': RecycleInv(),
         },
 }
+
+def conv_ratio(kind):
+    commod, rxtr = sup_to_commod[kind], sup_to_rxtr[kind]
+    mean_enr = np.mean(enr_ranges[commod][rxtr])
+    return converters[kind]['proc'](1.0, mean_enr, commod) / \
+        converters[kind]['inv'](1.0, mean_enr, commod)
 
 """generate a location"""
 loc = lambda: random.uniform(0, 1)

@@ -6,7 +6,7 @@ import itertools
 import numpy as np
 import random
 
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict, namedtuple, defaultdict
 
 from cyclopts import tools
 from cyclopts import cyclopts_io as cycio
@@ -65,34 +65,42 @@ class Point(object):
 class Reactor(object):
     """A simplified reactor model for Structured Request Species"""
     
-    def __init__(self, kind, point, gid=0):
-        # this init function should set up structured species members and generate ExNodes
+    def __init__(self, kind, point, gid=0, nid=0):
         self.kind = kind
-        self.n_assems = data.n_assemblies[kind]
-        self.nodes = None
-        self.commod_to_nodes = None
+        self.n_assems = n = 1 if point.f_rxtr == 1 else data.n_assemblies[kind]        
         
+        self.nodes = []
+        self.commod_to_nodes = defaultdict(list)
+        self.enr = {}
+
         req = True
+        excl = True
         qty = data.fuel_unit * data.request_qtys[kind]
+        req_qty = qty / n
+        for commod in data.enr_ranges[kind].keys():
+            lb, ub = data.enr_ranges[kind][commod]
+            self.enr[commod] = random.uniform(lb, ub) # one enr per commod per reactor
+            for i in range(n):
+                node = exinst.ExNode(nid, gid, req, req_qty, excl)
+                nid += 1
+                self.nodes.append(node)
+                self.commod_to_nodes[commod].append(node)
+
         self.group = exinst.ExGroup(gid, req, [qty], qty)
         self.loc = data.loc()
 
 class Supplier(object):
-    """A simplified reactor model for Structured Request Species"""
+    """A simplified supplier model for Structured Request Species"""
     
     def __init__(self, kind, point, gid=0):
         # this init function should set up structured species members 
         # it should *not* generate ExNodes
         self.kind = kind
         self.nodes = None
-    
+
         req = True
-        commod, rxtr = data.sup_to_commod[kind], data.sup_to_rxtr[kind]
-        mean_enr = np.mean(data.enr_ranges[commod][rxtr])
-        conv_ratio = data.converters[kind]['proc'](1.0, mean_enr, commod) / \
-            data.converters[kind]['inv'](1.0, mean_enr, commod)
         rhs = [data.sup_rhs[kind], 
-               data.sup_rhs[kind] * point.r_inv_proc * conv_ratio]
+               data.sup_rhs[kind] * point.r_inv_proc * data.conv_ratio(kind)]
         self.group = exinst.ExGroup(gid, not req, rhs)
         self.loc = data.loc()
 
@@ -285,7 +293,7 @@ class StructuredRequest(ProblemSpecies):
             }
         return suppliers
 
-    def _generate_supply(self, point, r_kind, commod, r_nodes, s_kind, supplier):
+    def _generate_supply(self, point, commod, requester, supplier):
         # this function should generate the supply for a single reactor from a single supplier
         # supplier nodes should be added
         # arcs should be generated and returned (as an nd array), preferences should be generated here 
@@ -295,13 +303,11 @@ class StructuredRequest(ProblemSpecies):
         arcs = []
         for r_kind, r_ary in reactors.items():
             for r in r_ary:
-                for commod, nodes in r.commod_to_nodes:
-                    s_kind = commodities_to_suppliers[s_kind]
-                    for s_ary in suppliers[s_kind]:
+                for commod in data.enr_ranges[r.kind].keys():
+                    for s_ary in suppliers[commodities_to_suppliers[commod]]:
                         for s in s_ary:
                             arcs.append(
-                                self._generate_supply(point, r_kind, commod, 
-                                                      nodes, s_kind, s))
+                                self._generate_supply(point, commod, r, s))
         return np.concatenate(arcs)                    
 
     def gen_inst(self, point):

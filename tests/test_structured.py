@@ -122,4 +122,9 @@ def test_reactor():
     p = strsp.Point()
         
     r = strsp.Reactor(data.Reactors.th, p)
+
+def test_supplier():
+    p = strsp.Point()
+        
+    r = strsp.Supplier(data.Suppliers.uox, p)
     
