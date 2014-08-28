@@ -4,11 +4,13 @@
 """
 import itertools
 import numpy as np
+import random
 
 from collections import OrderedDict, namedtuple
 
 from cyclopts import tools
 from cyclopts import cyclopts_io as cycio
+import cyclopts.exchange_instance as exinst
 from cyclopts.problems import ProblemSpecies
 from cyclopts.exchange_family import ResourceExchange
 from cyclopts import structured_species_data as data
@@ -31,6 +33,7 @@ parameters = {
     "r_inv_proc": Param(1.0, np.float32), 
     "n_reg": Param(10, np.uint32), # use a different tool for more than 4294967295 regions! 
     "r_l_c": Param(1.0, np.float32),
+    "seed": Param(-1.0, np.int64), # default is negative 
 }
 parameters = OrderedDict(sorted(parameters.items(), key=lambda t: t[0]))
 
@@ -49,6 +52,8 @@ class Point(object):
         for name, param in parameters.items():
             val = d[name] if name in d else param.val
             setattr(self, name, val)
+        if self.seed > 0:
+            random.seed(self.seed)
 
     def __eq__(self, other):
         return (isinstance(other, self.__class__) \
@@ -60,27 +65,36 @@ class Point(object):
 class Reactor(object):
     """A simplified reactor model for Structured Request Species"""
     
-    def __init__(self, kind, point):
+    def __init__(self, kind, point, gid=0):
         # this init function should set up structured species members and generate ExNodes
         self.kind = kind
         self.n_assems = data.n_assemblies[kind]
         self.nodes = None
         self.commod_to_nodes = None
-        self.group = None
-        self.loc = None
+        
+        req = True
+        qty = data.fuel_unit * data.request_qtys[kind]
+        self.group = exinst.ExGroup(gid, req, [qty], qty)
+        self.loc = data.loc()
 
 class Supplier(object):
     """A simplified reactor model for Structured Request Species"""
     
-    def __init__(self, kind, point):
+    def __init__(self, kind, point, gid=0):
         # this init function should set up structured species members 
         # it should *not* generate ExNodes
         self.kind = kind
-        self.converters = None
-        self.rhs = None
         self.nodes = None
-        self.group = None
-        self.loc = None
+    
+        req = True
+        commod, rxtr = data.sup_to_commod[kind], data.sup_to_rxtr[kind]
+        mean_enr = np.mean(data.enr_ranges[commod][rxtr])
+        conv_ratio = data.converters[kind]['proc'](1.0, mean_enr, commod) / \
+            data.converters[kind]['inv'](1.0, mean_enr, commod)
+        rhs = [data.sup_rhs[kind], 
+               data.sup_rhs[kind] * point.r_inv_proc * conv_ratio]
+        self.group = exinst.ExGroup(gid, not req, rhs)
+        self.loc = data.loc()
 
 class StructuredRequest(ProblemSpecies):
     """A class representing structured request-based exchanges species."""

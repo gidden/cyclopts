@@ -1,5 +1,5 @@
 """Data for structured species"""
-
+import random
 from enum import Enum
 
 class Commodities(Enum):
@@ -19,15 +19,29 @@ class Suppliers(Enum):
     f_mox = 3
     f_thox = 4
 
-commodities_to_suppliers = {
+commod_to_sup = {
     Commodities.uox: Suppliers.uox,
     Commodities.th_mox: Suppliers.th_mox,
     Commodities.f_mox: Suppliers.f_mox,
     Commodities.f_thox: Suppliers.f_thox,
 }
 
+sup_to_commod = {
+    Suppliers.uox: Commodities.uox,
+    Suppliers.th_mox: Commodities.th_mox,
+    Suppliers.f_mox: Commodities.f_mox,
+    Suppliers.f_thox: Commodities.f_thox,
+}
+
+sup_to_rxtr = {
+    Suppliers.uox: Reactors.th,
+    Suppliers.th_mox: Reactors.th,
+    Suppliers.f_mox: Reactors.f_mox,
+    Suppliers.f_thox: Reactors.f_thox,
+}
+
 """lower bound, upper bound tuples of enrichment ranges"""
-enrichment_ranges = {
+enr_ranges = {
     Reactors.th : {
         Commodities.uox : (3.5, 5.5),
         Commodities.th_mox : (55.0, 65.0),
@@ -107,4 +121,34 @@ pref_basis = {
         Commodities.f_mox : 0.5,
         Commodities.f_thox : 1.0,
         },
+    }
+
+"""supplier limiting values"""
+sup_rhs = {
+    Suppliers.uox: 2.3e5,
+    Suppliers.th_mox: 800./12, # 800t/yr / 12 months/yr
+    Suppliers.f_mox: 800./12,
+    Suppliers.f_thox: 800./12,
+    }
+
+converters = {
+    Suppliers.uox: {
+        'proc': None, 
+        'inv': None
+        },
+    Suppliers.th_mox: {
+        'proc': None, 
+        'inv': None
+        },
+    Suppliers.f_mox: {
+        'proc': None, 
+        'inv': None
+        },
+    Suppliers.f_thox: {
+        'proc': None, 
+        'inv': None
+        },
 }
+
+"""generate a location"""
+loc = lambda: random.uniform(0, 1)

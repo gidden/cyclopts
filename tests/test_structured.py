@@ -59,6 +59,7 @@ def test_request_write_point():
     # r_s_uox_mox
     # r_t_f
     # r_th_pu    
+    # seed
     exp = (
         uid.bytes,
         ResourceExchange().name,
@@ -76,6 +77,7 @@ def test_request_write_point():
         1,
         1,
         0,
+        -1,
         )
     obs = tbl._data[0]
     for i, k in enumerate(strsp.parameters):
