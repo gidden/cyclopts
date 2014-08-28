@@ -97,20 +97,20 @@ def test_reactor_breakdown():
     exp = (23, 66, 12)
     assert_equal(obs, exp)
 
-# def test_supplier_breakdown():
-#     sp = strsp.StructuredRequest()
-#     p = strsp.Point({
-#             'n_rxtr': 101,
-#             'f_fc': 2,
-#             'f_t_f': 0.23,
-#             'r_th_pu': 0.15,
-#             })
+def test_supplier_breakdown():
+    sp = strsp.StructuredRequest()
+    p = strsp.Point({
+            'n_rxtr': 101,
+            'f_fc': 2,
+            'r_t_f': 0.23,
+            'r_th_pu': 0.15,
+            'r_s_th': 0.13,
+            'r_s_uox_mox': 0.75,
+            'r_s_mox': 0.45,
+            'r_s_thox': 0.39,
+            })
+    uox, mox, thox = 23, 66, 12
     
-#     obs = sp._get_suppliers(p) 
-#     exp = {
-#         Suppliers.uox: uox_s,
-#         Suppliers.th_mox: mox_t_s,
-#         Suppliers.f_mox: mox_f_s,
-#         Suppliers.f_thox: thox_s,
-#         }
-    
+    obs = sp._supplier_breakdown(p) 
+    exp = (2, 1, 30, 5)    
+    assert_equal(obs, exp)

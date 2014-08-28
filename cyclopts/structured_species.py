@@ -231,42 +231,42 @@ class StructuredRequest(ProblemSpecies):
     def _supplier_breakdown(self, point):
         n_uox_r, n_mox_r, n_thox_r = self._reactor_breakdown(point)
         # number thermal suppliers
-        n_s_t = int(round(point.s_r_uox * n_uox_r)) 
-        n_uox = int(round(r_s_th * n_s_t))
+        n_s_t = int(round(point.r_s_th * n_uox_r)) 
+        n_uox = int(round(point.r_s_uox_mox * n_s_t))
         n_t_mox = n_s_t - n_uox
         # number f_mox suppliers
-        n_f_mox = int(round(point.s_r_mox * n_mox_r))
+        n_f_mox = int(round(point.r_s_mox * n_mox_r))
         # number f_thox suppliers
-        n_f_thox = int(round(point.s_r_thox * n_thox_r)) 
-        return n_uox, n_t_mox, n_f_mox, n_thox
+        n_f_thox = int(round(point.r_s_thox * n_thox_r)) 
+        return n_uox, n_t_mox, n_f_mox, n_f_thox
 
     def _get_suppliers(self, point):
-        n_uox, n_t_mox, n_f_mox, n_thox = self._supplier_breakdown(point)
+        n_uox, n_t_mox, n_f_mox, n_f_thox = self._supplier_breakdown(point)
         uox_s = np.ndarray(
             shape=(n_uox), 
             buffer=np.array([Supplier(data.Suppliers.uox, point) \
                                  for i in range(n_uox)]), 
             dtype=Supplier)
         mox_th_s = np.ndarray(
-            shape=(n_mox), 
+            shape=(n_t_mox), 
             buffer=np.array([Supplier(data.Suppliers.th_mox, point) \
                                  for i in range(n_uox)]), 
             dtype=Supplier)
         mox_f_s = np.ndarray(
-            shape=(n_mox), 
+            shape=(n_f_mox), 
             buffer=np.array([Supplier(data.Suppliers.f_mox, point) \
                                  for i in range(n_uox)]), 
             dtype=Supplier)
         thox_s = np.ndarray(
-            shape=(n_thox), 
+            shape=(n_f_thox), 
             buffer=np.array([Supplier(data.Suppliers.f_thox, point) \
                                  for i in range(n_uox)]), 
             dtype=Supplier)
         suppliers = {
-            Suppliers.uox: uox_s,
-            Suppliers.th_mox: mox_t_s,
-            Suppliers.f_mox: mox_f_s,
-            Suppliers.f_thox: thox_s,
+            data.Suppliers.uox: uox_s,
+            data.Suppliers.th_mox: mox_th_s,
+            data.Suppliers.f_mox: mox_f_s,
+            data.Suppliers.f_thox: thox_s,
             }
         return suppliers
 
