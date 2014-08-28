@@ -37,6 +37,29 @@ parameters = {
 }
 parameters = OrderedDict(sorted(parameters.items(), key=lambda t: t[0]))
 
+def region(point, loc):
+    """assumes loc is on [0, 1]"""
+    nreg = point.n_reg
+    return int(math.floor(nreg * loc))
+
+def preference(point, commod, requester, supplier):
+    rkind = requester.kind
+    commod_pref = data.pref_basis[rkind][commod]
+    loc_pref = 0
+    rloc = requester.loc
+    sloc = supplier.loc
+
+    if point.f_loc > 0: # at least coarse
+        rreg = region(point, rloc)
+        sreg = region(point, sloc)
+        loc_pref = math.exp(-np.abs(rreg - sreg))
+    
+    if point.f_loc > 1: # fine
+        loc_pref = (loc_pref + math.exp(-np.abs(rloc - sloc))) / 2
+
+    return commod_pref + point.r_l_C * loc_pref
+
+
 class Point(object):
     """A container class representing a point in parameter space"""
     
@@ -301,13 +324,10 @@ class StructuredRequest(ProblemSpecies):
             }
         return suppliers
 
-    def _pref(self, point, requester, supplier):
-        pass
-
     def _generate_supply(self, point, commod, requester, supplier):
         r = requester
         s = supplier
-        pref = self._pref(point, r, s)
+        pref = preference(point, commod, r, s)
         rnodes = r.commod_to_nodes[commod]
         arcs = []
         enr = requester.enr[commod]
