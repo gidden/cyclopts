@@ -72,7 +72,7 @@ relative_qtys = {
         Commodities.f_mox : 0.2,
         Commodities.f_thox : 0.2,
         },
-    Reactors.fast_Commodities.f_thox : {
+    Reactors.f_thox : {
         Commodities.uox : 1.0,
         Commodities.th_mox : 0.2,
         Commodities.f_mox : 0.2,
@@ -94,7 +94,7 @@ pref_basis = {
         Commodities.f_mox : 1.0,
         Commodities.f_thox : 0.25,
         },
-    Reactors.fast_Commodities.f_thox : {
+    Reactors.f_thox : {
         Commodities.uox : 0.1,
         Commodities.th_mox : 0.25,
         Commodities.f_mox : 0.5,

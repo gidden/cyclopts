@@ -2,11 +2,14 @@
 
 :author: Matthew Gidden <matthew.gidden _at_ gmail.com>
 """
+import itertools
 import numpy as np
 
 from collections import OrderedDict, namedtuple
 
+from cyclopts import tools
 from cyclopts.problems import ProblemSpecies
+from cyclopts.exchange_family import ResourceExchange
 from cyclopts import structured_species_data as data
 
 """ordered mapping from input parameters to default values and np.dtypes, see
@@ -27,7 +30,7 @@ parameters = {
 }
 parameters = OrderedDict(sorted(parameters.items(), key=lambda t: t[0]))
 
-class Point(RunControl):
+class Point(object):
     """A container class representing a point in parameter space"""
     
     def __init__(self, d):
@@ -38,9 +41,16 @@ class Point(RunControl):
             value
         """
         # init with dict-specified value else default
-        for name, param in parameters:
+        for name, param in parameters.items():
             val = d[name] if name in d else param.val
             setattr(self, name, val)
+
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__) \
+                    and self.__dict__ == other.__dict__)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 class Reactor(object):
     """A simplified reactor model for Structured Request Species"""
