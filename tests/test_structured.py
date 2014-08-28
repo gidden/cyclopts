@@ -2,7 +2,7 @@ from cyclopts import structured_species as strsp
 
 import uuid
 
-from nose.tools import assert_equal, assert_true, assert_false
+from nose.tools import assert_equal, assert_almost_equal, assert_true, assert_false
 
 from cyclopts.exchange_family import ResourceExchange
 
@@ -15,7 +15,7 @@ def test_pnt():
     q = strsp.Point({'foo': 'bar', 'n_rxtr': 100})
     assert_equal(p, q)
 
-def request_basics():
+def test_request_basics():
     sp = strsp.StructuredRequest()
     
     exp = 'StructuredRequest'
@@ -36,28 +36,45 @@ def test_request_read_space():
     obs = [p for p in sp.points()].sort(key=lambda x: x.f_fc)
     assert_equal(obs, exp)
 
-def request_write_point():    
+def test_request_write_point():    
     sp = strsp.StructuredRequest()
     tbl = sp.register_tables(None, 'foo')[0]
-    uuid = uuid.uuid4()
+    uid = uuid.uuid4()
     p = strsp.Point({'n_rxtr': 100})
-    sp.record_point(uuid, p, {sp.tbl_name: tbl})
-    
+    sp.record_point(p, uid, {sp.tbl_name: tbl})
+
+    ## params are alphabetcially ordered 
+    # f_fc
+    # f_loc
+    # f_mox
+    # f_rxtr
+    # n_reg
+    # n_rxtr
+    # r_inv_proc
+    # r_l_c
+    # r_s_r
+    # r_t_f
+    # r_th_pu    
     exp = (
-        uuid.bytes,
+        uid.bytes,
         ResourceExchange().name,
         0,
         0,
+        1.0/3,
         0,
-        100, # non default
-        1.0,
-        0,
+        1,
+        100, # non defaults
+        1,
+        1,
         0.5,
-        1./3,
-        1.0,
+        1,
         0,
-        1.0,
         )
     obs = tbl._data[0]
-    assert_equal(obs, exp)
+    keys = strsp.parameters.keys()
+    for i in range(len(exp)):
+        if isinstance(exp[i], float):
+            assert_almost_equal(obs[i], exp[i])
+        else:
+            assert_equal(obs[i], exp[i])
     

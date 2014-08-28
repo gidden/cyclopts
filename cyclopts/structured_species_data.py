@@ -58,6 +58,13 @@ request_qtys = {
     Reactors.f_thox : 1.0, 
 }
 
+"""total number of assemblies in the reactor core"""
+n_assemblies = {
+    Reactors.th : 157, # ap-1000 style
+    Reactors.f_mox : 369, # bn-600 style 
+    Reactors.f_thox : 369, # bn-600 style
+}
+
 """Relative quantity of fissile material required from supporting facilities --
 COMMODITIES.UOX requests include U-238, MOX/COMMODITIES.F_THOX requests only include fissile material."""
 relative_qtys = {

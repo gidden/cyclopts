@@ -8,6 +8,7 @@ import numpy as np
 from collections import OrderedDict, namedtuple
 
 from cyclopts import tools
+from cyclopts import cyclopts_io as cycio
 from cyclopts.problems import ProblemSpecies
 from cyclopts.exchange_family import ResourceExchange
 from cyclopts import structured_species_data as data
@@ -25,7 +26,7 @@ parameters = {
     "r_s_r": Param(1.0 / 2, np.float32),
     "f_mox": Param(1.0 / 3, np.float32),
     "r_inv_proc": Param(1.0, np.float32), 
-    "n_reg": Param(0, np.uint32), # use a different tool for more than 4294967295 regions! 
+    "n_reg": Param(1, np.uint32), # use a different tool for more than 4294967295 regions! 
     "r_l_c": Param(1.0, np.float32),
 }
 parameters = OrderedDict(sorted(parameters.items(), key=lambda t: t[0]))
@@ -58,7 +59,7 @@ class Reactor(object):
     def __init__(self, kind, point):
         # this init function should set up structured species members and generate ExNodes
         self.kind = kind
-        self.n_assems = None
+        self.n_assems = data.n_assemblies[kind]
         self.nodes = None
         self.commod_to_nodes = None
         self.group = None

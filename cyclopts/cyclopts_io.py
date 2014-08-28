@@ -14,7 +14,7 @@ class Table(object):
     """A thin wrapper for a PyTables Table to be used by Cyclopts.
     """
 
-    def __init__(self, h5file, path, dt=None, chunksize=None):
+    def __init__(self, h5file=None, path=None, dt=None, chunksize=None):
         """Parameters
         ----------
         h5file : PyTables File
@@ -28,8 +28,8 @@ class Table(object):
             default
         """
         self.h5file = h5file
-        self.path = path
-        self.dt = dt
+        self.path = path if path is not None else '/'
+        self.dt = dt if dt is not None else np.dtype(None) 
         # l1 cache size / row size / 2
         # factor of 2 is ideal for reading/writing speed (per @scopatz's advice)
         chunksize = chunksize if chunksize is not None \
@@ -41,8 +41,11 @@ class Table(object):
         self.name = self.path.split('/')[-1]
         self._data = np.empty(shape=(self.chunksize), dtype=self.dt)
         self._idx = 0
-        self._tbl = self.h5file.get_node(self.path) if self.path in self.h5file \
-            else None
+        
+        if self.h5file is not None and self.path in self.h5file:
+            self._tbl = self.h5file.get_node(self.path)
+        else:
+            self._tbl = None
 
     def __del__(self):
         del self._data
