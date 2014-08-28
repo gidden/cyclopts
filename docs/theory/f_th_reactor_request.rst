@@ -401,20 +401,23 @@ listed below:
 
 .. table:: Structured Request Species Parameters
 
-    ===================== ================================================================== ==========================
-    Handle                Full Name                                                          Possible Values
-    ===================== ================================================================== ==========================
-    :math:`f_{rxtr}`      reactor fidelity                                                   :math:`\{0, 1\}`
-    :math:`f_{fc}`        fuel cycle fidelity                                                :math:`\{0, 1, 2\}`
-    :math:`f_{loc}`       location fidelity                                                  :math:`\{0, 1, 2\}`
-    :math:`n_{rxtr}`      number of reactors                                                 any
-    :math:`r_{t, f}`      ratio of thermal reactors to fast reactors                         :math:`[0, \frac{1}{4}]`
-    :math:`r_{th, pu}`    ratio of Thorium to Plutonium-based fast reactors                  :math:`[0, 1]`
-    :math:`r_{s, r}`      ratio of primary suppliers to their primary requesters             :math:`[0, \frac{1}{2}]`
-    :math:`f_{mox}`       fraction of thermal reactor requests that can be met with mox fuel :math:`[0, \frac{1}{3}]`
-    :math:`r_{inv, proc}` ratio of the inventory RHS to the process RHS                      :math:`\{0.5, 1, 2\}`
-    :math:`\delta_{l}`    whether to include a location preference                           :math:`\{0, 1\}`
-    :math:`\delta_{fine}` whether to include a fine location proxy                           :math:`\{0, 1\}`
-    :math:`n_{reg}`       number of regions                                                  any
-    :math:`r_{l, c}`      ratio of location to commodity preference                          :math:`[0, 1]` 
-    ===================== ================================================================== ==========================
+    ======================= ================================================================== ==========================
+    Handle                  Full Name                                                          Possible Values
+    ======================= ================================================================== ==========================
+    :math:`f_{rxtr}`        reactor fidelity                                                   :math:`\{0, 1\}`
+    :math:`f_{fc}`          fuel cycle fidelity                                                :math:`\{0, 1, 2\}`
+    :math:`f_{loc}`         location fidelity                                                  :math:`\{0, 1, 2\}`
+    :math:`n_{rxtr}`        number of reactors                                                 any
+    :math:`r_{t, f}`        ratio of thermal reactors to fast reactors                         :math:`[0, \frac{1}{4}]`
+    :math:`r_{th, pu}`      ratio of Thorium to Plutonium-based fast reactors                  :math:`[0, 1]`
+    :math:`r_{s, th}`       ratio of primary suppliers to thermal reactors                     :math:`[0, \frac{1}{2}]`
+    :math:`r_{s, uox, mox}` ratio of uox to mox thermal supplier                               :math:`[0, 1]`
+    :math:`r_{s, mox}`      ratio of primary suppliers to fast mox reactors                    :math:`[0, \frac{1}{2}]`
+    :math:`r_{s, thox}`     ratio of primary suppliers to fast thox reactors                   :math:`[0, \frac{1}{2}]`
+    :math:`f_{mox}`         fraction of thermal reactor requests that can be met with mox fuel :math:`[0, \frac{1}{3}]`
+    :math:`r_{inv, proc}`   ratio of the inventory RHS to the process RHS                      :math:`\{0.5, 1, 2\}`
+    :math:`\delta_{l}`      whether to include a location preference                           :math:`\{0, 1\}`
+    :math:`\delta_{fine}`   whether to include a fine location proxy                           :math:`\{0, 1\}`
+    :math:`n_{reg}`         number of regions                                                  any
+    :math:`r_{l, c}`        ratio of location to commodity preference                          :math:`[0, 1]` 
+    ======================= ================================================================== ==========================
