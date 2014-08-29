@@ -26,7 +26,7 @@ parameters = {
     "r_t_f": Param(1.0, np.float32),
     "r_th_pu": Param(0.0, np.float32), 
     "r_s_th": Param(1.0 / 2, np.float32),
-    "r_s_uox_mox": Param(1.0, np.float32),
+    "r_s_mox_uox": Param(1.0, np.float32),
     "r_s_mox": Param(1.0 / 2, np.float32),
     "r_s_thox": Param(1.0 / 2, np.float32),
     "f_mox": Param(1.0 / 3, np.float32),
@@ -89,7 +89,7 @@ class Reactor(object):
     
     def __init__(self, kind, point, gids, nids):
         self.kind = kind
-        self.n_assems = n = 1 if point.f_rxtr == 1 else data.n_assemblies[kind]        
+        self.n_assems = n = 1 if point.f_rxtr == 0 else data.n_assemblies[kind]        
 
         self.nodes = []
         self.commod_to_nodes = defaultdict(list)
@@ -265,13 +265,13 @@ class StructuredRequest(ProblemSpecies):
             shape=(n_mox,), 
             buffer=np.array([Reactor(data.Reactors.f_mox, point, 
                                      self.gids, self.nids) \
-                                 for i in range(n_uox)]), 
+                                 for i in range(n_mox)]), 
             dtype=Reactor)
         thox_f_r = np.ndarray(
             shape=(n_thox,), 
             buffer=np.array([Reactor(data.Reactors.f_thox, point, 
                                      self.gids, self.nids) \
-                                 for i in range(n_uox)]), 
+                                 for i in range(n_thox)]), 
             dtype=Reactor)
         reactors = {
             data.Reactors.th: uox_th_r,
@@ -282,37 +282,49 @@ class StructuredRequest(ProblemSpecies):
 
     def _supplier_breakdown(self, point):
         n_uox_r, n_mox_r, n_thox_r = self._reactor_breakdown(point)
+        n_uox, n_t_mox, n_f_mox, n_f_thox = 0, 0, 0, 0
+        fidelity = point.f_fc
+
         # number thermal suppliers
-        n_s_t = int(round(point.r_s_th * n_uox_r)) 
-        n_uox = int(round(point.r_s_uox_mox * n_s_t))
-        n_t_mox = n_s_t - n_uox
+        if fidelity == 0: # once through - only uox
+            n_uox = int(round(point.r_s_th * n_uox_r))
+        else:
+            n_s_t = int(round(point.r_s_th * n_uox_r)) 
+            n_uox = int(round(n_s_t / (1.0 + point.r_s_mox_uox)))
+            n_t_mox = n_s_t - n_uox
+
         # number f_mox suppliers
-        n_f_mox = int(round(point.r_s_mox * n_mox_r))
+        if fidelity > 0:
+            n_f_mox = int(round(point.r_s_mox * n_mox_r))
+            
         # number f_thox suppliers
-        n_f_thox = int(round(point.r_s_thox * n_thox_r)) 
+        if fidelity > 1:
+            n_f_thox = int(round(point.r_s_thox * n_thox_r))
+ 
         return n_uox, n_t_mox, n_f_mox, n_f_thox
 
     def _get_suppliers(self, point):
         n_uox, n_t_mox, n_f_mox, n_f_thox = self._supplier_breakdown(point)
+        print(n_uox, n_t_mox, n_f_mox, n_f_thox)
         uox_s = np.ndarray(
-            shape=(n_uox), 
-            buffer=np.array([Supplier(data.Suppliers.uox, point) \
+            shape=(n_uox,), 
+            buffer=np.array([Supplier(data.Suppliers.uox, point, self.gids) \
                                  for i in range(n_uox)]), 
             dtype=Supplier)
         mox_th_s = np.ndarray(
-            shape=(n_t_mox), 
+            shape=(n_t_mox,), 
             buffer=np.array([Supplier(data.Suppliers.th_mox, point, self.gids) \
-                                 for i in range(n_uox)]), 
+                                 for i in range(n_t_mox)]), 
             dtype=Supplier)
         mox_f_s = np.ndarray(
-            shape=(n_f_mox), 
+            shape=(n_f_mox,), 
             buffer=np.array([Supplier(data.Suppliers.f_mox, point, self.gids) \
-                                 for i in range(n_uox)]), 
+                                 for i in range(n_f_mox)]), 
             dtype=Supplier)
         thox_s = np.ndarray(
-            shape=(n_f_thox), 
+            shape=(n_f_thox,), 
             buffer=np.array([Supplier(data.Suppliers.f_thox, point, self.gids) \
-                                 for i in range(n_uox)]), 
+                                 for i in range(n_f_thox)]), 
             dtype=Supplier)
         suppliers = {
             data.Suppliers.uox: uox_s,
@@ -349,8 +361,9 @@ class StructuredRequest(ProblemSpecies):
         arcs = []
         for r_kind, r_ary in reactors.items():
             for r in r_ary:
-                for commod in data.rxtr_commods(kind, point.f_fc):
-                    for s_ary in suppliers[commodities_to_suppliers[commod]]:
+                for commod in data.rxtr_commods(r.kind, point.f_fc):
+                    for s_ary in suppliers[data.commod_to_sup[commod]]:
+                        print(s_ary)
                         for s in s_ary:
                             arcs.append(
                                 self._generate_supply(point, commod, r, s))
@@ -373,7 +386,7 @@ class StructuredRequest(ProblemSpecies):
         suppliers = self._get_suppliers(point)        
 
         # create arcs
-        arcs = self._get_arcs(point, reactors, supplier)
+        arcs = self._get_arcs(point, reactors, suppliers)
         
         # collect nodes
         r_nodes = np.concatenate([x.nodes for ary in reactors.values() \

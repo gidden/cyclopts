@@ -55,9 +55,9 @@ def test_request_write_point():
     # r_inv_proc
     # r_l_c
     # r_s_mox
+    # r_s_mox_uox
     # r_s_th
     # r_s_thox
-    # r_s_uox_mox
     # r_t_f
     # r_th_pu    
     # seed
@@ -73,9 +73,9 @@ def test_request_write_point():
         1,
         1,
         0.5,
-        0.5,
-        0.5,
         1,
+        0.5,
+        0.5,
         1,
         0,
         -1,
@@ -90,43 +90,101 @@ def test_request_write_point():
     
 def test_reactor_breakdown():
     sp = strsp.StructuredRequest()
-    p = strsp.Point({
-            'n_rxtr': 101,
-            'f_fc': 2,
-            'r_t_f': 0.23,
-            'r_th_pu': 0.15,
-            })    
+    d = {
+        'n_rxtr': 101,
+        'r_t_f': 0.23,
+        'r_th_pu': 0.15,
+        }
+
+    d['f_fc'] = 0
+    p = strsp.Point(d)    
+    obs = sp._reactor_breakdown(p)
+    exp = (101, 0, 0)
+    assert_equal(obs, exp)
+
+    d['f_fc'] = 1
+    p = strsp.Point(d)    
+    obs = sp._reactor_breakdown(p)
+    exp = (23, 66 + 12, 0)
+    assert_equal(obs, exp)
+
+    d['f_fc'] = 2
+    p = strsp.Point(d)    
     obs = sp._reactor_breakdown(p)
     exp = (23, 66, 12)
     assert_equal(obs, exp)
 
 def test_supplier_breakdown():
     sp = strsp.StructuredRequest()
-    p = strsp.Point({
-            'n_rxtr': 101,
-            'f_fc': 2,
-            'r_t_f': 0.23,
-            'r_th_pu': 0.15,
-            'r_s_th': 0.13,
-            'r_s_uox_mox': 0.75,
-            'r_s_mox': 0.45,
-            'r_s_thox': 0.39,
-            })
-    uox, mox, thox = 23, 66, 12
+    d = {
+        'n_rxtr': 101,
+        'r_t_f': 0.23,
+        'r_th_pu': 0.15,
+        'r_s_th': 0.13,
+        'r_s_mox_uox': 0.75,
+        'r_s_mox': 0.45,
+        'r_s_thox': 0.39,
+        }
+
+    d['f_fc'] = 0
+    p = strsp.Point(d)
+    obs = sp._supplier_breakdown(p) 
+    exp = (13, 0, 0, 0)    
+    assert_equal(obs, exp)
+
+    d['f_fc'] = 1
+    p = strsp.Point(d)
+    obs = sp._supplier_breakdown(p) 
+    exp = (2, 1, 35, 0)    
+    assert_equal(obs, exp)
     
+    d['f_fc'] = 2
+    p = strsp.Point(d)
     obs = sp._supplier_breakdown(p) 
     exp = (2, 1, 30, 5)    
     assert_equal(obs, exp)
 
-
-def test_reactor():
-    p = strsp.Point()
+def test_th_reactor():
+    p = strsp.Point({'f_fc': 0})
     gids = tools.Incrementer()
     nids = tools.Incrementer()    
-    r = strsp.Reactor(data.Reactors.th, p, gids, nids)
+    kind = data.Reactors.th
+    r = strsp.Reactor(kind, p, gids, nids)
+    
+    assert_equal(r.kind, kind)
+    assert_equal(len(r.nodes), 1)
+    assert_equal(len(r.commod_to_nodes[data.Commodities.uox]), 1)
+    
+    p = strsp.Point({'f_fc': 2, 'f_rxtr': 1})
+    r = strsp.Reactor(kind, p, gids, nids)
+    assert_equal(r.kind, kind)
+    assert_equal(len(r.nodes), 3 * data.n_assemblies[kind])
+    assert_equal(len(r.commod_to_nodes[data.Commodities.uox]), 
+                 data.n_assemblies[kind])
+    assert_equal(len(r.commod_to_nodes[data.Commodities.th_mox]), 
+                 data.n_assemblies[kind])
+    assert_equal(len(r.commod_to_nodes[data.Commodities.f_mox]), 
+                 data.n_assemblies[kind])
+    
 
 def test_supplier():
-    p = strsp.Point()
+    p = strsp.Point({'r_inv_proc': 0.33})
     gids = tools.Incrementer()
-    s = strsp.Supplier(data.Suppliers.uox, p, gids)
-    
+    kind = data.Suppliers.uox
+    s = strsp.Supplier(kind, p, gids)
+
+    assert_almost_equal(s.group.caps[0], 2.3e5)
+    assert_almost_equal(s.group.caps[1], 2.3e5 * 0.33 * data.conv_ratio(kind))
+
+def test_once_through():
+    sp = strsp.StructuredRequest()
+    p = strsp.Point({
+            'n_rxtr': 5,
+            'f_fc': 0,
+            'r_s_th': 0.5,
+            'r_s_mox_uox': 0.33,
+            })
+    groups, nodes, arcs = sp.gen_inst(p)
+    assert_equal(len(groups), 5 + 3)
+    assert_equal(len(nodes), 5 + 5 * 3)
+    assert_equal(len(arcs), 5 * 3)
