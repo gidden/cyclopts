@@ -41,6 +41,16 @@ sup_to_rxtr = {
     Suppliers.f_thox: Reactors.f_thox,
 }
 
+
+def rxtr_commods(kind, fidelity):
+    """return a list of commodities per reactor kind and fidelity"""
+    commods = [Commodities.uox]
+    if fidelity > 0:
+        commods += [Commodities.th_mox, Commodities.f_mox]
+    if fidelity > 1 and kind != Reactors.th:
+        commods += [Commodities.f_thox]
+    return commods
+
 """lower bound, upper bound tuples of enrichment ranges"""
 enr_ranges = {
     Reactors.th : {

@@ -43,13 +43,13 @@ def region(point, loc):
     return int(math.floor(nreg * loc))
 
 def preference(point, commod, requester, supplier):
-    rkind = requester.kind
-    commod_pref = data.pref_basis[rkind][commod]
+    """returns the preference between a requester and supplier for a commodity"""
+    commod_pref = data.pref_basis[requester.kind][commod]
     loc_pref = 0
-    rloc = requester.loc
-    sloc = supplier.loc
 
     if point.f_loc > 0: # at least coarse
+        rloc = requester.loc
+        sloc = supplier.loc
         rreg = region(point, rloc)
         sreg = region(point, sloc)
         loc_pref = math.exp(-np.abs(rreg - sreg))
@@ -57,8 +57,7 @@ def preference(point, commod, requester, supplier):
     if point.f_loc > 1: # fine
         loc_pref = (loc_pref + math.exp(-np.abs(rloc - sloc))) / 2
 
-    return commod_pref + point.r_l_C * loc_pref
-
+    return commod_pref + point.r_l_c * loc_pref
 
 class Point(object):
     """A container class representing a point in parameter space"""
@@ -101,7 +100,7 @@ class Reactor(object):
         qty = data.fuel_unit * data.request_qtys[kind]
         self.req_qty = qty / n
         gid = gids.next()
-        for commod in data.enr_ranges[kind].keys():
+        for commod in data.rxtr_commods(kind, point.f_fc):
             req_qty = self.req_qty * data.relative_qtys[kind][commod]
             lb, ub = data.enr_ranges[kind][commod]
             self.enr[commod] = random.uniform(lb, ub) # one enr per commod per reactor
@@ -117,12 +116,11 @@ class Supplier(object):
     """A simplified supplier model for Structured Request Species"""
     
     def __init__(self, kind, point, gids):
-        # this init function should set up structured species members 
-        # it should *not* generate ExNodes
         self.kind = kind
         self.nodes = None
 
         req = True
+        # process then inventory
         rhs = [data.sup_rhs[kind], 
                data.sup_rhs[kind] * point.r_inv_proc * data.conv_ratio(kind)]
         self.group = exinst.ExGroup(gids.next(), not req, rhs)
@@ -351,7 +349,7 @@ class StructuredRequest(ProblemSpecies):
         arcs = []
         for r_kind, r_ary in reactors.items():
             for r in r_ary:
-                for commod in data.enr_ranges[r.kind].keys():
+                for commod in data.rxtr_commods(kind, point.f_fc):
                     for s_ary in suppliers[commodities_to_suppliers[commod]]:
                         for s in s_ary:
                             arcs.append(
