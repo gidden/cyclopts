@@ -117,7 +117,7 @@ class Supplier(object):
     
     def __init__(self, kind, point, gids):
         self.kind = kind
-        self.nodes = None
+        self.nodes = []
 
         req = True
         # process then inventory
@@ -342,9 +342,10 @@ class StructuredRequest(ProblemSpecies):
         arcs = []
         enr = requester.enr[commod]
         req_coeffs = [r.req_qty / data.relative_qtys[r.kind][commod]]
-        converters = data.converter[kind]
-        sup_coeffs = [c[k](r.req_qty * data.relative_qtys[r.kind][commod], 
-                           enr, commod) for k in ['proc', 'inv']]
+        converters = data.converters[s.kind]
+        qty = r.req_qty * data.relative_qtys[r.kind][commod]
+        sup_coeffs = [data.converters[s.kind][k](qty, enr, commod) \
+                          for k in ['proc', 'inv']]
         for i in range(len(rnodes)):
             req = True
             nid = self.nids.next()
@@ -362,11 +363,8 @@ class StructuredRequest(ProblemSpecies):
         for r_kind, r_ary in reactors.items():
             for r in r_ary:
                 for commod in data.rxtr_commods(r.kind, point.f_fc):
-                    for s_ary in suppliers[data.commod_to_sup[commod]]:
-                        print(s_ary)
-                        for s in s_ary:
-                            arcs.append(
-                                self._generate_supply(point, commod, r, s))
+                    for s in suppliers[data.commod_to_sup[commod]]:
+                        arcs.append(self._generate_supply(point, commod, r, s))
         return np.concatenate(arcs)                    
 
     def gen_inst(self, point):
@@ -397,7 +395,7 @@ class StructuredRequest(ProblemSpecies):
 
         # collect groups
         r_groups = [x.group for ary in reactors.values() for x in ary]
-        r_groups = [x.group for ary in suppliers.values() for x in ary]
+        s_groups = [x.group for ary in suppliers.values() for x in ary]
         groups = np.concatenate((r_groups, s_groups))
 
         return groups, nodes, arcs

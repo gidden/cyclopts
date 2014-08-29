@@ -164,8 +164,7 @@ def test_th_reactor():
     assert_equal(len(r.commod_to_nodes[data.Commodities.th_mox]), 
                  data.n_assemblies[kind])
     assert_equal(len(r.commod_to_nodes[data.Commodities.f_mox]), 
-                 data.n_assemblies[kind])
-    
+                 data.n_assemblies[kind])    
 
 def test_supplier():
     p = strsp.Point({'r_inv_proc': 0.33})
