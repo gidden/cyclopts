@@ -303,7 +303,6 @@ class StructuredRequest(ProblemSpecies):
 
     def _get_suppliers(self, point):
         n_uox, n_t_mox, n_f_mox, n_f_thox = self._supplier_breakdown(point)
-        print(n_uox, n_t_mox, n_f_mox, n_f_thox)
         uox_s = np.ndarray(
             shape=(n_uox,), 
             buffer=np.array([Supplier(data.Suppliers.uox, point, self.gids) \
