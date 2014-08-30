@@ -189,7 +189,7 @@ converters = {
 
 def conv_ratio(kind):
     commod, rxtr = sup_to_commod[kind], sup_to_rxtr[kind]
-    mean_enr = np.mean(enr_ranges[commod][rxtr])
+    mean_enr = np.mean(enr_ranges[rxtr][commod])
     return converters[kind]['proc'](1.0, mean_enr, commod) / \
         converters[kind]['inv'](1.0, mean_enr, commod)
 
