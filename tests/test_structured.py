@@ -157,19 +157,28 @@ def test_th_reactors():
     assert_equal(len(r.nodes), 1)
     assert_equal(len(r.commod_to_nodes[data.Commodities.uox]), 1)
     assert_almost_equal(r.group.caps[0], data.fuel_unit * data.request_qtys[kind])
+    assert_almost_equal(r.group.qty, data.fuel_unit * data.request_qtys[kind])
 
     # thox recycle, thermal, n assemblies
     p = strsp.Point({'f_fc': 2, 'f_rxtr': 1})
     kind = data.Reactors.th
     r = strsp.Reactor(kind, p, gids, nids)
+    base_qty = 1400 * 12.5 / math.floor(157 / 4.)
     assert_equal(len(r.nodes), 3 * data.n_assemblies[kind])
     assert_equal(len(r.commod_to_nodes[data.Commodities.uox]), 
                  data.n_assemblies[kind])
+    assert_almost_equal(r.commod_to_nodes[data.Commodities.uox][0].qty,
+                        base_qty)
     assert_equal(len(r.commod_to_nodes[data.Commodities.th_mox]), 
                  data.n_assemblies[kind])
+    assert_almost_equal(r.commod_to_nodes[data.Commodities.th_mox][0].qty,
+                        base_qty * 0.1)
     assert_equal(len(r.commod_to_nodes[data.Commodities.f_mox]), 
-                 data.n_assemblies[kind])    
+                 data.n_assemblies[kind])
+    assert_almost_equal(r.commod_to_nodes[data.Commodities.f_mox][0].qty,
+                        base_qty * 0.1)    
     assert_almost_equal(r.group.caps[0], data.fuel_unit * data.request_qtys[kind])
+    assert_almost_equal(r.group.qty, data.fuel_unit * data.request_qtys[kind])
 
 def test_mox_reactors():
     gids = tools.Incrementer()
@@ -184,21 +193,32 @@ def test_mox_reactors():
     assert_equal(len(r.commod_to_nodes[data.Commodities.th_mox]), 1)
     assert_equal(len(r.commod_to_nodes[data.Commodities.f_mox]), 1)
     assert_almost_equal(r.group.caps[0], data.fuel_unit * data.request_qtys[kind])
+    assert_almost_equal(r.group.qty, data.fuel_unit * data.request_qtys[kind])
 
     # thox recycle, mox, n assemblies
     p = strsp.Point({'f_fc': 2, 'f_rxtr': 1})
     kind = data.Reactors.f_mox
     r = strsp.Reactor(kind, p, gids, nids)
+    base_qty = 1400 / math.floor(369 / 4.)
     assert_equal(len(r.nodes), 4 * data.n_assemblies[kind])
     assert_equal(len(r.commod_to_nodes[data.Commodities.uox]), 
                  data.n_assemblies[kind])
+    assert_almost_equal(r.commod_to_nodes[data.Commodities.uox][0].qty,
+                        base_qty)
     assert_equal(len(r.commod_to_nodes[data.Commodities.th_mox]), 
                  data.n_assemblies[kind])
+    assert_almost_equal(r.commod_to_nodes[data.Commodities.th_mox][0].qty,
+                        base_qty * 0.2)
     assert_equal(len(r.commod_to_nodes[data.Commodities.f_mox]), 
                  data.n_assemblies[kind])
+    assert_almost_equal(r.commod_to_nodes[data.Commodities.f_mox][0].qty,
+                        base_qty * 0.2)
     assert_equal(len(r.commod_to_nodes[data.Commodities.f_thox]), 
                  data.n_assemblies[kind])    
+    assert_almost_equal(r.commod_to_nodes[data.Commodities.f_thox][0].qty,
+                        base_qty * 0.2)
     assert_almost_equal(r.group.caps[0], data.fuel_unit * data.request_qtys[kind])
+    assert_almost_equal(r.group.qty, data.fuel_unit * data.request_qtys[kind])
 
 def test_thox_reactors():
     gids = tools.Incrementer()
@@ -208,16 +228,26 @@ def test_thox_reactors():
     p = strsp.Point({'f_fc': 2, 'f_rxtr': 1})
     kind = data.Reactors.f_mox
     r = strsp.Reactor(kind, p, gids, nids)
+    base_qty = 1400 / math.floor(369 / 4.)
     assert_equal(len(r.nodes), 4 * data.n_assemblies[kind])
     assert_equal(len(r.commod_to_nodes[data.Commodities.uox]), 
                  data.n_assemblies[kind])
+    assert_almost_equal(r.commod_to_nodes[data.Commodities.uox][0].qty,
+                        base_qty)
     assert_equal(len(r.commod_to_nodes[data.Commodities.th_mox]), 
                  data.n_assemblies[kind])
+    assert_almost_equal(r.commod_to_nodes[data.Commodities.th_mox][0].qty,
+                        base_qty * 0.2)
     assert_equal(len(r.commod_to_nodes[data.Commodities.f_mox]), 
                  data.n_assemblies[kind])
+    assert_almost_equal(r.commod_to_nodes[data.Commodities.f_mox][0].qty,
+                        base_qty * 0.2)
     assert_equal(len(r.commod_to_nodes[data.Commodities.f_thox]), 
                  data.n_assemblies[kind])    
+    assert_almost_equal(r.commod_to_nodes[data.Commodities.f_thox][0].qty,
+                        base_qty * 0.2)    
     assert_almost_equal(r.group.caps[0], data.fuel_unit * data.request_qtys[kind])
+    assert_almost_equal(r.group.qty, data.fuel_unit * data.request_qtys[kind])
 
 def test_supplier():
     gids = tools.Incrementer()

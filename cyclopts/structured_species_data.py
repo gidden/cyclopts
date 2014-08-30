@@ -85,10 +85,11 @@ request_qtys = {
 }
 
 """total number of assemblies in a reactor core reload"""
+reload_frac = 1./4
 n_assemblies = {
-    Reactors.th : int(math.floor(157 * 1./4)), # ap-1000 style
-    Reactors.f_mox : int(math.floor(369 * 1./4)), # bn-600 style 
-    Reactors.f_thox : int(math.floor(369 * 1./4)), # bn-600 style
+    Reactors.th : int(math.floor(157 * reload_frac)), # ap-1000 style
+    Reactors.f_mox : int(math.floor(369 * reload_frac)), # bn-600 style 
+    Reactors.f_thox : int(math.floor(369 * reload_frac)), # bn-600 style
 }
 
 """Relative quantity of fissile material required from supporting facilities --
