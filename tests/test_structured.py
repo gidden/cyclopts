@@ -298,9 +298,8 @@ def test_mox_recycle():
     
     groups, nodes, arcs = sp.gen_inst(p)
     assert_equal(len(groups), sum(rexp) + sum(sexp))
-    rnodes_exp = rexp[0] * 3 + rexp[1] * 3
-    snodes_exp = sum((sexp[i] * r for i in (0, 1, 2) for r in rexp)) + \
-        sum((sexp[3] * rexp[i] for i in (1, 2)))
+    rnodes_exp = rexp[0] * 3 + rexp[1] * 3 # rxtrs * n commods
+    snodes_exp = sum((sexp[i] * r for i in (0, 1, 2) for r in rexp)) # uox/mox
     assert_equal(len(nodes), rnodes_exp + snodes_exp)
     assert_equal(len(arcs), snodes_exp)
 
@@ -333,8 +332,8 @@ def test_thox_recycle():
     assert_equal(len(groups), sum(rexp) + sum(sexp))
     groups, nodes, arcs = sp.gen_inst(p)
     assert_equal(len(groups), sum(rexp) + sum(sexp))
-    rnodes_exp = rexp[0] * 3 + rexp[1] * 4 + rexp[2] * 4
+    rnodes_exp = rexp[0] * 3 + rexp[1] * 4 + rexp[2] * 4 # rxtrs * n commods
     snodes_exp = sum((sexp[i] * r for i in (0, 1, 2) for r in rexp)) + \
-        sum((sexp[3] * rexp[i] for i in (1, 2)))
+        sum((sexp[3] * rexp[i] for i in (1, 2))) # uox/mox then thox
     assert_equal(len(nodes), rnodes_exp + snodes_exp)
     assert_equal(len(arcs), snodes_exp)
