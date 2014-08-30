@@ -2,6 +2,7 @@
 import random
 from enum import Enum
 import numpy as np
+import math
 
 class Commodities(Enum):
     uox = 1
@@ -83,11 +84,11 @@ request_qtys = {
     Reactors.f_thox : 1.0, 
 }
 
-"""total number of assemblies in the reactor core"""
+"""total number of assemblies in a reactor core reload"""
 n_assemblies = {
-    Reactors.th : 157, # ap-1000 style
-    Reactors.f_mox : 369, # bn-600 style 
-    Reactors.f_thox : 369, # bn-600 style
+    Reactors.th : int(math.floor(157 * 1./4)), # ap-1000 style
+    Reactors.f_mox : int(math.floor(369 * 1./4)), # bn-600 style 
+    Reactors.f_thox : int(math.floor(369 * 1./4)), # bn-600 style
 }
 
 """Relative quantity of fissile material required from supporting facilities --

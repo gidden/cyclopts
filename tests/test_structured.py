@@ -156,6 +156,7 @@ def test_th_reactors():
     assert_equal(r.kind, kind)
     assert_equal(len(r.nodes), 1)
     assert_equal(len(r.commod_to_nodes[data.Commodities.uox]), 1)
+    assert_almost_equal(r.group.caps[0], data.fuel_unit * data.request_qtys[kind])
 
     # thox recycle, thermal, n assemblies
     p = strsp.Point({'f_fc': 2, 'f_rxtr': 1})
@@ -168,6 +169,7 @@ def test_th_reactors():
                  data.n_assemblies[kind])
     assert_equal(len(r.commod_to_nodes[data.Commodities.f_mox]), 
                  data.n_assemblies[kind])    
+    assert_almost_equal(r.group.caps[0], data.fuel_unit * data.request_qtys[kind])
 
 def test_mox_reactors():
     gids = tools.Incrementer()
@@ -181,6 +183,7 @@ def test_mox_reactors():
     assert_equal(len(r.commod_to_nodes[data.Commodities.uox]), 1)
     assert_equal(len(r.commod_to_nodes[data.Commodities.th_mox]), 1)
     assert_equal(len(r.commod_to_nodes[data.Commodities.f_mox]), 1)
+    assert_almost_equal(r.group.caps[0], data.fuel_unit * data.request_qtys[kind])
 
     # thox recycle, mox, n assemblies
     p = strsp.Point({'f_fc': 2, 'f_rxtr': 1})
@@ -195,6 +198,7 @@ def test_mox_reactors():
                  data.n_assemblies[kind])
     assert_equal(len(r.commod_to_nodes[data.Commodities.f_thox]), 
                  data.n_assemblies[kind])    
+    assert_almost_equal(r.group.caps[0], data.fuel_unit * data.request_qtys[kind])
 
 def test_thox_reactors():
     gids = tools.Incrementer()
@@ -213,6 +217,7 @@ def test_thox_reactors():
                  data.n_assemblies[kind])
     assert_equal(len(r.commod_to_nodes[data.Commodities.f_thox]), 
                  data.n_assemblies[kind])    
+    assert_almost_equal(r.group.caps[0], data.fuel_unit * data.request_qtys[kind])
 
 def test_supplier():
     gids = tools.Incrementer()
