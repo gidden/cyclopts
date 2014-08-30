@@ -5,6 +5,7 @@
 import itertools
 import numpy as np
 import random
+import math
 
 from collections import OrderedDict, namedtuple, defaultdict
 
@@ -37,27 +38,24 @@ parameters = {
 }
 parameters = OrderedDict(sorted(parameters.items(), key=lambda t: t[0]))
 
-def region(point, loc):
+def region(loc, n_reg=1):
     """assumes loc is on [0, 1]"""
-    nreg = point.n_reg
-    return int(math.floor(nreg * loc))
+    return int(math.floor(n_reg * loc))
 
-def preference(point, commod, requester, supplier):
+def preference(base_pref, r_loc, s_loc, loc_fidelity=0, ratio=1., n_reg=1):
     """returns the preference between a requester and supplier for a commodity"""
-    commod_pref = data.pref_basis[requester.kind][commod]
+    commod_pref = base_pref
     loc_pref = 0
 
-    if point.f_loc > 0: # at least coarse
-        rloc = requester.loc
-        sloc = supplier.loc
-        rreg = region(point, rloc)
-        sreg = region(point, sloc)
+    if loc_fidelity > 0: # at least coarse
+        rreg = region(r_loc, n_reg=n_reg)
+        sreg = region(s_loc, n_reg=n_reg)
         loc_pref = math.exp(-np.abs(rreg - sreg))
     
-    if point.f_loc > 1: # fine
-        loc_pref = (loc_pref + math.exp(-np.abs(rloc - sloc))) / 2
+    if loc_fidelity > 1: # fine
+        loc_pref = (loc_pref + math.exp(-np.abs(r_loc - s_loc))) / 2
 
-    return commod_pref + point.r_l_c * loc_pref
+    return commod_pref + ratio * loc_pref
 
 class Point(object):
     """A container class representing a point in parameter space"""
@@ -337,7 +335,8 @@ class StructuredRequest(ProblemSpecies):
     def _generate_supply(self, point, commod, requester, supplier):
         r = requester
         s = supplier
-        pref = preference(point, commod, r, s)
+        pref = preference(data.pref_basis[requester.kind][commod], r.loc, s.loc, 
+                          point.f_loc, point.r_l_c, point.n_reg)
         rnodes = r.commod_to_nodes[commod]
         arcs = []
         enr = requester.enr[commod]
