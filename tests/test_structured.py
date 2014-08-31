@@ -4,6 +4,7 @@ import uuid
 import math
 
 from nose.tools import assert_equal, assert_almost_equal, assert_true, assert_false
+from numpy.testing import assert_array_almost_equal
 
 from cyclopts import tools
 from cyclopts.exchange_family import ResourceExchange
@@ -294,14 +295,16 @@ def test_get_one_supply():
     n_r = r.commod_to_nodes[data.Commodities.f_mox][0]
     assert_equal(a.uid, n_r.id)
     assert_equal(a.vid, n_s.id)
+
     kind = data.Reactors.f_mox
-    qty = data.request_qtys[kind] * data.relative_qtys[kind][commod] / data.fuel_unit
+    qty = data.fuel_unit * data.request_qtys[kind] / data.relative_qtys[kind][commod]
     r_coeffs = [qty]
-    assert_equal(a.ucaps, r_coeffs)
+    assert_array_almost_equal(a.ucaps, r_coeffs)
+
     kind = data.Suppliers.f_mox
     s_coeffs = [data.converters[kind]['proc'](qty, r.enr[commod], commod),
                 data.converters[kind]['inv'](qty, r.enr[commod], commod)]
-    assert_equal(a.vcaps, s_coeffs)
+    assert_array_almost_equal(a.vcaps, s_coeffs)
     
 def test_get_many_supply():
     gids = tools.Incrementer()
@@ -313,21 +316,21 @@ def test_get_many_supply():
     s = strsp.Supplier(data.Suppliers.f_mox, p, gids)
     commod = data.Commodities.f_mox
     arcs = sp._generate_supply(p, commod, r, s)
+    
     kind = data.Reactors.f_mox
     assert_equal(len(arcs), data.n_assemblies[kind])
     assert_equal(len(s.nodes), data.n_assemblies[kind])
+    
     a = arcs[0]
-    n_s = s.nodes[0]
-    n_r = r.commod_to_nodes[data.Commodities.f_mox][0]
-    assert_equal(a.uid, n_r.id)
-    assert_equal(a.vid, n_s.id)
-    qty = data.request_qtys[kind] * data.relative_qtys[kind][commod] / data.fuel_unit / data.n_assemblies[kind]
+    qty = data.fuel_unit * data.request_qtys[kind] / \
+        data.relative_qtys[kind][commod] / data.n_assemblies[kind]
     r_coeffs = [qty]
-    assert_equal(a.ucaps, r_coeffs)        
+    assert_array_almost_equal(a.ucaps, r_coeffs)        
+    
     kind = data.Suppliers.f_mox
     s_coeffs = [data.converters[kind]['proc'](qty, r.enr[commod], commod),
                 data.converters[kind]['inv'](qty, r.enr[commod], commod)]
-    assert_equal(a.vcaps, s_coeffs)
+    assert_array_almost_equal(a.vcaps, s_coeffs)
     
 def test_once_through():
     sp = strsp.StructuredRequest()

@@ -338,7 +338,7 @@ class StructuredRequest(ProblemSpecies):
                           point.f_loc, point.r_l_c, point.n_reg)
         rnodes = r.commod_to_nodes[commod]
         arcs = []
-        enr = requester.enr[commod]
+        enr = r.enr[commod]
         req_coeffs = [r.req_qty / data.relative_qtys[r.kind][commod]]
         converters = data.converters[s.kind]
         qty = r.req_qty * data.relative_qtys[r.kind][commod]
