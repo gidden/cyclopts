@@ -226,7 +226,7 @@ def test_thox_reactors():
 
     # thox recycle, thox
     p = strsp.Point({'f_fc': 2, 'f_rxtr': 1})
-    kind = data.Reactors.f_mox
+    kind = data.Reactors.f_thox
     r = strsp.Reactor(kind, p, gids, nids)
     base_qty = 1400 / math.floor(369 / 4.)
     assert_equal(len(r.nodes), 4 * data.n_assemblies[kind])
@@ -277,6 +277,58 @@ def test_supplier():
     assert_almost_equal(s.group.caps[0], rate)
     assert_almost_equal(s.group.caps[1], rate * 0.33 * data.conv_ratio(kind))
 
+def test_get_one_supply():
+    gids = tools.Incrementer()
+    nids = tools.Incrementer()
+    sp = strsp.StructuredRequest()
+
+    p = strsp.Point({'f_fc': 2, 'f_rxtr': 0})
+    r = strsp.Reactor(data.Reactors.f_mox, p, gids, nids)
+    s = strsp.Supplier(data.Suppliers.f_mox, p, gids)
+    commod = data.Commodities.f_mox
+    arcs = sp._generate_supply(p, commod, r, s)
+    assert_equal(len(arcs), 1)
+    assert_equal(len(s.nodes), 1)    
+    a = arcs[0]
+    n_s = s.nodes[0]
+    n_r = r.commod_to_nodes[data.Commodities.f_mox][0]
+    assert_equal(a.uid, n_r.id)
+    assert_equal(a.vid, n_s.id)
+    kind = data.Reactors.f_mox
+    qty = data.request_qtys[kind] * data.relative_qtys[kind][commod] / data.fuel_unit
+    r_coeffs = [qty]
+    assert_equal(a.ucaps, r_coeffs)
+    kind = data.Suppliers.f_mox
+    s_coeffs = [data.converters[kind]['proc'](qty, r.enr[commod], commod),
+                data.converters[kind]['inv'](qty, r.enr[commod], commod)]
+    assert_equal(a.vcaps, s_coeffs)
+    
+def test_get_many_supply():
+    gids = tools.Incrementer()
+    nids = tools.Incrementer()
+    sp = strsp.StructuredRequest()
+
+    p = strsp.Point({'f_fc': 2, 'f_rxtr': 1})
+    r = strsp.Reactor(data.Reactors.f_mox, p, gids, nids)
+    s = strsp.Supplier(data.Suppliers.f_mox, p, gids)
+    commod = data.Commodities.f_mox
+    arcs = sp._generate_supply(p, commod, r, s)
+    kind = data.Reactors.f_mox
+    assert_equal(len(arcs), data.n_assemblies[kind])
+    assert_equal(len(s.nodes), data.n_assemblies[kind])
+    a = arcs[0]
+    n_s = s.nodes[0]
+    n_r = r.commod_to_nodes[data.Commodities.f_mox][0]
+    assert_equal(a.uid, n_r.id)
+    assert_equal(a.vid, n_s.id)
+    qty = data.request_qtys[kind] * data.relative_qtys[kind][commod] / data.fuel_unit / data.n_assemblies[kind]
+    r_coeffs = [qty]
+    assert_equal(a.ucaps, r_coeffs)        
+    kind = data.Suppliers.f_mox
+    s_coeffs = [data.converters[kind]['proc'](qty, r.enr[commod], commod),
+                data.converters[kind]['inv'](qty, r.enr[commod], commod)]
+    assert_equal(a.vcaps, s_coeffs)
+    
 def test_once_through():
     sp = strsp.StructuredRequest()
     d = {
