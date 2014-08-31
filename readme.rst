@@ -37,6 +37,7 @@ Cyclopts has the following dependencies:
    #. `SciPy <http://www.scipy.org/>`_
    #. `Cython <http://cython.org/>`_ (>= 0.19.1)
    #. `PyTables <http://www.pytables.org/>`_
+   #. `PyNE <http://www.pyne.io/>`_
 
 Additionally, building the documentation requires:
 
