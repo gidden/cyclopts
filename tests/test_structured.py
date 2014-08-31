@@ -283,53 +283,57 @@ def test_get_one_supply():
     nids = tools.Incrementer()
     sp = strsp.StructuredRequest()
 
-    p = strsp.Point({'f_fc': 2, 'f_rxtr': 0})
-    r = strsp.Reactor(data.Reactors.f_mox, p, gids, nids)
-    s = strsp.Supplier(data.Suppliers.f_mox, p, gids)
+    rkind = data.Reactors.f_mox
+    skind = data.Suppliers.f_mox
     commod = data.Commodities.f_mox
+    p = strsp.Point({'f_fc': 2, 'f_rxtr': 0})
+    r = strsp.Reactor(rkind, p, gids, nids)
+    s = strsp.Supplier(skind, p, gids)
+
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), 1)
     assert_equal(len(s.nodes), 1)    
+
     a = arcs[0]
     n_s = s.nodes[0]
-    n_r = r.commod_to_nodes[data.Commodities.f_mox][0]
+    n_r = r.commod_to_nodes[commod][0]
     assert_equal(a.uid, n_r.id)
     assert_equal(a.vid, n_s.id)
 
-    kind = data.Reactors.f_mox
-    qty = data.fuel_unit * data.request_qtys[kind] / data.relative_qtys[kind][commod]
+    qty = data.fuel_unit * data.request_qtys[rkind] / data.relative_qtys[rkind][commod]
     r_coeffs = [qty]
     assert_array_almost_equal(a.ucaps, r_coeffs)
 
-    kind = data.Suppliers.f_mox
-    s_coeffs = [data.converters[kind]['proc'](qty, r.enr[commod], commod),
-                data.converters[kind]['inv'](qty, r.enr[commod], commod)]
+    qty *= data.relative_qtys[rkind][commod]
+    s_coeffs = [data.converters[skind]['proc'](qty, r.enr[commod], commod),
+                data.converters[skind]['inv'](qty, r.enr[commod], commod)]
+
     assert_array_almost_equal(a.vcaps, s_coeffs)
     
 def test_get_many_supply():
     gids = tools.Incrementer()
     nids = tools.Incrementer()
     sp = strsp.StructuredRequest()
-
-    p = strsp.Point({'f_fc': 2, 'f_rxtr': 1})
-    r = strsp.Reactor(data.Reactors.f_mox, p, gids, nids)
-    s = strsp.Supplier(data.Suppliers.f_mox, p, gids)
+    rkind = data.Reactors.f_mox
+    skind = data.Suppliers.f_mox
     commod = data.Commodities.f_mox
+    p = strsp.Point({'f_fc': 2, 'f_rxtr': 1})
+    r = strsp.Reactor(rkind, p, gids, nids)
+    s = strsp.Supplier(skind, p, gids)
+
     arcs = sp._generate_supply(p, commod, r, s)
-    
-    kind = data.Reactors.f_mox
-    assert_equal(len(arcs), data.n_assemblies[kind])
-    assert_equal(len(s.nodes), data.n_assemblies[kind])
+    assert_equal(len(arcs), data.n_assemblies[rkind])
+    assert_equal(len(s.nodes), data.n_assemblies[rkind])
     
     a = arcs[0]
-    qty = data.fuel_unit * data.request_qtys[kind] / \
-        data.relative_qtys[kind][commod] / data.n_assemblies[kind]
+    qty = data.fuel_unit * data.request_qtys[rkind] / \
+        data.relative_qtys[rkind][commod] / data.n_assemblies[rkind]
     r_coeffs = [qty]
     assert_array_almost_equal(a.ucaps, r_coeffs)        
     
-    kind = data.Suppliers.f_mox
-    s_coeffs = [data.converters[kind]['proc'](qty, r.enr[commod], commod),
-                data.converters[kind]['inv'](qty, r.enr[commod], commod)]
+    qty *= data.relative_qtys[rkind][commod]
+    s_coeffs = [data.converters[skind]['proc'](qty, r.enr[commod], commod),
+                data.converters[skind]['inv'](qty, r.enr[commod], commod)]
     assert_array_almost_equal(a.vcaps, s_coeffs)
     
 def test_once_through():
