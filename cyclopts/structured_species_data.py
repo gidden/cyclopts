@@ -3,6 +3,7 @@ import random
 from enum import Enum
 import numpy as np
 import math
+from pyne import enrichment
 
 class Commodities(Enum):
     uox = 1
@@ -151,15 +152,13 @@ class Converter(object):
         coefficient"""
         raise NotImplementedError
 
-# todo
 class NatU(Converter):
     def __call__(self, qty, enr, commod=None):
-        return 1
+        return enrichment.feed(0.0072, enr / 100., 0.0025, product=qty)
 
-#todo
 class SWU(Converter):
     def __call__(self, qty, enr, commod=None):
-        return 1
+        return enrichment.swu(0.0072, enr / 100., 0.0025, product=qty)
 
 class RecycleProc(Converter):
     def __call__(self, qty, enr, commod=None):
