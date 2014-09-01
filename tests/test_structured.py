@@ -291,7 +291,7 @@ def assert_scoeffs_equal(arc, commod, rkind, skind, n, enr):
                 data.converters[skind]['inv'](qty, enr, commod)]
     assert_array_almost_equal(arc.vcaps, s_coeffs)
 
-def test_get_one_supply():
+def test_one_supply():
     gids = tools.Incrementer()
     nids = tools.Incrementer()
     sp = strsp.StructuredRequest()
@@ -315,27 +315,152 @@ def test_get_one_supply():
     
     assert_rcoeffs_equal(a, commod, rkind, skind, 1)
     assert_scoeffs_equal(a, commod, rkind, skind, 1, r.enr[commod])    
+
+def test_th_supply():
+    gids = tools.Incrementer()
+    nids = tools.Incrementer()
+    sp = strsp.StructuredRequest()
+    rkind = data.Reactors.th
+    p = strsp.Point({'f_fc': 2, 'f_rxtr': 1})
+    r = strsp.Reactor(rkind, p, gids, nids)
+
+    # uox
+    skind = data.Suppliers.uox
+    commod = data.Commodities.uox
+    s = strsp.Supplier(skind, p, gids)
+    arcs = sp._generate_supply(p, commod, r, s)
+    assert_equal(len(arcs), data.n_assemblies[rkind])
+    assert_equal(len(s.nodes), data.n_assemblies[rkind])    
+    assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
+    assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
+                         r.enr[commod])    
+
+    # th mox
+    skind = data.Suppliers.th_mox
+    commod = data.Commodities.th_mox
+    s = strsp.Supplier(skind, p, gids)
+    arcs = sp._generate_supply(p, commod, r, s)
+    assert_equal(len(arcs), data.n_assemblies[rkind])
+    assert_equal(len(s.nodes), data.n_assemblies[rkind])    
+    assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
+    assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
+                         r.enr[commod])    
+
+    # f mox
+    skind = data.Suppliers.f_mox
+    commod = data.Commodities.f_mox
+    s = strsp.Supplier(skind, p, gids)
+    arcs = sp._generate_supply(p, commod, r, s)
+    assert_equal(len(arcs), data.n_assemblies[rkind])
+    assert_equal(len(s.nodes), data.n_assemblies[rkind])    
+    assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
+    assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
+                         r.enr[commod])    
     
-def test_get_many_supply():
+def test_fmox_supply():
     gids = tools.Incrementer()
     nids = tools.Incrementer()
     sp = strsp.StructuredRequest()
     rkind = data.Reactors.f_mox
-    skind = data.Suppliers.f_mox
-    commod = data.Commodities.f_mox
     p = strsp.Point({'f_fc': 2, 'f_rxtr': 1})
     r = strsp.Reactor(rkind, p, gids, nids)
-    s = strsp.Supplier(skind, p, gids)
 
+    # uox
+    skind = data.Suppliers.uox
+    commod = data.Commodities.uox
+    s = strsp.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), data.n_assemblies[rkind])
-    assert_equal(len(s.nodes), data.n_assemblies[rkind])
-    
-    a = arcs[0]
-    assert_rcoeffs_equal(a, commod, rkind, skind, data.n_assemblies[rkind])
-    assert_scoeffs_equal(a, commod, rkind, skind, data.n_assemblies[rkind], 
+    assert_equal(len(s.nodes), data.n_assemblies[rkind])    
+    assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
+    assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
                          r.enr[commod])    
 
+    # th mox
+    skind = data.Suppliers.th_mox
+    commod = data.Commodities.th_mox
+    s = strsp.Supplier(skind, p, gids)
+    arcs = sp._generate_supply(p, commod, r, s)
+    assert_equal(len(arcs), data.n_assemblies[rkind])
+    assert_equal(len(s.nodes), data.n_assemblies[rkind])    
+    assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
+    assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
+                         r.enr[commod])    
+
+    # f mox
+    skind = data.Suppliers.f_mox
+    commod = data.Commodities.f_mox
+    s = strsp.Supplier(skind, p, gids)
+    arcs = sp._generate_supply(p, commod, r, s)
+    assert_equal(len(arcs), data.n_assemblies[rkind])
+    assert_equal(len(s.nodes), data.n_assemblies[rkind])    
+    assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
+    assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
+                         r.enr[commod])    
+
+    # thox
+    skind = data.Suppliers.f_thox
+    commod = data.Commodities.f_thox
+    s = strsp.Supplier(skind, p, gids)
+    arcs = sp._generate_supply(p, commod, r, s)
+    assert_equal(len(arcs), data.n_assemblies[rkind])
+    assert_equal(len(s.nodes), data.n_assemblies[rkind])    
+    assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
+    assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
+                         r.enr[commod])    
+    
+def test_fmox_supply():
+    gids = tools.Incrementer()
+    nids = tools.Incrementer()
+    sp = strsp.StructuredRequest()
+    rkind = data.Reactors.f_thox
+    p = strsp.Point({'f_fc': 2, 'f_rxtr': 1})
+    r = strsp.Reactor(rkind, p, gids, nids)
+
+    # uox
+    skind = data.Suppliers.uox
+    commod = data.Commodities.uox
+    s = strsp.Supplier(skind, p, gids)
+    arcs = sp._generate_supply(p, commod, r, s)
+    assert_equal(len(arcs), data.n_assemblies[rkind])
+    assert_equal(len(s.nodes), data.n_assemblies[rkind])    
+    assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
+    assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
+                         r.enr[commod])    
+
+    # th mox
+    skind = data.Suppliers.th_mox
+    commod = data.Commodities.th_mox
+    s = strsp.Supplier(skind, p, gids)
+    arcs = sp._generate_supply(p, commod, r, s)
+    assert_equal(len(arcs), data.n_assemblies[rkind])
+    assert_equal(len(s.nodes), data.n_assemblies[rkind])    
+    assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
+    assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
+                         r.enr[commod])    
+
+    # f mox
+    skind = data.Suppliers.f_mox
+    commod = data.Commodities.f_mox
+    s = strsp.Supplier(skind, p, gids)
+    arcs = sp._generate_supply(p, commod, r, s)
+    assert_equal(len(arcs), data.n_assemblies[rkind])
+    assert_equal(len(s.nodes), data.n_assemblies[rkind])    
+    assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
+    assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
+                         r.enr[commod])    
+
+    # thox
+    skind = data.Suppliers.f_thox
+    commod = data.Commodities.f_thox
+    s = strsp.Supplier(skind, p, gids)
+    arcs = sp._generate_supply(p, commod, r, s)
+    assert_equal(len(arcs), data.n_assemblies[rkind])
+    assert_equal(len(s.nodes), data.n_assemblies[rkind])    
+    assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
+    assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
+                         r.enr[commod])    
+    
 def test_once_through():
     sp = strsp.StructuredRequest()
     d = {
