@@ -277,6 +277,19 @@ def test_supplier():
     s = strsp.Supplier(kind, p, gids)
     assert_almost_equal(s.group.caps[0], rate)
     assert_almost_equal(s.group.caps[1], rate * 0.33 * data.conv_ratio(kind))
+    
+def assert_rcoeffs_equal(arc, commod, rkind, skind, n):
+    qty = data.fuel_unit * data.request_qtys[rkind] / \
+        data.relative_qtys[rkind][commod] / n
+    r_coeffs = [qty]
+    assert_array_almost_equal(arc.ucaps, r_coeffs)
+
+def assert_scoeffs_equal(arc, commod, rkind, skind, n, enr):
+    qty = data.fuel_unit * data.request_qtys[rkind] * \
+        data.relative_qtys[rkind][commod] / n
+    s_coeffs = [data.converters[skind]['proc'](qty, enr, commod),
+                data.converters[skind]['inv'](qty, enr, commod)]
+    assert_array_almost_equal(arc.vcaps, s_coeffs)
 
 def test_get_one_supply():
     gids = tools.Incrementer()
@@ -299,16 +312,9 @@ def test_get_one_supply():
     n_r = r.commod_to_nodes[commod][0]
     assert_equal(a.uid, n_r.id)
     assert_equal(a.vid, n_s.id)
-
-    qty = data.fuel_unit * data.request_qtys[rkind] / data.relative_qtys[rkind][commod]
-    r_coeffs = [qty]
-    assert_array_almost_equal(a.ucaps, r_coeffs)
-
-    qty *= data.relative_qtys[rkind][commod]
-    s_coeffs = [data.converters[skind]['proc'](qty, r.enr[commod], commod),
-                data.converters[skind]['inv'](qty, r.enr[commod], commod)]
-
-    assert_array_almost_equal(a.vcaps, s_coeffs)
+    
+    assert_rcoeffs_equal(a, commod, rkind, skind, 1)
+    assert_scoeffs_equal(a, commod, rkind, skind, 1, r.enr[commod])    
     
 def test_get_many_supply():
     gids = tools.Incrementer()
@@ -326,16 +332,10 @@ def test_get_many_supply():
     assert_equal(len(s.nodes), data.n_assemblies[rkind])
     
     a = arcs[0]
-    qty = data.fuel_unit * data.request_qtys[rkind] / \
-        data.relative_qtys[rkind][commod] / data.n_assemblies[rkind]
-    r_coeffs = [qty]
-    assert_array_almost_equal(a.ucaps, r_coeffs)        
-    
-    qty *= data.relative_qtys[rkind][commod]
-    s_coeffs = [data.converters[skind]['proc'](qty, r.enr[commod], commod),
-                data.converters[skind]['inv'](qty, r.enr[commod], commod)]
-    assert_array_almost_equal(a.vcaps, s_coeffs)
-    
+    assert_rcoeffs_equal(a, commod, rkind, skind, data.n_assemblies[rkind])
+    assert_scoeffs_equal(a, commod, rkind, skind, data.n_assemblies[rkind], 
+                         r.enr[commod])    
+
 def test_once_through():
     sp = strsp.StructuredRequest()
     d = {

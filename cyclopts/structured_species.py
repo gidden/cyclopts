@@ -99,6 +99,7 @@ class Reactor(object):
         self.req_qty = qty / n
         gid = gids.next()
         for commod in data.rxtr_commods(kind, point.f_fc):
+            # node quantity takes into account relative fissile material
             req_qty = self.req_qty * data.relative_qtys[kind][commod]
             lb, ub = data.enr_ranges[kind][commod]
             self.enr[commod] = random.uniform(lb, ub) # one enr per commod per reactor
@@ -339,9 +340,14 @@ class StructuredRequest(ProblemSpecies):
         rnodes = r.commod_to_nodes[commod]
         arcs = []
         enr = r.enr[commod]
-        req_coeffs = [r.req_qty / data.relative_qtys[r.kind][commod]]
-        converters = data.converters[s.kind]
-        qty = r.req_qty * data.relative_qtys[r.kind][commod]
+        factor = data.relative_qtys[r.kind][commod]
+
+        # req coeffs have full orders take into relative fissile material
+        qty = r.req_qty / factor
+        req_coeffs = [qty]
+        
+        # sup coeffs act on the quantity of fissile material 
+        qty = r.req_qty * factor
         sup_coeffs = [data.converters[s.kind][k](qty, enr, commod) \
                           for k in ['proc', 'inv']]
         for i in range(len(rnodes)):
