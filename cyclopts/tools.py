@@ -495,7 +495,7 @@ def expand_args(x):
     for y in itools.product(*x):
         yield y
 
-def run_insts(fam, fam_tables, sp, sp_tables, ninst=1, update_freq=100, verbose=False):
+def conv_insts(fam, fam_tables, sp, sp_tables, ninst=1, update_freq=100, verbose=False):
     n = 0
     for point in sp.points():
         param_uuid = uuid.uuid4()
