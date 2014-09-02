@@ -255,7 +255,7 @@ def test_supplier():
     p = strsp.Point({'r_inv_proc': 0.33})
     
     kind = data.Suppliers.uox
-    rate = 2.3e5
+    rate = 3.3e6 / 12
     s = strsp.Supplier(kind, p, gids)
     assert_almost_equal(s.group.caps[0], rate)
     assert_almost_equal(s.group.caps[1], rate * 0.33 * data.conv_ratio(kind))

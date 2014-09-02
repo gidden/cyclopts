@@ -248,14 +248,12 @@ Supplier Constraint RHS Values
 Supporting facilities have a nominal throughput capacity. The proposed Eagle
 Rock Enrichment Plant `purports
 <http://us.areva.com/EN/home-203/eagle-rock-enrichment-facility.html>`_ to have
-a capacity of 3.3M SWU per year, which is enough to support 25 reactors. This
-work assumes a new facility could serve 25 thermal reactors requesting an
-average enrichment. From previous conversations with industry representatives, a
-reasonable size for a processing plant is 800 tonnes per year, which is similar
-to `Rokkassho
+a capacity of 3.3M SWU per year. From previous conversations with industry
+representatives, a reasonable size for a processing plant is 800 tonnes per
+year, which is similar to `Rokkassho
 <http://ec.europa.eu/dgs/jrc/downloads/jrc_20100615_safeguards_heinonen.pdf>`_. With
-the factor of 100 discussed above, a 800 t U/ 8 t Pu facility could service
-on the order of 2-3 fast reactors.
+the factor of 100 discussed above, a 800 t U/ 8 t Pu facility could service on
+the order of 2-3 fast reactors.
 
 Using the following assumptions
 
@@ -265,9 +263,7 @@ Using the following assumptions
 
 .. math::
 
-   SWU_{lwr} = SWU(\bar{\epsilon}, 12.5 * fuel unit) = ~1.1e5
-
-   S_{proc, SWU} = \frac{25 SWU_{lwr}}{12 \frac{month}{year}} = ~2.3e5 \frac{SWU}{month} 
+   S_{proc, SWU} = \frac{3.3E6 WU}{12 \frac{month}{year}} = ~2.75e5 \frac{SWU}{month} 
 
    S_{proc, recycle} = \frac{800 \frac{t}{year}}{12 \frac{month}{year} * 1.4 \frac{t}{fuel unit}} = ~47 \frac{fuel unit}{month} 
 

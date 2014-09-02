@@ -139,7 +139,7 @@ pref_basis = {
 
 """supplier limiting values"""
 sup_rhs = {
-    Suppliers.uox: 2.3e5,
+    Suppliers.uox: 3.3e6/12, # 3.3M SWU/yr / 12 months/yr
     Suppliers.th_mox: 800e3/12, # 800t/yr / 12 months/yr
     Suppliers.f_mox: 800e3/12,
     Suppliers.f_thox: 800e3/12,
