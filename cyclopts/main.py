@@ -125,8 +125,10 @@ def convert(args):
         h5file.close()
         return
     
-    tools.run_insts(fam, fam_manager.tables, sp, sp_manager.tables, 
-                    ninst=ninst, update_freq=update_freq, verbose=verbose)
+    # tools.run_insts(fam, fam_manager.tables, sp, sp_manager.tables, 
+    #                 ninst=ninst, update_freq=update_freq, verbose=verbose)
+    tools.run_insts_mp(fam, fam_manager.tables, sp, sp_manager.tables, 
+                       ninst=ninst, update_freq=update_freq, verbose=verbose)
 
     # clean up
     sp_manager.flush_tables()

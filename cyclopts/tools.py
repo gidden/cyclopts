@@ -21,6 +21,8 @@ from subprocess import PIPE, Popen
 import getpass
 import importlib
 import itertools as itools
+import multiprocessing as mp
+from Queue import Empty
 
 import cyclopts
 from cyclopts.params import PARAM_CTOR_ARGS, Param, BoolParam, SupConstrParam, \
@@ -495,7 +497,8 @@ def expand_args(x):
     for y in itools.product(*x):
         yield y
 
-def run_insts(fam, fam_tables, sp, sp_tables, ninst=1, update_freq=100, verbose=False):
+def run_insts(fam, fam_tables, sp, sp_tables, ninst=1, update_freq=100, 
+              verbose=False):
     n = 0
     for point in sp.points():
         param_uuid = uuid.uuid4()
@@ -512,25 +515,60 @@ def run_insts(fam, fam_tables, sp, sp_tables, ninst=1, update_freq=100, verbose=
     if verbose:
         print('{0} instances have been converted'.format(n))
 
-# def run_insts_mp():
-#     q = mp.Queue()
-#     pool = mp.Pool(4, multi_proc_gen, (q,))
-#     lock = mp.Lock()
-#     for point in sp.points():
-#         param_uuid = uuid.uuid4()
-#         if lock is not None:
-#             lock.acquire()
-#         sp.record_point(point, param_uuid, sp_manager.tables)
-#         if lock is not None:
-#             lock.release()
-#         for i in range(ninst):
-#             inst_uuid = uuid.uuid4()
-#             # q.put((inst_uuid, param_uuid, point, sp, fam, 
-#             #        fam_manager.tables, lock))
-#             q.put((inst_uuid, param_uuid, lock))
-            
-#     while not q.empty():
-#         if verbose and q.qsize() % update_freq == 0:
-#             print('{0} instances have been converted'.format(n))
-#         time.sleep(1)
 
+class Job(object):
+    
+    def __init__(self, sp, sp_tables, fam, fam_tables, ninst):
+        self.sp = sp
+        self.fam = fam
+        self.sp_tables = sp_tables
+        self.fam_tables = fam_tables
+        self.ninst = ninst
+
+    def run(self, point, lock):
+        print("run")
+        # pid = uuid.uuid4()
+        # with lock:
+        #     self.sp.record_point(point, pid, self.sp_manager.tables)
+        # for i in range(self.ninst):
+        #     iid = uuid.uuid4()
+        #     inst = self.sp.gen_inst(point)
+        #     with lock:
+        #         self.fam.record_inst(inst, iid, pid, self.sp.name, self.fam_tables)
+
+# def pool_proc(q, job, point, lock):
+def pool_proc(q, job):
+    print("pool proc")
+    # job.run(point, lock)
+    # q.put(job)
+
+def run_insts_mp(fam, fam_tables, sp, sp_tables, ninst=1, update_freq=100, 
+                 verbose=False):
+    pool = mp.Pool(processes=mp.cpu_count() - 1)
+    pool_mgr = mp.Manager()
+    q = pool_mgr.Queue()
+    lock = mp.Lock()
+    
+    njobs = sp.n_points * ninst
+    jobs = [Job(sp, sp_tables, fam, fam_tables, ninst) for i in range(njobs)]    
+    done = []
+    
+    # pool.imap_unordered(pool_proc, ((q, jobs[i], p, lock) for i, p in enumerate(sp.points())))
+    # pool.map(pool_proc, ((q, jobs[i], p, lock) for i, p in enumerate(sp.points())))
+    args = [(q, jobs[i]) for i, p in enumerate(sp.points())]
+    pool.map(pool_proc, args)
+    print('before', len(jobs), len(done))
+
+    while not q.empty() or len(done) != len(jobs):
+        try:
+            job = q.get()
+            done.append(job)
+            n = len(jobs) - len(done) 
+            if verbose and n % update_freq == 0:
+                print('{0} instances have been converted'.format(n))
+        except Empty:
+            pass
+        
+    print('after', len(jobs), len(done))
+    pool.close()
+    pool.join()   
