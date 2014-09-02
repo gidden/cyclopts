@@ -87,7 +87,7 @@ class Reactor(object):
     
     def __init__(self, kind, point, gids, nids):
         self.kind = kind
-        self.n_assems = n = 1 if point.f_rxtr == 0 else data.n_assemblies[kind]        
+        self.n_assems = 1 if point.f_rxtr == 0 else data.n_assemblies[kind]        
 
         self.nodes = []
         self.commod_to_nodes = defaultdict(list)
@@ -96,14 +96,16 @@ class Reactor(object):
         req = True
         excl = True
         qty = data.fuel_unit * data.request_qtys[kind]
-        self.req_qty = qty / n
         gid = gids.next()
+        self.group = exinst.ExGroup(gid, req, [qty], qty)
+        self.loc = data.loc()
+        self.req_qty = qty / self.n_assems
         for commod in data.rxtr_commods(kind, point.f_fc):
             # node quantity takes into account relative fissile material
             req_qty = self.req_qty * data.relative_qtys[kind][commod]
             lb, ub = data.enr_ranges[kind][commod]
             self.enr[commod] = random.uniform(lb, ub) # one enr per commod per reactor
-            nreq = n
+            nreq = self.n_assems
             # account for less mox requests
             if kind == data.Reactors.th:
                 if commod == data.Commodities.f_mox or commod == data.Commodities.th_mox:
@@ -113,8 +115,6 @@ class Reactor(object):
                 self.nodes.append(node)
                 self.commod_to_nodes[commod].append(node)
 
-        self.group = exinst.ExGroup(gid, req, [qty], qty)
-        self.loc = data.loc()
 
 class Supplier(object):
     """A simplified supplier model for Structured Request Species"""
@@ -143,7 +143,7 @@ class StructuredRequest(ProblemSpecies):
         self._dtype = np.dtype(
             [('paramid', ('str', 16)), ('family', ('str', 30))] + \
                 [(name, param.dtype) for name, param in parameters.items()])
-    
+            
         self.nids = tools.Incrementer()
         self.gids = tools.Incrementer()
         self.arcids = tools.Incrementer()
@@ -386,7 +386,12 @@ class StructuredRequest(ProblemSpecies):
         inst : tuple of lists of ExGroups, ExNodes, and ExArgs
             A representation of a problem instance to be used by this species' 
             family
-        """
+        """            
+        # reset id generation
+        self.nids = tools.Incrementer()
+        self.gids = tools.Incrementer()
+        self.arcids = tools.Incrementer()
+
         # species objects
         reactors = self._get_reactors(point)        
         suppliers = self._get_suppliers(point)        
