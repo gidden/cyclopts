@@ -494,3 +494,43 @@ def expand_args(x):
     """
     for y in itools.product(*x):
         yield y
+
+def run_insts(fam, fam_tables, sp, sp_tables, ninst=1, update_freq=100, verbose=False):
+    n = 0
+    for point in sp.points():
+        param_uuid = uuid.uuid4()
+        sp.record_point(point, param_uuid, sp_tables)
+        for i in range(ninst):
+            inst_uuid = uuid.uuid4()
+            inst = sp.gen_inst(point)
+            fam.record_inst(inst, inst_uuid, param_uuid, sp.name, 
+                            fam_tables)
+            if verbose and n % update_freq == 0:
+                print('{0} instances have been converted'.format(n))
+            n += 1
+    
+    if verbose:
+        print('{0} instances have been converted'.format(n))
+
+# def run_insts_mp():
+#     q = mp.Queue()
+#     pool = mp.Pool(4, multi_proc_gen, (q,))
+#     lock = mp.Lock()
+#     for point in sp.points():
+#         param_uuid = uuid.uuid4()
+#         if lock is not None:
+#             lock.acquire()
+#         sp.record_point(point, param_uuid, sp_manager.tables)
+#         if lock is not None:
+#             lock.release()
+#         for i in range(ninst):
+#             inst_uuid = uuid.uuid4()
+#             # q.put((inst_uuid, param_uuid, point, sp, fam, 
+#             #        fam_manager.tables, lock))
+#             q.put((inst_uuid, param_uuid, lock))
+            
+#     while not q.empty():
+#         if verbose and q.qsize() % update_freq == 0:
+#             print('{0} instances have been converted'.format(n))
+#         time.sleep(1)
+

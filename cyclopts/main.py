@@ -117,33 +117,34 @@ def convert(args):
                                                          fam.table_prefix))
     
     # convert
-    n = 0
     sp.read_space(rc._dict)
-
     if verbose or args.count_only:
         print('{0} possible (not validated) points to be converted.'.format(
                 sp.n_points))
-
     if args.count_only:
         h5file.close()
         return
-
-    for point in sp.points():
-        param_uuid = uuid.uuid4()
-        sp.record_point(point, param_uuid, sp_manager.tables)
-        for i in range(ninst):
-            inst_uuid = uuid.uuid4()
-            inst = sp.gen_inst(point)
-            fam.record_inst(inst, inst_uuid, param_uuid, sp.name, 
-                            fam_manager.tables)
-            if verbose and n % update_freq == 0:
-                print('{0} instances have been converted'.format(n))
-            n += 1
+    
+    tools.run_insts(fam, fam_manager.tables, sp, sp_manager.tables, 
+                    ninst=ninst, update_freq=update_freq, verbose=verbose)
 
     # clean up
     sp_manager.flush_tables()
     fam_manager.flush_tables()
     h5file.close()
+
+def multi_proc_gen(q):
+    if q.empty():
+        return
+    # iid, pid, point, sp, fam, tables, lock = q.get()
+    iid, pid, lock = q.get()
+    print(iid.hex, pid.hex)
+    # inst = sp.gen_inst(point)
+    # if lock is not None:
+    #     lock.acquire()
+    # fam.record_inst(inst, iid, pid, sp.name, tables)
+    # if lock is not None:
+    #     lock.release()
 
 def execute(args):
     indb = args.db
