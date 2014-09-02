@@ -414,8 +414,8 @@ listed below:
     :math:`r_{s, mox, uox}` ratio of mox to uox thermal supplier                               :math:`[0, 1]`
     :math:`r_{s, mox}`      ratio of primary suppliers to fast mox reactors                    :math:`[0, \frac{1}{2}]`
     :math:`r_{s, thox}`     ratio of primary suppliers to fast thox reactors                   :math:`[0, \frac{1}{2}]`
-    :math:`f_{mox}`         fraction of thermal reactor requests that can be met with mox fuel :math:`[0, \frac{1}{3}]`
+    :math:`f_{mox}`         fraction of thermal reactor requests that can be met with mox fuel :math:`[0, 1]`
     :math:`r_{inv, proc}`   ratio of the inventory RHS to the process RHS                      :math:`\{0.5, 1, 2\}`
     :math:`n_{reg}`         number of regions                                                  any
-    :math:`r_{l, c}`        ratio of location to commodity preference                          :math:`[0, 1]` 
+    :math:`r_{l, c}`        ratio of location to commodity preference                          :math:`[0, 2]` 
     ======================= ================================================================== ==========================

@@ -68,7 +68,7 @@ def test_request_write_point():
         ResourceExchange().name,
         0,
         0,
-        1.0/3,
+        1,
         0,
         10,
         100, # non defaults
@@ -151,7 +151,7 @@ def test_th_reactors():
     nids = tools.Incrementer()    
 
     # once through, thermal
-    p = strsp.Point({'f_fc': 0})
+    p = strsp.Point({'f_fc': 0, 'f_mox': 0.25})
     kind = data.Reactors.th
     r = strsp.Reactor(kind, p, gids, nids)    
     assert_equal(r.kind, kind)
@@ -161,21 +161,21 @@ def test_th_reactors():
     assert_almost_equal(r.group.qty, data.fuel_unit * data.request_qtys[kind])
 
     # thox recycle, thermal, n assemblies
-    p = strsp.Point({'f_fc': 2, 'f_rxtr': 1})
+    p = strsp.Point({'f_fc': 2, 'f_rxtr': 1, 'f_mox': 0.25})
     kind = data.Reactors.th
     r = strsp.Reactor(kind, p, gids, nids)
     base_qty = 1400 * 12.5 / math.floor(157 / 4.)
-    assert_equal(len(r.nodes), 3 * data.n_assemblies[kind])
+    assert_equal(len(r.nodes), int(math.ceil(1.5 * data.n_assemblies[kind])))
     assert_equal(len(r.commod_to_nodes[data.Commodities.uox]), 
                  data.n_assemblies[kind])
     assert_almost_equal(r.commod_to_nodes[data.Commodities.uox][0].qty,
                         base_qty)
     assert_equal(len(r.commod_to_nodes[data.Commodities.th_mox]), 
-                 data.n_assemblies[kind])
+                 int(math.ceil(0.25 * data.n_assemblies[kind])))
     assert_almost_equal(r.commod_to_nodes[data.Commodities.th_mox][0].qty,
                         base_qty * 0.1)
     assert_equal(len(r.commod_to_nodes[data.Commodities.f_mox]), 
-                 data.n_assemblies[kind])
+                 int(math.ceil(0.25 * data.n_assemblies[kind])))
     assert_almost_equal(r.commod_to_nodes[data.Commodities.f_mox][0].qty,
                         base_qty * 0.1)    
     assert_almost_equal(r.group.caps[0], data.fuel_unit * data.request_qtys[kind])
@@ -321,7 +321,7 @@ def test_th_supply():
     nids = tools.Incrementer()
     sp = strsp.StructuredRequest()
     rkind = data.Reactors.th
-    p = strsp.Point({'f_fc': 2, 'f_rxtr': 1})
+    p = strsp.Point({'f_fc': 2, 'f_rxtr': 1, 'f_mox': 0.25})
     r = strsp.Reactor(rkind, p, gids, nids)
 
     # uox
@@ -340,8 +340,9 @@ def test_th_supply():
     commod = data.Commodities.th_mox
     s = strsp.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
-    assert_equal(len(arcs), data.n_assemblies[rkind])
-    assert_equal(len(s.nodes), data.n_assemblies[rkind])    
+    n = int(math.ceil(0.25 * data.n_assemblies[rkind])) 
+    assert_equal(len(arcs), n)
+    assert_equal(len(s.nodes), n)    
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
                          r.enr[commod])    
@@ -351,8 +352,8 @@ def test_th_supply():
     commod = data.Commodities.f_mox
     s = strsp.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
-    assert_equal(len(arcs), data.n_assemblies[rkind])
-    assert_equal(len(s.nodes), data.n_assemblies[rkind])    
+    assert_equal(len(arcs), n)
+    assert_equal(len(s.nodes), n)    
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
                          r.enr[commod])    

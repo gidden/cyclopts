@@ -30,7 +30,7 @@ parameters = {
     "r_s_mox_uox": Param(1.0, np.float32),
     "r_s_mox": Param(1.0 / 2, np.float32),
     "r_s_thox": Param(1.0 / 2, np.float32),
-    "f_mox": Param(1.0 / 3, np.float32),
+    "f_mox": Param(1.0, np.float32),
     "r_inv_proc": Param(1.0, np.float32), 
     "n_reg": Param(10, np.uint32), # use a different tool for more than 4294967295 regions! 
     "r_l_c": Param(1.0, np.float32),
@@ -103,7 +103,12 @@ class Reactor(object):
             req_qty = self.req_qty * data.relative_qtys[kind][commod]
             lb, ub = data.enr_ranges[kind][commod]
             self.enr[commod] = random.uniform(lb, ub) # one enr per commod per reactor
-            for i in range(n):
+            nreq = n
+            # account for less mox requests
+            if kind == data.Reactors.th:
+                if commod == data.Commodities.f_mox or commod == data.Commodities.th_mox:
+                    nreq = int(math.ceil(nreq * point.f_mox))
+            for i in range(nreq):
                 node = exinst.ExNode(nids.next(), gid, req, req_qty, excl)
                 self.nodes.append(node)
                 self.commod_to_nodes[commod].append(node)
