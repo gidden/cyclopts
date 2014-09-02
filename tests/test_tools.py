@@ -183,3 +183,12 @@ def test_n_permutations():
 
     x = {"foo": [range(10), range(5)], "bar": ["42", 42]}
     assert_equal(100, tools.n_permutations(x))
+
+def test_expand_args():
+    args = [[0, 1, 2], [0.5, 1.0], [0.2]]
+    
+    exp = set([(0, 0.5, 0.2), (1, 0.5, 0.2), (2, 0.5, 0.2),
+               (0, 1.0, 0.2), (1, 1.0, 0.2), (2, 1.0, 0.2)])
+    obs = set([x for x in tools.expand_args(args)])
+    assert_equal(obs, exp)
+    

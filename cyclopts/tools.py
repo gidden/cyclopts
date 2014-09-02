@@ -13,7 +13,6 @@ import operator
 import tables as t
 import numpy as np
 from functools import reduce
-from itertools import product
 from collections import defaultdict, Iterable, Sequence, Mapping
 import paramiko as pm
 from os import kill
@@ -21,7 +20,7 @@ from signal import alarm, signal, SIGALRM, SIGKILL
 from subprocess import PIPE, Popen
 import getpass
 import importlib
-import itertools
+import itertools as itools
 
 import cyclopts
 from cyclopts.params import PARAM_CTOR_ARGS, Param, BoolParam, SupConstrParam, \
@@ -445,7 +444,7 @@ def collect_instids(h5file, path, rc=None, instids=None, colname='instid'):
                      not c.rstrip().endswith(')') else c for c in conds[::2]]
         cond = ' '.join(
             [' '.join(i) for i in \
-                 itertools.izip_longest(conds, ops, fillvalue='')]).strip()
+                 itools.izip_longest(conds, ops, fillvalue='')]).strip()
         vals = [x[colname] for x in h5node.where(cond)]
         vals = [x + '\0' if len(x) == 15 else x for x in vals]
         instids |= set(uuid.UUID(bytes=x) for x in vals)
@@ -482,3 +481,16 @@ def n_permutations(x):
         for v in x.values():
             n *= n_permutations(v)
     return n
+
+def expand_args(x):
+    """Parameters
+    ----------
+    x : list of lists of arguments
+    
+    Returns
+    -------
+    args : generator
+        a generator that returns a collection of single arguments
+    """
+    for y in itools.product(*x):
+        yield y

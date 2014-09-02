@@ -7,7 +7,7 @@ import numpy as np
 import random
 import math
 
-from collections import OrderedDict, namedtuple, defaultdict
+from collections import OrderedDict, namedtuple, defaultdict, Iterable
 
 from cyclopts import tools
 from cyclopts import cyclopts_io as cycio
@@ -189,7 +189,8 @@ class StructuredRequest(ProblemSpecies):
             A dictionary container resulting from the reading in of a run 
             control file
         """
-        self.space = {k: v for k, v in space_dict.items() if k in parameters}
+        self.space = {k: v if isinstance(v, Iterable) else [v] \
+                          for k, v in space_dict.items() if k in parameters}
 
     @property
     def n_points(self):
@@ -215,8 +216,8 @@ class StructuredRequest(ProblemSpecies):
         """
         keys = self.space.keys()
         vals = self.space.values()
-        for tup in itertools.product(vals):
-            d = {keys[i]: tup[i] for i in range(len(tup))}
+        for args in tools.expand_args(vals):
+            d = {keys[i]: args[i] for i in range(len(args))}
             yield Point(d)    
 
     def record_point(self, point, param_uuid, tables):
@@ -229,11 +230,9 @@ class StructuredRequest(ProblemSpecies):
         tables : list of cyclopts_io.Table
             The tables that can be written to
         """
-        for k in parameters.keys():
-            print(k)
         data = [param_uuid.bytes, self._family.name]
         data += [getattr(point, k) for k in parameters.keys()]
-        tables[self.tbl_name].append_data(tuple(data))
+        tables[self.tbl_name].append_data([tuple(data)])
 
     def _reactor_breakdown(self, point):
         """Returns

@@ -80,7 +80,7 @@ class Table(object):
 
         Parameters
         ----------
-        data : np.ndarray
+        data : array-like
             data to append to the table
         """
         ndata = len(data)
