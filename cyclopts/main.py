@@ -133,19 +133,6 @@ def convert(args):
     fam_manager.flush_tables()
     h5file.close()
 
-def multi_proc_gen(q):
-    if q.empty():
-        return
-    # iid, pid, point, sp, fam, tables, lock = q.get()
-    iid, pid, lock = q.get()
-    print(iid.hex, pid.hex)
-    # inst = sp.gen_inst(point)
-    # if lock is not None:
-    #     lock.acquire()
-    # fam.record_inst(inst, iid, pid, sp.name, tables)
-    # if lock is not None:
-    #     lock.release()
-
 def execute(args):
     indb = args.db
     outdb = args.outdb
