@@ -250,6 +250,11 @@ def test_thox_reactors():
     assert_almost_equal(r.group.caps[0], data.fuel_unit * data.request_qtys[kind])
     assert_almost_equal(r.group.qty, data.fuel_unit * data.request_qtys[kind])
 
+def test_conv():
+    exp = 1.33 # from wise-uranium.org/nfcue.html with assays as stated
+    obs = data.conv_ratio(data.Suppliers.uox)
+    assert_almost_equal(obs, exp, places=2)
+
 def test_supplier():
     gids = tools.Incrementer()
     p = strsp.Point({'r_inv_proc': 0.33})

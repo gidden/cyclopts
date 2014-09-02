@@ -167,7 +167,7 @@ class RecycleProc(Converter):
 
 class RecycleInv(Converter):
     def __call__(self, qty, enr, commod=None):
-        return qty * enr
+        return qty * enr / 100.
 
 converters = {
     Suppliers.uox: {
@@ -191,8 +191,8 @@ converters = {
 def conv_ratio(kind):
     commod, rxtr = sup_to_commod[kind], sup_to_rxtr[kind]
     mean_enr = np.mean(enr_ranges[rxtr][commod])
-    return converters[kind]['proc'](1.0, mean_enr, commod) / \
-        converters[kind]['inv'](1.0, mean_enr, commod)
+    return converters[kind]['inv'](1.0, mean_enr, commod) / \
+        converters[kind]['proc'](1.0, mean_enr, commod)
 
 """generate a location"""
 loc = lambda: random.uniform(0, 1)

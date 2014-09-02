@@ -265,7 +265,7 @@ Using the following assumptions
 
    S_{proc, SWU} = \frac{3.3E6 WU}{12 \frac{month}{year}} = ~2.75e5 \frac{SWU}{month} 
 
-   S_{proc, recycle} = \frac{800 \frac{t}{year}}{12 \frac{month}{year} * 1.4 \frac{t}{fuel unit}} = ~47 \frac{fuel unit}{month} 
+   S_{proc, recycle} = \frac{800 \frac{t}{year}}{12 \frac{month}{year}} = ~66.7 \frac{t}{month} 
 
 From the formulation point of view, interesting cases arise when either
 constraint is dominated by the other and when neither is dominant. Furthermore,
@@ -411,7 +411,7 @@ listed below:
     :math:`r_{s, mox}`      ratio of primary suppliers to fast mox reactors                    :math:`[0, \frac{1}{2}]`
     :math:`r_{s, thox}`     ratio of primary suppliers to fast thox reactors                   :math:`[0, \frac{1}{2}]`
     :math:`f_{mox}`         fraction of thermal reactor requests that can be met with mox fuel :math:`[0, 1]`
-    :math:`r_{inv, proc}`   ratio of the inventory RHS to the process RHS                      :math:`\{0.5, 1, 2\}`
+    :math:`r_{inv, proc}`   ratio of the inventory RHS to the process RHS                      :math:`\{0.75, 1, 1.5\}`
     :math:`n_{reg}`         number of regions                                                  any
     :math:`r_{l, c}`        ratio of location to commodity preference                          :math:`[0, 2]` 
     ======================= ================================================================== ==========================
