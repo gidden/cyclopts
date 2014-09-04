@@ -317,7 +317,7 @@ def test_one_supply():
     assert_equal(a.vid, n_s.id)
     
     assert_rcoeffs_equal(a, commod, rkind, skind, 1)
-    assert_scoeffs_equal(a, commod, rkind, skind, 1, r.enr[commod])    
+    assert_scoeffs_equal(a, commod, rkind, skind, 1, r.enr(commod))    
 
 def test_th_supply():
     gids = tools.Incrementer()
@@ -336,7 +336,7 @@ def test_th_supply():
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
-                         r.enr[commod])    
+                         r.enr(commod))    
 
     # th mox
     skind = data.Suppliers.th_mox
@@ -348,7 +348,7 @@ def test_th_supply():
     assert_equal(len(s.nodes), n)    
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
-                         r.enr[commod])    
+                         r.enr(commod))    
 
     # f mox
     skind = data.Suppliers.f_mox
@@ -359,7 +359,7 @@ def test_th_supply():
     assert_equal(len(s.nodes), n)    
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
-                         r.enr[commod])    
+                         r.enr(commod))    
     
 def test_fmox_supply():
     gids = tools.Incrementer()
@@ -378,7 +378,7 @@ def test_fmox_supply():
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
-                         r.enr[commod])    
+                         r.enr(commod))    
 
     # th mox
     skind = data.Suppliers.th_mox
@@ -389,7 +389,7 @@ def test_fmox_supply():
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
-                         r.enr[commod])    
+                         r.enr(commod))    
 
     # f mox
     skind = data.Suppliers.f_mox
@@ -400,7 +400,7 @@ def test_fmox_supply():
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
-                         r.enr[commod])    
+                         r.enr(commod))    
 
     # thox
     skind = data.Suppliers.f_thox
@@ -411,7 +411,7 @@ def test_fmox_supply():
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
-                         r.enr[commod])    
+                         r.enr(commod))    
     
 def test_fmox_supply():
     gids = tools.Incrementer()
@@ -430,7 +430,7 @@ def test_fmox_supply():
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
-                         r.enr[commod])    
+                         r.enr(commod))    
 
     # th mox
     skind = data.Suppliers.th_mox
@@ -441,7 +441,7 @@ def test_fmox_supply():
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
-                         r.enr[commod])    
+                         r.enr(commod))    
 
     # f mox
     skind = data.Suppliers.f_mox
@@ -452,7 +452,7 @@ def test_fmox_supply():
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
-                         r.enr[commod])    
+                         r.enr(commod))    
 
     # thox
     skind = data.Suppliers.f_thox
@@ -463,7 +463,7 @@ def test_fmox_supply():
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
-                         r.enr[commod])    
+                         r.enr(commod))    
     
 def test_once_through():
     sp = strsp.StructuredRequest()

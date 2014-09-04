@@ -91,7 +91,7 @@ class Reactor(object):
 
         self.nodes = []
         self.commod_to_nodes = defaultdict(list)
-        self.enr = {}
+        self.enr_rnd = random.uniform(0, 1) 
 
         req = True
         qty = data.fuel_unit * data.request_qtys[self.kind]
@@ -105,9 +105,6 @@ class Reactor(object):
         req = True
         excl = True
         for commod in data.rxtr_commods(self.kind, point.f_fc):
-            # node quantity takes into account relative fissile material
-            lb, ub = data.enr_ranges[self.kind][commod]
-            self.enr[commod] = random.uniform(lb, ub) # one enr per commod per reactor
             nreq = self.n_assems
             # account for less mox requests
             if self.kind == data.Reactors.th:
@@ -119,6 +116,11 @@ class Reactor(object):
                                      self.req_qty(commod), excl)
                 self.nodes.append(node)
                 self.commod_to_nodes[commod].append(node)
+
+    def enr(self, commod):
+        # node quantity takes into account relative fissile material
+        lb, ub = data.enr_ranges[self.kind][commod]
+        return (ub - lb) * self.enr_rnd + lb
 
     def req_qty(self, commod):
         return self.base_req_qty * data.relative_qtys[self.kind][commod]
@@ -358,7 +360,7 @@ class StructuredRequest(ProblemSpecies):
                           point.f_loc, point.r_l_c, point.n_reg)
         rnodes = r.commod_to_nodes[commod]
         arcs = []
-        enr = r.enr[commod]
+        enr = r.enr(commod)
 
         # req coeffs have full orders take into relative fissile material
         req_coeffs = r.coeffs(commod)
