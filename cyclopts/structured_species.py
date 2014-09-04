@@ -94,27 +94,37 @@ class Reactor(object):
         self.enr = {}
 
         req = True
-        excl = True
-        qty = data.fuel_unit * data.request_qtys[kind]
+        qty = data.fuel_unit * data.request_qtys[self.kind]
         gid = gids.next()
         self.group = exinst.ExGroup(gid, req, [qty], qty)
         self.loc = data.loc()
-        self.req_qty = qty / self.n_assems
-        for commod in data.rxtr_commods(kind, point.f_fc):
+        self.base_req_qty = qty / self.n_assems
+        self._gen_nodes(point, gid, nids)
+
+    def _gen_nodes(self, point, gid, nids):
+        req = True
+        excl = True
+        for commod in data.rxtr_commods(self.kind, point.f_fc):
             # node quantity takes into account relative fissile material
-            req_qty = self.req_qty * data.relative_qtys[kind][commod]
-            lb, ub = data.enr_ranges[kind][commod]
+            lb, ub = data.enr_ranges[self.kind][commod]
             self.enr[commod] = random.uniform(lb, ub) # one enr per commod per reactor
             nreq = self.n_assems
             # account for less mox requests
-            if kind == data.Reactors.th:
-                if commod == data.Commodities.f_mox or commod == data.Commodities.th_mox:
+            if self.kind == data.Reactors.th:
+                if commod == data.Commodities.f_mox or \
+                        commod == data.Commodities.th_mox:
                     nreq = int(math.ceil(nreq * point.f_mox))
             for i in range(nreq):
-                node = exinst.ExNode(nids.next(), gid, req, req_qty, excl)
+                node = exinst.ExNode(nids.next(), gid, req, 
+                                     self.req_qty(commod), excl)
                 self.nodes.append(node)
                 self.commod_to_nodes[commod].append(node)
 
+    def req_qty(self, commod):
+        return self.base_req_qty * data.relative_qtys[self.kind][commod]
+
+    def coeffs(self, commod):
+        return [1 / data.relative_qtys[self.kind][commod]]
 
 class Supplier(object):
     """A simplified supplier model for Structured Request Species"""
@@ -129,6 +139,11 @@ class Supplier(object):
                data.sup_rhs[kind] * point.r_inv_proc * data.conv_ratio(kind)]
         self.group = exinst.ExGroup(gids.next(), not req, rhs)
         self.loc = data.loc()
+
+    def coeffs(self, qty, enr):
+        return [data.converters[self.kind][k](
+                qty, enr, data.sup_to_commod[self.kind]) / qty \
+                    for k in ['proc', 'inv']]
 
 class StructuredRequest(ProblemSpecies):
     """A class representing structured request-based exchanges species."""
@@ -344,15 +359,13 @@ class StructuredRequest(ProblemSpecies):
         rnodes = r.commod_to_nodes[commod]
         arcs = []
         enr = r.enr[commod]
-        factor = data.relative_qtys[r.kind][commod]
 
         # req coeffs have full orders take into relative fissile material
-        req_coeffs = [1 / factor]
-        
+        req_coeffs = r.coeffs(commod)
+
         # sup coeffs act on the quantity of fissile material 
-        qty = r.req_qty * factor
-        sup_coeffs = [data.converters[s.kind][k](qty, enr, commod) / qty \
-                          for k in ['proc', 'inv']]
+        qty = r.req_qty(commod)
+        sup_coeffs = s.coeffs(qty, enr)
         for i in range(len(rnodes)):
             req = True
             nid = self.nids.next()
