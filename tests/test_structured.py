@@ -42,10 +42,10 @@ def test_request_read_space():
 
 def test_request_write_point():    
     sp = strsp.StructuredRequest()
-    tbl = sp.register_tables(None, 'foo')[0]
+    param_tbl, sum_tbl = sp.register_tables(None, 'foo')
     uid = uuid.uuid4()
     p = strsp.Point({'n_rxtr': 100})
-    sp.record_point(p, uid, {sp.tbl_name: tbl})
+    sp.record_point(p, uid, {sp.param_tbl_name: param_tbl, sp.sum_tbl_name: sum_tbl})
 
     ## params are alphabetcially ordered 
     # f_fc
@@ -82,7 +82,7 @@ def test_request_write_point():
         0,
         -1,
         )
-    obs = tbl._data[0]
+    obs = param_tbl._data[0]
     for i, k in enumerate(strsp.parameters):
         print(k)
         if isinstance(exp[i], float):

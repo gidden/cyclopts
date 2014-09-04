@@ -152,14 +152,20 @@ class StructuredRequest(ProblemSpecies):
 
     def __init__(self):
         super(StructuredRequest, self).__init__()
-        self.tbl_name = 'StructuredRequestParameters'
         self._family = ResourceExchange()
         self.space = None
         self._n_points = None
         # 16 bytes for uuid
-        self._dtype = np.dtype(
+        self.param_tbl_name = 'Points'
+        self._param_dtype = np.dtype(
             [('paramid', ('str', 16)), ('family', ('str', 30))] + \
                 [(name, param.dtype) for name, param in parameters.items()])
+        self.sum_tbl_name = 'Summary'
+        facs = ['n_r_th', 'n_r_f_mox', 'n_r_f_thox', 'n_s_uox', 'n_s_th_mox', 
+                'n_s_f_mox', 'n_s_f_thox']
+        self._sum_dtype = np.dtype(
+            [('paramid', ('str', 16)), ('family', ('str', 30))] + \
+                [(name, np.uint32) for name in facs])
             
         self.nids = tools.Incrementer()
         self.gids = tools.Incrementer()
@@ -196,8 +202,10 @@ class StructuredRequest(ProblemSpecies):
         tables : list of cyclopts_io.Tables
             All tables that could be written to by this species.
         """
-        return [cycio.Table(h5file, '/'.join([prefix, self.tbl_name]), 
-                            self._dtype)]
+        return [cycio.Table(h5file, '/'.join([prefix, self.param_tbl_name]), 
+                            self._param_dtype),
+                cycio.Table(h5file, '/'.join([prefix, self.sum_tbl_name]), 
+                            self._sum_dtype)]
 
     def read_space(self, space_dict):
         """Parameters
@@ -249,7 +257,10 @@ class StructuredRequest(ProblemSpecies):
         """
         data = [param_uuid.bytes, self._family.name]
         data += [getattr(point, k) for k in parameters.keys()]
-        tables[self.tbl_name].append_data([tuple(data)])
+        tables[self.param_tbl_name].append_data([tuple(data)])
+        data = [param_uuid.bytes, self._family.name]
+        data += self._reactor_breakdown(point) + self._supplier_breakdown(point)
+        tables[self.sum_tbl_name].append_data([tuple(data)])
 
     def _reactor_breakdown(self, point):
         """Returns
@@ -307,19 +318,19 @@ class StructuredRequest(ProblemSpecies):
 
         # number thermal suppliers
         if fidelity == 0: # once through - only uox
-            n_uox = int(round(point.r_s_th * n_uox_r))
+            n_uox = max(int(round(point.r_s_th * n_uox_r)), 1)
         else:
-            n_s_t = int(round(point.r_s_th * n_uox_r)) 
-            n_uox = int(round(n_s_t / (1.0 + point.r_s_mox_uox)))
-            n_t_mox = n_s_t - n_uox
+            n_s_t = max(int(round(point.r_s_th * n_uox_r)), 1)
+            n_uox = max(int(round(n_s_t / (1.0 + point.r_s_mox_uox))), 1)
+            n_t_mox = max(n_s_t - n_uox, 1)
 
         # number f_mox suppliers
         if fidelity > 0:
-            n_f_mox = int(round(point.r_s_mox * n_mox_r))
+            n_f_mox = max(int(round(point.r_s_mox * n_mox_r)), 1)
             
         # number f_thox suppliers
         if fidelity > 1:
-            n_f_thox = int(round(point.r_s_thox * n_thox_r))
+            n_f_thox = max(int(round(point.r_s_thox * n_thox_r)), 1)
  
         return n_uox, n_t_mox, n_f_mox, n_f_thox
 

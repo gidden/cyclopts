@@ -3,7 +3,12 @@ import random
 from enum import Enum
 import numpy as np
 import math
-from pyne import enrichment
+
+import warnings
+with warnings.catch_warnings():
+    from pyne.utils import VnVWarning
+    warnings.filterwarnings("ignore", category=VnVWarning)
+    from pyne import enrichment
 
 class Commodities(Enum):
     uox = 1
