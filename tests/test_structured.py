@@ -284,16 +284,14 @@ def test_supplier():
     assert_almost_equal(s.group.caps[1], rate * 0.33 * data.conv_ratio(kind))
     
 def assert_rcoeffs_equal(arc, commod, rkind, skind, n):
-    qty = data.fuel_unit * data.request_qtys[rkind] / \
-        data.relative_qtys[rkind][commod] / n
-    r_coeffs = [qty]
+    r_coeffs = [1 / data.relative_qtys[rkind][commod]]
     assert_array_almost_equal(arc.ucaps, r_coeffs)
 
 def assert_scoeffs_equal(arc, commod, rkind, skind, n, enr):
     qty = data.fuel_unit * data.request_qtys[rkind] * \
         data.relative_qtys[rkind][commod] / n
-    s_coeffs = [data.converters[skind]['proc'](qty, enr, commod),
-                data.converters[skind]['inv'](qty, enr, commod)]
+    s_coeffs = [data.converters[skind]['proc'](qty, enr, commod) / qty,
+                data.converters[skind]['inv'](qty, enr, commod) / qty]
     assert_array_almost_equal(arc.vcaps, s_coeffs)
 
 def test_one_supply():

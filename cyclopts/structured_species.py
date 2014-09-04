@@ -347,12 +347,11 @@ class StructuredRequest(ProblemSpecies):
         factor = data.relative_qtys[r.kind][commod]
 
         # req coeffs have full orders take into relative fissile material
-        qty = r.req_qty / factor
-        req_coeffs = [qty]
+        req_coeffs = [1 / factor]
         
         # sup coeffs act on the quantity of fissile material 
         qty = r.req_qty * factor
-        sup_coeffs = [data.converters[s.kind][k](qty, enr, commod) \
+        sup_coeffs = [data.converters[s.kind][k](qty, enr, commod) / qty \
                           for k in ['proc', 'inv']]
         for i in range(len(rnodes)):
             req = True
