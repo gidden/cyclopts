@@ -9,7 +9,7 @@ from cyclopts.problems import ProblemFamily
 import cyclopts.cyclopts_io as cycio
 import cyclopts.exchange_instance as exinst
 
-_N_CAPS_MAX = 10
+_N_CAPS_MAX = 4
 
 # add to this if more objects need to be persistable
 _tbl_names = {
