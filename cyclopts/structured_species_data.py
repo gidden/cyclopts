@@ -103,8 +103,8 @@ COMMODITIES.UOX requests include U-238, MOX/COMMODITIES.F_THOX requests only inc
 relative_qtys = {
     Reactors.th : {
         Commodities.uox : 1.0,
-        Commodities.th_mox : 0.1,
-        Commodities.f_mox : 0.1,
+        Commodities.th_mox : 0.07,
+        Commodities.f_mox : 0.07,
         },
     Reactors.f_mox : {
         Commodities.uox : 1.0,

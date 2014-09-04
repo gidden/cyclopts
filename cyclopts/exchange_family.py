@@ -244,4 +244,5 @@ class ResourceExchange(ProblemFamily):
             A representation of a problem solution
         """
         groups, nodes, arcs = inst
-        return exinst.Run(groups, nodes, arcs, solver, verbose)
+        soln = exinst.Run(groups, nodes, arcs, solver, verbose)
+        return soln

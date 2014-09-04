@@ -382,10 +382,11 @@ class StructuredRequest(ProblemSpecies):
         for i in range(len(rnodes)):
             req = True
             nid = self.nids.next()
-            node = exinst.ExNode(nid, s.group.id, not req)
+            node = exinst.ExNode(nid, s.group.id, not req, qty)
             s.nodes.append(node)
+            arcid = self.arcids.next()
             arcs.append(exinst.ExArc(
-                    self.arcids.next(),
+                    arcid,
                     rnodes[i].id, req_coeffs,
                     nid, sup_coeffs,
                     pref))
@@ -397,8 +398,9 @@ class StructuredRequest(ProblemSpecies):
             for r in r_ary:
                 for commod in data.rxtr_commods(r.kind, point.f_fc):
                     for s in suppliers[data.commod_to_sup[commod]]:
-                        arcs.append(self._generate_supply(point, commod, r, s))
-        return np.concatenate(arcs)                    
+                        supply = self._generate_supply(point, commod, r, s)
+                        arcs.append(supply)
+        return np.concatenate(arcs)          
 
     def gen_inst(self, point):
         """Parameters

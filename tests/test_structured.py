@@ -2,6 +2,7 @@ from cyclopts import structured_species as strsp
 
 import uuid
 import math
+import os
 
 from nose.tools import assert_equal, assert_almost_equal, assert_true, assert_false
 from numpy.testing import assert_array_almost_equal
@@ -9,6 +10,7 @@ from numpy.testing import assert_array_almost_equal
 from cyclopts import tools
 from cyclopts.exchange_family import ResourceExchange
 from cyclopts import structured_species_data as data
+from cyclopts.problems import Solver
 
 def test_pnt():
     p = strsp.Point({'foo': 'bar', 'n_rxtr': 100})
@@ -173,11 +175,11 @@ def test_th_reactors():
     assert_equal(len(r.commod_to_nodes[data.Commodities.th_mox]), 
                  int(math.ceil(0.25 * data.n_assemblies[kind])))
     assert_almost_equal(r.commod_to_nodes[data.Commodities.th_mox][0].qty,
-                        base_qty * 0.1)
+                        base_qty * 0.07)
     assert_equal(len(r.commod_to_nodes[data.Commodities.f_mox]), 
                  int(math.ceil(0.25 * data.n_assemblies[kind])))
     assert_almost_equal(r.commod_to_nodes[data.Commodities.f_mox][0].qty,
-                        base_qty * 0.1)    
+                        base_qty * 0.07)    
     assert_almost_equal(r.group.caps[0], data.fuel_unit * data.request_qtys[kind])
     assert_almost_equal(r.group.qty, data.fuel_unit * data.request_qtys[kind])
 
@@ -315,7 +317,9 @@ def test_one_supply():
     n_r = r.commod_to_nodes[commod][0]
     assert_equal(a.uid, n_r.id)
     assert_equal(a.vid, n_s.id)
-    
+
+    assert_almost_equal(n_s.qty, r.req_qty(commod))
+
     assert_rcoeffs_equal(a, commod, rkind, skind, 1)
     assert_scoeffs_equal(a, commod, rkind, skind, 1, r.enr(commod))    
 
@@ -334,6 +338,7 @@ def test_th_supply():
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), data.n_assemblies[rkind])
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
+    assert_almost_equal(s.nodes[0].qty, r.req_qty(commod))
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
                          r.enr(commod))    
@@ -346,6 +351,7 @@ def test_th_supply():
     n = int(math.ceil(0.25 * data.n_assemblies[rkind])) 
     assert_equal(len(arcs), n)
     assert_equal(len(s.nodes), n)    
+    assert_almost_equal(s.nodes[0].qty, r.req_qty(commod))
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
                          r.enr(commod))    
@@ -357,6 +363,7 @@ def test_th_supply():
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), n)
     assert_equal(len(s.nodes), n)    
+    assert_almost_equal(s.nodes[0].qty, r.req_qty(commod))
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
                          r.enr(commod))    
@@ -376,6 +383,7 @@ def test_fmox_supply():
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), data.n_assemblies[rkind])
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
+    assert_almost_equal(s.nodes[0].qty, r.req_qty(commod))
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
                          r.enr(commod))    
@@ -387,6 +395,7 @@ def test_fmox_supply():
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), data.n_assemblies[rkind])
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
+    assert_almost_equal(s.nodes[0].qty, r.req_qty(commod))
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
                          r.enr(commod))    
@@ -398,6 +407,7 @@ def test_fmox_supply():
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), data.n_assemblies[rkind])
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
+    assert_almost_equal(s.nodes[0].qty, r.req_qty(commod))
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
                          r.enr(commod))    
@@ -409,6 +419,7 @@ def test_fmox_supply():
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), data.n_assemblies[rkind])
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
+    assert_almost_equal(s.nodes[0].qty, r.req_qty(commod))
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
                          r.enr(commod))    
@@ -428,6 +439,7 @@ def test_fmox_supply():
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), data.n_assemblies[rkind])
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
+    assert_almost_equal(s.nodes[0].qty, r.req_qty(commod))
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
                          r.enr(commod))    
@@ -439,6 +451,7 @@ def test_fmox_supply():
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), data.n_assemblies[rkind])
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
+    assert_almost_equal(s.nodes[0].qty, r.req_qty(commod))
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
                          r.enr(commod))    
@@ -450,6 +463,7 @@ def test_fmox_supply():
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), data.n_assemblies[rkind])
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
+    assert_almost_equal(s.nodes[0].qty, r.req_qty(commod))
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
                          r.enr(commod))    
@@ -461,6 +475,7 @@ def test_fmox_supply():
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), data.n_assemblies[rkind])
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
+    assert_almost_equal(s.nodes[0].qty, r.req_qty(commod))
     assert_rcoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind])
     assert_scoeffs_equal(arcs[0], commod, rkind, skind, data.n_assemblies[rkind], 
                          r.enr(commod))    
@@ -586,3 +601,21 @@ def test_pref():
     exp = base + ratio * (math.exp(-1) + math.exp(rloc - sloc)) / 2
     assert_almost_equal(obs, exp)
     
+def test_mininmal_run():
+    fname = 'structured_request_conv.py'
+    base = os.path.dirname(os.path.abspath(__file__))
+    fpath = os.path.join(base, 'files', fname)
+
+    sp = strsp.StructuredRequest()
+    fam = ResourceExchange()
+    rc = tools.parse_rc(fpath)
+
+    sp.read_space(rc._dict)
+    for point in sp.points(): # there should only be one
+        inst = sp.gen_inst(point)
+        solver = Solver('greedy')
+        soln = fam.run_inst(inst, solver)
+
+    assert_almost_equal(soln.flows[0], 17500) # uox for thermal reactors
+    assert_almost_equal(soln.flows[5], 280) # fmox for fmox reactors
+    assert_almost_equal(soln.flows[10], 280) # fthox for fthox reactors

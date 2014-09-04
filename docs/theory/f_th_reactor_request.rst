@@ -126,7 +126,7 @@ can vary from reactor to reator and from assembly to assembly within a
 reactor. Accordingly, a surrogate model of enrichment preference is used,
 randomly selective an enrichment within a viable range. Furthermore, because MOX
 fuel is backfilled by another istopically fertile material, it is assumed that a
-MOX request is approximately `10%
+MOX request is approximately `7%
 <http://www.world-nuclear.org/info/Nuclear-Fuel-Cycle/Fuel-Recycling/Mixed-Oxide-Fuel-MOX/>`_
 of a UOX request. The MOX enrichment range is based off `IAEA estimates
 <www-pub.iaea.org/MTCD/publications/PDF/TRS415_web.pdf>`_.
@@ -137,7 +137,7 @@ of a UOX request. The MOX enrichment range is based off `IAEA estimates
     Commodity      Enrichment Range    Relative Request Size
     ===========    =================== ==============
     UOX            :math:`[3.5, 5.5]`  1
-    Th & F MOX     :math:`[55, 65]`    0.1
+    Th & F MOX     :math:`[55, 65]`    0.07
     ===========    =================== ==============
 
 Fast Reactor
@@ -253,7 +253,9 @@ representatives, a reasonable size for a processing plant is 800 tonnes per
 year, which is similar to `Rokkassho
 <http://ec.europa.eu/dgs/jrc/downloads/jrc_20100615_safeguards_heinonen.pdf>`_. With
 the factor of 100 discussed above, a 800 t U/ 8 t Pu facility could service on
-the order of 2-3 fast reactors.
+the order of 2-3 fast reactors or ~2 thermal reactors with 1/3 a request as MOX
+(in other words, an 8 t/yr plant cannot process 1/4 of a thermal core in one
+month).
 
 Using the following assumptions
 
