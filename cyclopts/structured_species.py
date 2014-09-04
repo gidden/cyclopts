@@ -274,14 +274,14 @@ class StructuredRequest(ProblemSpecies):
         r_th_pu = point.r_th_pu # thox to mox
         n_uox, n_mox, n_thox = 0, 0, 0
         if fidelity == 0: # once through
-            n_uox = n_rxtr
+            n_uox = max(n_rxtr, 1)
         elif fidelity == 1: # uox + fast mox
-            n_uox = int(round(r_t_f * n_rxtr))
-            n_mox = n_rxtr - n_uox
+            n_uox = max(int(round(r_t_f * n_rxtr)), 1)
+            n_mox = max(n_rxtr - n_uox, 1)
         else: # uox + fast mox + fast thox
-            n_uox = int(round(r_t_f * n_rxtr))
-            n_thox = int(round(r_th_pu * (n_rxtr - n_uox)))
-            n_mox = n_rxtr - n_uox - n_thox
+            n_uox = max(int(round(r_t_f * n_rxtr)), 1)
+            n_thox = max(int(round(r_th_pu * (n_rxtr - n_uox))), 1)
+            n_mox = max(n_rxtr - n_uox - n_thox, 1)
         return n_uox, n_mox, n_thox
 
     def _get_reactors(self, point):
