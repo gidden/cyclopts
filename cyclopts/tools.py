@@ -21,6 +21,7 @@ from subprocess import PIPE, Popen
 import getpass
 import importlib
 import itertools as itools
+import gc
 
 import cyclopts
 from cyclopts.params import PARAM_CTOR_ARGS, Param, BoolParam, SupConstrParam, \
@@ -505,8 +506,10 @@ def conv_insts(fam, fam_tables, sp, sp_tables, ninst=1, update_freq=100, verbose
             inst = sp.gen_inst(point)
             fam.record_inst(inst, inst_uuid, param_uuid, sp.name, 
                             fam_tables)
-            if verbose and n % update_freq == 0:
-                print('{0} instances have been converted'.format(n))
+            if n % update_freq == 0:
+                gc.collect()
+                if verbose:
+                    print('{0} instances have been converted'.format(n))
             n += 1
     
     if verbose:
