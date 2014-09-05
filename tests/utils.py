@@ -1,5 +1,5 @@
 from numpy.testing import assert_array_equal
-from nose.tools import assert_equal
+from nose.tools import assert_equal, assert_almost_equal, assert_true
 from collections import Iterable
 
 from functools import wraps

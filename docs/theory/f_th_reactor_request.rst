@@ -26,9 +26,9 @@ been defined in three categories.
 ===================  =====================================
 Category             Subcategory
 ===================  =====================================
-Facilities           - Reactor Requests (batch/assem)
+Reactor              - batch
 
-                     - Supply Constraints (inv/inv + process)
+                     - assembly
 -------------------  -------------------------------------
 Fuel Cycle           - Once-Through
 
@@ -36,7 +36,7 @@ Fuel Cycle           - Once-Through
 
                      - UOX + MOX F/Th Recycle + Thorium F Recycle
 -------------------  -------------------------------------
-Geospatial           - None
+Location             - None
 
                      - Coarse
 		     
@@ -106,6 +106,17 @@ Under these assumptions, each fast reactor will request 1 unit of fuel and each
 thermal reactor will request 12.5 units of fuel. Each may be further binned into
 smaller quantities to more accurately model assemblies.
 
+As a rough approximation using the figures from active core size, and assuming
+that a single AP-1000 fuel assembly holds `450 kg
+<http://books.google.com/books/about/Nuclear_Engineering_Handbook.html?id=EMy2OyUrqbUC>`_
+of Uranium, a unit of fuel is roughly
+
+.. math::
+
+   \frac{450 \frac{kg}{assembly} * 157 assemblies * \frac{1}{4} core}{12.5 units} = ~1.4 \frac{tonnes}{fuel unit}
+
+Again one fuel unit is approximately equal to a quarter of a BN-600 reactor core.
+
 Thermal Reactors
 ~~~~~~~~~~~~~~~~
 
@@ -115,7 +126,7 @@ can vary from reactor to reator and from assembly to assembly within a
 reactor. Accordingly, a surrogate model of enrichment preference is used,
 randomly selective an enrichment within a viable range. Furthermore, because MOX
 fuel is backfilled by another istopically fertile material, it is assumed that a
-MOX request is approximately `10%
+MOX request is approximately `7%
 <http://www.world-nuclear.org/info/Nuclear-Fuel-Cycle/Fuel-Recycling/Mixed-Oxide-Fuel-MOX/>`_
 of a UOX request. The MOX enrichment range is based off `IAEA estimates
 <www-pub.iaea.org/MTCD/publications/PDF/TRS415_web.pdf>`_.
@@ -126,7 +137,7 @@ of a UOX request. The MOX enrichment range is based off `IAEA estimates
     Commodity      Enrichment Range    Relative Request Size
     ===========    =================== ==============
     UOX            :math:`[3.5, 5.5]`  1
-    Th & F MOX     :math:`[55, 65]`    0.1
+    Th & F MOX     :math:`[55, 65]`    0.07
     ===========    =================== ==============
 
 Fast Reactor
@@ -164,8 +175,14 @@ Questions
 ~~~~~~~~~
 
 * What critiques are there regarding the commodity-preference mapping?
+
+  - functional form effects (e.g., linear vs. exp) could be added
+
 * What critiques are there regarding reactory enrichment generation?
 
+  - start simple with one enrichment per reactor, a possible upgrade is to
+    introduce 2 or 3 bins around an average enrichment to emulate enrichment
+    zones
 
 Supporting Facilities
 +++++++++++++++++++++
@@ -182,8 +199,17 @@ surrogate material, i.e., an enrichment and quantity.
 UOX Supplier
 ~~~~~~~~~~~~
 
-The UOX supplier has well-known conversion functions, where basic additional
-parameters, e.g., feed and tails assays, can be safely assumed
+The UOX supplier has basic parameters, e.g., feed and tails assays, can be
+safely assumed as follows
+
+===========   =======
+Parameter     Value
+===========   =======
+feed assay    0.711
+tails assay   0.3
+===========   =======
+
+The conversion functions are also well known. 
 
 .. math::
 
@@ -197,47 +223,70 @@ MOX and ThOX Suppliers
 Due to the lack of commercially viable, well documented fast reactor fuel
 suppliers, a simple linear surrogate model is assumed for an inventory
 constraint. There are many possible process surrogate models that could be used,
-such as heat production or radiotoxicity.
+such as heat production or radiotoxicity; however, each of these requires a
+detailed isotopic composition to be relevant. Per the current `IAEA practice
+<http://ec.europa.eu/dgs/jrc/downloads/jrc_20100615_safeguards_heinonen.pdf>`_,
+and extrapolating the same effect for reprocessing U-233, a factor,
+:math:`f_{commod}`, of 100 is added for for Plutonium and Thorium-based
+commodities.
 
 .. math::
 
     conv_{inv}(\epsilon, q) = \epsilon q
 
-    conv_{proc}(\epsilon, q) = Dose(\epsilon, q)
+    f_{commod} = 
+    \begin{cases}
+    1,& \text{if UOX}\\
+    100,              & \text{otherwise}
+    \end{cases}
+
+    conv_{proc}(\epsilon, q, commod) = q f_{commod}
 
 Supplier Constraint RHS Values
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Supporting facilities have a nominal throughput capacity. The proposed Eagle
+Rock Enrichment Plant `purports
+<http://us.areva.com/EN/home-203/eagle-rock-enrichment-facility.html>`_ to have
+a capacity of 3.3M SWU per year. From previous conversations with industry
+representatives, a reasonable size for a processing plant is 800 tonnes per
+year, which is similar to `Rokkassho
+<http://ec.europa.eu/dgs/jrc/downloads/jrc_20100615_safeguards_heinonen.pdf>`_. With
+the factor of 100 discussed above, a 800 t U/ 8 t Pu facility could service on
+the order of 2-3 fast reactors or ~2 thermal reactors with 1/3 a request as MOX
+(in other words, an 8 t/yr plant cannot process 1/4 of a thermal core in one
+month).
+
+Using the following assumptions
+
+* enrichment facilities primarily service thermal reactors
+* an exchange represents a monthly timestep
+* requests are based on a single unit of fuel (rather than kilograms, etc.)
+
+.. math::
+
+   S_{proc, SWU} = \frac{3.3E6 WU}{12 \frac{month}{year}} = ~2.75e5 \frac{SWU}{month} 
+
+   S_{proc, recycle} = \frac{800 \frac{t}{year}}{12 \frac{month}{year}} = ~66.7 \frac{t}{month} 
+
 From the formulation point of view, interesting cases arise when either
 constraint is dominated by the other and when neither is dominant. Furthermore,
 instanes should be investigated in which supply is generally constrained and
-when it is not. In order to accomplish these goals, the supply constraint values
+when it is not. 
+
+In order to accomplish these goals, the supply constraint values
 are formulated as follows
 
 .. math::
 
-    S_{inv} = f_{demand} \frac{demand}{conv_{inv}(\bar{\epsilon}, demand)}
+    S_{proc}, given
 
-    S_{proc} = S_{inv} \frac{conv_{inv}(\bar{\epsilon}, demand)}{conv_{proc}(\bar{\epsilon}, demand)} f_{inv, proc}
+    S_{inv} = S_{proc} r_{inv, proc} \frac{conv_{proc}(\bar{\epsilon}, 1)}{conv_{inv}(\bar{\epsilon}, 1)}
 
 Parameters
 ::::::::::
 
-    :math:`f_{demand}` : the fraction of demand that should be supplied
-
-    :math:`f_{inv, proc}` : the ratio of the inventory RHS to the process RHS
-
-Surrogate Models
-::::::::::::::::
-
-    :math:`conv_{inv}(\epsilon, q)` : an inventory-based constraint
-
-    :math:`conv_{process}(\epsilon, q)` : an process-based constraint
-
-Questions
-~~~~~~~~~
-
-* What process conversion function for fast reactors makes the most sense?
+    :math:`r_{inv, proc}` : the ratio of the inventory RHS to the process RHS
 
 Fuel Cycles
 -----------
@@ -267,21 +316,19 @@ included, and a ratio between the two is set as a parameter. Supporting
 facilities include Enrichment, Thermal, and Fast Fuel Fabricators. The amount of
 thermal reactors requests that can be satisfied by recycled fuel is set as a
 parameter. The fraction is capped at :math:`\frac{1}{3}`, in line with current
-French LWR refueling practices.
+French LWR refueling practices. In the low-fidelity reactor scenario,
+:math:`f_{mox}` acts a probability that the batch request will be for thermal
+mox fuel.
 
 Parameters
 ~~~~~~~~~~
 
-    :math:`f_{t, f}` : the ratio of thermal reactors to fast reactors
+    :math:`r_{t, f}` : the ratio of thermal reactors to fast reactors
 
     :math:`f_{mox} \in [0, \frac{1}{3}]` : the fraction of thermal reactor
     requests that can be met with recycled fuel
 
-Questions
-~~~~~~~~~
-
-* Should suppliers be treated similarly to reactors (i.e., :math:`f_{t, f}`)?
-  This increases the parameter space by :math:`n - 1` dimensions.
+    :math:`r_{s, r}` : the ratio of primary suppliers to their primary requesters
 
 Recycle + Thorium
 +++++++++++++++++
@@ -295,18 +342,18 @@ Fabricator is added to the pool of suppliers.
 Parameters
 ~~~~~~~~~~
 
-    :math:`f_{th, pu}` : the ratio of Thorium to Plutonium-based fast reactors
+    :math:`r_{th, pu}` : the ratio of Thorium to Plutonium-based fast reactors
 
-Geospatial Assignment
+Location Assignment
 ---------------------
 
-Geospatial values can be assigned in either a coarse or fine fashion. In both
+Location values can be assigned in either a coarse or fine fashion. In both
 cases, a location proxy is assigned uniformly, e.g., on :math:`[0,
 1]`. Locations are binned, representing regions. If coarse, only regional
 relationships are taken into account; if fine, regional relationships are taken
 into account as well as total proximity.
 
-Once geospatial values are assigned, they can then affect preferences. A
+Once location values are assigned, they can then affect preferences. A
 surrogate model function is required, and one suggestion is 
 
 .. math::
@@ -343,3 +390,30 @@ Parameters
 ++++++++++
 
     :math:`r_{l, c}` : the importance ratio of location to commodity types
+
+Parameter Summary
+-----------------
+
+All of the parameters that can be set in a run control for this species are
+listed below:
+
+.. table:: Structured Request Species Parameters
+
+    ======================= ================================================================== ==========================
+    Handle                  Full Name                                                          Possible Values
+    ======================= ================================================================== ==========================
+    :math:`f_{rxtr}`        reactor fidelity                                                   :math:`\{0, 1\}`
+    :math:`f_{fc}`          fuel cycle fidelity                                                :math:`\{0, 1, 2\}`
+    :math:`f_{loc}`         location fidelity                                                  :math:`\{0, 1, 2\}`
+    :math:`n_{rxtr}`        number of reactors                                                 any
+    :math:`r_{t, f}`        ratio of thermal reactors to fast reactors                         :math:`[0, \frac{1}{4}]`
+    :math:`r_{th, pu}`      ratio of Thorium to Plutonium-based fast reactors                  :math:`[0, 1]`
+    :math:`r_{s, th}`       ratio of primary suppliers to thermal reactors                     :math:`[0, \frac{1}{2}]`
+    :math:`r_{s, mox, uox}` ratio of mox to uox thermal supplier                               :math:`[0, 1]`
+    :math:`r_{s, mox}`      ratio of primary suppliers to fast mox reactors                    :math:`[0, \frac{1}{2}]`
+    :math:`r_{s, thox}`     ratio of primary suppliers to fast thox reactors                   :math:`[0, \frac{1}{2}]`
+    :math:`f_{mox}`         fraction of thermal reactor requests that can be met with mox fuel :math:`[0, 1]`
+    :math:`r_{inv, proc}`   ratio of the inventory RHS to the process RHS                      :math:`\{0.75, 1, 1.5\}`
+    :math:`n_{reg}`         number of regions                                                  any
+    :math:`r_{l, c}`        ratio of location to commodity preference                          :math:`[0, 2]` 
+    ======================= ================================================================== ==========================

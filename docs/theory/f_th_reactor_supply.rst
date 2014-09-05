@@ -50,26 +50,28 @@ Four types of supportin facilities will be modeled:
 * Fast ThOX Recycle
 * Repository
 
-Constraint Coefficients
-~~~~~~~~~~~~~~~~~~~~~~~
+Constraints
+~~~~~~~~~~~
 
-In the low-fidelity version, each facility type will have a linear conversion constraint
+Recycle facilities will maintain the same constraint coefficients and RHS values
+as the reactor request, except they are interpreted as demand
+constraints. 
+
+Repostories will employ a simple linear combination quantity processing
+constraint based on the total fuel exiting a reactor via its relative quantity
+measure, :math:`r_{rxtr, commod}`.
 
 .. math::
 
-    conv_{inv}(\epsilon, q) = \epsilon q
+    conv_{proc}(\epsilon, q) = \frac{q}{r_{rxtr, commod}}
 
-For higher model fideltiy, a heat-generation process constraint is added
+To determine an appropriate RHS, I assume a Yucca Mountain statutory limit of
+17,000 tonnes and a 30 year lifetime, resulting in ~575 t per year processing
+capacity. In fuel units, the RHS value becomes 
 
 .. math::
 
-    conv_{proc}(\epsilon, q) = Heat(\epsilon, q)
-
-Constraint RHS
-~~~~~~~~~~~~~~~~~~~~~~~
-
-The constraint RHS values will be determined in the same manner as in the
-request case.
+    S_{proc} = \frac{575 \frac{t}{year}}{12 \frac{month}{year} * 1.4 \frac{t}{fuel unit}} = ~35 \frac{fuel unit}{month}
 
 Commodity Preferences
 ~~~~~~~~~~~~~~~~~~~~~
@@ -86,8 +88,8 @@ material to be sent to processing facilities over repositories.
     Facility Type       EUOX    Th MOX  F MOX   F ThOX
     ==================  ======= ======= ======= =======
     Thermal Recycle     1       1       0.5     N/A
-    Fast MOX Recycle    1       0.5     1       N/A
-    Fast ThOX Recycle   1       N/A     N/A     1
+    Fast MOX Recycle    0.5     0.5     1       N/A
+    Fast ThOX Recycle   0.5     N/A     N/A     1
     Repository          0.1     0.1     0.1     0.1
     ==================  ======= ======= ======= =======
 
@@ -103,16 +105,8 @@ Parameters
     :math:`f_{mox, th}` : the ratio of MOX fast recycle facilities to ThOX fast
     recycle facilities
 
-
-Questions
-~~~~~~~~~
-
-* What heat proxy should be used?
-* Do preferences match reality? Would every facility want to process UOX?
-
-
-Geospatial Assignment
+Location Assignment
 ---------------------
 
-Geospatial considerations will be handled in the same manner as the request
+Location considerations will be handled in the same manner as the request
 case.

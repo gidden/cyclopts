@@ -13,15 +13,15 @@ import operator
 import tables as t
 import numpy as np
 from functools import reduce
-from itertools import product
-from collections import defaultdict, Iterable
+from collections import defaultdict, Iterable, Sequence, Mapping
 import paramiko as pm
 from os import kill
 from signal import alarm, signal, SIGALRM, SIGKILL
 from subprocess import PIPE, Popen
 import getpass
 import importlib
-import itertools
+import itertools as itools
+import gc
 
 import cyclopts
 from cyclopts.params import PARAM_CTOR_ARGS, Param, BoolParam, SupConstrParam, \
@@ -445,7 +445,7 @@ def collect_instids(h5file, path, rc=None, instids=None, colname='instid'):
                      not c.rstrip().endswith(')') else c for c in conds[::2]]
         cond = ' '.join(
             [' '.join(i) for i in \
-                 itertools.izip_longest(conds, ops, fillvalue='')]).strip()
+                 itools.izip_longest(conds, ops, fillvalue='')]).strip()
         vals = [x[colname] for x in h5node.where(cond)]
         vals = [x + '\0' if len(x) == 15 else x for x in vals]
         instids |= set(uuid.UUID(bytes=x) for x in vals)
@@ -459,3 +459,86 @@ def collect_instids(h5file, path, rc=None, instids=None, colname='instid'):
             instids.add(uuid.UUID(bytes=iid))
     
     return instids
+
+def n_permutations(x):
+    """Parameters
+    ----------
+    x : dict, list, or other
+    
+    Returns
+    -------
+    n : int
+        the total number of permutations of values in x, if x has 
+        container values, those are recusively interrogated as well
+    """
+    n = 1
+    if isinstance(x, Sequence) and not isinstance(x, basestring):
+        if isinstance(x[0], Sequence) and not isinstance(x[0], basestring):
+            for y in x:
+                n *= n_permutations(y)
+        else:
+            n *= len(x)
+    elif isinstance(x, Mapping):
+        for v in x.values():
+            n *= n_permutations(v)
+    return n
+
+def expand_args(x):
+    """Parameters
+    ----------
+    x : list of lists of arguments
+    
+    Returns
+    -------
+    args : generator
+        a generator that returns a collection of single arguments
+    """
+    for y in itools.product(*x):
+        yield y
+
+def conv_insts(fam, fam_tables, sp, sp_tables, ninst=1, update_freq=100, verbose=False):
+    n = 0
+    for point in sp.points():
+        param_uuid = uuid.uuid4()
+        sp.record_point(point, param_uuid, sp_tables)
+        for i in range(ninst):
+            inst_uuid = uuid.uuid4()
+            inst = sp.gen_inst(point)
+            fam.record_inst(inst, inst_uuid, param_uuid, sp.name, 
+                            fam_tables)
+            if n % update_freq == 0:
+                if verbose:
+                    print('Memusg before collect: {0}'.format(
+                            resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
+                gc.collect()
+                if verbose:
+                    print('Memusg after collect: {0}'.format(
+                            resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
+                    print('{0} instances have been converted'.format(n))
+            n += 1
+    
+    if verbose:
+        print('{0} instances have been converted'.format(n))
+
+# def run_insts_mp():
+#     q = mp.Queue()
+#     pool = mp.Pool(4, multi_proc_gen, (q,))
+#     lock = mp.Lock()
+#     for point in sp.points():
+#         param_uuid = uuid.uuid4()
+#         if lock is not None:
+#             lock.acquire()
+#         sp.record_point(point, param_uuid, sp_manager.tables)
+#         if lock is not None:
+#             lock.release()
+#         for i in range(ninst):
+#             inst_uuid = uuid.uuid4()
+#             # q.put((inst_uuid, param_uuid, point, sp, fam, 
+#             #        fam_manager.tables, lock))
+#             q.put((inst_uuid, param_uuid, lock))
+            
+#     while not q.empty():
+#         if verbose and q.qsize() % update_freq == 0:
+#             print('{0} instances have been converted'.format(n))
+#         time.sleep(1)
+
