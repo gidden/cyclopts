@@ -507,8 +507,13 @@ def conv_insts(fam, fam_tables, sp, sp_tables, ninst=1, update_freq=100, verbose
             fam.record_inst(inst, inst_uuid, param_uuid, sp.name, 
                             fam_tables)
             if n % update_freq == 0:
+                if verbose:
+                    print('Memusg before collect: {0}'.format(
+                            resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
                 gc.collect()
                 if verbose:
+                    print('Memusg after collect: {0}'.format(
+                            resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
                     print('{0} instances have been converted'.format(n))
             n += 1
     
