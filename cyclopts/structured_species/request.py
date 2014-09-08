@@ -14,7 +14,8 @@ from cyclopts import cyclopts_io as cycio
 import cyclopts.exchange_instance as exinst
 from cyclopts.problems import ProblemSpecies
 from cyclopts.exchange_family import ResourceExchange
-from cyclopts import structured_species_data as data
+
+from cyclopts.structured_species import data as data
 
 """ordered mapping from input parameters to default values and np.dtypes, see
 the theory manual for further explanation of the parameter names"""
