@@ -18,7 +18,6 @@ import paramiko as pm
 import getpass
 import ast
 import sys
-import resource
 import gc
 import io
 
@@ -136,6 +135,11 @@ def convert(args):
     # clean up
     sp_manager.flush_tables()
     fam_manager.flush_tables()
+    path = '{0}/{1}'.format(fam.table_prefix, fam.property_table_name)
+    instids = tools.collect_instids(h5file=h5file, path=path)
+    print(('Upon completion of instance coversion, '
+           'Cyclopts reads a total of {0} instances in {1}').format(
+            len(instids), fout))
     h5file.close()
 
 def execute(args):

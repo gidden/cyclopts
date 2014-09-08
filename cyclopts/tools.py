@@ -22,6 +22,7 @@ import getpass
 import importlib
 import itertools as itools
 import gc
+import resource
 
 import cyclopts
 from cyclopts.params import PARAM_CTOR_ARGS, Param, BoolParam, SupConstrParam, \
