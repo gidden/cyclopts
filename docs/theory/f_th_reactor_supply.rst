@@ -63,7 +63,7 @@ measure, :math:`r_{rxtr, commod}`.
 
 .. math::
 
-    conv_{proc}(\epsilon, q) = \frac{q}{r_{rxtr, commod}}
+    conv_{proc}(\epsilon, q, commod) = \frac{q}{r_{commod}}
 
 To determine an appropriate RHS, I assume a Yucca Mountain statutory limit of
 17,000 tonnes and a 30 year lifetime, resulting in ~575 t per year processing
@@ -71,7 +71,7 @@ capacity. In fuel units, the RHS value becomes
 
 .. math::
 
-    S_{proc} = \frac{575 \frac{t}{year}}{12 \frac{month}{year} * 1.4 \frac{t}{fuel unit}} = ~35 \frac{fuel unit}{month}
+    S_{proc} = \frac{575 \frac{t}{year}}{12 \frac{month}{year}} = ~48 \frac{t}{month}
 
 Commodity Preferences
 ~~~~~~~~~~~~~~~~~~~~~
