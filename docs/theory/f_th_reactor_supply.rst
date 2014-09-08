@@ -33,45 +33,28 @@ chosen initial enrichment.
 Parameters
 ~~~~~~~~~~
 
-    :math:`f_{t, f}` : the ratio of thermal reactors to fast reactors
+Reactor parameters will include all those of the request instance plus
 
-    :math:`f_{mox} \in [0, \frac{1}{3}]` : the fraction of thermal reactor
-    used fuel that is MOX
+    :math:`d_{th}` : the distribution of thermal reactor assembly commodities
 
-    :math:`f_{th, pu}` : the ratio of Thorium to Plutonium-based fast reactors
+    :math:`d_{f_{mox}}` : the distribution of fast mox reactor assembly commodities
+
+    :math:`d_{f_{thox}}` : the distribution of fast thox reactor assembly commodities
 
 Supporting Facilities
 +++++++++++++++++++++
 
-Four types of supportin facilities will be modeled: 
+The same supporting facilities will be used with the addition of: 
 
-* Thermal Recycle
-* Fast MOX Recycle
-* Fast ThOX Recycle
 * Repository
 
-Constraints
-~~~~~~~~~~~
+Parameters
+~~~~~~~~~~
 
-Recycle facilities will maintain the same constraint coefficients and RHS values
-as the reactor request, except they are interpreted as demand
-constraints. 
+Supporing facility parameters will include all those of the request instance plus
 
-Repostories will employ a simple linear combination quantity processing
-constraint based on the total fuel exiting a reactor via its relative quantity
-measure, :math:`r_{rxtr, commod}`.
-
-.. math::
-
-    conv_{proc}(\epsilon, q, commod) = \frac{q}{r_{commod}}
-
-To determine an appropriate RHS, I assume a Yucca Mountain statutory limit of
-17,000 tonnes and a 30 year lifetime, resulting in ~575 t per year processing
-capacity. In fuel units, the RHS value becomes 
-
-.. math::
-
-    S_{proc} = \frac{575 \frac{t}{year}}{12 \frac{month}{year}} = ~48 \frac{t}{month}
+    :math:`f_{repo}` : the ratio of repositories to other supporting
+    facilities
 
 Commodity Preferences
 ~~~~~~~~~~~~~~~~~~~~~
@@ -89,24 +72,60 @@ material to be sent to processing facilities over repositories.
     ==================  ======= ======= ======= =======
     Thermal Recycle     1       1       0.5     N/A
     Fast MOX Recycle    0.5     0.5     1       N/A
-    Fast ThOX Recycle   0.5     N/A     N/A     1
-    Repository          0.1     0.1     0.1     0.1
+    Fast ThOX Recycle   0.3     N/A     N/A     1
+    Repository          0.01    0.01    0.01    0.01
     ==================  ======= ======= ======= =======
 
-Parameters
-~~~~~~~~~~
+Constraints
+~~~~~~~~~~~
 
-    :math:`f_{repository}` : the ratio of repositories to other supporting
-    facilities
+Recycle facilities will maintain the same constraint coefficients and RHS values
+as the reactor request, except they are interpreted as demand
+constraints. 
 
-    :math:`f_{t, f}` : the ratio of thermal recycle facilities to fast recycle
-    facilities
+Repostories will employ a simple linear combination quantity processing
+constraint based on the total fuel exiting a reactor via its relative quantity
+measure, :math:`r_{commod}`.
 
-    :math:`f_{mox, th}` : the ratio of MOX fast recycle facilities to ThOX fast
-    recycle facilities
+.. math::
+
+    conv_{proc}(\epsilon, q, commod) = \frac{q}{r_{commod}}
+
+To determine an appropriate RHS, I assume a Yucca Mountain statutory limit of
+17,000 tonnes and a 30 year lifetime, resulting in ~575 t per year processing
+capacity. In fuel units, the RHS value becomes 
+
+.. math::
+
+    S_{proc} = \frac{575 \frac{t}{year}}{12 \frac{month}{year}} = ~48 \frac{t}{month}
+
+Fuel Cycles
+-----------
+
+The same fuel cycles will be modeled as in the request case.
 
 Location Assignment
 ---------------------
 
 Location considerations will be handled in the same manner as the request
 case.
+
+Preference Determination
+------------------------
+
+Preferences will be determined in the same manner as the request case.
+
+In addition to all :ref:`Request Parameters <request_params>`, the following
+parameters can be set in a run control file for the supply case:
+
+.. table:: Structured Supply Species Parameters
+
+    ======================= ================================================================== =================================================================================
+    Handle                  Full Name                                                          Possible Values
+    ======================= ================================================================== =================================================================================
+    :math:`d_{th}`          thermal reactor assembly distribution                              :math:`[x_{uox}, x_{{mox}_{th}}, x_{{mox}_{f}}], x_i \in [0, 1)`
+    :math:`d_{f_{mox}}`     fast mox reactor assembly distribution                             :math:`[x_{uox}, x_{{mox}_{th}}, x_{{mox}_{f}}, x_{{thox}_{f}}], x_i \in [0, 1)`
+    :math:`d_{f_{thox}}`    fast thox reactor assembly distribution                            :math:`[x_{uox}, x_{{mox}_{th}}, x_{{mox}_{f}}, x_{{thox}_{f}}], x_i \in [0, 1)`
+    :math:`f_{repo}`        repository to supportin facility ratio                             :math:`[0, 2]`
+    ======================= ================================================================== =================================================================================
+    
