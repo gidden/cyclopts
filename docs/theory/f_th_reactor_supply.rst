@@ -115,6 +115,9 @@ Preference Determination
 
 Preferences will be determined in the same manner as the request case.
 
+Parameter Summary
+-----------------
+
 In addition to all :ref:`Request Parameters <request_params>`, the following
 parameters can be set in a run control file for the supply case:
 
