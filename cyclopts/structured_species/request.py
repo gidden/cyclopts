@@ -256,6 +256,7 @@ class StructuredRequest(ProblemSpecies):
         tables : list of cyclopts_io.Table
             The tables that can be written to
         """
+        uid = param_uuid.bytes if len(param_uuid.bytes) == 16 else param_uuid.bytes + '\0' 
         data = [param_uuid.bytes, self._family.name]
         data += [getattr(point, k) for k in parameters.keys()]
         tables[self.param_tbl_name].append_data([tuple(data)])
