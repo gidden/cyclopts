@@ -387,7 +387,7 @@ class StructuredRequest(ProblemSpecies):
             node = exinst.ExNode(nid, s.group.id, not req, qty)
             s.nodes.append(node)
             arcid = self.arcids.next()
-            print('id', arcid, 'commod', commod, 'pref', pref)
+            #print('id', arcid, 'commod', commod, 'pref', pref)
             arcs.append(exinst.ExArc(
                     arcid,
                     rnodes[i].id, req_coeffs,
