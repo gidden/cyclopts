@@ -21,7 +21,7 @@ class Reactors(Enum):
     f_mox = 2
     f_thox = 3
 
-class Suppliers(Enum):    
+class Supports(Enum):    
     uox = 1
     th_mox = 2
     f_mox = 3
@@ -29,24 +29,24 @@ class Suppliers(Enum):
     repo = 5
 
 commod_to_sup = {
-    Commodities.uox: Suppliers.uox,
-    Commodities.th_mox: Suppliers.th_mox,
-    Commodities.f_mox: Suppliers.f_mox,
-    Commodities.f_thox: Suppliers.f_thox,
+    Commodities.uox: Supports.uox,
+    Commodities.th_mox: Supports.th_mox,
+    Commodities.f_mox: Supports.f_mox,
+    Commodities.f_thox: Supports.f_thox,
 }
 
 sup_to_commod = {
-    Suppliers.uox: Commodities.uox,
-    Suppliers.th_mox: Commodities.th_mox,
-    Suppliers.f_mox: Commodities.f_mox,
-    Suppliers.f_thox: Commodities.f_thox,
+    Supports.uox: Commodities.uox,
+    Supports.th_mox: Commodities.th_mox,
+    Supports.f_mox: Commodities.f_mox,
+    Supports.f_thox: Commodities.f_thox,
 }
 
 sup_to_rxtr = {
-    Suppliers.uox: Reactors.th,
-    Suppliers.th_mox: Reactors.th,
-    Suppliers.f_mox: Reactors.f_mox,
-    Suppliers.f_thox: Reactors.f_thox,
+    Supports.uox: Reactors.th,
+    Supports.th_mox: Reactors.th,
+    Supports.f_mox: Reactors.f_mox,
+    Supports.f_thox: Reactors.f_thox,
 }
 
 
@@ -145,10 +145,10 @@ pref_basis = {
 
 """supplier limiting values"""
 sup_rhs = {
-    Suppliers.uox: 3.3e6/12, # 3.3M SWU/yr / 12 months/yr
-    Suppliers.th_mox: 800e3/12, # 800t/yr / 12 months/yr
-    Suppliers.f_mox: 800e3/12,
-    Suppliers.f_thox: 800e3/12,
+    Supports.uox: 3.3e6/12, # 3.3M SWU/yr / 12 months/yr
+    Supports.th_mox: 800e3/12, # 800t/yr / 12 months/yr
+    Supports.f_mox: 800e3/12,
+    Supports.f_thox: 800e3/12,
     }
 
 class Converter(object):
@@ -176,19 +176,19 @@ class RecycleInv(Converter):
         return qty * enr / 100.
 
 converters = {
-    Suppliers.uox: {
+    Supports.uox: {
         'proc': SWU(), 
         'inv': NatU(),
         },
-    Suppliers.th_mox: {
+    Supports.th_mox: {
         'proc': RecycleProc(), 
         'inv': RecycleInv(),
         },
-    Suppliers.f_mox: {
+    Supports.f_mox: {
         'proc': RecycleProc(), 
         'inv': RecycleInv(),
         },
-    Suppliers.f_thox: {
+    Supports.f_thox: {
         'proc': RecycleProc(), 
         'inv': RecycleInv(),
         },

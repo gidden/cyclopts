@@ -254,32 +254,32 @@ def test_thox_reactors():
 
 def test_conv():
     exp = 1.33 # from wise-uranium.org/nfcue.html with assays as stated
-    obs = data.conv_ratio(data.Suppliers.uox)
+    obs = data.conv_ratio(data.Supports.uox)
     assert_almost_equal(obs, exp, places=2)
 
 def test_supplier():
     gids = tools.Incrementer()
     p = strreq.Point({'r_inv_proc': 0.33})
     
-    kind = data.Suppliers.uox
+    kind = data.Supports.uox
     rate = 3.3e6 / 12
     s = strreq.Supplier(kind, p, gids)
     assert_almost_equal(s.group.caps[0], rate)
     assert_almost_equal(s.group.caps[1], rate * 0.33 * data.conv_ratio(kind))
 
-    kind = data.Suppliers.th_mox
+    kind = data.Supports.th_mox
     rate = 800e3 / 12
     s = strreq.Supplier(kind, p, gids)
     assert_almost_equal(s.group.caps[0], rate)
     assert_almost_equal(s.group.caps[1], rate * 0.33 * data.conv_ratio(kind))
 
-    kind = data.Suppliers.f_mox
+    kind = data.Supports.f_mox
     rate = 800e3 / 12
     s = strreq.Supplier(kind, p, gids)
     assert_almost_equal(s.group.caps[0], rate)
     assert_almost_equal(s.group.caps[1], rate * 0.33 * data.conv_ratio(kind))
 
-    kind = data.Suppliers.f_thox
+    kind = data.Supports.f_thox
     rate = 800e3 / 12
     s = strreq.Supplier(kind, p, gids)
     assert_almost_equal(s.group.caps[0], rate)
@@ -302,7 +302,7 @@ def test_one_supply():
     sp = strreq.StructuredRequest()
 
     rkind = data.Reactors.f_mox
-    skind = data.Suppliers.f_mox
+    skind = data.Supports.f_mox
     commod = data.Commodities.f_mox
     p = strreq.Point({'f_fc': 2, 'f_rxtr': 0})
     r = strreq.Reactor(rkind, p, gids, nids)
@@ -332,7 +332,7 @@ def test_th_supply():
     r = strreq.Reactor(rkind, p, gids, nids)
 
     # uox
-    skind = data.Suppliers.uox
+    skind = data.Supports.uox
     commod = data.Commodities.uox
     s = strreq.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
@@ -344,7 +344,7 @@ def test_th_supply():
                          r.enr(commod))    
 
     # th mox
-    skind = data.Suppliers.th_mox
+    skind = data.Supports.th_mox
     commod = data.Commodities.th_mox
     s = strreq.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
@@ -357,7 +357,7 @@ def test_th_supply():
                          r.enr(commod))    
 
     # f mox
-    skind = data.Suppliers.f_mox
+    skind = data.Supports.f_mox
     commod = data.Commodities.f_mox
     s = strreq.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
@@ -377,7 +377,7 @@ def test_fmox_supply():
     r = strreq.Reactor(rkind, p, gids, nids)
 
     # uox
-    skind = data.Suppliers.uox
+    skind = data.Supports.uox
     commod = data.Commodities.uox
     s = strreq.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
@@ -389,7 +389,7 @@ def test_fmox_supply():
                          r.enr(commod))    
 
     # th mox
-    skind = data.Suppliers.th_mox
+    skind = data.Supports.th_mox
     commod = data.Commodities.th_mox
     s = strreq.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
@@ -401,7 +401,7 @@ def test_fmox_supply():
                          r.enr(commod))    
 
     # f mox
-    skind = data.Suppliers.f_mox
+    skind = data.Supports.f_mox
     commod = data.Commodities.f_mox
     s = strreq.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
@@ -413,7 +413,7 @@ def test_fmox_supply():
                          r.enr(commod))    
 
     # thox
-    skind = data.Suppliers.f_thox
+    skind = data.Supports.f_thox
     commod = data.Commodities.f_thox
     s = strreq.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
@@ -433,7 +433,7 @@ def test_fmox_supply():
     r = strreq.Reactor(rkind, p, gids, nids)
 
     # uox
-    skind = data.Suppliers.uox
+    skind = data.Supports.uox
     commod = data.Commodities.uox
     s = strreq.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
@@ -445,7 +445,7 @@ def test_fmox_supply():
                          r.enr(commod))    
 
     # th mox
-    skind = data.Suppliers.th_mox
+    skind = data.Supports.th_mox
     commod = data.Commodities.th_mox
     s = strreq.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
@@ -457,7 +457,7 @@ def test_fmox_supply():
                          r.enr(commod))    
 
     # f mox
-    skind = data.Suppliers.f_mox
+    skind = data.Supports.f_mox
     commod = data.Commodities.f_mox
     s = strreq.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
@@ -469,7 +469,7 @@ def test_fmox_supply():
                          r.enr(commod))    
 
     # thox
-    skind = data.Suppliers.f_thox
+    skind = data.Supports.f_thox
     commod = data.Commodities.f_thox
     s = strreq.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)

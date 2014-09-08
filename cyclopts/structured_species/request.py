@@ -340,29 +340,29 @@ class StructuredRequest(ProblemSpecies):
         n_uox, n_t_mox, n_f_mox, n_f_thox = self._supplier_breakdown(point)
         uox_s = np.ndarray(
             shape=(n_uox,), 
-            buffer=np.array([Supplier(data.Suppliers.uox, point, self.gids) \
+            buffer=np.array([Supplier(data.Supports.uox, point, self.gids) \
                                  for i in range(n_uox)]), 
             dtype=Supplier)
         mox_th_s = np.ndarray(
             shape=(n_t_mox,), 
-            buffer=np.array([Supplier(data.Suppliers.th_mox, point, self.gids) \
+            buffer=np.array([Supplier(data.Supports.th_mox, point, self.gids) \
                                  for i in range(n_t_mox)]), 
             dtype=Supplier)
         mox_f_s = np.ndarray(
             shape=(n_f_mox,), 
-            buffer=np.array([Supplier(data.Suppliers.f_mox, point, self.gids) \
+            buffer=np.array([Supplier(data.Supports.f_mox, point, self.gids) \
                                  for i in range(n_f_mox)]), 
             dtype=Supplier)
         thox_s = np.ndarray(
             shape=(n_f_thox,), 
-            buffer=np.array([Supplier(data.Suppliers.f_thox, point, self.gids) \
+            buffer=np.array([Supplier(data.Supports.f_thox, point, self.gids) \
                                  for i in range(n_f_thox)]), 
             dtype=Supplier)
         suppliers = {
-            data.Suppliers.uox: uox_s,
-            data.Suppliers.th_mox: mox_th_s,
-            data.Suppliers.f_mox: mox_f_s,
-            data.Suppliers.f_thox: thox_s,
+            data.Supports.uox: uox_s,
+            data.Supports.th_mox: mox_th_s,
+            data.Supports.f_mox: mox_f_s,
+            data.Supports.f_thox: thox_s,
             }
         return suppliers
 
@@ -387,6 +387,7 @@ class StructuredRequest(ProblemSpecies):
             node = exinst.ExNode(nid, s.group.id, not req, qty)
             s.nodes.append(node)
             arcid = self.arcids.next()
+            print('id', arcid, 'commod', commod, 'pref', pref)
             arcs.append(exinst.ExArc(
                     arcid,
                     rnodes[i].id, req_coeffs,
