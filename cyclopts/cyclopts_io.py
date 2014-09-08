@@ -28,7 +28,8 @@ class Table(object):
             the table chunksize, Cyclopts will optimize for a 32Kb L1 cache by
             default
         cachesize : int, optional
-            the size of data to cache before writing
+            the size of data to cache before writing, defaults to 100 times the 
+            chunksize
         """
         self.h5file = h5file
         self.path = path if path is not None else '/'
@@ -38,6 +39,7 @@ class Table(object):
         chunksize = chunksize if chunksize is not None \
             else math.floor(32 * 1024 / float(dt.itemsize) / 2)
         self.chunksize = int(chunksize)
+        # 100 seems right, eh?
         self.cachesize = 100 * self.chunksize if cachesize is None else cachesize
         self.prefix = '/'.join(self.path.split('/')[:-1])
         if not self.prefix.startswith('/'):
@@ -79,7 +81,7 @@ class Table(object):
         return self._tbl.where('instid == uuid')
 
     def append_data(self, data):
-        """Appends data to the Table. If the chunksize limit is reached, data is
+        """Appends data to the Table. If the cachesize limit is reached, data is
         written to disc.
 
         Parameters
@@ -89,7 +91,7 @@ class Table(object):
         """
         ndata = len(data)
         idx = self._idx
-        arylen = self.chunksize
+        arylen = self.cachesize
         # just add data, no writing
         if ndata + idx < arylen:
             self._idx += ndata
