@@ -49,7 +49,6 @@ sup_to_rxtr = {
     Supports.f_thox: Reactors.f_thox,
 }
 
-
 def rxtr_commods(kind, fidelity):
     """return a list of commodities per reactor kind and fidelity"""
     commods = [Commodities.uox]
@@ -123,7 +122,7 @@ relative_qtys = {
 
 """Initial preference values, functional shape can be changed based on
 parameters in run control"""
-pref_basis = {
+rxtr_pref_basis = {
     Reactors.th : {
         Commodities.uox : 0.5,
         Commodities.th_mox : 1.0,
@@ -143,12 +142,38 @@ pref_basis = {
         },
     }
 
-"""supplier limiting values"""
+"""Initial preference values, functional shape can be changed based on
+parameters in run control"""
+sup_pref_basis = {
+    Supports.th_mox : {
+        Commodities.uox : 1.5,
+        Commodities.th_mox : 1.0,
+        Commodities.f_mox : 0.5,
+        },
+    Supports.f_mox : {
+        Commodities.uox : 0.5,
+        Commodities.th_mox : 0.5,
+        Commodities.f_mox : 1.0,
+        },
+    Supports.f_thox : {
+        Commodities.uox : 0.3,
+        Commodities.f_thox : 1.0,
+        },
+    Supports.repo : {
+        Commodities.uox : 0.01,
+        Commodities.th_mox : 0.01,
+        Commodities.f_mox : 0.01,
+        Commodities.f_thox : 0.01,
+        },
+    }
+
+"""support limiting values"""
 sup_rhs = {
     Supports.uox: 3.3e6/12, # 3.3M SWU/yr / 12 months/yr
-    Supports.th_mox: 800e3/12, # 800t/yr / 12 months/yr
+    Supports.th_mox: 800e3/12, # 800 t/yr / 12 months/yr
     Supports.f_mox: 800e3/12,
     Supports.f_thox: 800e3/12,
+    Supports.repo: 575e3/12, # 575 t/yr / 12 months/yr
     }
 
 class Converter(object):
