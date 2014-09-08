@@ -40,13 +40,14 @@ class Table(object):
             else math.floor(32 * 1024 / float(dt.itemsize) / 2)
         self.chunksize = int(chunksize)
         # 100 seems right, eh?
-        self.cachesize = 100 * self.chunksize if cachesize is None else cachesize
+        self.cachesize = int(1e2) * self.chunksize if cachesize is None else cachesize
         self.prefix = '/'.join(self.path.split('/')[:-1])
         if not self.prefix.startswith('/'):
             self.prefix = '/{0}'.format(self.prefix)
         self.name = self.path.split('/')[-1]
         self._data = np.empty(shape=(self.cachesize), dtype=self.dt)
         self._idx = 0
+        self.n_writes = 0
         
         if self.h5file is not None and self.path in self.h5file:
             self._tbl = self.h5file.get_node(self.path)
@@ -100,15 +101,15 @@ class Table(object):
 
         # writing
         space = arylen - idx
-        nwrites = 1 + int(math.floor(float(ndata - space) / arylen))
+        n_writes = 1 + int(math.floor(float(ndata - space) / arylen))
         self._data[idx:arylen] = data[:space]
         self._idx = arylen
         self.flush()
-        for i in range(nwrites - 1):
+        for i in range(n_writes - 1):
             start = i * arylen + space
             stop = (i + 1) * arylen + space
             self.flush(data[start:stop])
-        self._idx = ndata - (nwrites - 1) * arylen - space
+        self._idx = ndata - (n_writes - 1) * arylen - space
         if self._idx > 0:
             self._data[:self._idx] = data[-self._idx:]
             
@@ -122,6 +123,7 @@ class Table(object):
         else:
             self._tbl.append(data)
         self._tbl.flush()        
+        self.n_writes += 1
 
 _result_dt = np.dtype([
                 ("solnid", ('str', 16)), # 16 bytes for uuid
@@ -192,3 +194,6 @@ class TableManager(object):
     def flush_tables(self):
         for tbl in self.tables.values():
             tbl.flush()
+
+    def total_writes(self):
+        return sum([tbl.n_writes for tbl in self.tables.values()])
