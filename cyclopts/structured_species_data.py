@@ -26,6 +26,7 @@ class Suppliers(Enum):
     th_mox = 2
     f_mox = 3
     f_thox = 4
+    repo = 5
 
 commod_to_sup = {
     Commodities.uox: Suppliers.uox,
