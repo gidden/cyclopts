@@ -9,13 +9,14 @@ import math
 
 from collections import OrderedDict, namedtuple, defaultdict, Iterable
 
-from cyclopts import tools
+from cyclopts import tools as cyctools
 from cyclopts import cyclopts_io as cycio
 import cyclopts.exchange_instance as exinst
 from cyclopts.problems import ProblemSpecies
 from cyclopts.exchange_family import ResourceExchange
 
-from cyclopts.structured_species import data as data
+from cyclopts.structured_species import data
+from cyclopts.structured_species import tools as strtools
 
 """ordered mapping from input parameters to default values and np.dtypes, see
 the theory manual for further explanation of the parameter names"""
@@ -24,7 +25,7 @@ parameters = {
     "f_rxtr": Param(0, np.int8),
     "f_fc": Param(0, np.int8),
     "f_loc": Param(0, np.int8),
-    "n_rxtr": Param(0, np.uint32), # use a different tool for more than 4294967295 rxtrs! 
+    "n_rxtr": Param(1, np.uint32), # use a different tool for more than 4294967295 rxtrs! 
     "r_t_f": Param(1.0, np.float32),
     "r_th_pu": Param(0.0, np.float32), 
     "r_s_th": Param(1.0 / 2, np.float32),
@@ -120,7 +121,7 @@ class Supplier(object):
         req = True
         # process then inventory
         rhs = [data.sup_rhs[kind], 
-               data.sup_rhs[kind] * point.r_inv_proc * data.conv_ratio(kind)]
+               data.sup_rhs[kind] * point.r_inv_proc * strtools.conv_ratio(kind)]
         self.group = exinst.ExGroup(gids.next(), not req, rhs)
         self.loc = data.loc()
 
@@ -149,9 +150,9 @@ class StructuredRequest(ProblemSpecies):
             [('paramid', ('str', 16)), ('family', ('str', 30))] + \
                 [(name, np.uint32) for name in facs])
             
-        self.nids = tools.Incrementer()
-        self.gids = tools.Incrementer()
-        self.arcids = tools.Incrementer()
+        self.nids = cyctools.Incrementer()
+        self.gids = cyctools.Incrementer()
+        self.arcids = cyctools.Incrementer()
 
     @property
     def family(self):
@@ -207,7 +208,7 @@ class StructuredRequest(ProblemSpecies):
             The total number of points in the parameter space
         """
         if self._n_points is None: # lazy evaluation
-            self._n_points = tools.n_permutations(self.space)
+            self._n_points = cyctools.n_permutations(self.space)
         return self._n_points
     
     def points(self):
@@ -223,7 +224,7 @@ class StructuredRequest(ProblemSpecies):
         """
         keys = self.space.keys()
         vals = self.space.values()
-        for args in tools.expand_args(vals):
+        for args in cyctools.expand_args(vals):
             d = {keys[i]: args[i] for i in range(len(args))}
             yield Point(d)    
 
@@ -350,9 +351,9 @@ class StructuredRequest(ProblemSpecies):
     def _generate_supply(self, point, commod, requester, supplier):
         r = requester
         s = supplier
-        pref = data.preference(data.rxtr_pref_basis[r.kind][commod], 
-                               r.loc, s.loc, 
-                               point.f_loc, point.r_l_c, point.n_reg)
+        pref = strtools.preference(data.rxtr_pref_basis[r.kind][commod], 
+                                   r.loc, s.loc, 
+                                   point.f_loc, point.r_l_c, point.n_reg)
         rnodes = r.commod_to_nodes[commod]
         arcs = []
         enr = r.enr(commod)
@@ -400,9 +401,9 @@ class StructuredRequest(ProblemSpecies):
             family
         """            
         # reset id generation
-        self.nids = tools.Incrementer()
-        self.gids = tools.Incrementer()
-        self.arcids = tools.Incrementer()
+        self.nids = cyctools.Incrementer()
+        self.gids = cyctools.Incrementer()
+        self.arcids = cyctools.Incrementer()
 
         # species objects
         reactors = self._get_reactors(point)        
