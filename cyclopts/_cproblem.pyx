@@ -16,7 +16,7 @@ from libcpp.string cimport string as std_string
 
 
 cdef class Solver:
-    """no docstring for {'sidecars': (), 'tarbase': '_cproblem', 'tarname': 'Solver', 'language': 'c++', 'srcname': 'Solver', 'incfiles': ('problem.h',), 'srcfiles': ('cpp/problem.cc', 'cpp/problem.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': '_cproblem', 'tarname': 'Solver', 'language': 'c++', 'srcname': 'Solver', 'sidecars': (), 'incfiles': ('problem.h',), 'srcfiles': ('cpp/problem.cc', 'cpp/problem.h')}, please file a bug report!"""
 
 
 
@@ -62,7 +62,7 @@ cdef class Solver:
 
 
 cdef class ProbSolution:
-    """no docstring for {'sidecars': (), 'tarbase': '_cproblem', 'tarname': 'ProbSolution', 'language': 'c++', 'srcname': 'ProbSolution', 'incfiles': ('problem.h',), 'srcfiles': ('cpp/problem.cc', 'cpp/problem.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': '_cproblem', 'tarname': 'ProbSolution', 'language': 'c++', 'srcname': 'ProbSolution', 'sidecars': (), 'incfiles': ('problem.h',), 'srcfiles': ('cpp/problem.cc', 'cpp/problem.h')}, please file a bug report!"""
 
 
 

@@ -40,7 +40,7 @@ class Table(object):
             else math.floor(32 * 1024 / float(dt.itemsize) / 2)
         self.chunksize = int(chunksize)
         # 100 seems right, eh?
-        factor = int(1e0)
+        factor = int(1e2)
         self.cachesize = factor * self.chunksize if cachesize is None else cachesize
         self.prefix = '/'.join(self.path.split('/')[:-1])
         if not self.prefix.startswith('/'):
