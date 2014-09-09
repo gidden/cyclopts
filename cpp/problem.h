@@ -22,7 +22,8 @@ class ProbSolution {
 class Solver {
  public:
   /// @param type the type of solver
-  explicit Solver(std::string type = "cbc") : type(type) { };
+  explicit Solver(std::string type = "cbc");
+
   std::string type;
 };
 
