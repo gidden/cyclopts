@@ -9,7 +9,7 @@ import math
 # fidelity levels, 1 * 1 * 1 = 1
 f_rxtr = 0
 f_fc = 2
-f_loc = 2
+f_loc = 0
 
 # reactor params, 1 = 1
 n_rxtr = 1
