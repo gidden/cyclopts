@@ -55,13 +55,16 @@ def condor_submit(args):
     print('Submitting a {kind} job with {n} instances of the '
           'ProblemFamily {cname}.'.format(
             kind=args.kind, n=len(instids), cname=cname))
+    
+    solvers = [s.strip().rstrip(',') for s in args.solvers]
+
     # submit job
     if args.kind == 'dag':
-        cdag.submit(args.user, args.db, instids, module, cname, args.solvers,
+        cdag.submit(args.user, args.db, instids, module, cname, solvers,
                     host=args.host, remotedir=args.remotedir, 
                     keyfile=args.keyfile, verbose=args.verbose)
     elif args.kind == 'queue':
-        cqueue.submit(args.user, args.db, instids, module, cname, args.solvers, 
+        cqueue.submit(args.user, args.db, instids, module, cname, solvers, 
                       log=args.log, host=args.host, remotedir=args.remotedir, 
                       keyfile=args.keyfile, verbose=args.verbose,
                       nodes=args.nodes, port=args.port)        
@@ -152,7 +155,8 @@ def execute(args):
         # some scripting workflows produce a string the first time
         asteval = ast.literal_eval(asteval) 
     rc._update(asteval)
-    solvers = args.solvers
+    solvers = [s.strip().rstrip(',') for s in args.solvers]
+    
     instids = set(uuid.UUID(x) for x in args.instids)
     verbose = args.verbose
 
