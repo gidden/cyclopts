@@ -18,7 +18,6 @@ import paramiko as pm
 import getpass
 import ast
 import sys
-import resource
 import gc
 import io
 
@@ -99,7 +98,12 @@ def convert(args):
     verbose = args.verbose
     update_freq = args.update_freq
     debug = args.debug
-    h5file = t.open_file(fout, 'a', filters=tools.FILTERS)
+    
+    if os.path.exists(fout):
+        raise IOError('Conversion output database {0} already exists.'.format(
+                fout))
+
+    h5file = t.open_file(fout, 'w', filters=tools.FILTERS)
 
     obj_rcs = [rc, tools.parse_rc(args.cycrc)] \
         if os.path.exists(args.cycrc) else [rc]
@@ -131,6 +135,11 @@ def convert(args):
     # clean up
     sp_manager.flush_tables()
     fam_manager.flush_tables()
+    path = '{0}/{1}'.format(fam.table_prefix, fam.property_table_name)
+    instids = tools.collect_instids(h5file=h5file, path=path)
+    print(('Upon completion of instance coversion, '
+           'Cyclopts reads a total of {0} instances in {1}').format(
+            len(instids), fout))
     h5file.close()
 
 def execute(args):
@@ -248,16 +257,17 @@ def update_cde(args):
 def dump(args):
     """Dumps information about instances in a database"""
     h5file = t.open_file(args.db, mode='r', filters=tools.FILTERS)
-
     fam = tools.get_obj(kind='family', rcs=tools.parse_rc(args.cycrc), 
                         args=args)
     path = '{0}/{1}'.format(fam.table_prefix, fam.property_table_name)
     instids = tools.collect_instids(h5file=h5file, path=path)
-
-    for iid in instids:
-        print(iid.hex)
-
     h5file.close()
+
+    if args.count:
+        print('{0} instids.'.format(len(instids)))
+    if args.list:
+        for iid in instids:
+            print(iid.hex)
 
 def main():
     """Entry point for Cyclopts runs."""
@@ -366,6 +376,9 @@ def main():
                                help=instids)    
     submit_parser.add_argument('--solvers', nargs='*', default=['cbc'], 
                                dest='solvers', help=solversh)    
+    counth = 'Only count instances to be run.'
+    submit_parser.add_argument('--count', default=False, action='store_true', 
+                               dest='only_count', help=counth)    
     
     # condor related
     uh = ("The condor user name.")
@@ -501,6 +514,12 @@ def main():
                                 help=dumph)
     dump_parser.set_defaults(func=dump)
     dump_parser.add_argument('--db', dest='db', help=db)
+    counth = 'Only count instances.'
+    dump_parser.add_argument('--count', default=False, action='store_true', 
+                             dest='count', help=counth)    
+    listh = 'List all instance uuids (as hex).'
+    dump_parser.add_argument('--list', default=False, action='store_true', 
+                             dest='list', help=listh)    
     
     #
     # and away we go!

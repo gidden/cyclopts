@@ -60,16 +60,19 @@ def cyclopts_setup():
 
     packages = [
         'cyclopts', 
-        'cyclopts.condor'
+        'cyclopts.condor',
+        'cyclopts.structured_species',
         ]
     pack_dir = {
         'cyclopts': 'cyclopts',
         'cyclopts.condor': 'cyclopts/condor',
+        'cyclopts.structured_species': 'cyclopts/structured_species',
         }
     extpttn = ['*.dll', '*.so', '*.dylib', '*.pyd', '*.pyo']
     pack_data = {
         'cyclopts': ['*.pxd', 'include/*.h', 'include/*.pxi',] + extpttn,
         'cyclopts.condor': extpttn,
+        'cyclopts.structured_species': extpttn,
         }
     setup_kwargs = {
         "name": "cyclopts",

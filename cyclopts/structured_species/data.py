@@ -21,7 +21,7 @@ class Reactors(Enum):
     f_mox = 2
     f_thox = 3
 
-class Suppliers(Enum):    
+class Supports(Enum):    
     uox = 1
     th_mox = 2
     f_mox = 3
@@ -29,26 +29,25 @@ class Suppliers(Enum):
     repo = 5
 
 commod_to_sup = {
-    Commodities.uox: Suppliers.uox,
-    Commodities.th_mox: Suppliers.th_mox,
-    Commodities.f_mox: Suppliers.f_mox,
-    Commodities.f_thox: Suppliers.f_thox,
+    Commodities.uox: Supports.uox,
+    Commodities.th_mox: Supports.th_mox,
+    Commodities.f_mox: Supports.f_mox,
+    Commodities.f_thox: Supports.f_thox,
 }
 
 sup_to_commod = {
-    Suppliers.uox: Commodities.uox,
-    Suppliers.th_mox: Commodities.th_mox,
-    Suppliers.f_mox: Commodities.f_mox,
-    Suppliers.f_thox: Commodities.f_thox,
+    Supports.uox: Commodities.uox,
+    Supports.th_mox: Commodities.th_mox,
+    Supports.f_mox: Commodities.f_mox,
+    Supports.f_thox: Commodities.f_thox,
 }
 
 sup_to_rxtr = {
-    Suppliers.uox: Reactors.th,
-    Suppliers.th_mox: Reactors.th,
-    Suppliers.f_mox: Reactors.f_mox,
-    Suppliers.f_thox: Reactors.f_thox,
+    Supports.uox: Reactors.th,
+    Supports.th_mox: Reactors.th,
+    Supports.f_mox: Reactors.f_mox,
+    Supports.f_thox: Reactors.f_thox,
 }
-
 
 def rxtr_commods(kind, fidelity):
     """return a list of commodities per reactor kind and fidelity"""
@@ -123,7 +122,7 @@ relative_qtys = {
 
 """Initial preference values, functional shape can be changed based on
 parameters in run control"""
-pref_basis = {
+rxtr_pref_basis = {
     Reactors.th : {
         Commodities.uox : 0.5,
         Commodities.th_mox : 1.0,
@@ -143,12 +142,38 @@ pref_basis = {
         },
     }
 
-"""supplier limiting values"""
+"""Initial preference values, functional shape can be changed based on
+parameters in run control"""
+sup_pref_basis = {
+    Supports.th_mox : {
+        Commodities.uox : 1.5,
+        Commodities.th_mox : 1.0,
+        Commodities.f_mox : 0.5,
+        },
+    Supports.f_mox : {
+        Commodities.uox : 0.5,
+        Commodities.th_mox : 0.5,
+        Commodities.f_mox : 1.0,
+        },
+    Supports.f_thox : {
+        Commodities.uox : 0.3,
+        Commodities.f_thox : 1.0,
+        },
+    Supports.repo : {
+        Commodities.uox : 0.01,
+        Commodities.th_mox : 0.01,
+        Commodities.f_mox : 0.01,
+        Commodities.f_thox : 0.01,
+        },
+    }
+
+"""support limiting values"""
 sup_rhs = {
-    Suppliers.uox: 3.3e6/12, # 3.3M SWU/yr / 12 months/yr
-    Suppliers.th_mox: 800e3/12, # 800t/yr / 12 months/yr
-    Suppliers.f_mox: 800e3/12,
-    Suppliers.f_thox: 800e3/12,
+    Supports.uox: 3.3e6/12, # 3.3M SWU/yr / 12 months/yr
+    Supports.th_mox: 800e3/12, # 800 t/yr / 12 months/yr
+    Supports.f_mox: 800e3/12,
+    Supports.f_thox: 800e3/12,
+    Supports.repo: 575e3/12, # 575 t/yr / 12 months/yr
     }
 
 class Converter(object):
@@ -175,22 +200,29 @@ class RecycleInv(Converter):
     def __call__(self, qty, enr, commod=None):
         return qty * enr / 100.
 
+class RepoProc(Converter):
+    def __call__(self, qty, enr, commod=None):
+        return qty
+
 converters = {
-    Suppliers.uox: {
+    Supports.uox: {
         'proc': SWU(), 
         'inv': NatU(),
         },
-    Suppliers.th_mox: {
+    Supports.th_mox: {
         'proc': RecycleProc(), 
         'inv': RecycleInv(),
         },
-    Suppliers.f_mox: {
+    Supports.f_mox: {
         'proc': RecycleProc(), 
         'inv': RecycleInv(),
         },
-    Suppliers.f_thox: {
+    Supports.f_thox: {
         'proc': RecycleProc(), 
         'inv': RecycleInv(),
+        },
+    Supports.repo: {
+        'proc': RepoProc(), 
         },
 }
 

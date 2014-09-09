@@ -23,12 +23,12 @@ class TestIO:
         os.remove(self.db)
 
     def test_create(self):
-        tbl = cycio.Table(self.h5file, self.pth, self.dt, chunksize=2)
+        tbl = cycio.Table(self.h5file, self.pth, self.dt, chunksize=2, cachesize=2)
         tbl.create()
         assert_true(self.pth in self.h5file) 
 
     def test_throw(self):
-        cyctbl = cycio.Table(self.h5file, self.pth, self.dt, chunksize=3)
+        cyctbl = cycio.Table(self.h5file, self.pth, self.dt, chunksize=3, cachesize=3)
         cyctbl.create()
         h5tbl = self.h5file.root.tbl
         data = np.empty(2, dtype=self.dt)
@@ -37,7 +37,7 @@ class TestIO:
         assert_raises(IOError, cyctbl.flush())
 
     def test_write_flush(self):
-        cyctbl = cycio.Table(self.h5file, self.pth, self.dt, chunksize=3)
+        cyctbl = cycio.Table(self.h5file, self.pth, self.dt, chunksize=3, cachesize=3)
         cyctbl.create()
         h5tbl = self.h5file.root.tbl
         data = np.empty(2, dtype=self.dt)
@@ -49,7 +49,7 @@ class TestIO:
         assert_array_equal(data, rows)
 
     def test_write_single(self):
-        cyctbl = cycio.Table(self.h5file, self.pth, self.dt, chunksize=3)
+        cyctbl = cycio.Table(self.h5file, self.pth, self.dt, chunksize=3, cachesize=3)
         cyctbl.create()
         h5tbl = self.h5file.root.tbl
         data = np.empty(4, dtype=self.dt)
@@ -60,7 +60,7 @@ class TestIO:
         assert_array_equal(data[:-1], rows)
 
     def test_write_double(self):
-        cyctbl = cycio.Table(self.h5file, self.pth, self.dt, chunksize=3)
+        cyctbl = cycio.Table(self.h5file, self.pth, self.dt, chunksize=3, cachesize=3)
         cyctbl.create()
         h5tbl = self.h5file.root.tbl
         data = np.empty(7, dtype=self.dt)
@@ -71,7 +71,7 @@ class TestIO:
         assert_array_equal(data[:-1], rows)
 
     def test_write_triple(self):
-        cyctbl = cycio.Table(self.h5file, self.pth, self.dt, chunksize=3)
+        cyctbl = cycio.Table(self.h5file, self.pth, self.dt, chunksize=3, cachesize=3)
         cyctbl.create()
         h5tbl = self.h5file.root.tbl
 
@@ -83,7 +83,7 @@ class TestIO:
         assert_array_equal(data, rows)
 
     def test_write_triple_separate(self):
-        cyctbl = cycio.Table(self.h5file, self.pth, self.dt, chunksize=3)
+        cyctbl = cycio.Table(self.h5file, self.pth, self.dt, chunksize=3, cachesize=3)
         cyctbl.create()
         h5tbl = self.h5file.root.tbl
 
@@ -104,7 +104,7 @@ class TestIO:
         assert_array_equal(exp, rows)
 
     def test_manager(self):
-        tbls = [cycio.Table(self.h5file, self.pth, self.dt, chunksize=3)]
+        tbls = [cycio.Table(self.h5file, self.pth, self.dt, chunksize=3, cachesize=3)]
         manager = cycio.TableManager(self.h5file, tbls)
         h5tbl = self.h5file.root.tbl
         data = np.empty(2, dtype=self.dt)

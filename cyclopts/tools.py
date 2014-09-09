@@ -22,6 +22,7 @@ import getpass
 import importlib
 import itertools as itools
 import gc
+import resource
 
 import cyclopts
 from cyclopts.params import PARAM_CTOR_ARGS, Param, BoolParam, SupConstrParam, \
@@ -508,6 +509,8 @@ def conv_insts(fam, fam_tables, sp, sp_tables, ninst=1, update_freq=100, verbose
                             fam_tables)
             if n % update_freq == 0:
                 if verbose:
+                    print('Total writes: {0}'.format(
+                            sum([tbl.n_writes for tbl in fam_tables.values() + sp_tables.values()])))
                     print('Memusg before collect: {0}'.format(
                             resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
                 gc.collect()

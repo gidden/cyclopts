@@ -14,7 +14,8 @@ from cyclopts import cyclopts_io as cycio
 import cyclopts.exchange_instance as exinst
 from cyclopts.problems import ProblemSpecies
 from cyclopts.exchange_family import ResourceExchange
-from cyclopts import structured_species_data as data
+
+from cyclopts.structured_species import data as data
 
 """ordered mapping from input parameters to default values and np.dtypes, see
 the theory manual for further explanation of the parameter names"""
@@ -255,6 +256,7 @@ class StructuredRequest(ProblemSpecies):
         tables : list of cyclopts_io.Table
             The tables that can be written to
         """
+        uid = param_uuid.bytes if len(param_uuid.bytes) == 16 else param_uuid.bytes + '\0' 
         data = [param_uuid.bytes, self._family.name]
         data += [getattr(point, k) for k in parameters.keys()]
         tables[self.param_tbl_name].append_data([tuple(data)])
@@ -338,36 +340,36 @@ class StructuredRequest(ProblemSpecies):
         n_uox, n_t_mox, n_f_mox, n_f_thox = self._supplier_breakdown(point)
         uox_s = np.ndarray(
             shape=(n_uox,), 
-            buffer=np.array([Supplier(data.Suppliers.uox, point, self.gids) \
+            buffer=np.array([Supplier(data.Supports.uox, point, self.gids) \
                                  for i in range(n_uox)]), 
             dtype=Supplier)
         mox_th_s = np.ndarray(
             shape=(n_t_mox,), 
-            buffer=np.array([Supplier(data.Suppliers.th_mox, point, self.gids) \
+            buffer=np.array([Supplier(data.Supports.th_mox, point, self.gids) \
                                  for i in range(n_t_mox)]), 
             dtype=Supplier)
         mox_f_s = np.ndarray(
             shape=(n_f_mox,), 
-            buffer=np.array([Supplier(data.Suppliers.f_mox, point, self.gids) \
+            buffer=np.array([Supplier(data.Supports.f_mox, point, self.gids) \
                                  for i in range(n_f_mox)]), 
             dtype=Supplier)
         thox_s = np.ndarray(
             shape=(n_f_thox,), 
-            buffer=np.array([Supplier(data.Suppliers.f_thox, point, self.gids) \
+            buffer=np.array([Supplier(data.Supports.f_thox, point, self.gids) \
                                  for i in range(n_f_thox)]), 
             dtype=Supplier)
         suppliers = {
-            data.Suppliers.uox: uox_s,
-            data.Suppliers.th_mox: mox_th_s,
-            data.Suppliers.f_mox: mox_f_s,
-            data.Suppliers.f_thox: thox_s,
+            data.Supports.uox: uox_s,
+            data.Supports.th_mox: mox_th_s,
+            data.Supports.f_mox: mox_f_s,
+            data.Supports.f_thox: thox_s,
             }
         return suppliers
 
     def _generate_supply(self, point, commod, requester, supplier):
         r = requester
         s = supplier
-        pref = preference(data.pref_basis[r.kind][commod], r.loc, s.loc, 
+        pref = preference(data.rxtr_pref_basis[r.kind][commod], r.loc, s.loc, 
                           point.f_loc, point.r_l_c, point.n_reg)
         rnodes = r.commod_to_nodes[commod]
         arcs = []
@@ -385,6 +387,7 @@ class StructuredRequest(ProblemSpecies):
             node = exinst.ExNode(nid, s.group.id, not req, qty)
             s.nodes.append(node)
             arcid = self.arcids.next()
+            #print('id', arcid, 'commod', commod, 'pref', pref)
             arcs.append(exinst.ExArc(
                     arcid,
                     rnodes[i].id, req_coeffs,

@@ -1,4 +1,4 @@
-from cyclopts import structured_species as strsp
+from cyclopts.structured_species import request as strreq
 
 import uuid
 import math
@@ -9,20 +9,20 @@ from numpy.testing import assert_array_almost_equal
 
 from cyclopts import tools
 from cyclopts.exchange_family import ResourceExchange
-from cyclopts import structured_species_data as data
+from cyclopts.structured_species import data as data
 from cyclopts.problems import Solver
 
 def test_pnt():
-    p = strsp.Point({'foo': 'bar', 'n_rxtr': 100})
+    p = strreq.Point({'foo': 'bar', 'n_rxtr': 100})
     assert_equal(p.n_rxtr, 100) # not default
     assert_equal(p.f_rxtr, 0) # default
     assert_false(hasattr(p.n_rxtr, 'foo'))
 
-    q = strsp.Point({'foo': 'bar', 'n_rxtr': 100})
+    q = strreq.Point({'foo': 'bar', 'n_rxtr': 100})
     assert_equal(p, q)
 
 def test_request_basics():
-    sp = strsp.StructuredRequest()
+    sp = strreq.StructuredRequest()
     
     exp = 'StructuredRequest'
     obs = sp.name
@@ -32,21 +32,21 @@ def test_request_basics():
 
 def test_request_read_space():
     space = {'n_rxtr': [100], 'f_fc': [0, 1, 2]}
-    sp = strsp.StructuredRequest()
+    sp = strreq.StructuredRequest()
     
     sp.read_space(space)
     assert_equal(sp.n_points, 3)
     
-    exp = [strsp.Point({'n_rxtr': 100, 'f_fc': i}) \
+    exp = [strreq.Point({'n_rxtr': 100, 'f_fc': i}) \
                for i in range(3)].sort(key=lambda x: x.f_fc)
     obs = [p for p in sp.points()].sort(key=lambda x: x.f_fc)
     assert_equal(obs, exp)
 
 def test_request_write_point():    
-    sp = strsp.StructuredRequest()
+    sp = strreq.StructuredRequest()
     param_tbl, sum_tbl = sp.register_tables(None, 'foo')
     uid = uuid.uuid4()
-    p = strsp.Point({'n_rxtr': 100})
+    p = strreq.Point({'n_rxtr': 100})
     sp.record_point(p, uid, {sp.param_tbl_name: param_tbl, sp.sum_tbl_name: sum_tbl})
 
     ## params are alphabetcially ordered 
@@ -85,7 +85,7 @@ def test_request_write_point():
         -1,
         )
     obs = param_tbl._data[0]
-    for i, k in enumerate(strsp.parameters):
+    for i, k in enumerate(strreq.parameters):
         print(k)
         if isinstance(exp[i], float):
             assert_almost_equal(obs[i], exp[i])
@@ -93,7 +93,7 @@ def test_request_write_point():
             assert_equal(obs[i], exp[i])
     
 def test_reactor_breakdown():
-    sp = strsp.StructuredRequest()
+    sp = strreq.StructuredRequest()
     d = {
         'n_rxtr': 101,
         'r_t_f': 0.23,
@@ -101,25 +101,25 @@ def test_reactor_breakdown():
         }
 
     d['f_fc'] = 0
-    p = strsp.Point(d)    
+    p = strreq.Point(d)    
     obs = sp._reactor_breakdown(p)
     exp = (101, 0, 0)
     assert_equal(obs, exp)
 
     d['f_fc'] = 1
-    p = strsp.Point(d)    
+    p = strreq.Point(d)    
     obs = sp._reactor_breakdown(p)
     exp = (23, 66 + 12, 0)
     assert_equal(obs, exp)
 
     d['f_fc'] = 2
-    p = strsp.Point(d)    
+    p = strreq.Point(d)    
     obs = sp._reactor_breakdown(p)
     exp = (23, 66, 12)
     assert_equal(obs, exp)
 
 def test_supplier_breakdown():
-    sp = strsp.StructuredRequest()
+    sp = strreq.StructuredRequest()
     d = {
         'n_rxtr': 101,
         'r_t_f': 0.23,
@@ -131,19 +131,19 @@ def test_supplier_breakdown():
         }
 
     d['f_fc'] = 0
-    p = strsp.Point(d)
+    p = strreq.Point(d)
     obs = sp._supplier_breakdown(p) 
     exp = (13, 0, 0, 0)    
     assert_equal(obs, exp)
 
     d['f_fc'] = 1
-    p = strsp.Point(d)
+    p = strreq.Point(d)
     obs = sp._supplier_breakdown(p) 
     exp = (2, 1, 35, 0)    
     assert_equal(obs, exp)
     
     d['f_fc'] = 2
-    p = strsp.Point(d)
+    p = strreq.Point(d)
     obs = sp._supplier_breakdown(p) 
     exp = (2, 1, 30, 5)    
     assert_equal(obs, exp)
@@ -153,9 +153,9 @@ def test_th_reactors():
     nids = tools.Incrementer()    
 
     # once through, thermal
-    p = strsp.Point({'f_fc': 0, 'f_mox': 0.25})
+    p = strreq.Point({'f_fc': 0, 'f_mox': 0.25})
     kind = data.Reactors.th
-    r = strsp.Reactor(kind, p, gids, nids)    
+    r = strreq.Reactor(kind, p, gids, nids)    
     assert_equal(r.kind, kind)
     assert_equal(len(r.nodes), 1)
     assert_equal(len(r.commod_to_nodes[data.Commodities.uox]), 1)
@@ -163,9 +163,9 @@ def test_th_reactors():
     assert_almost_equal(r.group.qty, data.fuel_unit * data.request_qtys[kind])
 
     # thox recycle, thermal, n assemblies
-    p = strsp.Point({'f_fc': 2, 'f_rxtr': 1, 'f_mox': 0.25})
+    p = strreq.Point({'f_fc': 2, 'f_rxtr': 1, 'f_mox': 0.25})
     kind = data.Reactors.th
-    r = strsp.Reactor(kind, p, gids, nids)
+    r = strreq.Reactor(kind, p, gids, nids)
     base_qty = 1400 * 12.5 / math.floor(157 / 4.)
     assert_equal(len(r.nodes), int(math.ceil(1.5 * data.n_assemblies[kind])))
     assert_equal(len(r.commod_to_nodes[data.Commodities.uox]), 
@@ -188,9 +188,9 @@ def test_mox_reactors():
     nids = tools.Incrementer()    
 
     # mox recycle, mox
-    p = strsp.Point({'f_fc': 1})
+    p = strreq.Point({'f_fc': 1})
     kind = data.Reactors.f_mox
-    r = strsp.Reactor(kind, p, gids, nids)
+    r = strreq.Reactor(kind, p, gids, nids)
     assert_equal(len(r.nodes), 3)
     assert_equal(len(r.commod_to_nodes[data.Commodities.uox]), 1)
     assert_equal(len(r.commod_to_nodes[data.Commodities.th_mox]), 1)
@@ -199,9 +199,9 @@ def test_mox_reactors():
     assert_almost_equal(r.group.qty, data.fuel_unit * data.request_qtys[kind])
 
     # thox recycle, mox, n assemblies
-    p = strsp.Point({'f_fc': 2, 'f_rxtr': 1})
+    p = strreq.Point({'f_fc': 2, 'f_rxtr': 1})
     kind = data.Reactors.f_mox
-    r = strsp.Reactor(kind, p, gids, nids)
+    r = strreq.Reactor(kind, p, gids, nids)
     base_qty = 1400 / math.floor(369 / 4.)
     assert_equal(len(r.nodes), 4 * data.n_assemblies[kind])
     assert_equal(len(r.commod_to_nodes[data.Commodities.uox]), 
@@ -228,9 +228,9 @@ def test_thox_reactors():
     nids = tools.Incrementer()    
 
     # thox recycle, thox
-    p = strsp.Point({'f_fc': 2, 'f_rxtr': 1})
+    p = strreq.Point({'f_fc': 2, 'f_rxtr': 1})
     kind = data.Reactors.f_thox
-    r = strsp.Reactor(kind, p, gids, nids)
+    r = strreq.Reactor(kind, p, gids, nids)
     base_qty = 1400 / math.floor(369 / 4.)
     assert_equal(len(r.nodes), 4 * data.n_assemblies[kind])
     assert_equal(len(r.commod_to_nodes[data.Commodities.uox]), 
@@ -254,34 +254,34 @@ def test_thox_reactors():
 
 def test_conv():
     exp = 1.33 # from wise-uranium.org/nfcue.html with assays as stated
-    obs = data.conv_ratio(data.Suppliers.uox)
+    obs = data.conv_ratio(data.Supports.uox)
     assert_almost_equal(obs, exp, places=2)
 
 def test_supplier():
     gids = tools.Incrementer()
-    p = strsp.Point({'r_inv_proc': 0.33})
+    p = strreq.Point({'r_inv_proc': 0.33})
     
-    kind = data.Suppliers.uox
+    kind = data.Supports.uox
     rate = 3.3e6 / 12
-    s = strsp.Supplier(kind, p, gids)
+    s = strreq.Supplier(kind, p, gids)
     assert_almost_equal(s.group.caps[0], rate)
     assert_almost_equal(s.group.caps[1], rate * 0.33 * data.conv_ratio(kind))
 
-    kind = data.Suppliers.th_mox
+    kind = data.Supports.th_mox
     rate = 800e3 / 12
-    s = strsp.Supplier(kind, p, gids)
+    s = strreq.Supplier(kind, p, gids)
     assert_almost_equal(s.group.caps[0], rate)
     assert_almost_equal(s.group.caps[1], rate * 0.33 * data.conv_ratio(kind))
 
-    kind = data.Suppliers.f_mox
+    kind = data.Supports.f_mox
     rate = 800e3 / 12
-    s = strsp.Supplier(kind, p, gids)
+    s = strreq.Supplier(kind, p, gids)
     assert_almost_equal(s.group.caps[0], rate)
     assert_almost_equal(s.group.caps[1], rate * 0.33 * data.conv_ratio(kind))
 
-    kind = data.Suppliers.f_thox
+    kind = data.Supports.f_thox
     rate = 800e3 / 12
-    s = strsp.Supplier(kind, p, gids)
+    s = strreq.Supplier(kind, p, gids)
     assert_almost_equal(s.group.caps[0], rate)
     assert_almost_equal(s.group.caps[1], rate * 0.33 * data.conv_ratio(kind))
     
@@ -299,14 +299,14 @@ def assert_scoeffs_equal(arc, commod, rkind, skind, n, enr):
 def test_one_supply():
     gids = tools.Incrementer()
     nids = tools.Incrementer()
-    sp = strsp.StructuredRequest()
+    sp = strreq.StructuredRequest()
 
     rkind = data.Reactors.f_mox
-    skind = data.Suppliers.f_mox
+    skind = data.Supports.f_mox
     commod = data.Commodities.f_mox
-    p = strsp.Point({'f_fc': 2, 'f_rxtr': 0})
-    r = strsp.Reactor(rkind, p, gids, nids)
-    s = strsp.Supplier(skind, p, gids)
+    p = strreq.Point({'f_fc': 2, 'f_rxtr': 0})
+    r = strreq.Reactor(rkind, p, gids, nids)
+    s = strreq.Supplier(skind, p, gids)
 
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), 1)
@@ -326,15 +326,15 @@ def test_one_supply():
 def test_th_supply():
     gids = tools.Incrementer()
     nids = tools.Incrementer()
-    sp = strsp.StructuredRequest()
+    sp = strreq.StructuredRequest()
     rkind = data.Reactors.th
-    p = strsp.Point({'f_fc': 2, 'f_rxtr': 1, 'f_mox': 0.25})
-    r = strsp.Reactor(rkind, p, gids, nids)
+    p = strreq.Point({'f_fc': 2, 'f_rxtr': 1, 'f_mox': 0.25})
+    r = strreq.Reactor(rkind, p, gids, nids)
 
     # uox
-    skind = data.Suppliers.uox
+    skind = data.Supports.uox
     commod = data.Commodities.uox
-    s = strsp.Supplier(skind, p, gids)
+    s = strreq.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), data.n_assemblies[rkind])
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
@@ -344,9 +344,9 @@ def test_th_supply():
                          r.enr(commod))    
 
     # th mox
-    skind = data.Suppliers.th_mox
+    skind = data.Supports.th_mox
     commod = data.Commodities.th_mox
-    s = strsp.Supplier(skind, p, gids)
+    s = strreq.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
     n = int(math.ceil(0.25 * data.n_assemblies[rkind])) 
     assert_equal(len(arcs), n)
@@ -357,9 +357,9 @@ def test_th_supply():
                          r.enr(commod))    
 
     # f mox
-    skind = data.Suppliers.f_mox
+    skind = data.Supports.f_mox
     commod = data.Commodities.f_mox
-    s = strsp.Supplier(skind, p, gids)
+    s = strreq.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), n)
     assert_equal(len(s.nodes), n)    
@@ -371,15 +371,15 @@ def test_th_supply():
 def test_fmox_supply():
     gids = tools.Incrementer()
     nids = tools.Incrementer()
-    sp = strsp.StructuredRequest()
+    sp = strreq.StructuredRequest()
     rkind = data.Reactors.f_mox
-    p = strsp.Point({'f_fc': 2, 'f_rxtr': 1})
-    r = strsp.Reactor(rkind, p, gids, nids)
+    p = strreq.Point({'f_fc': 2, 'f_rxtr': 1})
+    r = strreq.Reactor(rkind, p, gids, nids)
 
     # uox
-    skind = data.Suppliers.uox
+    skind = data.Supports.uox
     commod = data.Commodities.uox
-    s = strsp.Supplier(skind, p, gids)
+    s = strreq.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), data.n_assemblies[rkind])
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
@@ -389,9 +389,9 @@ def test_fmox_supply():
                          r.enr(commod))    
 
     # th mox
-    skind = data.Suppliers.th_mox
+    skind = data.Supports.th_mox
     commod = data.Commodities.th_mox
-    s = strsp.Supplier(skind, p, gids)
+    s = strreq.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), data.n_assemblies[rkind])
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
@@ -401,9 +401,9 @@ def test_fmox_supply():
                          r.enr(commod))    
 
     # f mox
-    skind = data.Suppliers.f_mox
+    skind = data.Supports.f_mox
     commod = data.Commodities.f_mox
-    s = strsp.Supplier(skind, p, gids)
+    s = strreq.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), data.n_assemblies[rkind])
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
@@ -413,9 +413,9 @@ def test_fmox_supply():
                          r.enr(commod))    
 
     # thox
-    skind = data.Suppliers.f_thox
+    skind = data.Supports.f_thox
     commod = data.Commodities.f_thox
-    s = strsp.Supplier(skind, p, gids)
+    s = strreq.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), data.n_assemblies[rkind])
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
@@ -427,15 +427,15 @@ def test_fmox_supply():
 def test_fmox_supply():
     gids = tools.Incrementer()
     nids = tools.Incrementer()
-    sp = strsp.StructuredRequest()
+    sp = strreq.StructuredRequest()
     rkind = data.Reactors.f_thox
-    p = strsp.Point({'f_fc': 2, 'f_rxtr': 1})
-    r = strsp.Reactor(rkind, p, gids, nids)
+    p = strreq.Point({'f_fc': 2, 'f_rxtr': 1})
+    r = strreq.Reactor(rkind, p, gids, nids)
 
     # uox
-    skind = data.Suppliers.uox
+    skind = data.Supports.uox
     commod = data.Commodities.uox
-    s = strsp.Supplier(skind, p, gids)
+    s = strreq.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), data.n_assemblies[rkind])
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
@@ -445,9 +445,9 @@ def test_fmox_supply():
                          r.enr(commod))    
 
     # th mox
-    skind = data.Suppliers.th_mox
+    skind = data.Supports.th_mox
     commod = data.Commodities.th_mox
-    s = strsp.Supplier(skind, p, gids)
+    s = strreq.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), data.n_assemblies[rkind])
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
@@ -457,9 +457,9 @@ def test_fmox_supply():
                          r.enr(commod))    
 
     # f mox
-    skind = data.Suppliers.f_mox
+    skind = data.Supports.f_mox
     commod = data.Commodities.f_mox
-    s = strsp.Supplier(skind, p, gids)
+    s = strreq.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), data.n_assemblies[rkind])
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
@@ -469,9 +469,9 @@ def test_fmox_supply():
                          r.enr(commod))    
 
     # thox
-    skind = data.Suppliers.f_thox
+    skind = data.Supports.f_thox
     commod = data.Commodities.f_thox
-    s = strsp.Supplier(skind, p, gids)
+    s = strreq.Supplier(skind, p, gids)
     arcs = sp._generate_supply(p, commod, r, s)
     assert_equal(len(arcs), data.n_assemblies[rkind])
     assert_equal(len(s.nodes), data.n_assemblies[rkind])    
@@ -481,7 +481,7 @@ def test_fmox_supply():
                          r.enr(commod))    
     
 def test_once_through():
-    sp = strsp.StructuredRequest()
+    sp = strreq.StructuredRequest()
     d = {
         'n_rxtr': 5,
         'r_t_f': 2./5., 
@@ -493,7 +493,7 @@ def test_once_through():
     d['f_fc'] = 0
     d['r_s_th'] = 1.
     d['r_s_mox_uox'] = 1.
-    p = strsp.Point(d)
+    p = strreq.Point(d)
 
     # reactors exp
     obs = sp._reactor_breakdown(p)
@@ -511,7 +511,7 @@ def test_once_through():
     assert_equal(len(arcs), rexp[0] * sexp[0])
 
 def test_mox_recycle():
-    sp = strsp.StructuredRequest()
+    sp = strreq.StructuredRequest()
     d = {
         'n_rxtr': 5,
         'r_t_f': 2./5., 
@@ -523,7 +523,7 @@ def test_mox_recycle():
     d['f_fc'] = 1
     d['r_s_th'] = 3. / 2.
     d['r_s_mox_uox'] = 1. / 3.
-    p = strsp.Point(d)
+    p = strreq.Point(d)
 
     # reactors exp
     obs = sp._reactor_breakdown(p)
@@ -543,7 +543,7 @@ def test_mox_recycle():
     assert_equal(len(arcs), snodes_exp)
 
 def test_thox_recycle():
-    sp = strsp.StructuredRequest()
+    sp = strreq.StructuredRequest()
     d = {
         'n_rxtr': 5,
         'r_t_f': 2./5., 
@@ -555,7 +555,7 @@ def test_thox_recycle():
     d['f_fc'] = 2
     d['r_s_th'] = 3. / 2.
     d['r_s_mox_uox'] = 1. / 3.
-    p = strsp.Point(d)
+    p = strreq.Point(d)
 
     # reactors exp
     obs = sp._reactor_breakdown(p)
@@ -578,26 +578,26 @@ def test_thox_recycle():
     assert_equal(len(arcs), snodes_exp)
 
 def test_region():
-    assert_equal(strsp.region(0.42, n_reg=5), 2)
-    assert_equal(strsp.region(0.42, n_reg=10), 4)
-    assert_equal(strsp.region(0.72, n_reg=5), 3)
-    assert_equal(strsp.region(0.72, n_reg=10), 7)
+    assert_equal(strreq.region(0.42, n_reg=5), 2)
+    assert_equal(strreq.region(0.42, n_reg=10), 4)
+    assert_equal(strreq.region(0.72, n_reg=5), 3)
+    assert_equal(strreq.region(0.72, n_reg=10), 7)
 
 def test_pref():
     base, rloc, sloc, n_reg, ratio = 0.5, 0.42, 0.72, 5, 0.33
     
     fidelity = 0
-    obs = strsp.preference(base, rloc, sloc, fidelity, ratio, n_reg)
+    obs = strreq.preference(base, rloc, sloc, fidelity, ratio, n_reg)
     exp = base
     assert_equal(obs, exp)
 
     fidelity = 1
-    obs = strsp.preference(base, rloc, sloc, fidelity, ratio, n_reg)
+    obs = strreq.preference(base, rloc, sloc, fidelity, ratio, n_reg)
     exp = base + ratio * math.exp(-1)
     assert_almost_equal(obs, exp)
 
     fidelity = 2
-    obs = strsp.preference(base, rloc, sloc, fidelity, ratio, n_reg)
+    obs = strreq.preference(base, rloc, sloc, fidelity, ratio, n_reg)
     exp = base + ratio * (math.exp(-1) + math.exp(rloc - sloc)) / 2
     assert_almost_equal(obs, exp)
     
@@ -606,16 +606,17 @@ def test_mininmal_run():
     base = os.path.dirname(os.path.abspath(__file__))
     fpath = os.path.join(base, 'files', fname)
 
-    sp = strsp.StructuredRequest()
+    sp = strreq.StructuredRequest()
     fam = ResourceExchange()
     rc = tools.parse_rc(fpath)
 
     sp.read_space(rc._dict)
     for point in sp.points(): # there should only be one
         inst = sp.gen_inst(point)
-        solver = Solver('greedy')
+        solver = Solver('cbc')
         soln = fam.run_inst(inst, solver)
-
+    
+    print('flows:', soln.flows)
     assert_almost_equal(soln.flows[0], 17500) # uox for thermal reactors
     assert_almost_equal(soln.flows[5], 280) # fmox for fmox reactors
     assert_almost_equal(soln.flows[10], 280) # fthox for fthox reactors
