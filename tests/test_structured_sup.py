@@ -13,10 +13,9 @@ from cyclopts.structured_species import data as data
 from cyclopts.problems import Solver
 
 def test_basics():
-    sp = strsup.StructuredSupply()
-    
+    sp = strsup.StructuredSupply()    
     exp = 'StructuredSupply'
     obs = sp.name
     assert_equal(obs, exp)
-    
     assert_true(isinstance(sp.family, ResourceExchange))
+
