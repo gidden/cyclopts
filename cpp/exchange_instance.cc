@@ -1,5 +1,7 @@
 #include "exchange_instance.h"
 
+#include <stdexcept>
+
 #include "exchange_graph.h"
 #include "greedy_solver.h"
 #include "prog_solver.h"
@@ -94,8 +96,10 @@ cyclus::ExchangeSolver* SolverFactory(Solver& solver) {
     ret = new cyclus::ProgSolver(type, !excl_orders);
   else if (type == "clp-e")
     ret = new cyclus::ProgSolver("clp", excl_orders);
-  else
+  else if (type == "greedy")
     ret = new cyclus::GreedySolver(excl_orders);
+  else
+    throw std::invalid_argument("Invalid solver type " + solver.type);
   return ret;
 }
 
