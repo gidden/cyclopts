@@ -1,7 +1,39 @@
 import math
 import numpy as np
+from collections import namedtuple
 
 from cyclopts.structured_species import data
+
+"""default values and np.dtypes for points making up parameter space"""
+Param = namedtuple('Param', ['val', 'dtype'])
+
+class Point(object):
+    """A container class representing a point in parameter space"""
+    
+    def __init__(self, d=None):
+        """Parameters
+        ----------
+        d : dict, optional
+            a dictionary with key value pairs of parameter name, parameter 
+            value
+        """
+        d = d if d is not None else {}
+        # init with dict-specified value else default
+        for name, param in self._parameters().items():
+            val = d[name] if name in d else param.val
+            setattr(self, name, val)
+        
+    def _parameters(self):
+        """subclasses must implement their parameter mapping"""
+        return NotImplemented
+
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__) \
+                    and self.__dict__ == other.__dict__)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
 
 def conv_ratio(kind):
     """provides the inventory to process conversion ratio for given support"""

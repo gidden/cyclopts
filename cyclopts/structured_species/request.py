@@ -7,7 +7,7 @@ import numpy as np
 import random
 import math
 
-from collections import OrderedDict, namedtuple, defaultdict, Iterable
+from collections import OrderedDict, defaultdict, Iterable
 
 from cyclopts import tools as cyctools
 from cyclopts import cyclopts_io as cycio
@@ -18,30 +18,28 @@ from cyclopts.exchange_family import ResourceExchange
 from cyclopts.structured_species import data
 from cyclopts.structured_species import tools as strtools
 
-"""ordered mapping from input parameters to default values and np.dtypes, see
-the theory manual for further explanation of the parameter names"""
-Param = namedtuple('Param', ['val', 'dtype'])
-parameters = {
-    "f_rxtr": Param(0, np.int8),
-    "f_fc": Param(0, np.int8),
-    "f_loc": Param(0, np.int8),
-    "n_rxtr": Param(1, np.uint32), # use a different tool for more than 4294967295 rxtrs! 
-    "r_t_f": Param(1.0, np.float32),
-    "r_th_pu": Param(0.0, np.float32), 
-    "r_s_th": Param(1.0 / 2, np.float32),
-    "r_s_mox_uox": Param(1.0, np.float32),
-    "r_s_mox": Param(1.0 / 2, np.float32),
-    "r_s_thox": Param(1.0 / 2, np.float32),
-    "f_mox": Param(1.0, np.float32),
-    "r_inv_proc": Param(1.0, np.float32), 
-    "n_reg": Param(10, np.uint32), # use a different tool for more than 4294967295 regions! 
-    "r_l_c": Param(1.0, np.float32),
-    "seed": Param(-1.0, np.int64), # default is negative 
-}
-parameters = OrderedDict(sorted(parameters.items(), key=lambda t: t[0]))
-
-class Point(object):
+class Point(strtools.Point):
     """A container class representing a point in parameter space"""
+
+    parameters = OrderedDict(sorted({
+        "f_rxtr": strtools.Param(0, np.int8),
+        "f_fc": strtools.Param(0, np.int8),
+        "f_loc": strtools.Param(0, np.int8),
+        # use a different tool for more than 4294967295 rxtrs! 
+        "n_rxtr": strtools.Param(1, np.uint32), 
+        "r_t_f": strtools.Param(1.0, np.float32),
+        "r_th_pu": strtools.Param(0.0, np.float32), 
+        "r_s_th": strtools.Param(1.0 / 2, np.float32),
+        "r_s_mox_uox": strtools.Param(1.0, np.float32),
+        "r_s_mox": strtools.Param(1.0 / 2, np.float32),
+        "r_s_thox": strtools.Param(1.0 / 2, np.float32),
+        "f_mox": strtools.Param(1.0, np.float32),
+        "r_inv_proc": strtools.Param(1.0, np.float32), 
+        # use a different tool for more than 4294967295 regions! 
+        "n_reg": strtools.Param(10, np.uint32), 
+        "r_l_c": strtools.Param(1.0, np.float32),
+        "seed": strtools.Param(-1.0, np.int64), # default is negative 
+        }.items(), key=lambda t: t[0]))
     
     def __init__(self, d=None):
         """Parameters
@@ -50,20 +48,14 @@ class Point(object):
             a dictionary with key value pairs of parameter name, parameter 
             value
         """
-        d = d if d is not None else {}
-        # init with dict-specified value else default
-        for name, param in parameters.items():
-            val = d[name] if name in d else param.val
-            setattr(self, name, val)
+        super(Point, self).__init__(d)
         if self.seed > 0:
             random.seed(self.seed)
 
-    def __eq__(self, other):
-        return (isinstance(other, self.__class__) \
-                    and self.__dict__ == other.__dict__)
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
+    def _parameters(self):
+        """ordered mapping from input parameters to default values and np.dtypes, see
+        the theory manual for further explanation of the parameter names"""
+        return Point.parameters
 
 class Reactor(object):
     """A simplified reactor model for Structured Request Species"""
@@ -142,7 +134,7 @@ class StructuredRequest(ProblemSpecies):
         self.param_tbl_name = 'Points'
         self._param_dtype = np.dtype(
             [('paramid', ('str', 16)), ('family', ('str', 30))] + \
-                [(name, param.dtype) for name, param in parameters.items()])
+                [(name, param.dtype) for name, param in Point.parameters.items()])
         self.sum_tbl_name = 'Summary'
         facs = ['n_r_th', 'n_r_f_mox', 'n_r_f_thox', 'n_s_uox', 'n_s_th_mox', 
                 'n_s_f_mox', 'n_s_f_thox']
@@ -198,7 +190,8 @@ class StructuredRequest(ProblemSpecies):
             control file
         """
         self.space = {k: v if isinstance(v, Iterable) else [v] \
-                          for k, v in space_dict.items() if k in parameters}
+                          for k, v in space_dict.items() \
+                          if k in Point.parameters}
 
     @property
     def n_points(self):
@@ -240,7 +233,7 @@ class StructuredRequest(ProblemSpecies):
         """
         uid = param_uuid.bytes if len(param_uuid.bytes) == 16 else param_uuid.bytes + '\0' 
         data = [param_uuid.bytes, self._family.name]
-        data += [getattr(point, k) for k in parameters.keys()]
+        data += [getattr(point, k) for k in Point.parameters.keys()]
         tables[self.param_tbl_name].append_data([tuple(data)])
         data = [param_uuid.bytes, self._family.name]
         data += self._reactor_breakdown(point) + self._supplier_breakdown(point)

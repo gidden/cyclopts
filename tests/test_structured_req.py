@@ -71,8 +71,8 @@ def test_write_point():
         -1, # seed
         ]
     obs = param_tbl._data[0]
-    for i, k in enumerate(spmod.parameters):
-        print(k)
+    for i, k in enumerate(p._parameters()):
+        print(k, spmod.Point.parameters[k])
         assert_equal(obs[i], exp[i])
     
 def test_reactor_breakdown():
