@@ -26,7 +26,7 @@ def test_exec():
     base = os.path.dirname(os.path.abspath(__file__))
     db = os.path.join(base, "tmp_{0}.h5".format(str(uuid.uuid4())))
     shutil.copy(os.path.join(base, 'files', infile), db)
-    solvers = "greedy clp cbc"
+    solvers = "greedy, clp, cbc"
     cmd = ("cyclopts exec --db={0} --family_class ResourceExchange "
            "--family_module cyclopts.exchange_family "
            "--solvers {1}").format(db, solvers)
