@@ -1,6 +1,7 @@
 import math
 import numpy as np
 from collections import namedtuple
+import random
 
 from cyclopts.structured_species import data
 
@@ -114,10 +115,52 @@ def support_breakdown(point):
 
     return n_uox, n_t_mox, n_f_mox, n_f_thox, n_repo
 
-def assembly_breakdown(point):
+def assembly_roulette(fracs):
+    """In the case where this is only one assembly (i.e., low reactor fidelity),
+    this method chooses the index
+    
+    Parameters
+    ----------
+    fracs : list
+        the assembly distribution, assumed to be normalized
+
+    Returns
+    -------
+    idx : int
+        the chosen list index
+    """
+    rnd = random.uniform(0, 1)
+    cum_sum = 0
+    for i in range(len(fracs)):
+        cum_sum += fracs[i]
+        if rnd <= cum_sum:
+            return i
+
+def assembly_breakdown(point, kind):
     """Returns
     -------
     n_uox, n_th_mox, n_f_mox, n_f_thox : tuple
-    the number of each assembly type for a reactor
+        the number of each assembly type for a reactor
     """
+    if kind == data.Reactors.th:
+        fracs = point.d_th
+    elif kind == data.Reactors.f_mox:
+        fracs = point.d_f_mox
+    elif kind == data.Reactors.f_thox:
+        fracs = point.d_f_thox
+    denom = float(sum(fracs))
+    fracs = [x / denom for x in fracs]
+
+    if point.f_rxtr == 0: # one 'assembly', i.e. a batch 
+        ret = [0] * len(fracs)
+        ret[assembly_roulette(fracs)] = 1
+    else: # full assemblies
+        nassems = data.n_assemblies[kind]
+        ret = [int(round(x * nassems)) for x in fracs]
+        
+        diff = sum(ret) - nassems
+        if diff != 0: # adjust largest amount to give exactly nassems
+            ret[ret.index(max(ret))] -= diff
+    
+    return ret
     
