@@ -53,7 +53,7 @@ Parameters
 
 Supporing facility parameters will include all those of the request instance plus
 
-    :math:`f_{repo}` : the ratio of repositories to other supporting
+    :math:`r_{repo}` : the ratio of repositories to other supporting
     facilities
 
 Commodity Preferences
@@ -129,6 +129,6 @@ parameters can be set in a run control file for the supply case:
     :math:`d_{th}`          thermal reactor assembly distribution                              :math:`[x_{uox}, x_{{mox}_{th}}, x_{{mox}_{f}}], x_i \in [0, 1)`
     :math:`d_{f_{mox}}`     fast mox reactor assembly distribution                             :math:`[x_{uox}, x_{{mox}_{th}}, x_{{mox}_{f}}, x_{{thox}_{f}}], x_i \in [0, 1)`
     :math:`d_{f_{thox}}`    fast thox reactor assembly distribution                            :math:`[x_{uox}, x_{{mox}_{th}}, x_{{mox}_{f}}, x_{{thox}_{f}}], x_i \in [0, 1)`
-    :math:`f_{repo}`        repository to supportin facility ratio                             :math:`[0, 2]`
+    :math:`r_{repo}`        repository to supporting facility ratio                            :math:`[0, 2]`
     ======================= ================================================================== =================================================================================
     
