@@ -30,6 +30,15 @@ determine used fuel supply. In order to simplify the generation of supply, each
 reactor is assumed to be fueled by its preferred commodity with a randomly
 chosen initial enrichment.
 
+The primary difference between reactors of the request and supply cases is that
+reactors in the supply case are offering known assembly types, whereas reactors
+in the request case are requesting an array of assembly types. Accordingly, the
+assembly types in the supply case must be chosen. If the instance is of high
+reactor fidelity, the assembly types will be assigned according to the reactor's
+distribution parameter. If the instance is of low reactor fidelity, the
+distribution parameters serve as commodity assignment probabilities for the
+reactor's entire batch.
+
 Parameters
 ~~~~~~~~~~
 
