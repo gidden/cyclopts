@@ -461,6 +461,11 @@ def collect_instids(h5file, path, rc=None, instids=None, colname='instid'):
     
     return instids
 
+"""simple utility for determining if something is a sequence (and not a
+string)"""
+seq_not_str = lambda obj: isinstance(obj, Sequence) \
+    and not isinstance(obj, basestring)
+
 def n_permutations(x, iter_keys=[], recurse=True):
     """Parameters
     ----------
@@ -475,8 +480,6 @@ def n_permutations(x, iter_keys=[], recurse=True):
         container values, those are recusively interrogated as well
     """
     n = 1
-    seq_not_str = lambda obj: isinstance(obj, Sequence) \
-        and not isinstance(obj, basestring)
     if seq_not_str(x):
         if seq_not_str(x[0]):
             if recurse:
@@ -491,8 +494,6 @@ def n_permutations(x, iter_keys=[], recurse=True):
         for k, v in x.items():
             flag = False if k in iter_keys else True # in blacklist
             n *= n_permutations(v, recurse=flag)
-
-    print(x, iter_keys, recurse, n)
     return n
 
 def expand_args(x):

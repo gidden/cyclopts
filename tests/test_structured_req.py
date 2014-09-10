@@ -51,7 +51,7 @@ def test_write_point():
     sp.record_point(p, uid, {sp.param_tbl_name: param_tbl, sp.sum_tbl_name: sum_tbl})
 
     ## params are alphabetcially ordered
-    exp = [
+    exp_ary = [
         uid.bytes,
         ResourceExchange().name,
         0, # f_fc
@@ -70,10 +70,15 @@ def test_write_point():
         0, # r_th_pu
         -1, # seed
         ]
-    obs = param_tbl._data[0]
+    obs_ary = param_tbl._data[0]
     for i, k in enumerate(p._parameters()):
-        print(k, spmod.Point.parameters[k])
-        assert_equal(obs[i], exp[i])
+        obs = obs_ary[i + 2] # skip uuid, name
+        exp = exp_ary[i + 2]
+        print(k, spmod.Point.parameters[k], obs, exp)
+        if cyctools.seq_not_str(exp):
+            assert_array_almost_equal(obs, exp)
+        else:
+            assert_almost_equal(obs, exp)
     
 def test_reactor_breakdown():
     sp = spmod.StructuredRequest()

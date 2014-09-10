@@ -1,11 +1,12 @@
 from cyclopts.structured_species import supply as spmod
 
+from nose.tools import assert_equal, assert_almost_equal, assert_true, assert_false
+from numpy.testing import assert_array_almost_equal
+
 import uuid
 import math
 import os
-
-from nose.tools import assert_equal, assert_almost_equal, assert_true, assert_false
-from numpy.testing import assert_array_almost_equal
+from collections import Sequence
 
 from cyclopts import tools
 from cyclopts.exchange_family import ResourceExchange
@@ -55,12 +56,12 @@ def test_write_point():
     sp.record_point(p, uid, {sp.param_tbl_name: param_tbl, sp.sum_tbl_name: sum_tbl})
 
     ## params are alphabetcially ordered 
-    exp = (
+    exp_ary = [
         uid.bytes,
         ResourceExchange().name,
+        [0., 0., 1., 0.], # d_f_mox
+        [0., 0., 0., 1.], # d_f_thox
         [0.7, 0.2, 0.1], # d_th, non defaults
-        [0, 0, 1, 0], # d_f_mox
-        [0, 0, 0, 1], # d_f_thox
         0, # f_fc
         0, # f_loc
         1, # f_mox
@@ -77,9 +78,14 @@ def test_write_point():
         1, # r_t_f
         0, # r_th_pu
         -1, # seed
-        )
-    obs = param_tbl._data[0]
+        ]
+    obs_ary = param_tbl._data[0]
     for i, k in enumerate(p._parameters()):
-        print(k, spmod.Point.parameters[k])
-        assert_equal(obs[i], exp[i])
+        obs = obs_ary[i + 2] # skip uuid, name
+        exp = exp_ary[i + 2]
+        print(k, spmod.Point.parameters[k], obs, exp)
+        if tools.seq_not_str(exp):
+            assert_array_almost_equal(obs, exp)
+        else:
+            assert_almost_equal(obs, exp)
     
