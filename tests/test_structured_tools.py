@@ -182,5 +182,4 @@ def test_assembly_breakdown():
     p = Point(d)
     obs = tools.assembly_breakdown(p, data.Reactors.f_mox)
     exp = [9, 18, 92 - 9 * 4, 9] # 92 == nassems of f_mox
-    assert_equal(obs, exp)
-    
+    assert_equal(obs, exp)    

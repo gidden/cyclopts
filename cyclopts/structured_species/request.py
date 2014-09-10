@@ -57,26 +57,21 @@ class Point(strtools.Point):
     def _parameters(self):
         return Point.parameters
 
-class Reactor(object):
-    """A simplified reactor model for Structured Request Species"""
+class Reactor(strtools.Reactor):
+    """An extension reactor model for Structured Request Species"""
     
     def __init__(self, kind, point, gids, nids):
-        self.kind = kind
-        self.n_assems = 1 if point.f_rxtr == 0 else data.n_assemblies[kind]        
-
-        self.nodes = []
-        self.commod_to_nodes = defaultdict(list)
-        self.enr_rnd = random.uniform(0, 1) 
-
+        super(Reactor, self).__init__(kind, point)
         req = True
         qty = data.fuel_unit * data.request_qtys[self.kind]
+        self.base_req_qty = qty / self.n_assems
         gid = gids.next()
         self.group = exinst.ExGroup(gid, req, [qty], qty)
-        self.loc = data.loc()
-        self.base_req_qty = qty / self.n_assems
         self._gen_nodes(point, gid, nids)
 
     def _gen_nodes(self, point, gid, nids):
+        self.nodes = []
+        self.commod_to_nodes = defaultdict(list)
         req = True
         excl = True
         for commod in data.rxtr_commods(self.kind, point.f_fc):
@@ -92,16 +87,8 @@ class Reactor(object):
                 self.nodes.append(node)
                 self.commod_to_nodes[commod].append(node)
 
-    def enr(self, commod):
-        # node quantity takes into account relative fissile material
-        lb, ub = data.enr_ranges[self.kind][commod]
-        return (ub - lb) * self.enr_rnd + lb
-
     def req_qty(self, commod):
         return self.base_req_qty * data.relative_qtys[self.kind][commod]
-
-    def coeffs(self, commod):
-        return [1 / data.relative_qtys[self.kind][commod]]
 
 class Supplier(object):
     """A simplified supplier model for Structured Request Species"""

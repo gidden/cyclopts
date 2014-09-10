@@ -164,3 +164,19 @@ def assembly_breakdown(point, kind):
     
     return ret
     
+class Reactor(object):
+    """A simplified reactor model for Structured Species"""
+    
+    def __init__(self, kind, point):
+        self.kind = kind
+        self.n_assems = 1 if point.f_rxtr == 0 else data.n_assemblies[kind]        
+        self.enr_rnd = random.uniform(0, 1) 
+        self.loc = data.loc()
+
+    def enr(self, commod):
+        # node quantity takes into account relative fissile material
+        lb, ub = data.enr_ranges[self.kind][commod]
+        return (ub - lb) * self.enr_rnd + lb
+
+    def coeffs(self, commod):
+        return [1 / data.relative_qtys[self.kind][commod]]
