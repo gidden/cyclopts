@@ -113,19 +113,19 @@ def test_sup_breakdown():
 
     d['f_fc'] = 0
     p = Point(d)
-    obs = tools.supplier_breakdown(p) 
+    obs = tools.support_breakdown(p) 
     exp = (13, 0, 0, 0, 0)    
     assert_equal(obs, exp)
 
     d['f_fc'] = 1
     p = Point(d)
-    obs = tools.supplier_breakdown(p) 
+    obs = tools.support_breakdown(p) 
     exp = (2, 1, 35, 0, 0)    
     assert_equal(obs, exp)
     
     d['f_fc'] = 2
     p = Point(d)
-    obs = tools.supplier_breakdown(p) 
+    obs = tools.support_breakdown(p) 
     exp = (2, 1, 30, 5, 0)    
     assert_equal(obs, exp)
 
@@ -135,19 +135,19 @@ def test_sup_breakdown():
     d['f_fc'] = 0
     p = Point(d)
     assert_true(hasattr(p, 'r_repo'))
-    obs = tools.supplier_breakdown(p) 
+    obs = tools.support_breakdown(p) 
     exp = (13, 0, 0, 0, 7)    
     assert_equal(obs, exp)
 
     d['f_fc'] = 1
     p = Point(d)
-    obs = tools.supplier_breakdown(p) 
+    obs = tools.support_breakdown(p) 
     exp = (2, 1, 35, 0, 19)    
     assert_equal(obs, exp)
     
     d['f_fc'] = 2
     p = Point(d)
-    obs = tools.supplier_breakdown(p) 
+    obs = tools.support_breakdown(p) 
     exp = (2, 1, 30, 5, 19)    
     assert_equal(obs, exp)
     

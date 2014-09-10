@@ -82,17 +82,17 @@ def reactor_breakdown(point):
         n_mox = max(n_rxtr - n_uox - n_thox, 1)
     return n_uox, n_mox, n_thox
 
-def supplier_breakdown(point):
+def support_breakdown(point):
     """Returns
     -------
     n_uox, n_mox, n_thox, n_repo : tuple
-    the number of each reactor type
+    the number of each support type
     """
     n_uox_r, n_mox_r, n_thox_r = reactor_breakdown(point)
     n_uox, n_t_mox, n_f_mox, n_f_thox, n_repo = 0, 0, 0, 0, 0
     fidelity = point.f_fc
 
-    # number thermal suppliers
+    # number thermal supports
     if fidelity == 0: # once through - only uox
         n_uox = max(int(round(point.r_s_th * n_uox_r)), 1)
     else:
@@ -100,11 +100,11 @@ def supplier_breakdown(point):
         n_uox = max(int(round(n_s_t / (1.0 + point.r_s_mox_uox))), 1)
         n_t_mox = max(n_s_t - n_uox, 1)
         
-    # number f_mox suppliers
+    # number f_mox supports
     if fidelity > 0:
         n_f_mox = max(int(round(point.r_s_mox * n_mox_r)), 1)
             
-    # number f_thox suppliers
+    # number f_thox supports
     if fidelity > 1:
         n_f_thox = max(int(round(point.r_s_thox * n_thox_r)), 1)
  
@@ -113,3 +113,11 @@ def supplier_breakdown(point):
                                    point.r_repo)), 1)
 
     return n_uox, n_t_mox, n_f_mox, n_f_thox, n_repo
+
+def assembly_breakdown(point):
+    """Returns
+    -------
+    n_uox, n_th_mox, n_f_mox, n_f_thox : tuple
+    the number of each assembly type for a reactor
+    """
+    

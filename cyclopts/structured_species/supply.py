@@ -163,7 +163,7 @@ class StructuredSupply(ProblemSpecies):
         
         data = [param_uuid.bytes, self._family.name]
         data += strtools.reactor_breakdown(point)
-        data += strtools.supplier_breakdown(point)
+        data += strtools.support_breakdown(point)
         tables[self.sum_tbl_name].append_data([tuple(data)])
 
     def _get_reactors(self, point):
@@ -194,7 +194,7 @@ class StructuredSupply(ProblemSpecies):
         return reactors
 
     def _get_suppliers(self, point):
-        n_uox, n_t_mox, n_f_mox, n_f_thox, n_repo = strtools.supplier_breakdown(point)
+        n_uox, n_t_mox, n_f_mox, n_f_thox, n_repo = strtools.support_breakdown(point)
         uox_s = np.ndarray(
             shape=(n_uox,), 
             buffer=np.array([Supplier(data.Supports.uox, point, self.gids) \

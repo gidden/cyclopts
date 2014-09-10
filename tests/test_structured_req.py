@@ -433,7 +433,7 @@ def test_once_through():
     assert_equal(obs, rexp)
     
     # suppliers exp
-    obs = strtools.supplier_breakdown(p)
+    obs = strtools.support_breakdown(p)
     sexp = (5, 0, 0, 0, 0)
     assert_equal(obs, sexp)
     
@@ -463,7 +463,7 @@ def test_mox_recycle():
     assert_equal(obs, rexp)
 
     # suppliers exp
-    obs = strtools.supplier_breakdown(p)
+    obs = strtools.support_breakdown(p)
     sexp = (2, 1, 1, 0, 0)
     assert_equal(obs, sexp)
     
@@ -495,7 +495,7 @@ def test_thox_recycle():
     assert_equal(obs, rexp)
     
     # suppliers exp
-    obs = strtools.supplier_breakdown(p)
+    obs = strtools.support_breakdown(p)
     sexp = (2, 1, 1, 1, 0)
     assert_equal(obs, sexp)
     
