@@ -34,7 +34,6 @@ class Point(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-
 def conv_ratio(kind):
     """provides the inventory to process conversion ratio for given support"""
     commod, rxtr = data.sup_to_commod[kind], data.sup_to_rxtr[kind]
@@ -60,3 +59,57 @@ def preference(base_pref, r_loc, s_loc, loc_fidelity=0, ratio=1., n_reg=1):
         loc_pref = (loc_pref + math.exp(-np.abs(r_loc - s_loc))) / 2
 
     return commod_pref + ratio * loc_pref
+
+def reactor_breakdown(point):
+    """Returns
+    -------
+    n_uox, n_mox, n_thox : tuple
+    the number of each reactor type
+    """
+    n_rxtr = point.n_rxtr
+    fidelity = point.f_fc
+    r_t_f = point.r_t_f # thermal to fast
+    r_th_pu = point.r_th_pu # thox to mox
+    n_uox, n_mox, n_thox = 0, 0, 0
+    if fidelity == 0: # once through
+        n_uox = max(n_rxtr, 1)
+    elif fidelity == 1: # uox + fast mox
+        n_uox = max(int(round(r_t_f * n_rxtr)), 1)
+        n_mox = max(n_rxtr - n_uox, 1)
+    else: # uox + fast mox + fast thox
+        n_uox = max(int(round(r_t_f * n_rxtr)), 1)
+        n_thox = max(int(round(r_th_pu * (n_rxtr - n_uox))), 1)
+        n_mox = max(n_rxtr - n_uox - n_thox, 1)
+    return n_uox, n_mox, n_thox
+
+def supplier_breakdown(point):
+    """Returns
+    -------
+    n_uox, n_mox, n_thox, n_repo : tuple
+    the number of each reactor type
+    """
+    n_uox_r, n_mox_r, n_thox_r = reactor_breakdown(point)
+    n_uox, n_t_mox, n_f_mox, n_f_thox, n_repo = 0, 0, 0, 0, 0
+    fidelity = point.f_fc
+
+    # number thermal suppliers
+    if fidelity == 0: # once through - only uox
+        n_uox = max(int(round(point.r_s_th * n_uox_r)), 1)
+    else:
+        n_s_t = max(int(round(point.r_s_th * n_uox_r)), 1)
+        n_uox = max(int(round(n_s_t / (1.0 + point.r_s_mox_uox))), 1)
+        n_t_mox = max(n_s_t - n_uox, 1)
+        
+    # number f_mox suppliers
+    if fidelity > 0:
+        n_f_mox = max(int(round(point.r_s_mox * n_mox_r)), 1)
+            
+    # number f_thox suppliers
+    if fidelity > 1:
+        n_f_thox = max(int(round(point.r_s_thox * n_thox_r)), 1)
+ 
+    if hasattr(point, 'r_repo'):
+        n_repo = max(int(round(sum([n_uox, n_t_mox, n_f_mox, n_f_thox]) * \
+                                   point.r_repo)), 1)
+
+    return n_uox, n_t_mox, n_f_mox, n_f_thox, n_repo

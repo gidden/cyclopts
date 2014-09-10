@@ -235,34 +235,14 @@ class StructuredRequest(ProblemSpecies):
         data = [param_uuid.bytes, self._family.name]
         data += [getattr(point, k) for k in Point.parameters.keys()]
         tables[self.param_tbl_name].append_data([tuple(data)])
+        
         data = [param_uuid.bytes, self._family.name]
-        data += self._reactor_breakdown(point) + self._supplier_breakdown(point)
+        data += strtools.reactor_breakdown(point)
+        data += strtools.supplier_breakdown(point)[:-1]
         tables[self.sum_tbl_name].append_data([tuple(data)])
 
-    def _reactor_breakdown(self, point):
-        """Returns
-        -------
-        n_uox, n_mox, n_thox : tuple
-            the number of each reactor type
-        """
-        n_rxtr = point.n_rxtr
-        fidelity = point.f_fc
-        r_t_f = point.r_t_f # thermal to fast
-        r_th_pu = point.r_th_pu # thox to mox
-        n_uox, n_mox, n_thox = 0, 0, 0
-        if fidelity == 0: # once through
-            n_uox = max(n_rxtr, 1)
-        elif fidelity == 1: # uox + fast mox
-            n_uox = max(int(round(r_t_f * n_rxtr)), 1)
-            n_mox = max(n_rxtr - n_uox, 1)
-        else: # uox + fast mox + fast thox
-            n_uox = max(int(round(r_t_f * n_rxtr)), 1)
-            n_thox = max(int(round(r_th_pu * (n_rxtr - n_uox))), 1)
-            n_mox = max(n_rxtr - n_uox - n_thox, 1)
-        return n_uox, n_mox, n_thox
-
     def _get_reactors(self, point):
-        n_uox, n_mox, n_thox = self._reactor_breakdown(point)
+        n_uox, n_mox, n_thox = strtools.reactor_breakdown(point)
         uox_th_r = np.ndarray(
             shape=(n_uox,), 
             buffer=np.array([Reactor(data.Reactors.th, point, 
@@ -288,31 +268,8 @@ class StructuredRequest(ProblemSpecies):
             }
         return reactors
 
-    def _supplier_breakdown(self, point):
-        n_uox_r, n_mox_r, n_thox_r = self._reactor_breakdown(point)
-        n_uox, n_t_mox, n_f_mox, n_f_thox = 0, 0, 0, 0
-        fidelity = point.f_fc
-
-        # number thermal suppliers
-        if fidelity == 0: # once through - only uox
-            n_uox = max(int(round(point.r_s_th * n_uox_r)), 1)
-        else:
-            n_s_t = max(int(round(point.r_s_th * n_uox_r)), 1)
-            n_uox = max(int(round(n_s_t / (1.0 + point.r_s_mox_uox))), 1)
-            n_t_mox = max(n_s_t - n_uox, 1)
-
-        # number f_mox suppliers
-        if fidelity > 0:
-            n_f_mox = max(int(round(point.r_s_mox * n_mox_r)), 1)
-            
-        # number f_thox suppliers
-        if fidelity > 1:
-            n_f_thox = max(int(round(point.r_s_thox * n_thox_r)), 1)
- 
-        return n_uox, n_t_mox, n_f_mox, n_f_thox
-
     def _get_suppliers(self, point):
-        n_uox, n_t_mox, n_f_mox, n_f_thox = self._supplier_breakdown(point)
+        n_uox, n_t_mox, n_f_mox, n_f_thox, _ = strtools.supplier_breakdown(point)
         uox_s = np.ndarray(
             shape=(n_uox,), 
             buffer=np.array([Supplier(data.Supports.uox, point, self.gids) \

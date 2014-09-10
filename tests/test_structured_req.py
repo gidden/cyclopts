@@ -79,62 +79,6 @@ def test_write_point():
             assert_array_almost_equal(obs, exp)
         else:
             assert_almost_equal(obs, exp)
-    
-def test_reactor_breakdown():
-    sp = spmod.StructuredRequest()
-    d = {
-        'n_rxtr': 101,
-        'r_t_f': 0.23,
-        'r_th_pu': 0.15,
-        }
-
-    d['f_fc'] = 0
-    p = spmod.Point(d)    
-    obs = sp._reactor_breakdown(p)
-    exp = (101, 0, 0)
-    assert_equal(obs, exp)
-
-    d['f_fc'] = 1
-    p = spmod.Point(d)    
-    obs = sp._reactor_breakdown(p)
-    exp = (23, 66 + 12, 0)
-    assert_equal(obs, exp)
-
-    d['f_fc'] = 2
-    p = spmod.Point(d)    
-    obs = sp._reactor_breakdown(p)
-    exp = (23, 66, 12)
-    assert_equal(obs, exp)
-
-def test_supplier_breakdown():
-    sp = spmod.StructuredRequest()
-    d = {
-        'n_rxtr': 101,
-        'r_t_f': 0.23,
-        'r_th_pu': 0.15,
-        'r_s_th': 0.13,
-        'r_s_mox_uox': 0.75,
-        'r_s_mox': 0.45,
-        'r_s_thox': 0.39,
-        }
-
-    d['f_fc'] = 0
-    p = spmod.Point(d)
-    obs = sp._supplier_breakdown(p) 
-    exp = (13, 0, 0, 0)    
-    assert_equal(obs, exp)
-
-    d['f_fc'] = 1
-    p = spmod.Point(d)
-    obs = sp._supplier_breakdown(p) 
-    exp = (2, 1, 35, 0)    
-    assert_equal(obs, exp)
-    
-    d['f_fc'] = 2
-    p = spmod.Point(d)
-    obs = sp._supplier_breakdown(p) 
-    exp = (2, 1, 30, 5)    
-    assert_equal(obs, exp)
 
 def test_th_reactors():
     gids = cyctools.Incrementer()
@@ -484,13 +428,13 @@ def test_once_through():
     p = spmod.Point(d)
 
     # reactors exp
-    obs = sp._reactor_breakdown(p)
+    obs = strtools.reactor_breakdown(p)
     rexp = (5, 0, 0)
     assert_equal(obs, rexp)
     
     # suppliers exp
-    obs = sp._supplier_breakdown(p)
-    sexp = (5, 0, 0, 0)
+    obs = strtools.supplier_breakdown(p)
+    sexp = (5, 0, 0, 0, 0)
     assert_equal(obs, sexp)
     
     groups, nodes, arcs = sp.gen_inst(p)
@@ -514,13 +458,13 @@ def test_mox_recycle():
     p = spmod.Point(d)
 
     # reactors exp
-    obs = sp._reactor_breakdown(p)
+    obs = strtools.reactor_breakdown(p)
     rexp = (2, 3, 0)
     assert_equal(obs, rexp)
 
     # suppliers exp
-    obs = sp._supplier_breakdown(p)
-    sexp = (2, 1, 1, 0)
+    obs = strtools.supplier_breakdown(p)
+    sexp = (2, 1, 1, 0, 0)
     assert_equal(obs, sexp)
     
     groups, nodes, arcs = sp.gen_inst(p)
@@ -546,13 +490,13 @@ def test_thox_recycle():
     p = spmod.Point(d)
 
     # reactors exp
-    obs = sp._reactor_breakdown(p)
+    obs = strtools.reactor_breakdown(p)
     rexp = (2, 2, 1)
     assert_equal(obs, rexp)
     
     # suppliers exp
-    obs = sp._supplier_breakdown(p)
-    sexp = (2, 1, 1, 1)
+    obs = strtools.supplier_breakdown(p)
+    sexp = (2, 1, 1, 1, 0)
     assert_equal(obs, sexp)
     
     groups, nodes, arcs = sp.gen_inst(p)
