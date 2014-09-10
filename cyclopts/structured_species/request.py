@@ -187,9 +187,7 @@ class StructuredRequest(ProblemSpecies):
         n : int
             The total number of points in the parameter space
         """
-        if self._n_points is None: # lazy evaluation
-            self._n_points = cyctools.n_permutations(self.space)
-        return self._n_points
+        return cyctools.n_permutations(self.space)
     
     def points(self):
         """Derived classes must implement this function returning a
@@ -218,7 +216,9 @@ class StructuredRequest(ProblemSpecies):
         tables : list of cyclopts_io.Table
             The tables that can be written to
         """
-        uid = param_uuid.bytes if len(param_uuid.bytes) == 16 else param_uuid.bytes + '\0' 
+        uid = param_uuid.bytes if len(param_uuid.bytes) == 16 \
+            else param_uuid.bytes + '\0' 
+        
         data = [param_uuid.bytes, self._family.name]
         data += [getattr(point, k) for k in Point.parameters.keys()]
         tables[self.param_tbl_name].append_data([tuple(data)])

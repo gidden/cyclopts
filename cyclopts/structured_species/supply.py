@@ -47,6 +47,20 @@ class Point(strtools.Point):
         the theory manual for further explanation of the parameter names"""
         return Point.parameters
 
+
+class Reactor(strtools.Reactor):
+    """An extension reactor model for Structured Supply Species"""
+    # todo: finish class
+    def __init__(self, kind, point, gids, nids):
+        super(Reactor, self).__init__(kind, point)
+
+class Requester(object):
+    """A simplified requester model for Structured Supply Species"""
+    # todo: finish class
+    def __init__(self, kind, point, gids):
+        self.kind = kind
+        self.nodes = []
+
 class StructuredSupply(ProblemSpecies):
     """A class representing structured supply-based exchanges species."""
     
@@ -128,6 +142,7 @@ class StructuredSupply(ProblemSpecies):
         """
         return cyctools.n_permutations(self.space, iter_keys=self.iter_params)
     
+
     def points(self):
         """Derived classes must implement this function returning a
         representation of a point in its parameter space to be used by other
@@ -157,6 +172,7 @@ class StructuredSupply(ProblemSpecies):
         """
         uid = param_uuid.bytes if len(param_uuid.bytes) == 16 \
             else param_uuid.bytes + '\0' 
+        
         data = [param_uuid.bytes, self._family.name]
         data += [getattr(point, k) for k in Point.parameters.keys()]
         tables[self.param_tbl_name].append_data([tuple(data)])
@@ -193,41 +209,45 @@ class StructuredSupply(ProblemSpecies):
             }
         return reactors
 
-    def _get_suppliers(self, point):
+    def _get_requesters(self, point):
         n_uox, n_t_mox, n_f_mox, n_f_thox, n_repo = strtools.support_breakdown(point)
         uox_s = np.ndarray(
             shape=(n_uox,), 
-            buffer=np.array([Supplier(data.Supports.uox, point, self.gids) \
+            buffer=np.array([Requester(data.Supports.uox, point, self.gids) \
                                  for i in range(n_uox)]), 
-            dtype=Supplier)
+            dtype=Requester)
         mox_th_s = np.ndarray(
             shape=(n_t_mox,), 
-            buffer=np.array([Supplier(data.Supports.th_mox, point, self.gids) \
+            buffer=np.array([Requester(data.Supports.th_mox, point, self.gids) \
                                  for i in range(n_t_mox)]), 
-            dtype=Supplier)
+            dtype=Requester)
         mox_f_s = np.ndarray(
             shape=(n_f_mox,), 
-            buffer=np.array([Supplier(data.Supports.f_mox, point, self.gids) \
+            buffer=np.array([Requester(data.Supports.f_mox, point, self.gids) \
                                  for i in range(n_f_mox)]), 
-            dtype=Supplier)
+            dtype=Requester)
         thox_s = np.ndarray(
             shape=(n_f_thox,), 
-            buffer=np.array([Supplier(data.Supports.f_thox, point, self.gids) \
+            buffer=np.array([Requester(data.Supports.f_thox, point, self.gids) \
                                  for i in range(n_f_thox)]), 
-            dtype=Supplier)
+            dtype=Requester)
         repo_s = np.ndarray(
             shape=(n_f_thox,), 
-            buffer=np.array([Supplier(data.Supports.repo, point, self.gids) \
+            buffer=np.array([Requester(data.Supports.repo, point, self.gids) \
                                  for i in range(n_repo)]), 
-            dtype=Supplier)
-        suppliers = {
+            dtype=Requester)
+        requesters = {
             data.Supports.uox: uox_s,
             data.Supports.th_mox: mox_th_s,
             data.Supports.f_mox: mox_f_s,
             data.Supports.f_thox: thox_s,
             data.Supports.repo: repo_s,
             }
-        return suppliers
+        return requesters
+
+    def _get_arcs(self, point, reactors, requesters):
+        # todo: finish function
+        pass
 
     def gen_inst(self, point):
         """Parameters
@@ -248,21 +268,21 @@ class StructuredSupply(ProblemSpecies):
 
         # species objects
         reactors = self._get_reactors(point)        
-        suppliers = self._get_suppliers(point)        
+        requesters = self._get_requesters(point)        
 
         # create arcs
-        arcs = [] #self._get_arcs(point, reactors, suppliers)
+        arcs = self._get_arcs(point, reactors, requesters)
         
         # collect nodes
-        r_nodes = np.concatenate([x.nodes for ary in reactors.values() \
-                                     for x in ary])
-        s_nodes = np.concatenate([x.nodes for ary in suppliers.values() \
-                                     for x in ary])
-        nodes = np.concatenate((r_nodes, s_nodes))
+        rx_nodes = np.concatenate([x.nodes for ary in reactors.values() \
+                                       for x in ary])
+        rq_nodes = np.concatenate([x.nodes for ary in requesters.values() \
+                                       for x in ary])
+        nodes = np.concatenate((rx_nodes, rq_nodes))
 
         # collect groups
-        r_groups = [x.group for ary in reactors.values() for x in ary]
-        s_groups = [x.group for ary in suppliers.values() for x in ary]
-        groups = np.concatenate((r_groups, s_groups))
+        rx_groups = [x.group for ary in reactors.values() for x in ary]
+        rq_groups = [x.group for ary in requesters.values() for x in ary]
+        groups = np.concatenate((rx_groups, rq_groups))
 
         return groups, nodes, arcs
