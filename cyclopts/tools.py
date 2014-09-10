@@ -461,10 +461,12 @@ def collect_instids(h5file, path, rc=None, instids=None, colname='instid'):
     
     return instids
 
-def n_permutations(x):
+def n_permutations(x, iter_keys=[], recurse=True):
     """Parameters
     ----------
     x : dict, list, or other
+    iter_keys : a list of keys atomic values should be iterables, optional
+    recurse : bool, whether to recurse at the lowest level
     
     Returns
     -------
@@ -473,15 +475,24 @@ def n_permutations(x):
         container values, those are recusively interrogated as well
     """
     n = 1
-    if isinstance(x, Sequence) and not isinstance(x, basestring):
-        if isinstance(x[0], Sequence) and not isinstance(x[0], basestring):
-            for y in x:
-                n *= n_permutations(y)
+    seq_not_str = lambda obj: isinstance(obj, Sequence) \
+        and not isinstance(obj, basestring)
+    if seq_not_str(x):
+        if seq_not_str(x[0]):
+            if recurse:
+                for y in x:
+                    n *= n_permutations(y, recurse=recurse)
+            else:
+                n *= len(x)
         else:
-            n *= len(x)
+            factor = len(x) if recurse else 1
+            n *= factor
     elif isinstance(x, Mapping):
-        for v in x.values():
-            n *= n_permutations(v)
+        for k, v in x.items():
+            flag = False if k in iter_keys else True # in blacklist
+            n *= n_permutations(v, recurse=flag)
+
+    print(x, iter_keys, recurse, n)
     return n
 
 def expand_args(x):

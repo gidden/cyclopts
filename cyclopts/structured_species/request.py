@@ -1,4 +1,4 @@
-"""A module for defining structured request/supply species.
+"""A module for defining structured request species.
 
 :author: Matthew Gidden <matthew.gidden _at_ gmail.com>
 """
@@ -21,6 +21,8 @@ from cyclopts.structured_species import tools as strtools
 class Point(strtools.Point):
     """A container class representing a point in parameter space"""
 
+    """ordered mapping from input parameters to default values and np.dtypes, see
+    the theory manual for further explanation of the parameter names"""
     parameters = OrderedDict(sorted({
         "f_rxtr": strtools.Param(0, np.int8),
         "f_fc": strtools.Param(0, np.int8),
@@ -53,8 +55,6 @@ class Point(strtools.Point):
             random.seed(self.seed)
 
     def _parameters(self):
-        """ordered mapping from input parameters to default values and np.dtypes, see
-        the theory manual for further explanation of the parameter names"""
         return Point.parameters
 
 class Reactor(object):

@@ -34,12 +34,18 @@ def test_read_space():
     sp = spmod.StructuredSupply()
     
     sp.read_space(space)
+    print('space', sp.space)
     assert_equal(sp.n_points, 3)
     
     exp = [spmod.Point({'n_rxtr': i, 'd_th': [0.7, 0.2, 0.1]}) \
                for i in range(3)].sort(key=lambda x: x.n_rxtr)
     obs = [p for p in sp.points()].sort(key=lambda x: x.n_rxtr)
     assert_equal(obs, exp)
+
+    space = {'n_rxtr': range(5, 8), 'd_th': [range(3), range(3)]}
+    sp.read_space(space)
+    print('space', sp.space)
+    assert_equal(sp.n_points, 6)
 
 def test_write_point():    
     sp = spmod.StructuredSupply()
@@ -73,6 +79,7 @@ def test_write_point():
         -1, # seed
         )
     obs = param_tbl._data[0]
-    for i, k in enumerate(spmod.parameters):
-        print(k)
+    for i, k in enumerate(p._parameters()):
+        print(k, spmod.Point.parameters[k])
         assert_equal(obs[i], exp[i])
+    

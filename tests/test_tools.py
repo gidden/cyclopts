@@ -166,17 +166,22 @@ def test_n_permutations():
     x = [[1, 2]]
     assert_equal(2, tools.n_permutations(x))
     
+    x = [[1, 2], [2, 3]]
+    assert_equal(2, tools.n_permutations(x, recurse=False))
+    
     x = {"foo": [[1, 2]], "bar": [[1, 2]]}
     assert_equal(4, tools.n_permutations(x))
 
     x = {'foo': [[1, 2]], 'bar': [[1, 2]], 'baz': [[1, 2]]}
     assert_equal(2 ** 3, tools.n_permutations(x))
 
-    x = {'foo': [[1, 2], [1]], 'bar': [[1, 2]], 'baz': [[1, 2]]}
-    assert_equal(2 ** 3, tools.n_permutations(x))
+    x = {'foo': [[1, 2], [1, 3]], 'bar': [[1, 2]], 'baz': [[1, 2]]}
+    assert_equal(2 ** 4, tools.n_permutations(x))
+    assert_equal(2 ** 3, tools.n_permutations(x, iter_keys=["foo"]))
     
     x = {"foo": range(10), "bar": ["42", 42]}
     assert_equal(20, tools.n_permutations(x))
+    assert_equal(2, tools.n_permutations(x, iter_keys=["foo"]))
 
     x = {"foo": {"foobar": range(10), "foobaz": range(5)}, "bar": ["42", 42]}
     assert_equal(100, tools.n_permutations(x))
