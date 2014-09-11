@@ -51,16 +51,18 @@ class Point(strtools.Point):
 class Reactor(strtools.Reactor):
     """An extension reactor model for Structured Supply Species"""
     # todo: finish class
-    def __init__(self, kind, point, gids, nids):
+    def __init__(self, kind, point):
         super(Reactor, self).__init__(kind, point)
 
 class Requester(object):
     """A simplified requester model for Structured Supply Species"""
     # todo: finish class
-    def __init__(self, kind, point, gids):
+    def __init__(self, kind, point, gids, nids):
         self.kind = kind
         self.nodes = []
 
+    
+        
 class StructuredSupply(ProblemSpecies):
     """A class representing structured supply-based exchanges species."""
     

@@ -8,7 +8,7 @@ import math
 import os
 from collections import Sequence
 
-from cyclopts import tools
+from cyclopts import tools as cyctools
 from cyclopts.exchange_family import ResourceExchange
 from cyclopts.structured_species import data as data
 from cyclopts.problems import Solver
@@ -84,8 +84,15 @@ def test_write_point():
         obs = obs_ary[i + 2] # skip uuid, name
         exp = exp_ary[i + 2]
         print(k, spmod.Point.parameters[k], obs, exp)
-        if tools.seq_not_str(exp):
+        if cyctools.seq_not_str(exp):
             assert_array_almost_equal(obs, exp)
         else:
             assert_almost_equal(obs, exp)
     
+def test_requester():
+    p = spmod.Point({'d_th': [0.7, 0.2, 0.1]})
+    gids = cyctools.Incrementer()
+    nids = cyctools.Incrementer()    
+
+    kind = data.Supports.f_mox
+    reqr = spmod.Requester(kind, p, gids, nids)
