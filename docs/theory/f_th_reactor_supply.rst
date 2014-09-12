@@ -108,7 +108,7 @@ fuel units, the RHS value becomes
 
 .. math::
 
-    S_{proc} = \frac{575 \frac{t}{year}}{12 \frac{month}{year}} = ~48 \frac{t}{month}
+    S_{repo} = \frac{575 \frac{t}{year}}{12 \frac{month}{year}} = ~48 \frac{t}{month}
 
 Fuel Cycles
 -----------
