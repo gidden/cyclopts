@@ -14,7 +14,7 @@ from cyclopts.problems import Solver
 from cyclopts.exchange_instance import ExGroup, ExNode, ExArc
 from cyclopts.tools import Incrementer
 
-from utils import assert_xd_equal
+from utils import assert_cyc_equal
 
 def test_basics():
     fam = ResourceExchange()
@@ -141,7 +141,7 @@ class TestExchangeIO:
         
     def tearDown(self):
         self.h5file.close()
-        os.remove(self.fname)
+        #os.remove(self.fname)
 
     def test_inst_roundtrip(self):
         print('test file {0}'.format(self.fname))
@@ -170,12 +170,12 @@ class TestExchangeIO:
         # test
         assert_equal(len(exp_groups), len(obs_groups))
         for i in range(len(exp_groups)):
-            assert_xd_equal(exp_groups[i], obs_groups[i])
+            assert_cyc_equal(exp_groups[i], obs_groups[i])
         assert_equal(len(exp_nodes), len(obs_nodes))
         for i in range(len(exp_nodes)):
-            assert_xd_equal(exp_nodes[i], obs_nodes[i])
+            assert_cyc_equal(exp_nodes[i], obs_nodes[i])
         assert_equal(len(exp_arcs), len(obs_arcs))
         for i in range(len(exp_arcs)):
-            assert_xd_equal(exp_arcs[i], obs_arcs[i])
+            assert_cyc_equal(exp_arcs[i], obs_arcs[i])
 
         del manager        

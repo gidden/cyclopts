@@ -538,9 +538,7 @@ def conv_insts(fam, fam_tables, sp, sp_tables, ninst=1, update_freq=100, verbose
 def cyc_members(obj):
     """return a list of persistable members per the Cyclopts style guide."""
     members = obj.__class__.__dict__.keys()
-    print(members)
     cycfilter = lambda x: x.startswith('_') or x.endswith('_') or x[0].isupper()
-    print([x for x in members if not cycfilter(x)])
     return [x for x in members if not cycfilter(x)]
     
 

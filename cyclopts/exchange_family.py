@@ -7,6 +7,7 @@ from collections import Iterable
 
 from cyclopts.problems import ProblemFamily
 import cyclopts.cyclopts_io as cycio
+import cyclopts.tools as tools
 import cyclopts.exchange_instance as exinst
 
 _N_CAPS_MAX = 4
@@ -76,8 +77,12 @@ _dtypes = {
 
 # these functions must be kept up to date with cyclopts.instance
 def grp_tpl(instid, obj):    
-    return(instid.bytes, obj.id, obj.kind, 
-           np.append(obj.caps, [0] * (_N_CAPS_MAX - len(obj.caps))), obj.qty)
+    return(instid.bytes, 
+           obj.id, 
+           obj.kind, 
+           np.append(obj.caps, [0] * (_N_CAPS_MAX - len(obj.caps))),
+           np.append(obj.cap_dirs, [0] * (_N_CAPS_MAX - len(obj.cap_dirs))), 
+           obj.qty,)
 
 def node_tpl(instid, obj):    
     return(instid.bytes, obj.id, obj.gid, obj.kind, obj.qty, obj.excl, obj.excl_id)
@@ -206,8 +211,6 @@ class ResourceExchange(ProblemFamily):
         inst : tuple of lists of ExGroups, ExNodes, and ExArgs
             A representation of a problem instance
         """
-        xdattrs = lambda obj: [x for x in obj.__class__.__dict__.keys() \
-                                   if not x.startswith('_')]
         ctors = {'ExGroup': exinst.ExGroup, 
                  'ExNode': exinst.ExNode, 
                  'ExArc': exinst.ExArc}
@@ -215,16 +218,22 @@ class ResourceExchange(ProblemFamily):
         for name in ctors.keys():
             tbl = tables[_tbl_names[name]]
             rows = tbl.instid_rows(uuid.bytes)
-            setattrs = xdattrs(ctors[name]())
+            setattrs = tools.cyc_members(ctors[name]())
             for row in rows:
                 obj = ctors[name]()
+                if name == 'ExGroup':
+                    ncaps = len([x for x in row['caps'] if x > 0])
                 for var in setattrs:
                     attr = getattr(obj, var)
                     if isinstance(attr, Iterable):
                         ary = row[var]
-                        attr = ary[ary > 0] 
+                        if name == 'ExGroup':
+                            attr = [ary[i] for i in range(ncaps)]
+                        else:
+                            attr = ary[ary > 0]
                     else:
                         attr = row[var]
+                    print('setting {0} to {1}'.format(var, attr))
                     setattr(obj, var, attr)
                 objs[name].append(obj)
         return objs['ExGroup'], objs['ExNode'], objs['ExArc']
