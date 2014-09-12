@@ -11,6 +11,7 @@ from collections import Sequence
 from cyclopts import tools as cyctools
 from cyclopts.exchange_family import ResourceExchange
 from cyclopts.structured_species import data as data
+from cyclopts.structured_species import tools as strtools
 from cyclopts.problems import Solver
 
 def test_basics():
@@ -94,5 +95,28 @@ def test_requester():
     gids = cyctools.Incrementer()
     nids = cyctools.Incrementer()    
 
+    # recycle requester
     kind = data.Supports.f_mox
-    reqr = spmod.Requester(kind, p, gids, nids)
+    r = spmod.Requester(kind, p, gids, nids)
+    assert_equal(r.kind, kind)
+    assert_equal(len(r.nodes), len(data.sup_pref_basis[kind].keys()))
+    for commod in data.sup_pref_basis[kind].keys():
+        assert_equal(len(r.commod_to_nodes[commod]), 1)
+    assert_equal(len(r.group.caps), 1)
+    commod, rxtr = data.sup_to_commod[kind], data.sup_to_rxtr[kind]
+    mean_enr = strtools.mean_enr(rxtr, commod)
+    assert_almost_equal(
+        r.group.caps[0], 
+        data.sup_rhs[kind] * mean_enr * data.relative_qtys[rxtr][commod])
+    assert_equal(r.group.cap_dirs[0], True)
+    assert_almost_equal(r.group.qty, data.sup_rhs[kind])
+
+    # repo requester
+    kind = data.Supports.repo
+    r = spmod.Requester(kind, p, gids, nids)
+    assert_equal(r.kind, kind)
+    assert_equal(len(r.nodes), len(data.sup_pref_basis[kind].keys()))
+    for commod in data.sup_pref_basis[kind].keys():
+        assert_equal(len(r.commod_to_nodes[commod]), 1)
+    assert_equal(len(r.group.caps), 0)
+    assert_almost_equal(r.group.qty, data.sup_rhs[kind])

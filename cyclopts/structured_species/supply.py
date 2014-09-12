@@ -58,7 +58,28 @@ class Requester(object):
     # todo: finish class
     def __init__(self, kind, point, gids, nids):
         self.kind = kind
-        self.nodes = []    
+        self.req_qty = data.sup_rhs[self.kind]
+        gid = gids.next()
+        req = True
+        if self.kind == data.Supports.repo:
+            self.group = grp = exinst.ExGroup(gid, req, self.req_qty)
+        else:
+            self.group = grp = exinst.ExGroup(gid, req, self.req_qty)
+            commod = data.sup_to_commod[self.kind]
+            rxtr = data.sup_to_rxtr[self.kind]
+            mean_enr = strtools.mean_enr(rxtr, commod)
+            grp.AddCap(self.req_qty * mean_enr * data.relative_qtys[rxtr][commod])
+        self._gen_nodes(point, gid, nids)
+
+    def _gen_nodes(self, point, gid, nids):
+        self.nodes = []
+        self.commod_to_nodes = defaultdict(list)
+        req = True
+        for commod in data.sup_pref_basis[self.kind].keys():
+            nid = nids.next()
+            node = exinst.ExNode(nid, gid, req, self.req_qty)
+            self.nodes.append(node)
+            self.commod_to_nodes[commod].append(node)
         
 class StructuredSupply(ProblemSpecies):
     """A class representing structured supply-based exchanges species."""

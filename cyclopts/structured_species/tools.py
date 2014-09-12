@@ -35,10 +35,15 @@ class Point(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+
+def mean_enr(rxtr, commod):
+    """the mean enrichment for a reactor and commodity"""
+    return np.mean(data.enr_ranges[rxtr][commod])
+
 def conv_ratio(kind):
     """provides the inventory to process conversion ratio for given support"""
     commod, rxtr = data.sup_to_commod[kind], data.sup_to_rxtr[kind]
-    mean_enr = np.mean(data.enr_ranges[rxtr][commod])
+    mean_enr = mean_enr(rxtr, commod)
     return data.converters[kind]['inv'](1.0, mean_enr, commod) / \
         data.converters[kind]['proc'](1.0, mean_enr, commod)
 
