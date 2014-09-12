@@ -53,9 +53,8 @@ Reactor parameters will include all those of the request instance plus
 Supporting Facilities
 +++++++++++++++++++++
 
-The same supporting facilities will be used with the addition of: 
-
-* Repository
+The same supporting facilities will be used with the addition of a Repository
+and the subtraction of the Enrichment Facility.
 
 Parameters
 ~~~~~~~~~~
@@ -88,21 +87,23 @@ material to be sent to processing facilities over repositories.
 Constraints
 ~~~~~~~~~~~
 
-Recycle facilities will maintain the same constraint coefficients and RHS values
-as the reactor request, except they are interpreted as demand
-constraints. 
-
-Repostories will employ a simple linear combination quantity processing
-constraint based on the total fuel exiting a reactor via its relative quantity
-measure, :math:`r_{commod}`.
+In addition to a raw throughput capacity constraint of 800 t/yr of material,
+recycle facilities requesting material will be supply a fissile content demand
+constraint with the coefficient and RHS are shown below, where
+:math:`\bar{\epsilon}` is determined by the mean enrichment of the primary
+supplier to given requester.
 
 .. math::
 
-    conv_{proc}(\epsilon, q, commod) = \frac{q}{r_{commod}}
+    conv_{fiss}(\epsilon, q) = \epsilon q
 
-To determine an appropriate RHS, I assume a Yucca Mountain statutory limit of
-17,000 tonnes and a 30 year lifetime, resulting in ~575 t per year processing
-capacity. In fuel units, the RHS value becomes 
+    S_{fiss} = \bar{\epsilon}\frac{800 \frac{t}{year}}{12 \frac{month}{year}} = ~66.7 \frac{t}{month} 
+
+
+Repostories will employ a simple, quantity-based supply constraint. To determine
+an appropriate RHS, I assume a Yucca Mountain statutory limit of 17,000 tonnes
+and a 30 year lifetime, resulting in ~575 t per year processing capacity. In
+fuel units, the RHS value becomes
 
 .. math::
 
