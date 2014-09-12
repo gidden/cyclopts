@@ -327,7 +327,10 @@ class RandomRequestBuilder(object):
             n_constr = s.n_req_constr.sample()
             # add qty as first constraint -- required for clp/cbc
             caps = np.append(total_grp_qty, self._req_constr_vals(n_constr, multi_reqs))
-            self.groups.append(exinst.ExGroup(g_id, req, caps, total_grp_qty))
+            grp = exinst.ExGroup(g_id, req, caps, total_grp_qty)
+            for cap in caps:
+                grp.AddCap(cap)
+            self.groups.append(grp)
             
             exid = Incrementer()
             for reqs in multi_reqs: # mutually satisfying requests
@@ -348,7 +351,10 @@ class RandomRequestBuilder(object):
         for g_id, sups in supply.items():
             caps = self._sup_constr_vals(supplier_capacity[g_id], 
                                          s.n_sup_constr.sample())
-            self.groups.append(exinst.ExGroup(g_id, bid, caps))
+            grp = exinst.ExGroup(g_id, bid, caps)
+            for cap in caps:
+                grp.AddCap(cap)
+            self.groups.append(grp)
             for v_id, u_id in sups:
                 req_qty = req_qtys[u_id]
                 n_node_ucaps[v_id] = len(caps)

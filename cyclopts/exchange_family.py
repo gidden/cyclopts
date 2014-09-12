@@ -28,6 +28,7 @@ _dtypes = {
         ("id", np.int64),
         ("kind", np.bool_),
         ("caps", (np.float64, _N_CAPS_MAX),), # array of size N_CAPS_MAX
+        ("cap_dirs", (np.bool_, _N_CAPS_MAX),), # array of size N_CAPS_MAX
         ("qty", np.float64),
         ]),
     "ExNode": np.dtype([

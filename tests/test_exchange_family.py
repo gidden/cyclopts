@@ -80,12 +80,12 @@ def test_run():
     excl = True
     
     gid = Incrementer()
-    rg1 = ExGroup(gid.next(), req, np.array([1], dtype='float'), 1)
-    rg2 = ExGroup(gid.next(), req, np.array([1.5], dtype='float'), 1.5)
-    rg3 = ExGroup(gid.next(), req, np.array([1, 0.4], dtype='float'), 1)
-    bg1 = ExGroup(gid.next(), bid, np.array([2], dtype='float'))
-    bg2 = ExGroup(gid.next(), bid, np.array([1.5, 2], dtype='float'))
-    bg3 = ExGroup(gid.next(), bid, np.array([1], dtype='float'))
+    rg1 = ExGroup(gid.next(), req, np.array([1], dtype='float'), [True], 1)
+    rg2 = ExGroup(gid.next(), req, np.array([1.5], dtype='float'), [True], 1.5)
+    rg3 = ExGroup(gid.next(), req, np.array([1, 0.4], dtype='float'), [True] * 2, 1)
+    bg1 = ExGroup(gid.next(), bid, np.array([2], dtype='float'), [False])
+    bg2 = ExGroup(gid.next(), bid, np.array([1.5, 2], dtype='float'), [False] * 2)
+    bg3 = ExGroup(gid.next(), bid, np.array([1], dtype='float'), [False])
     grps = [rg1, rg2, rg3, bg1, bg2, bg3]
 
     nid = Incrementer()
@@ -145,8 +145,8 @@ class TestExchangeIO:
 
     def test_inst_roundtrip(self):
         print('test file {0}'.format(self.fname))
-        exp_groups = [ExGroup(1, True, np.array([1], dtype='float'), 3), 
-                      ExGroup(6, False, np.array([2, 3.5], dtype='float'))]
+        exp_groups = [ExGroup(1, True, np.array([1], dtype='float'), [True], 3), 
+                      ExGroup(6, False, np.array([2, 3.5], dtype='float'), [False] * 2)]
         exp_nodes = [ExNode(1, 2, True, 3), 
                      ExNode(6, 7, False, 0, True, 1)]
         exp_arcs = [ExArc(2, 1, np.array([1, 0.9, 4], dtype='float'), 

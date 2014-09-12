@@ -91,7 +91,7 @@ def Run(groups, nodes, arcs, solver, verbose=False):
 
 
 cdef class ExNode:
-    """no docstring for {'sidecars': (), 'tarbase': 'exchange_instance', 'tarname': 'ExNode', 'language': 'c++', 'srcname': 'ExNode', 'incfiles': ('exchange_instance.h',), 'srcfiles': ('cpp/exchange_instance.cc', 'cpp/exchange_instance.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'exchange_instance', 'tarname': 'ExNode', 'language': 'c++', 'srcname': 'ExNode', 'sidecars': (), 'incfiles': ('exchange_instance.h',), 'srcfiles': ('cpp/exchange_instance.cc', 'cpp/exchange_instance.h')}, please file a bug report!"""
 
 
 
@@ -229,7 +229,7 @@ cdef class ExNode:
 
 
 cdef class ExSolution(_cproblem.ProbSolution):
-    """no docstring for {'sidecars': (), 'tarbase': 'exchange_instance', 'tarname': 'ExSolution', 'language': 'c++', 'srcname': 'ExSolution', 'incfiles': ('exchange_instance.h',), 'srcfiles': ('cpp/exchange_instance.cc', 'cpp/exchange_instance.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'exchange_instance', 'tarname': 'ExSolution', 'language': 'c++', 'srcname': 'ExSolution', 'sidecars': (), 'incfiles': ('exchange_instance.h',), 'srcfiles': ('cpp/exchange_instance.cc', 'cpp/exchange_instance.h')}, please file a bug report!"""
 
 
 
@@ -300,7 +300,7 @@ cdef class ExSolution(_cproblem.ProbSolution):
 
 
 cdef class ExGroup:
-    """no docstring for {'sidecars': (), 'tarbase': 'exchange_instance', 'tarname': 'ExGroup', 'language': 'c++', 'srcname': 'ExGroup', 'incfiles': ('exchange_instance.h',), 'srcfiles': ('cpp/exchange_instance.cc', 'cpp/exchange_instance.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'exchange_instance', 'tarname': 'ExGroup', 'language': 'c++', 'srcname': 'ExGroup', 'sidecars': (), 'incfiles': ('exchange_instance.h',), 'srcfiles': ('cpp/exchange_instance.cc', 'cpp/exchange_instance.h')}, please file a bug report!"""
 
 
 
@@ -310,6 +310,7 @@ cdef class ExGroup:
         self._free_inst = True
 
         # cached property defaults
+        self._cap_dirs = None
         self._caps = None
 
     def _exgroup_exgroup_0(self, ):
@@ -318,13 +319,17 @@ cdef class ExGroup:
         self._inst = new cpp_exchange_instance.ExGroup()
     
     
-    def _exgroup_exgroup_1(self, id, kind, caps, qty=0):
-        """ExGroup(self, id, kind, caps, qty=0)
+    def _exgroup_exgroup_1(self, id, kind, caps, cap_dirs, qty=0):
+        """ExGroup(self, id, kind, caps, cap_dirs, qty=0)
         """
         cdef cpp_vector[double] caps_proxy
         cdef int icaps
         cdef int caps_size
         cdef double * caps_data
+        cdef cpp_vector[int] cap_dirs_proxy
+        cdef int icap_dirs
+        cdef int cap_dirs_size
+        cdef int * cap_dirs_data
         # caps is a (('vector', 'float64', 0), '&')
         caps_size = len(caps)
         if isinstance(caps, np.ndarray) and (<np.ndarray> caps).descr.type_num == np.NPY_FLOAT64:
@@ -336,10 +341,27 @@ cdef class ExGroup:
             caps_proxy = cpp_vector[double](<size_t> caps_size)
             for icaps in range(caps_size):
                 caps_proxy[icaps] = <double> caps[icaps]
-        self._inst = new cpp_exchange_instance.ExGroup(<int> id, <bint> kind, caps_proxy, <double> qty)
+        # cap_dirs is a (('vector', 'int32', 0), '&')
+        cap_dirs_size = len(cap_dirs)
+        if isinstance(cap_dirs, np.ndarray) and (<np.ndarray> cap_dirs).descr.type_num == dtypes.xd_vector_int.num:
+            cap_dirs_data = <int *> np.PyArray_DATA(<np.ndarray> cap_dirs)
+            cap_dirs_proxy = cpp_vector[int](<size_t> cap_dirs_size)
+            for icap_dirs in range(cap_dirs_size):
+                cap_dirs_proxy[icap_dirs] = cap_dirs_data[icap_dirs]
+        else:
+            cap_dirs_proxy = cpp_vector[int](<size_t> cap_dirs_size)
+            for icap_dirs in range(cap_dirs_size):
+                cap_dirs_proxy[icap_dirs] = <int> cap_dirs[icap_dirs]
+        self._inst = new cpp_exchange_instance.ExGroup(<int> id, <bint> kind, caps_proxy, cap_dirs_proxy, <double> qty)
     
     
-    def _exgroup_exgroup_2(self, other):
+    def _exgroup_exgroup_2(self, id, kind, qty=0):
+        """ExGroup(self, id, kind, qty=0)
+        """
+        self._inst = new cpp_exchange_instance.ExGroup(<int> id, <bint> kind, <double> qty)
+    
+    
+    def _exgroup_exgroup_3(self, other):
         """ExGroup(self, other)
         """
         cdef ExGroup other_proxy
@@ -348,8 +370,9 @@ cdef class ExGroup:
     
     
     _exgroup_exgroup_0_argtypes = frozenset()
-    _exgroup_exgroup_1_argtypes = frozenset(((0, int), (1, bool), (2, np.ndarray), (3, float), ("id", int), ("kind", bool), ("caps", np.ndarray), ("qty", float)))
-    _exgroup_exgroup_2_argtypes = frozenset(((0, ExGroup), ("other", ExGroup)))
+    _exgroup_exgroup_1_argtypes = frozenset(((0, int), (1, bool), (2, np.ndarray), (3, np.ndarray), (4, float), ("id", int), ("kind", bool), ("caps", np.ndarray), ("cap_dirs", np.ndarray), ("qty", float)))
+    _exgroup_exgroup_2_argtypes = frozenset(((0, int), (1, bool), (2, float), ("id", int), ("kind", bool), ("qty", float)))
+    _exgroup_exgroup_3_argtypes = frozenset(((0, ExGroup), ("other", ExGroup)))
     
     def __init__(self, *args, **kwargs):
         """ExGroup(self, other)
@@ -360,6 +383,9 @@ cdef class ExGroup:
         if types <= self._exgroup_exgroup_0_argtypes:
             self._exgroup_exgroup_0(*args, **kwargs)
             return
+        if types <= self._exgroup_exgroup_3_argtypes:
+            self._exgroup_exgroup_3(*args, **kwargs)
+            return
         if types <= self._exgroup_exgroup_2_argtypes:
             self._exgroup_exgroup_2(*args, **kwargs)
             return
@@ -369,6 +395,11 @@ cdef class ExGroup:
         # duck-typed dispatch based on whatever works!
         try:
             self._exgroup_exgroup_0(*args, **kwargs)
+            return
+        except (RuntimeError, TypeError, NameError):
+            pass
+        try:
+            self._exgroup_exgroup_3(*args, **kwargs)
             return
         except (RuntimeError, TypeError, NameError):
             pass
@@ -389,6 +420,37 @@ cdef class ExGroup:
             free(self._inst)
 
     # attributes
+    property cap_dirs:
+        """no docstring for cap_dirs, please file a bug report!"""
+        def __get__(self):
+            cdef np.ndarray cap_dirs_proxy
+            cdef np.npy_intp cap_dirs_proxy_shape[1]
+            if self._cap_dirs is None:
+                cap_dirs_proxy_shape[0] = <np.npy_intp> (<cpp_exchange_instance.ExGroup *> self._inst).cap_dirs.size()
+                cap_dirs_proxy = np.PyArray_SimpleNewFromData(1, cap_dirs_proxy_shape, np.NPY_INT32, &(<cpp_exchange_instance.ExGroup *> self._inst).cap_dirs[0])
+                self._cap_dirs = cap_dirs_proxy
+            return self._cap_dirs
+    
+        def __set__(self, value):
+            cdef cpp_vector[int] value_proxy
+            cdef int ivalue
+            cdef int value_size
+            cdef int * value_data
+            # value is a ('vector', 'int32', 0)
+            value_size = len(value)
+            if isinstance(value, np.ndarray) and (<np.ndarray> value).descr.type_num == dtypes.xd_vector_int.num:
+                value_data = <int *> np.PyArray_DATA(<np.ndarray> value)
+                value_proxy = cpp_vector[int](<size_t> value_size)
+                for ivalue in range(value_size):
+                    value_proxy[ivalue] = value_data[ivalue]
+            else:
+                value_proxy = cpp_vector[int](<size_t> value_size)
+                for ivalue in range(value_size):
+                    value_proxy[ivalue] = <int> value[ivalue]
+            (<cpp_exchange_instance.ExGroup *> self._inst).cap_dirs = value_proxy
+            self._cap_dirs = None
+    
+    
     property caps:
         """no docstring for caps, please file a bug report!"""
         def __get__(self):
@@ -448,6 +510,42 @@ cdef class ExGroup:
     
     
     # methods
+    def _exgroup_addcap_0(self, cap):
+        """AddCap(self, cap)
+        no docstring for AddCap, please file a bug report!"""
+        (<cpp_exchange_instance.ExGroup *> self._inst).AddCap(<double> cap)
+    
+    
+    def _exgroup_addcap_1(self, cap, dir):
+        """AddCap(self, cap, dir)
+        no docstring for AddCap, please file a bug report!"""
+        (<cpp_exchange_instance.ExGroup *> self._inst).AddCap(<double> cap, <int> dir)
+    
+    
+    _exgroup_addcap_0_argtypes = frozenset(((0, float), ("cap", float)))
+    _exgroup_addcap_1_argtypes = frozenset(((0, float), (1, int), ("cap", float), ("dir", int)))
+    
+    def AddCap(self, *args, **kwargs):
+        """AddCap(self, cap, dir)
+        no docstring for AddCap, please file a bug report!"""
+        types = set([(i, type(a)) for i, a in enumerate(args)])
+        types.update([(k, type(v)) for k, v in kwargs.items()])
+        # vtable-like dispatch for exactly matching types
+        if types <= self._exgroup_addcap_0_argtypes:
+            return self._exgroup_addcap_0(*args, **kwargs)
+        if types <= self._exgroup_addcap_1_argtypes:
+            return self._exgroup_addcap_1(*args, **kwargs)
+        # duck-typed dispatch based on whatever works!
+        try:
+            return self._exgroup_addcap_0(*args, **kwargs)
+        except (RuntimeError, TypeError, NameError):
+            pass
+        try:
+            return self._exgroup_addcap_1(*args, **kwargs)
+        except (RuntimeError, TypeError, NameError):
+            pass
+        raise RuntimeError('method AddCap() could not be dispatched')
+    
     
 
     pass
@@ -457,7 +555,7 @@ cdef class ExGroup:
 
 
 cdef class ExArc:
-    """no docstring for {'sidecars': (), 'tarbase': 'exchange_instance', 'tarname': 'ExArc', 'language': 'c++', 'srcname': 'ExArc', 'incfiles': ('exchange_instance.h',), 'srcfiles': ('cpp/exchange_instance.cc', 'cpp/exchange_instance.h')}, please file a bug report!"""
+    """no docstring for {'tarbase': 'exchange_instance', 'tarname': 'ExArc', 'language': 'c++', 'srcname': 'ExArc', 'sidecars': (), 'incfiles': ('exchange_instance.h',), 'srcfiles': ('cpp/exchange_instance.cc', 'cpp/exchange_instance.h')}, please file a bug report!"""
 
 
 

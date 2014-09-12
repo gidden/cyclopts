@@ -233,7 +233,7 @@ cdef PyMemberDef pyxd_int_type_members[1]
 pyxd_int_type_members[0] = PyMemberDef(NULL, 0, 0, 0, NULL)
 
 cdef PyGetSetDef pyxd_int_type_getset[1]
-pyxd_int_type_getset[0] = PyGetSetDef(NULL)
+pyxd_int_type_getset[0] = PyGetSetDef(NULL, NULL, NULL, NULL, NULL)
 
 cdef bint pyxd_int_is_ready
 cdef type PyXD_Int = type("xd_int", ((<object> PyArray_API[10]),), {})
@@ -267,7 +267,7 @@ c_xd_int_descr.typeobj = <PyTypeObject *> PyXD_Int # typeobj
 c_xd_int_descr.kind = 'x'  # kind, for xdress
 c_xd_int_descr.type = 'x'  # type
 c_xd_int_descr.byteorder = '='  # byteorder
-c_xd_int_descr.flags = 0    # flags
+c_xd_int_descr.flags = NPY_USE_GETITEM  # flags
 c_xd_int_descr.type_num = 0    # type_num, assigned at registration
 c_xd_int_descr.elsize = sizeof(int)  # elsize, 
 c_xd_int_descr.alignment = 8  # alignment
@@ -474,7 +474,7 @@ cdef PyMemberDef pyxd_double_type_members[1]
 pyxd_double_type_members[0] = PyMemberDef(NULL, 0, 0, 0, NULL)
 
 cdef PyGetSetDef pyxd_double_type_getset[1]
-pyxd_double_type_getset[0] = PyGetSetDef(NULL)
+pyxd_double_type_getset[0] = PyGetSetDef(NULL, NULL, NULL, NULL, NULL)
 
 cdef bint pyxd_double_is_ready
 cdef type PyXD_Double = type("xd_double", ((<object> PyArray_API[10]),), {})
@@ -508,7 +508,7 @@ c_xd_double_descr.typeobj = <PyTypeObject *> PyXD_Double # typeobj
 c_xd_double_descr.kind = 'x'  # kind, for xdress
 c_xd_double_descr.type = 'x'  # type
 c_xd_double_descr.byteorder = '='  # byteorder
-c_xd_double_descr.flags = 0    # flags
+c_xd_double_descr.flags = NPY_USE_GETITEM  # flags
 c_xd_double_descr.type_num = 0    # type_num, assigned at registration
 c_xd_double_descr.elsize = sizeof(double)  # elsize, 
 c_xd_double_descr.alignment = 8  # alignment
@@ -718,7 +718,7 @@ cdef PyMemberDef pyxd_exgroup_type_members[1]
 pyxd_exgroup_type_members[0] = PyMemberDef(NULL, 0, 0, 0, NULL)
 
 cdef PyGetSetDef pyxd_exgroup_type_getset[1]
-pyxd_exgroup_type_getset[0] = PyGetSetDef(NULL)
+pyxd_exgroup_type_getset[0] = PyGetSetDef(NULL, NULL, NULL, NULL, NULL)
 
 cdef bint pyxd_exgroup_is_ready
 cdef type PyXD_ExGroup = type("xd_exgroup", ((<object> PyArray_API[10]),), {})
@@ -752,7 +752,7 @@ c_xd_exgroup_descr.typeobj = <PyTypeObject *> PyXD_ExGroup # typeobj
 c_xd_exgroup_descr.kind = 'x'  # kind, for xdress
 c_xd_exgroup_descr.type = 'x'  # type
 c_xd_exgroup_descr.byteorder = '='  # byteorder
-c_xd_exgroup_descr.flags = 0    # flags
+c_xd_exgroup_descr.flags = NPY_USE_GETITEM  # flags
 c_xd_exgroup_descr.type_num = 0    # type_num, assigned at registration
 c_xd_exgroup_descr.elsize = sizeof(cpp_exchange_instance.ExGroup)  # elsize, 
 c_xd_exgroup_descr.alignment = 8  # alignment
@@ -962,7 +962,7 @@ cdef PyMemberDef pyxd_exnode_type_members[1]
 pyxd_exnode_type_members[0] = PyMemberDef(NULL, 0, 0, 0, NULL)
 
 cdef PyGetSetDef pyxd_exnode_type_getset[1]
-pyxd_exnode_type_getset[0] = PyGetSetDef(NULL)
+pyxd_exnode_type_getset[0] = PyGetSetDef(NULL, NULL, NULL, NULL, NULL)
 
 cdef bint pyxd_exnode_is_ready
 cdef type PyXD_ExNode = type("xd_exnode", ((<object> PyArray_API[10]),), {})
@@ -996,7 +996,7 @@ c_xd_exnode_descr.typeobj = <PyTypeObject *> PyXD_ExNode # typeobj
 c_xd_exnode_descr.kind = 'x'  # kind, for xdress
 c_xd_exnode_descr.type = 'x'  # type
 c_xd_exnode_descr.byteorder = '='  # byteorder
-c_xd_exnode_descr.flags = 0    # flags
+c_xd_exnode_descr.flags = NPY_USE_GETITEM  # flags
 c_xd_exnode_descr.type_num = 0    # type_num, assigned at registration
 c_xd_exnode_descr.elsize = sizeof(cpp_exchange_instance.ExNode)  # elsize, 
 c_xd_exnode_descr.alignment = 8  # alignment
@@ -1206,7 +1206,7 @@ cdef PyMemberDef pyxd_exarc_type_members[1]
 pyxd_exarc_type_members[0] = PyMemberDef(NULL, 0, 0, 0, NULL)
 
 cdef PyGetSetDef pyxd_exarc_type_getset[1]
-pyxd_exarc_type_getset[0] = PyGetSetDef(NULL)
+pyxd_exarc_type_getset[0] = PyGetSetDef(NULL, NULL, NULL, NULL, NULL)
 
 cdef bint pyxd_exarc_is_ready
 cdef type PyXD_ExArc = type("xd_exarc", ((<object> PyArray_API[10]),), {})
@@ -1240,7 +1240,7 @@ c_xd_exarc_descr.typeobj = <PyTypeObject *> PyXD_ExArc # typeobj
 c_xd_exarc_descr.kind = 'x'  # kind, for xdress
 c_xd_exarc_descr.type = 'x'  # type
 c_xd_exarc_descr.byteorder = '='  # byteorder
-c_xd_exarc_descr.flags = 0    # flags
+c_xd_exarc_descr.flags = NPY_USE_GETITEM  # flags
 c_xd_exarc_descr.type_num = 0    # type_num, assigned at registration
 c_xd_exarc_descr.elsize = sizeof(cpp_exchange_instance.ExArc)  # elsize, 
 c_xd_exarc_descr.alignment = 8  # alignment
@@ -1466,7 +1466,7 @@ cdef PyMemberDef pyxd_vector_int_type_members[1]
 pyxd_vector_int_type_members[0] = PyMemberDef(NULL, 0, 0, 0, NULL)
 
 cdef PyGetSetDef pyxd_vector_int_type_getset[1]
-pyxd_vector_int_type_getset[0] = PyGetSetDef(NULL)
+pyxd_vector_int_type_getset[0] = PyGetSetDef(NULL, NULL, NULL, NULL, NULL)
 
 cdef bint pyxd_vector_int_is_ready
 cdef type PyXD_VectorInt = type("xd_vector_int", ((<object> PyArray_API[10]),), {})
@@ -1500,7 +1500,7 @@ c_xd_vector_int_descr.typeobj = <PyTypeObject *> PyXD_VectorInt # typeobj
 c_xd_vector_int_descr.kind = 'x'  # kind, for xdress
 c_xd_vector_int_descr.type = 'x'  # type
 c_xd_vector_int_descr.byteorder = '='  # byteorder
-c_xd_vector_int_descr.flags = 0    # flags
+c_xd_vector_int_descr.flags = NPY_USE_GETITEM  # flags
 c_xd_vector_int_descr.type_num = 0    # type_num, assigned at registration
 c_xd_vector_int_descr.elsize = sizeof(cpp_vector[int])  # elsize, 
 c_xd_vector_int_descr.alignment = 8  # alignment

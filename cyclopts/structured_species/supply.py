@@ -47,7 +47,6 @@ class Point(strtools.Point):
         the theory manual for further explanation of the parameter names"""
         return Point.parameters
 
-
 class Reactor(strtools.Reactor):
     """An extension reactor model for Structured Supply Species"""
     # todo: finish class
@@ -59,9 +58,7 @@ class Requester(object):
     # todo: finish class
     def __init__(self, kind, point, gids, nids):
         self.kind = kind
-        self.nodes = []
-
-    
+        self.nodes = []    
         
 class StructuredSupply(ProblemSpecies):
     """A class representing structured supply-based exchanges species."""

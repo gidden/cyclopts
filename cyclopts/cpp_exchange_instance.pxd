@@ -71,17 +71,22 @@ cdef extern from "exchange_instance.h" namespace "cyclopts":
         ExGroup(int) except +
         ExGroup(int, cpp_bool) except +
         ExGroup(int, cpp_bool, cpp_vector[double] &) except +
-        ExGroup(int, cpp_bool, cpp_vector[double] &, double) except +
+        ExGroup(int, cpp_bool, cpp_vector[double] &, cpp_vector[int] &) except +
+        ExGroup(int, cpp_bool, cpp_vector[double] &, cpp_vector[int] &, double) except +
+        ExGroup(int, cpp_bool, double) except +
         ExGroup(const ExGroup &) except +
 
         # attributes
+        cpp_vector[int] cap_dirs
         cpp_vector[double] caps
         int id
         cpp_bool kind
         double qty
 
         # methods
-
+        void AddCap() except +
+        void AddCap(double) except +
+        void AddCap(double, int) except +
         pass
 
 

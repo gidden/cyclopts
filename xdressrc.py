@@ -21,6 +21,7 @@ testdir = '.'            # location of root dir for tests, i.e., root/tests
 extra_types = 'xdress_extra_types'
 
 stlcontainers = [
+#    ('vector', 'bool'),
     ('vector', 'int'),
     ('vector', 'float'),
     ('vector', 'ExGroup'),

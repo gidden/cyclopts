@@ -14,21 +14,38 @@ namespace cyclopts {
 class ExGroup {
  public:
   ExGroup() {};
-  ExGroup(int id, bool kind, std::vector<double>& caps, double qty = 0)
+  ExGroup(int id, bool kind, double qty = 0)
+      : id(id), kind(kind), qty(qty) { };
+  
+  ExGroup(int id, bool kind, std::vector<double>& caps,
+          std::vector<int>& cap_dirs, double qty = 0)
     : id(id),
       kind(kind),
       caps(caps),
+      cap_dirs(cap_dirs),
       qty(qty) { };
+
   ExGroup(const ExGroup& other)
     : id(other.id),
       kind(other.kind),
       caps(other.caps),
+      cap_dirs(other.cap_dirs),
       qty(other.qty) { };
 
+  void AddCap(double cap) {
+    AddCap(cap, kind); 
+  }
+  
+  void AddCap(double cap, int dir) {
+    caps.push_back(cap);
+    cap_dirs.push_back(dir);
+  }
+  
   int id;  
   bool kind; // true == request, false == bid
   double qty;
   std::vector<double> caps;
+  std::vector<int> cap_dirs; // true == GTEQ, false == LTEQ
 };
 
 /// A struct of POD and STL of PODs representation of a Cyclus ExchangeNode

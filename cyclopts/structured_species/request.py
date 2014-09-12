@@ -66,7 +66,9 @@ class Reactor(strtools.Reactor):
         qty = data.fuel_unit * data.request_qtys[self.kind]
         self.base_req_qty = qty / self.n_assems
         gid = gids.next()
-        self.group = exinst.ExGroup(gid, req, [qty], qty)
+        grp = exinst.ExGroup(gid, req, qty)
+        grp.AddCap(qty)
+        self.group = grp
         self._gen_nodes(point, gid, nids)
 
     def _gen_nodes(self, point, gid, nids):
@@ -101,7 +103,10 @@ class Supplier(object):
         # process then inventory
         rhs = [data.sup_rhs[kind], 
                data.sup_rhs[kind] * point.r_inv_proc * strtools.conv_ratio(kind)]
-        self.group = exinst.ExGroup(gids.next(), not req, rhs)
+        grp = exinst.ExGroup(gids.next(), not req)
+        for cap in rhs:
+            grp.AddCap(cap)
+        self.group = grp
         self.loc = data.loc()
 
     def coeffs(self, qty, enr):

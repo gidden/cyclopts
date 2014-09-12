@@ -6,6 +6,7 @@
 #include "greedy_solver.h"
 #include "prog_solver.h"
 #include "version.h"
+#include "capacity_types.h"
 
 #include "cpu_time.h"
 
@@ -32,10 +33,12 @@ void AddGroups(std::vector<ExGroup>& groups,
       bg = cyclus::ExchangeNodeGroup::Ptr(new cyclus::ExchangeNodeGroup());
       g.AddSupplyGroup(bg);
     }
-    ctx.id_to_grp[git->id] = bg;  
-    std::vector<double>::iterator cit;
-    for (cit = git->caps.begin(); cit != git->caps.end(); ++cit) {
-      bg->AddCapacity(*cit);
+    ctx.id_to_grp[git->id] = bg;
+    cyclus::cap_t t;
+    int i;
+    for (i = 0; i < git->caps.size(); ++i) {
+      t = git->cap_dirs[i] == 0 ? cyclus::GTEQ : cyclus::LTEQ;
+      bg->AddCapacity(git->caps[i], t);
     }
   }
 }

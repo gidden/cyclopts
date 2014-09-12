@@ -32,6 +32,7 @@ cdef class ExArc:
 cdef class ExGroup:
     cdef void * _inst
     cdef public bint _free_inst
+    cdef public np.ndarray _cap_dirs
     cdef public np.ndarray _caps
     pass
 
