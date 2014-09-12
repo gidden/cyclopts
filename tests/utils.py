@@ -10,13 +10,12 @@ import warnings
 
 xdattrs = lambda obj: [x for x in obj.__class__.__dict__.keys() \
                            if not x.startswith('_')]
+
+from cyclopts import tools
         
-# equality comparison is required on the python level because xdress can't
-# currently wrap dunder magic, see 
-# https://github.com/xdress/xdress/issues/46
-def assert_xd_equal(exp, obs):
-    assert_array_equal(xdattrs(exp), xdattrs(obs))
-    for var in xdattrs(exp):
+def assert_cyc_equal(exp, obs):
+    assert_array_equal(tools.cyc_members(exp), tools.cyc_members(obs))
+    for var in tools.cyc_members(exp):
         vexp = getattr(exp, var)
         vobs = getattr(obs, var)
         print("exp {0}: {1}".format(var, vexp))

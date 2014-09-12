@@ -9,7 +9,7 @@ from nose.tools import assert_equal, assert_almost_equal, assert_true, \
     assert_false, assert_raises, assert_less, assert_greater, \
     assert_less_equal, assert_greater_equal
 
-from utils import assert_xd_equal
+from utils import assert_cyc_equal
 from cyclopts.exchange_instance import ExGroup, ExNode, ExArc
 from cyclopts.exchange_family import ResourceExchange
 from cyclopts.params import Param, BoolParam, CoeffParam, SupConstrParam
@@ -80,13 +80,13 @@ def test_def_rxtr_req_build():
     assert_equal(groups[0].id, nodes[0].gid)
     assert_equal(groups[1].id, nodes[1].gid)
     exp = ExGroup(0, req, np.array([1], dtype='float'), [req], 1)
-    assert_xd_equal(exp, groups[0])
+    assert_cyc_equal(exp, groups[0])
     exp = ExGroup(1, bid, np.array([1], dtype='float'), [bid])
-    assert_xd_equal(exp, groups[1])
+    assert_cyc_equal(exp, groups[1])
     exp = ExNode(0, 0, req, 1)
-    assert_xd_equal(exp, nodes[0])
+    assert_cyc_equal(exp, nodes[0])
     exp = ExNode(1, 1, bid, 1)
-    assert_xd_equal(exp, nodes[1])
+    assert_cyc_equal(exp, nodes[1])
     # arcs are separate because values are stochastic
     exp = ExArc(0, 0, np.array([1], dtype='float'), 
                 1, np.array([1], dtype='float'), 1)

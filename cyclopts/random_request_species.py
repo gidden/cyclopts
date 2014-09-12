@@ -19,7 +19,7 @@ import cyclopts.cyclopts_io as cycio
 from cyclopts.exchange_family import ResourceExchange
 from cyclopts.params import Param, BoolParam, CoeffParam, SupConstrParam, \
     PARAM_CTOR_ARGS
-from cyclopts.tools import Incrementer
+import cyclopts.tools as tools
 
 class RandomRequestPoint(object):
     """A container class representing a point in parameter space for
@@ -144,11 +144,10 @@ class RandomRequestPoint(object):
         """Returns a numpy dtype describing all composed objects."""
         ret = [('paramid', ('str', 16)), ('family', ('str', 30))] # uuid
         for name, obj in self.__dict__.items():
-            for subname, subobj in obj.__dict__.items():
-                if subname.startswith('_'):
-                    continue
-                ret.append(("{0}_{1}".format(name, subname), 
-                            self._dt_convert(subobj)))
+            cycmembers = tools.cyc_members(obj)
+            for member in cycmembers:
+                ret.append(("{0}_{1}".format(name, member), 
+                            self._dt_convert(getattr(obj, member))))
         return np.dtype(ret)
                 
     def export_h5(self, uuid, fam_name):
@@ -260,7 +259,7 @@ class RandomRequestBuilder(object):
             the requesters        
         """
         s = self.sampler
-        n_ids = self.req_n_ids = Incrementer(self.req_n_offset)
+        n_ids = self.req_n_ids = tools.Incrementer(self.req_n_offset)
         requests = collections.defaultdict(list)
         
         chosen_commods = set()
@@ -327,12 +326,12 @@ class RandomRequestBuilder(object):
             n_constr = s.n_req_constr.sample()
             # add qty as first constraint -- required for clp/cbc
             caps = np.append(total_grp_qty, self._req_constr_vals(n_constr, multi_reqs))
-            grp = exinst.ExGroup(g_id, req, caps, total_grp_qty)
+            grp = exinst.ExGroup(g_id, req, total_grp_qty)
             for cap in caps:
                 grp.AddCap(cap)
             self.groups.append(grp)
             
-            exid = Incrementer()
+            exid = tools.Incrementer()
             for reqs in multi_reqs: # mutually satisfying requests
                 for n_id, commod in reqs:
                     n_node_ucaps[n_id] = n_constr
@@ -344,14 +343,14 @@ class RandomRequestBuilder(object):
                     req_qtys[n_id] = req_qty
     
         # populate supply params and arc relations
-        a_ids = Incrementer(self.arc_offset)
+        a_ids = tools.Incrementer(self.arc_offset)
         commod_demand = self._commod_demand()
         supplier_capacity = \
             self._supplier_capacity(commod_demand, supplier_commods)
         for g_id, sups in supply.items():
             caps = self._sup_constr_vals(supplier_capacity[g_id], 
                                          s.n_sup_constr.sample())
-            grp = exinst.ExGroup(g_id, bid, caps)
+            grp = exinst.ExGroup(g_id, bid)
             for cap in caps:
                 grp.AddCap(cap)
             self.groups.append(grp)
@@ -384,17 +383,17 @@ class RandomRequestBuilder(object):
         # the request quantity per assembly (i.e., kg of fuel per assembly request)
         self.req_qty = s.req_qty.sample() 
 
-        req_g_ids = Incrementer(self.req_g_offset)
+        req_g_ids = tools.Incrementer(self.req_g_offset)
         # request groups
         requesters = self.requesters = \
             [req_g_ids.next() for i in range(self.n_request)] 
         # include request values because ids are global
         sup_g_ids = \
-            Incrementer(self.req_g_offset + self.sup_g_offset + self.n_request)
+            tools.Incrementer(self.req_g_offset + self.sup_g_offset + self.n_request)
         # supply groups
         suppliers = self.suppliers = \
             [sup_g_ids.next() for i in range(self.n_supply)] 
-        self.arc_ids = Incrementer(self.arc_offset)
+        self.arc_ids = tools.Incrementer(self.arc_offset)
 
         self.reqs_to_commods = {} # requests to their commodities
         self.commods_to_reqs = {} # commodities to all requests
@@ -495,9 +494,9 @@ class RandomRequestBuilder(object):
         s = self.sampler
 
         # include request values because ids are global
-        n_ids = self.sup_n_ids = Incrementer(self.req_n_offset + 
-                                             self.sup_n_offset + 
-                                             len(self.reqs_to_commods))
+        n_ids = self.sup_n_ids = tools.Incrementer(self.req_n_offset + 
+                                                   self.sup_n_offset + 
+                                                   len(self.reqs_to_commods))
 
         supply = collections.defaultdict(list) # supplier group id to arcs
         possible_supply = collections.defaultdict(list) # req to supplier group id
