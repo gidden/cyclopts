@@ -37,7 +37,7 @@ void AddGroups(std::vector<ExGroup>& groups,
     cyclus::cap_t t;
     int i;
     for (i = 0; i < git->caps.size(); ++i) {
-      t = git->cap_dirs[i] == 0 ? cyclus::GTEQ : cyclus::LTEQ;
+      t = git->cap_dirs[i] == 1 ? cyclus::GTEQ : cyclus::LTEQ;
       bg->AddCapacity(git->caps[i], t);
     }
   }

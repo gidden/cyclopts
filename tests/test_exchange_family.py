@@ -80,12 +80,12 @@ def test_run():
     excl = True
     
     gid = Incrementer()
-    rg1 = ExGroup(gid.next(), req, np.array([1], dtype='float'), [True], 1)
-    rg2 = ExGroup(gid.next(), req, np.array([1.5], dtype='float'), [True], 1.5)
-    rg3 = ExGroup(gid.next(), req, np.array([1, 0.4], dtype='float'), [True] * 2, 1)
-    bg1 = ExGroup(gid.next(), bid, np.array([2], dtype='float'), [False])
-    bg2 = ExGroup(gid.next(), bid, np.array([1.5, 2], dtype='float'), [False] * 2)
-    bg3 = ExGroup(gid.next(), bid, np.array([1], dtype='float'), [False])
+    rg1 = ExGroup(gid.next(), req, np.array([1], dtype='float'), [req], 1)
+    rg2 = ExGroup(gid.next(), req, np.array([1.5], dtype='float'), [req], 1.5)
+    rg3 = ExGroup(gid.next(), req, np.array([1, 0.4], dtype='float'), [req] * 2, 1)
+    bg1 = ExGroup(gid.next(), bid, np.array([2], dtype='float'), [bid])
+    bg2 = ExGroup(gid.next(), bid, np.array([1.5, 2], dtype='float'), [bid] * 2)
+    bg3 = ExGroup(gid.next(), bid, np.array([1], dtype='float'), [bid])
     grps = [rg1, rg2, rg3, bg1, bg2, bg3]
 
     nid = Incrementer()
