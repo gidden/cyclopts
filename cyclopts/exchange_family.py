@@ -233,7 +233,7 @@ class ResourceExchange(ProblemFamily):
                             attr = ary[ary > 0]
                     else:
                         attr = row[var]
-                    print('setting {0} to {1}'.format(var, attr))
+                    #print('setting {0} to {1}'.format(var, attr))
                     setattr(obj, var, attr)
                 objs[name].append(obj)
         return objs['ExGroup'], objs['ExNode'], objs['ExArc']

@@ -144,10 +144,11 @@ class RandomRequestPoint(object):
         """Returns a numpy dtype describing all composed objects."""
         ret = [('paramid', ('str', 16)), ('family', ('str', 30))] # uuid
         for name, obj in self.__dict__.items():
-            cycmembers = tools.cyc_members(obj)
-            for member in cycmembers:
-                ret.append(("{0}_{1}".format(name, member), 
-                            self._dt_convert(getattr(obj, member))))
+            for subname, subobj in obj.__dict__.items():
+                if subname.startswith('_'):
+                    continue
+                ret.append(("{0}_{1}".format(name, subname), 
+                            self._dt_convert(getattr(obj, subname))))
         return np.dtype(ret)
                 
     def export_h5(self, uuid, fam_name):
