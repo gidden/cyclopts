@@ -90,8 +90,9 @@ Constraints
 In addition to a raw throughput capacity constraint of 800 t/yr of material,
 recycle facilities requesting material will be supply a fissile content demand
 constraint with the coefficient and RHS are shown below, where
-:math:`\bar{\epsilon} r_{commod}` is determined by the mean quantity of fissile
-materail of the primary supplier to given requester.
+:math:`\bar{\epsilon} r_{commod}` is the mean quantity of fissile materail of
+the primary supplier to given requester, and :math:`r_{commod}` is the relative
+quantity of the supplier as defined in the previous section.
 
 .. math::
 
