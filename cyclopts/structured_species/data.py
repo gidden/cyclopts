@@ -84,7 +84,7 @@ fuel_unit = 1400.0
 
 """fast reactor requests are unity, thermal reactors are larger by an active
 core volume fraction"""
-request_qtys = {
+core_vol_frac = {
     Reactors.th : 12.5, 
     Reactors.f_mox : 1.0, 
     Reactors.f_thox : 1.0, 

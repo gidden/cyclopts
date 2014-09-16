@@ -63,7 +63,7 @@ class Reactor(strtools.Reactor):
     def __init__(self, kind, point, gids, nids):
         super(Reactor, self).__init__(kind, point)
         req = True
-        qty = data.fuel_unit * data.request_qtys[self.kind]
+        qty = data.fuel_unit * data.core_vol_frac[self.kind]
         self.base_req_qty = qty / self.n_assems
         gid = gids.next()
         grp = exinst.ExGroup(gid, req, qty)

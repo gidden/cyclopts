@@ -43,9 +43,9 @@ def mean_enr(rxtr, commod):
 def conv_ratio(kind):
     """provides the inventory to process conversion ratio for given support"""
     commod, rxtr = data.sup_to_commod[kind], data.sup_to_rxtr[kind]
-    mean_enr = mean_enr(rxtr, commod)
-    return data.converters[kind]['inv'](1.0, mean_enr, commod) / \
-        data.converters[kind]['proc'](1.0, mean_enr, commod)
+    enr = mean_enr(rxtr, commod)
+    return data.converters[kind]['inv'](1.0, enr, commod) / \
+        data.converters[kind]['proc'](1.0, enr, commod)
 
 def region(loc, n_reg=1):
     """assumes loc is on [0, 1]"""

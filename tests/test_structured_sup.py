@@ -100,8 +100,8 @@ def test_requester():
     r = spmod.Requester(kind, p, gids, nids)
     assert_equal(r.kind, kind)
     assert_equal(len(r.nodes), len(data.sup_pref_basis[kind].keys()))
-    for commod in data.sup_pref_basis[kind].keys():
-        assert_equal(len(r.commod_to_nodes[commod]), 1)
+    assert_equal(len(r.commod_to_nodes.values()), 
+                 len(data.sup_pref_basis[kind].keys()))
     assert_equal(len(r.group.caps), 1)
     commod, rxtr = data.sup_to_commod[kind], data.sup_to_rxtr[kind]
     mean_enr = strtools.mean_enr(rxtr, commod)
@@ -116,7 +116,38 @@ def test_requester():
     r = spmod.Requester(kind, p, gids, nids)
     assert_equal(r.kind, kind)
     assert_equal(len(r.nodes), len(data.sup_pref_basis[kind].keys()))
-    for commod in data.sup_pref_basis[kind].keys():
-        assert_equal(len(r.commod_to_nodes[commod]), 1)
+    assert_equal(len(r.commod_to_nodes.values()), 
+                 len(data.sup_pref_basis[kind].keys()))
     assert_equal(len(r.group.caps), 0)
     assert_almost_equal(r.group.qty, data.sup_rhs[kind])
+
+def test_reactor():
+    p = spmod.Point({'f_rxtr': 1})
+    kind = data.Reactors.f_mox
+    r = spmod.Reactor(kind, p)
+    assem_qty = data.core_vol_frac[kind] * data.fuel_unit / \
+        data.n_assemblies[kind]
+    
+    # assembly groups
+    gid = 5
+    obs_grp = r.gen_group(gid)
+    assert_equal(obs_grp.id, gid)
+    assert_equal(len(obs_grp.caps), 1)
+    assert_almost_equal(obs_grp.caps[0], assem_qty)
+    assert_equal(len(obs_grp.cap_dirs), 1)
+    assert_equal(obs_grp.cap_dirs[0], False)
+
+    # assembly node
+    nid = 4
+    excl_id = 2
+    obs_node = r.gen_node(nid, gid, excl_id)
+    assert_equal(obs_node.qty, assem_qty)
+    assert_equal(obs_node.gid, gid)
+    assert_equal(obs_node.id, nid)
+    assert_equal(obs_node.excl_id, excl_id)
+    assert_equal(obs_node.kind, False)
+    assert_equal(obs_node.excl, True)
+
+def test_assembly_breakdown():
+    p = spmod.Point({'d_th': [0.7, 0.2, 0.1]})
+    

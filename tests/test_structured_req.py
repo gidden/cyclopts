@@ -91,8 +91,8 @@ def test_th_reactors():
     assert_equal(r.kind, kind)
     assert_equal(len(r.nodes), 1)
     assert_equal(len(r.commod_to_nodes[data.Commodities.uox]), 1)
-    assert_almost_equal(r.group.caps[0], data.fuel_unit * data.request_qtys[kind])
-    assert_almost_equal(r.group.qty, data.fuel_unit * data.request_qtys[kind])
+    assert_almost_equal(r.group.caps[0], data.fuel_unit * data.core_vol_frac[kind])
+    assert_almost_equal(r.group.qty, data.fuel_unit * data.core_vol_frac[kind])
 
     # thox recycle, thermal, n assemblies
     p = spmod.Point({'f_fc': 2, 'f_rxtr': 1, 'f_mox': 0.25})
@@ -112,8 +112,8 @@ def test_th_reactors():
                  int(math.ceil(0.25 * data.n_assemblies[kind])))
     assert_almost_equal(r.commod_to_nodes[data.Commodities.f_mox][0].qty,
                         base_qty * 0.07)    
-    assert_almost_equal(r.group.caps[0], data.fuel_unit * data.request_qtys[kind])
-    assert_almost_equal(r.group.qty, data.fuel_unit * data.request_qtys[kind])
+    assert_almost_equal(r.group.caps[0], data.fuel_unit * data.core_vol_frac[kind])
+    assert_almost_equal(r.group.qty, data.fuel_unit * data.core_vol_frac[kind])
 
 def test_mox_reactors():
     gids = cyctools.Incrementer()
@@ -127,8 +127,8 @@ def test_mox_reactors():
     assert_equal(len(r.commod_to_nodes[data.Commodities.uox]), 1)
     assert_equal(len(r.commod_to_nodes[data.Commodities.th_mox]), 1)
     assert_equal(len(r.commod_to_nodes[data.Commodities.f_mox]), 1)
-    assert_almost_equal(r.group.caps[0], data.fuel_unit * data.request_qtys[kind])
-    assert_almost_equal(r.group.qty, data.fuel_unit * data.request_qtys[kind])
+    assert_almost_equal(r.group.caps[0], data.fuel_unit * data.core_vol_frac[kind])
+    assert_almost_equal(r.group.qty, data.fuel_unit * data.core_vol_frac[kind])
 
     # thox recycle, mox, n assemblies
     p = spmod.Point({'f_fc': 2, 'f_rxtr': 1})
@@ -152,8 +152,8 @@ def test_mox_reactors():
                  data.n_assemblies[kind])    
     assert_almost_equal(r.commod_to_nodes[data.Commodities.f_thox][0].qty,
                         base_qty * 0.2)
-    assert_almost_equal(r.group.caps[0], data.fuel_unit * data.request_qtys[kind])
-    assert_almost_equal(r.group.qty, data.fuel_unit * data.request_qtys[kind])
+    assert_almost_equal(r.group.caps[0], data.fuel_unit * data.core_vol_frac[kind])
+    assert_almost_equal(r.group.qty, data.fuel_unit * data.core_vol_frac[kind])
 
 def test_thox_reactors():
     gids = cyctools.Incrementer()
@@ -181,8 +181,8 @@ def test_thox_reactors():
                  data.n_assemblies[kind])    
     assert_almost_equal(r.commod_to_nodes[data.Commodities.f_thox][0].qty,
                         base_qty * 0.2)    
-    assert_almost_equal(r.group.caps[0], data.fuel_unit * data.request_qtys[kind])
-    assert_almost_equal(r.group.qty, data.fuel_unit * data.request_qtys[kind])
+    assert_almost_equal(r.group.caps[0], data.fuel_unit * data.core_vol_frac[kind])
+    assert_almost_equal(r.group.qty, data.fuel_unit * data.core_vol_frac[kind])
 
 def test_conv():
     exp = 1.33 # from wise-uranium.org/nfcue.html with assays as stated
@@ -222,7 +222,7 @@ def assert_rcoeffs_equal(arc, commod, rkind, skind, n):
     assert_array_almost_equal(arc.ucaps, r_coeffs)
 
 def assert_scoeffs_equal(arc, commod, rkind, skind, n, enr):
-    qty = data.fuel_unit * data.request_qtys[rkind] * \
+    qty = data.fuel_unit * data.core_vol_frac[rkind] * \
         data.relative_qtys[rkind][commod] / n
     s_coeffs = [data.converters[skind]['proc'](qty, enr, commod) / qty,
                 data.converters[skind]['inv'](qty, enr, commod) / qty]
