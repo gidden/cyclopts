@@ -101,6 +101,20 @@ class Requester(object):
 
 class StructuredSupply(ProblemSpecies):
     """A class representing structured supply-based exchanges species."""
+
+    @staticmethod
+    def gen_arc(aid, point, commod, rx_node_id, rxtr, reqr):
+        """generate an arc"""
+        pref = strtools.preference(data.sup_pref_basis[reqr.kind][commod], 
+                                   rxtr.loc, reqr.loc, 
+                                   point.f_loc, point.r_l_c, point.n_reg)
+        rq_coeffs = [reqr.coeff(rxtr.enr(commod), rxtr.kind, commod)] \
+            if not reqr.kind == data.Supports.repo else []
+        arc = exinst.ExArc(aid,
+                           reqr.commod_to_nodes[commod].id, rq_coeffs,
+                           rx_node_id, [1],
+                           pref)
+        return arc
     
     def __init__(self):
         super(StructuredSupply, self).__init__()
@@ -275,18 +289,6 @@ class StructuredSupply(ProblemSpecies):
             }
         return requesters
 
-    def _gen_arc(self, point, commod, rxnode, rxtr, reqr):
-        pref = strtools.preference(data.sup_pref_basis[reqr.kind][commod], 
-                                   rxtr.loc, reqr.loc, 
-                                   point.f_loc, point.r_l_c, point.n_reg)
-        rq_coeffs = [reqr.coeff(rxtr.enr(commod), rxtr.kind, commod)] \
-            if not reqr.kind == data.Supports.repo else []
-        arc = exinst.ExArc(self.arcids.next(),
-                           reqr.node.id, rq_coeffs,
-                           rxnode.id, [1],
-                           pref)
-        return arc
-
     def _gen_structure(self, point, reactors, requesters):
         grps, nodes, arcs = [], [], []
         for rx_kind, rx_ary in reactors:
@@ -301,7 +303,8 @@ class StructuredSupply(ProblemSpecies):
                         for reqr in requesters[commod]:
                             nid = self.nids.next()
                             node = rxtr.gen_node(nid, gid, excl_id)
-                            arc = self._gen_arc(commod, node, rxtr, reqr) 
+                            arc = gen_arc(self.arcids.next(), point, commod, 
+                                          nid, rxtr, reqr) 
                             nodes.append(node)
                             arcs.append(arc)
         return grps, nodes, arcs

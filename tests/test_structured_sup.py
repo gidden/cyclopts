@@ -13,6 +13,9 @@ from cyclopts.exchange_family import ResourceExchange
 from cyclopts.structured_species import data as data
 from cyclopts.structured_species import tools as strtools
 from cyclopts.problems import Solver
+import cyclopts.exchange_instance as exinst
+
+from utils import assert_cyc_equal
 
 def test_basics():
     sp = spmod.StructuredSupply()    
@@ -91,7 +94,7 @@ def test_write_point():
             assert_almost_equal(obs, exp)
     
 def test_requester():
-    p = spmod.Point({'d_th': [0.7, 0.2, 0.1]})
+    p = spmod.Point()
     gids = cyctools.Incrementer()
     nids = cyctools.Incrementer()    
 
@@ -151,21 +154,41 @@ def test_reactor():
     
     # assembly groups
     gid = 5
-    obs_grp = r.gen_group(gid)
-    assert_equal(obs_grp.id, gid)
-    assert_equal(len(obs_grp.caps), 1)
-    assert_almost_equal(obs_grp.caps[0], assem_qty)
-    assert_equal(len(obs_grp.cap_dirs), 1)
-    assert_equal(obs_grp.cap_dirs[0], False)
+    obs = r.gen_group(gid)
+    exp = exinst.ExGroup(gid, False, [assem_qty], [False])
+    assert_cyc_equal(obs, exp)
 
     # assembly node
     nid = 4
     excl_id = 2
-    obs_node = r.gen_node(nid, gid, excl_id)
-    assert_equal(obs_node.qty, assem_qty)
-    assert_equal(obs_node.gid, gid)
-    assert_equal(obs_node.id, nid)
-    assert_equal(obs_node.excl_id, excl_id)
-    assert_equal(obs_node.kind, False)
-    assert_equal(obs_node.excl, True)
+    obs = r.gen_node(nid, gid, excl_id)
+    exp = exinst.ExNode(nid, gid, False, assem_qty, True, excl_id)
+    assert_cyc_equal(obs, exp)
         
+def test_arc():
+    aid, vid = 42, 52
+    p = spmod.Point({'f_loc': 0})
+    commod = data.Commodities.f_thox
+
+    kind = data.Reactors.f_thox
+    rxtr = spmod.Reactor(kind, p)
+
+    gids = cyctools.Incrementer()
+    nids = cyctools.Incrementer()    
+    
+    kinds = [data.Supports.f_thox, data.Supports.repo,]
+    uids = [1, 4 + 1] # commod index of sup_pref_basis
+    ucaps = [[rxtr.enr(commod) / 100 * data.relative_qtys[rxtr.kind][commod]],
+             [],]
+    print(len(kinds), len(uids), len(ucaps))
+    for i in range(len(kinds)):
+        print(len(kinds), len(uids), len(ucaps))
+        uid, kind, caps = uids[i], kinds[i], ucaps[i]
+        reqr = spmod.Requester(kind, p, gids, nids)    
+        obs = spmod.StructuredSupply.gen_arc(aid, p, commod, vid, rxtr, reqr)
+        exp = exinst.ExArc(aid, 
+                           uid, caps, 
+                           vid, [1], 
+                           data.sup_pref_basis[kind][commod])
+        assert_cyc_equal(obs, exp)
+    
