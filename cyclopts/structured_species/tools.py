@@ -166,8 +166,7 @@ def assembly_breakdown(point, kind):
         diff = sum(ret) - nassems
         if diff != 0: # adjust largest amount to give exactly nassems
             ret[ret.index(max(ret))] -= diff
-    
-    return ret
+    return {data.Commodities[i]: ret[i] for i in range(len(ret))}
     
 class Reactor(object):
     """A simplified reactor model for Structured Species"""

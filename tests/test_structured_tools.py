@@ -4,6 +4,7 @@ from nose.tools import assert_equal, assert_almost_equal, assert_true, assert_fa
 
 import math
 import numpy as np
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 
 from cyclopts.structured_species import data
 
@@ -167,19 +168,34 @@ def test_assembly_breakdown():
             super(Point, self).__init__(d)
 
         def _parameters(self):
-            return {'d_f_mox': tools.Param([0., 0., 1., 0.], (np.float64, 4)),
+            return {'d_th': tools.Param([1., 0., 0.], (np.float64, 4)),
+                    'd_f_mox': tools.Param([0., 0., 1., 0.], (np.float64, 4)),
                     'f_rxtr': tools.Param(1, np.int32)}
 
     # low fidelity
-    d = {'d_f_mox': [0., 0., 1, 0.], 'f_rxtr': 0}
+    d = {'d_th': [0., 1., 0.], 
+         'd_f_mox': [0., 0., 1, 0.], 
+         'f_rxtr': 0}
     p = Point(d)
-    obs = tools.assembly_breakdown(p, data.Reactors.f_mox)
-    exp = [0, 0, 1, 0]
-    assert_equal(obs, exp)
+    obs = [tools.assembly_breakdown(p, data.Reactors.th),
+           tools.assembly_breakdown(p, data.Reactors.f_mox)]
+    exp = [[0, 1, 0], 
+           [0, 0, 1, 0]]
+    for i in range(len(exp)):
+        print(obs[i], exp[i])
+        for j in range(len(exp[i])):
+            assert_equal(obs[i][j], exp[i][j])
 
     # high fidelity    
-    d = {'d_f_mox': [0.1, 0.2, 0.6, 0.1], 'f_rxtr': 1}
+    d = {'d_th': [65., 30., 5.], 
+         'd_f_mox': [0.1, 0.2, 0.6, 0.1], 
+         'f_rxtr': 1}
     p = Point(d)
-    obs = tools.assembly_breakdown(p, data.Reactors.f_mox)
-    exp = [9, 18, 92 - 9 * 4, 9] # 92 == nassems of f_mox
-    assert_equal(obs, exp)    
+    obs = [tools.assembly_breakdown(p, data.Reactors.th),
+           tools.assembly_breakdown(p, data.Reactors.f_mox)]
+    exp = [[39 - 12 - 2, 12, 2], # 39 == nassems of th 
+           [9, 18, 92 - 9 * 4, 9]] # 92 == nassems of f_mox
+    for i in range(len(exp)):
+        print(obs[i], exp[i])
+        for j in range(len(exp[i])):
+            assert_equal(obs[i][j], exp[i][j])

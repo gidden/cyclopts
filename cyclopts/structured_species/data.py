@@ -3,6 +3,7 @@ import random
 from enum import Enum
 import numpy as np
 import math
+from collections import namedtuple
 
 import warnings
 with warnings.catch_warnings():
@@ -10,11 +11,17 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=VnVWarning)
     from pyne import enrichment
 
-class Commodities(Enum):
-    uox = 1
-    th_mox = 2
-    f_mox = 3
-    f_thox = 4
+def enum(*keys):
+    """return an enumerator object"""
+    return namedtuple('Enum', keys)(*range(len(keys)))
+
+# class Commodities(Enum):
+#     uox = 1
+#     th_mox = 2
+#     f_mox = 3
+#     f_thox = 4
+
+Commodities = enum('uox', 'th_mox', 'f_mox', 'f_thox')
 
 class Reactors(Enum):    
     th = 1

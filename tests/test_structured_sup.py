@@ -168,8 +168,4 @@ def test_reactor():
     assert_equal(obs_node.excl_id, excl_id)
     assert_equal(obs_node.kind, False)
     assert_equal(obs_node.excl, True)
-    
-def test_assembly_breakdown():
-    p = spmod.Point({'d_th': [0.7, 0.2, 0.1]})
-    
-    
+        

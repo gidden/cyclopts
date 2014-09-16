@@ -275,10 +275,6 @@ class StructuredSupply(ProblemSpecies):
             }
         return requesters
 
-    def assembly_breakdown(self, point, kind):
-        # todo: finish; commod: n assemblies
-        pass
-
     def _gen_arc(self, point, commod, rxnode, rxtr, reqr):
         pref = strtools.preference(data.sup_pref_basis[reqr.kind][commod], 
                                    rxtr.loc, reqr.loc, 
@@ -294,7 +290,7 @@ class StructuredSupply(ProblemSpecies):
     def _gen_structure(self, point, reactors, requesters):
         grps, nodes, arcs = [], [], []
         for rx_kind, rx_ary in reactors:
-            assems = self.assembly_breakdown(point, rx_kind)
+            assems = strtools.assembly_breakdown(point, rx_kind)
             for rxtr in rx_ary:
                 for commod, nassems in assems:
                     for i in range(nassems):
