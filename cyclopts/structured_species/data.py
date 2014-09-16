@@ -99,7 +99,8 @@ n_assemblies = {
 }
 
 """Relative quantity of fissile material required from supporting facilities --
-COMMODITIES.UOX requests include U-238, MOX/COMMODITIES.F_THOX requests only include fissile material."""
+COMMODITIES.UOX requests include U-238, MOX/COMMODITIES.F_THOX requests only
+include fissile material."""
 relative_qtys = {
     Reactors.th : {
         Commodities.uox : 1.0,
@@ -200,10 +201,6 @@ class RecycleInv(Converter):
     def __call__(self, qty, enr, commod=None):
         return qty * enr / 100.
 
-class RepoProc(Converter):
-    def __call__(self, qty, enr, commod=None):
-        return qty
-
 converters = {
     Supports.uox: {
         'proc': SWU(), 
@@ -220,9 +217,6 @@ converters = {
     Supports.f_thox: {
         'proc': RecycleProc(), 
         'inv': RecycleInv(),
-        },
-    Supports.repo: {
-        'proc': RepoProc(), 
         },
 }
 

@@ -79,11 +79,11 @@ class Requester(object):
             self.group = grp = exinst.ExGroup(gid, req, self.req_qty)
             commod = data.sup_to_commod[self.kind]
             rxtr = data.sup_to_rxtr[self.kind]
-            mean_enr = strtools.mean_enr(rxtr, commod)
-            grp.AddCap(self.req_qty * mean_enr * data.relative_qtys[rxtr][commod])
+            grp.AddCap(self.req_qty * strtools.mean_enr(rxtr, commod) / 100 \
+                           * data.relative_qtys[rxtr][commod])
         self._gen_nodes(point, gid, nids)
         self.loc = data.loc()
-
+        
     def _gen_nodes(self, point, gid, nids):
         self.nodes = []
         self.commod_to_nodes = {}
@@ -94,8 +94,10 @@ class Requester(object):
             self.nodes.append(node)
             self.commod_to_nodes[commod] = node
 
-    def coeffs(self, qty, enr):
-        pass
+    def coeff(self, enr, rkind, commod):
+        if self.kind == data.Supports.repo:
+            raise RuntimeError('Coeff not supported for repos')
+        return enr / 100 * data.relative_qtys[rkind][commod] 
 
 class StructuredSupply(ProblemSpecies):
     """A class representing structured supply-based exchanges species."""
@@ -281,8 +283,10 @@ class StructuredSupply(ProblemSpecies):
         pref = strtools.preference(data.sup_pref_basis[reqr.kind][commod], 
                                    rxtr.loc, reqr.loc, 
                                    point.f_loc, point.r_l_c, point.n_reg)
+        rq_coeffs = [reqr.coeff(rxtr.enr(commod), rxtr.kind, commod)] \
+            if not reqr.kind == data.Supports.repo else []
         arc = exinst.ExArc(self.arcids.next(),
-                           reqr.node.id, reqr.coeffs(rxnode.qty, rxtr.enr(commod)),
+                           reqr.node.id, rq_coeffs,
                            rxnode.id, [1],
                            pref)
         return arc

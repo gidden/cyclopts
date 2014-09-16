@@ -107,7 +107,7 @@ def test_requester():
     mean_enr = strtools.mean_enr(rxtr, commod)
     assert_almost_equal(
         r.group.caps[0], 
-        data.sup_rhs[kind] * mean_enr * data.relative_qtys[rxtr][commod])
+        data.sup_rhs[kind] * mean_enr / 100 * data.relative_qtys[rxtr][commod])
     assert_equal(r.group.cap_dirs[0], True)
     assert_almost_equal(r.group.qty, data.sup_rhs[kind])
 
@@ -120,6 +120,27 @@ def test_requester():
                  len(data.sup_pref_basis[kind].keys()))
     assert_equal(len(r.group.caps), 0)
     assert_almost_equal(r.group.qty, data.sup_rhs[kind])
+
+def test_rqr_coeff():
+    p = spmod.Point({'d_th': [0.7, 0.2, 0.1]})
+    gids = cyctools.Incrementer()
+    nids = cyctools.Incrementer()    
+    kind = data.Supports.f_mox
+    r = spmod.Requester(kind, p, gids, nids)
+
+    enrs = [4.5, 62.5,
+            62.5, 17.5,
+            62.5, 17.5,]
+    commods = [data.Commodities.uox, data.Commodities.th_mox,
+               data.Commodities.f_mox, data.Commodities.uox,
+               data.Commodities.f_thox, data.Commodities.uox,]
+    rkinds = [data.Reactors.th, data.Reactors.th, 
+              data.Reactors.f_mox, data.Reactors.f_mox, 
+              data.Reactors.f_thox, data.Reactors.f_thox,]
+    for i in range(len(enrs)):
+        enr, commod, rkind = enrs[i], commods[i], rkinds[i]
+        obs = r.coeff(enr, rkind, commod)
+        exp = enr / 100 * data.relative_qtys[rkind][commod]
 
 def test_reactor():
     p = spmod.Point({'f_rxtr': 1})
@@ -147,7 +168,8 @@ def test_reactor():
     assert_equal(obs_node.excl_id, excl_id)
     assert_equal(obs_node.kind, False)
     assert_equal(obs_node.excl, True)
-
+    
 def test_assembly_breakdown():
     p = spmod.Point({'d_th': [0.7, 0.2, 0.1]})
+    
     
