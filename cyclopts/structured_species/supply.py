@@ -365,5 +365,5 @@ class StructuredSupply(ProblemSpecies):
              [x.group for ary in requesters.values() for x in ary]))
         nodes = np.concatenate(
             (rx_nodes, 
-             [x.nodes for ary in requesters.values() for x in ary]))
+             [n for ary in requesters.values() for x in ary for n in x.nodes]))
         return groups, nodes, arcs

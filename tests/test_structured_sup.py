@@ -192,7 +192,7 @@ def test_arc():
                            data.sup_pref_basis[kind][commod])
         assert_cyc_equal(obs, exp)
     
-def test_mininmal_run():
+def test_minimal_run():
     fname = 'structured_supply_conv.py'
     base = os.path.dirname(os.path.abspath(__file__))
     fpath = os.path.join(base, 'files', fname)
@@ -208,8 +208,9 @@ def test_mininmal_run():
 
     # 4 req groups, 3 rxtr groups
     assert_equal(len(groups), 4 + 3)
-    # 4 req nodes, 3 from thermal and fmox, 2 from thox
-    assert_equal(len(nodes), 4 + 3 * 2 + 2) 
+    # 12 req nodes, 3 from thermal and fmox, 2 from thox
+    n_rq_nodes = sum((len(x) for x in data.sup_pref_basis.values()))   
+    assert_equal(len(nodes), n_rq_nodes + 3 * 2 + 2) 
     # 3 arcs to thermal and fmox, 2 to thox
     assert_equal(len(arcs), 3 * 2 + 2)
 
@@ -227,10 +228,11 @@ def test_mininmal_run():
             exp_prefs.append(data.sup_pref_basis[rq_kind][commod])
     assert_equal(obs_prefs, exp_prefs)
 
-    # solver = Solver('cbc') # segfault happens wither or not this is cbc
-    # soln = fam.run_inst((groups, nodes, arcs), solver)
+    solver = Solver('cbc') # segfault happens wither or not this is cbc
+    soln = fam.run_inst((groups, nodes, arcs), solver)
     
     # print('flows:', soln.flows)
-    # assert_almost_equal(soln.flows[0], 17500) # uox for thermal reactors
-    # assert_almost_equal(soln.flows[5], 280) # fmox for fmox reactors
-    # assert_almost_equal(soln.flows[10], 280) # fthox for fthox reactors
+    # assert_true(len(soln.flows) == len(arcs))
+    # assert_almost_equal(soln.flows[0], 17500) # thmox from thermal reactors
+    # assert_almost_equal(soln.flows[4], 280) # fmox from fmox reactors
+    # assert_almost_equal(soln.flows[6], 280) # fthox from fthox reactors
