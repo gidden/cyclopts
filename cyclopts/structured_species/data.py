@@ -15,25 +15,9 @@ def enum(*keys):
     """return an enumerator object"""
     return namedtuple('Enum', keys)(*range(len(keys)))
 
-# class Commodities(Enum):
-#     uox = 1
-#     th_mox = 2
-#     f_mox = 3
-#     f_thox = 4
-
 Commodities = enum('uox', 'th_mox', 'f_mox', 'f_thox')
-
-class Reactors(Enum):    
-    th = 1
-    f_mox = 2
-    f_thox = 3
-
-class Supports(Enum):    
-    uox = 1
-    th_mox = 2
-    f_mox = 3
-    f_thox = 4
-    repo = 5
+Reactors = enum('th', 'f_mox', 'f_thox')
+Supports = enum('uox', 'th_mox', 'f_mox', 'f_thox', 'repo')
 
 commod_to_sup = {
     Commodities.uox: Supports.uox,

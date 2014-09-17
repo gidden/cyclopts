@@ -7,7 +7,7 @@ import numpy as np
 import random
 import math
 
-from collections import OrderedDict, defaultdict, Iterable
+from collections import OrderedDict, defaultdict, Iterable, namedtuple
 
 from cyclopts import tools as cyctools
 from cyclopts import cyclopts_io as cycio
@@ -101,6 +101,27 @@ class Requester(object):
 
 class StructuredSupply(ProblemSpecies):
     """A class representing structured supply-based exchanges species."""
+
+    @staticmethod
+    def realization(point):
+        """Returns a realization of a structured supply instance given a point
+        in parameter space.
+        
+        A realization is a tuple of :
+          * a dictionary of the kind and number of each requester
+          * a dictionary of the kind and number of each reactor
+          * a dictionary of the kind of reactor to number of assemblies
+          * a dictionary of the kind of reactor to its assembly distribution
+        """
+        rxtrs = {data.Reactor[i]: n \
+                     for i, n in enumerate(strtools.reactor_breakdown(point))}
+        reqrs = {data.Supports[i]: n \
+                     for i, n in enumerate(strtools.support_breakdown(point))}
+        nassems = {data.Reactor[i]: strtools.nassems(point, data.Reactor[i])}
+        dists = {data.Reactor[i]: x \
+                     for i, x in enumerate([point.d_th, point.d_f_mox, 
+                                            point.d_f_thox])}
+        return reqrs, rxtrs, nassems, dists
 
     @staticmethod
     def gen_arc(aid, point, commod, rx_node_id, rxtr, reqr):

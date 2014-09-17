@@ -192,3 +192,33 @@ def test_arc():
                            data.sup_pref_basis[kind][commod])
         assert_cyc_equal(obs, exp)
     
+def test_mininmal_run():
+    pass
+    # fname = 'structured_supply_conv.py'
+    # base = os.path.dirname(os.path.abspath(__file__))
+    # fpath = os.path.join(base, 'files', fname)
+
+    # sp = spmod.StructuredRequest()
+    # fam = ResourceExchange()
+    # rc = cyctools.parse_rc(fpath)
+
+    # sp.read_space(rc._dict)
+    # assert_equal(sp.n_points, 1)
+    # for point in sp.points(): # there should only be one
+    #     groups, nodes, arcs = sp.gen_inst(point)
+
+    # assert_equal(len(groups), 7)
+    # assert_equal(len(nodes), 22)
+    # assert_equal(len(arcs), 11)
+
+    # obs_prefs = [a.pref for a in arcs]
+    # exp_prefs = [0.5, 1.0, 0.1, 0.1, 0.5, 1.0, 0.25, 0.1, 0.25, 0.5, 1.0]
+    # assert_equal(obs_prefs, exp_prefs)
+
+    # solver = Solver('cbc')
+    # soln = fam.run_inst((groups, nodes, arcs), solver)
+    
+    # print('flows:', soln.flows)
+    # assert_almost_equal(soln.flows[0], 17500) # uox for thermal reactors
+    # assert_almost_equal(soln.flows[5], 280) # fmox for fmox reactors
+    # assert_almost_equal(soln.flows[10], 280) # fthox for fthox reactors

@@ -538,3 +538,4 @@ def test_mininmal_run():
     assert_almost_equal(soln.flows[0], 17500) # uox for thermal reactors
     assert_almost_equal(soln.flows[5], 280) # fmox for fmox reactors
     assert_almost_equal(soln.flows[10], 280) # fthox for fthox reactors
+
