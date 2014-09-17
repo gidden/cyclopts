@@ -103,7 +103,7 @@ class StructuredSupply(ProblemSpecies):
     """A class representing structured supply-based exchanges species."""
 
     @staticmethod
-    def realization(point):
+    def pnt_to_realization(point):
         """Returns a realization of a structured supply instance given a point
         in parameter space.
         
@@ -165,11 +165,6 @@ class StructuredSupply(ProblemSpecies):
 
         # default realization is None
         self._rlztn = None
-
-    def _set_realization(self, point):
-        """set the realization known to this species instance, useful for
-        testing"""
-        self._rlztn = realization(point)
 
     @property
     def family(self):
@@ -330,7 +325,7 @@ class StructuredSupply(ProblemSpecies):
         if self._rlztn is None: 
             # this could have been set before calling gen_inst, e.g., for 
             # testing
-            self._rlztn = self._set_realization(point)
+            self._rlztn = pnt_to_realization(point)
         reactors = self._get_reactors()        
         requesters = self._get_requesters()        
 
