@@ -144,8 +144,8 @@ def assembly_roulette(fracs):
 def assembly_breakdown(point, kind):
     """Returns
     -------
-    n_uox, n_th_mox, n_f_mox, n_f_thox : tuple
-        the number of each assembly type for a reactor
+    assems : dict
+        a dictionary from commodity types to the number of assemblies
     """
     if kind == data.Reactors.th:
         fracs = point.d_th

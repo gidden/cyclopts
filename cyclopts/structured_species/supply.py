@@ -110,21 +110,17 @@ class StructuredSupply(ProblemSpecies):
         A realization is a namedtuple of :
           * reqrs: a dictionary of the kind and number of each requester
           * rxtrs: a dictionary of the kind and number of each reactor
-          * n_assems: a dictionary of the kind of reactor to number of 
-            assemblies
-          * assem_dists: a dictionary of the kind of reactor to its assembly 
-            distribution
+          * assem_dists: a dictionary of the kind of reactor to a dictionary 
+            of Commodity type to the number of assemblies of that Commodity type
         """
-        rxtrs = {data.Reactor[i]: n \
-                     for i, n in enumerate(strtools.reactor_breakdown(point))}
         reqrs = {data.Supports[i]: n \
                      for i, n in enumerate(strtools.support_breakdown(point))}
-        nassems = {data.Reactor[i]: strtools.nassems(point, data.Reactor[i])}
-        dists = {data.Reactor[i]: x \
-                     for i, x in enumerate([point.d_th, point.d_f_mox, 
-                                            point.d_f_thox])}
-        keys = ['reqrs', 'rxtrs', 'nassems', 'assem_dists']
-        return namedtuple('Realization', keys)(reqrs, rxtrs, nassems, dists)
+        rxtrs = {data.Reactor[i]: n \
+                     for i, n in enumerate(strtools.reactor_breakdown(point))}
+        dists = {k: strtools.assembly_breakdown(point, k) \
+                     for k in data.Reactors}
+        keys = ['n_reqrs', 'n_rxtrs', 'assem_dists']
+        return namedtuple('Realization', keys)(reqrs, rxtrs, dists)
 
     @staticmethod
     def gen_arc(aid, point, commod, rx_node_id, rxtr, reqr):
@@ -263,14 +259,16 @@ class StructuredSupply(ProblemSpecies):
 
     def _get_reactors(self):
         # requires self._rlztn to be set
+        rkinds = self._rlztn.n_rxtrs.keys()
+        n_assems = {k: sum(v.values()) \
+                       for k, v in self._rlztn.assem_dists.items()}
         gen_ary = lambda kind, num, n_assems: \
             np.ndarray(
             shape=(num,), 
             buffer=np.array([Reactor(kind, n_assems=n_assems) \
                                  for i in range(num)]), 
             dtype=Reactor)
-        rkinds = self._rlztn.rxtrs.keys()
-        return {k: gen_ary(k, self._rlztn.rxtrs[k], self._rlztn.nassems[k]) \
+        return {k: gen_ary(k, self._rlztn.n_rxtrs[k], n_assems[k]) \
                     for k in rkinds}
 
     def _get_requesters(self):
@@ -281,14 +279,14 @@ class StructuredSupply(ProblemSpecies):
             buffer=np.array([Requester(kind, self.gids, self.nids) \
                                  for i in range(num)]), 
             dtype=Requester)
-        return {k: gen_ary(k, v) for k, v in self._rlztn.reqrs.items()}
+        return {k: gen_ary(k, v) for k, v in self._rlztn.n_reqrs.items()}
 
     def _gen_structure(self, point, reactors, requesters):
         # requires self._rlztn to be set
         grps, nodes, arcs = [], [], []
         for rx_kind, rx_ary in reactors:
             for rxtr in rx_ary:
-                for commod, nassems in self._rlztn.nassems[rx_kind]:
+                for commod, nassems in self._rlztn.assem_dists[rx_kind].items():
                     for i in range(nassems):
                         excl_id = self.excl_ids.next()
                         gid = self.gids.next()
