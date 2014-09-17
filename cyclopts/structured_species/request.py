@@ -18,6 +18,15 @@ from cyclopts.exchange_family import ResourceExchange
 from cyclopts.structured_species import data
 from cyclopts.structured_species import tools as strtools
 
+def rxtr_commods(kind, fidelity):
+    """return a list of commodities per reactor kind and fidelity"""
+    commods = [data.Commodities.uox]
+    if fidelity > 0:
+        commods += [data.Commodities.th_mox, data.Commodities.f_mox]
+    if fidelity > 1 and kind != data.Reactors.th:
+        commods += [data.Commodities.f_thox]
+    return commods
+
 class Point(strtools.Point):
     """A container class representing a point in parameter space"""
 
@@ -76,7 +85,7 @@ class Reactor(strtools.Reactor):
         self.commod_to_nodes = defaultdict(list)
         req = True
         excl = True
-        for commod in data.rxtr_commods(self.kind, point.f_fc):
+        for commod in rxtr_commods(self.kind, point.f_fc):
             nreq = self.n_assems
             # account for less mox requests
             if self.kind == data.Reactors.th:
@@ -324,7 +333,7 @@ class StructuredRequest(ProblemSpecies):
         arcs = []
         for r_kind, r_ary in reactors.items():
             for r in r_ary:
-                for commod in data.rxtr_commods(r.kind, point.f_fc):
+                for commod in rxtr_commods(r.kind, point.f_fc):
                     for s in suppliers[data.commod_to_sup[commod]]:
                         supply = self._generate_supply(point, commod, r, s)
                         arcs.append(supply)

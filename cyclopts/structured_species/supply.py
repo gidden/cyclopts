@@ -19,6 +19,23 @@ from cyclopts.structured_species import data
 from cyclopts.structured_species import tools as strtools
 from cyclopts.structured_species import request
 
+def commod_to_reqrs(fidelity):
+    """return a mapping of commodities to requesters of those commodities"""
+    ret = defaultdict(list)
+    min_fidelities = {
+        data.Supports.th_mox: 0,
+        data.Supports.f_mox: 1,
+        data.Supports.f_thox: 2,
+        data.Supports.repo: 0,
+        }
+    for reqr, v in data.sup_pref_basis.items():
+        if not fidelity >= min_fidelities[reqr]:
+            continue
+        commods = v.keys()
+        for c in commods:
+            ret[c].append(reqr)
+    return ret
+
 class Point(strtools.Point):
     """A container class representing a point in parameter space"""
 
@@ -127,6 +144,7 @@ class StructuredSupply(ProblemSpecies):
     @staticmethod
     def gen_arc(aid, point, commod, rx_node_id, rxtr, reqr):
         """generate an arc"""
+        print(reqr.kind, commod)
         pref = strtools.preference(data.sup_pref_basis[reqr.kind][commod], 
                                    rxtr.loc, reqr.loc, 
                                    point.f_loc, point.r_l_c, point.n_reg)
@@ -301,14 +319,15 @@ class StructuredSupply(ProblemSpecies):
                         gid = self.gids.next()
                         grp = rxtr.gen_group(gid)
                         grps.append(grp)
-                        for reqr in requesters[commod]:
-                            nid = self.nids.next()
-                            node = rxtr.gen_node(nid, gid, excl_id)
-                            arc = StructuredSupply.gen_arc(
-                                self.arcids.next(), point, commod, 
-                                nid, rxtr, reqr) 
-                            nodes.append(node)
-                            arcs.append(arc)
+                        for rq_kind in self.commod_to_reqrs[commod]:
+                            for reqr in requesters[rq_kind]:
+                                nid = self.nids.next()
+                                node = rxtr.gen_node(nid, gid, excl_id)
+                                arc = StructuredSupply.gen_arc(
+                                    self.arcids.next(), point, commod, 
+                                    nid, rxtr, reqr) 
+                                nodes.append(node)
+                                arcs.append(arc)
         return grps, nodes, arcs
 
     def gen_inst(self, point):
@@ -329,18 +348,18 @@ class StructuredSupply(ProblemSpecies):
         self.gids = cyctools.Incrementer()
         self.arcids = cyctools.Incrementer()
 
+        self.commod_to_reqrs = commod_to_reqrs(point.f_fc)
+
         # species objects
         if self._rlztn is None: 
             # this could have been set before calling gen_inst, e.g., for 
             # testing
             self._rlztn = StructuredSupply.pnt_to_realization(point)
-        print(self._rlztn)
         reactors = self._get_reactors()    
-        requesters = self._get_requesters()     
+        requesters = self._get_requesters()
         
         # structure
         rx_groups, rx_nodes, arcs = self._gen_structure(point, reactors, requesters)
-        print(requesters)
         # combine groups, nodes
         groups = np.concatenate(
             (rx_groups, 
@@ -348,5 +367,4 @@ class StructuredSupply(ProblemSpecies):
         nodes = np.concatenate(
             (rx_nodes, 
              [x.nodes for ary in requesters.values() for x in ary]))
-        print(len(groups))
         return groups, nodes, arcs

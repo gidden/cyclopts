@@ -206,9 +206,12 @@ def test_mininmal_run():
     for point in sp.points(): # there should only be one
         groups, nodes, arcs = sp.gen_inst(point)
 
+    # 4 req groups, 3 rxtr groups
     assert_equal(len(groups), 4 + 3)
-    assert_equal(len(nodes), 4 + 3 * 3)
-    assert_equal(len(arcs), 3 * 3)
+    # 4 req nodes, 3 from thermal and fmox, 2 from thox
+    assert_equal(len(nodes), 4 + 3 * 2 + 2) 
+    # 3 arcs to thermal and fmox, 2 to thox
+    assert_equal(len(arcs), 3 * 2 + 2)
 
     # obs_prefs = [a.pref for a in arcs]
     # exp_prefs = [0.5, 1.0, 0.1, 0.1, 0.5, 1.0, 0.25, 0.1, 0.25, 0.5, 1.0]
