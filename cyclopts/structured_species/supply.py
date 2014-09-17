@@ -329,11 +329,13 @@ class StructuredSupply(ProblemSpecies):
 
         # structure
         rx_groups, rx_nodes, arcs = self._gen_structure(point, reactors, requesters)
-        rq_groups = [x.group for ary in requesters.values() for x in ary]
-        rq_nodes = np.concatenate([x.nodes for ary in requesters.values() \
-                                       for x in ary])
 
-        groups = np.concatenate((rx_groups, rq_groups))
-        nodes = np.concatenate((rx_nodes, rq_nodes))
+        # combine groups, nodes
+        groups = np.concatenate(
+            (rx_groups, 
+             [x.group for ary in requesters.values() for x in ary]))
+        nodes = np.concatenate(
+            (rx_nodes, 
+             [x.nodes for ary in requesters.values() for x in ary]))
 
         return groups, nodes, arcs
