@@ -69,12 +69,12 @@ def test_write_point():
         0, # f_fc
         0, # f_loc
         1, # f_mox
-        0.1, # f_repo
         0, # f_rxtr
         10, # n_reg
         1, # n_rxtr
         1, # r_inv_proc
         1, # r_l_c
+        0.1, # r_repo
         0.5, # r_s_mox
         1, # r_s_mox_uox
         0.5, # r_s_th
@@ -193,23 +193,22 @@ def test_arc():
         assert_cyc_equal(obs, exp)
     
 def test_mininmal_run():
-    pass
-    # fname = 'structured_supply_conv.py'
-    # base = os.path.dirname(os.path.abspath(__file__))
-    # fpath = os.path.join(base, 'files', fname)
+    fname = 'structured_supply_conv.py'
+    base = os.path.dirname(os.path.abspath(__file__))
+    fpath = os.path.join(base, 'files', fname)
 
-    # sp = spmod.StructuredRequest()
-    # fam = ResourceExchange()
-    # rc = cyctools.parse_rc(fpath)
+    sp = spmod.StructuredSupply()
+    fam = ResourceExchange()
+    rc = cyctools.parse_rc(fpath)
 
-    # sp.read_space(rc._dict)
-    # assert_equal(sp.n_points, 1)
-    # for point in sp.points(): # there should only be one
-    #     groups, nodes, arcs = sp.gen_inst(point)
+    sp.read_space(rc._dict)
+    assert_equal(sp.n_points, 1)
+    for point in sp.points(): # there should only be one
+        groups, nodes, arcs = sp.gen_inst(point)
 
-    # assert_equal(len(groups), 7)
-    # assert_equal(len(nodes), 22)
-    # assert_equal(len(arcs), 11)
+    assert_equal(len(groups), 4 + 3)
+    assert_equal(len(nodes), 4 + 3 * 3)
+    assert_equal(len(arcs), 3 * 3)
 
     # obs_prefs = [a.pref for a in arcs]
     # exp_prefs = [0.5, 1.0, 0.1, 0.1, 0.5, 1.0, 0.25, 0.1, 0.25, 0.5, 1.0]

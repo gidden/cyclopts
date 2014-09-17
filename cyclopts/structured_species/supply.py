@@ -28,7 +28,7 @@ class Point(strtools.Point):
                 "d_th": strtools.Param([0.67, 0.33, 0], (np.float64, 3)),
                 "d_f_mox": strtools.Param([0., 0., 1., 0.], (np.float64, 4)),
                 "d_f_thox": strtools.Param([0., 0., 0., 1.], (np.float64, 4)),
-                "f_repo": strtools.Param(0.1, np.float32),
+                "r_repo": strtools.Param(0.1, np.float32),
                 }.items(), key=lambda t: t[0]))    
     
     def __init__(self, d=None):
@@ -113,8 +113,10 @@ class StructuredSupply(ProblemSpecies):
           * assem_dists: a dictionary of the kind of reactor to a dictionary 
             of Commodity type to the number of assemblies of that Commodity type
         """
+        # skip uox support facilities
         reqrs = {data.Supports[i]: n \
-                     for i, n in enumerate(strtools.support_breakdown(point))}
+                     for i, n in enumerate(strtools.support_breakdown(point)) \
+                     if i in data.sup_pref_basis.keys()}
         rxtrs = {data.Reactors[i]: n \
                      for i, n in enumerate(strtools.reactor_breakdown(point))}
         dists = {k: strtools.assembly_breakdown(point, k) \
@@ -239,10 +241,8 @@ class StructuredSupply(ProblemSpecies):
                 if not cyctools.seq_not_str(self.space[k][0]):
                     self.space[k] = [self.space[k]]
         vals = self.space.values()
-        for args in cyctools.expand_args(vals, iter_keys=self.iter_params):
-            d = {keys[i]: args[i] for i in range(len(args))}
-            print(d)
-            yield Point(d)
+        for args in cyctools.expand_args(vals):
+            yield Point({keys[i]: args[i] for i in range(len(args))})
 
     def record_point(self, point, param_uuid, tables):
         """Parameters
@@ -293,7 +293,7 @@ class StructuredSupply(ProblemSpecies):
     def _gen_structure(self, point, reactors, requesters):
         # requires self._rlztn to be set
         grps, nodes, arcs = [], [], []
-        for rx_kind, rx_ary in reactors:
+        for rx_kind, rx_ary in reactors.items():
             for rxtr in rx_ary:
                 for commod, nassems in self._rlztn.assem_dists[rx_kind].items():
                     for i in range(nassems):
@@ -304,8 +304,9 @@ class StructuredSupply(ProblemSpecies):
                         for reqr in requesters[commod]:
                             nid = self.nids.next()
                             node = rxtr.gen_node(nid, gid, excl_id)
-                            arc = gen_arc(self.arcids.next(), point, commod, 
-                                          nid, rxtr, reqr) 
+                            arc = StructuredSupply.gen_arc(
+                                self.arcids.next(), point, commod, 
+                                nid, rxtr, reqr) 
                             nodes.append(node)
                             arcs.append(arc)
         return grps, nodes, arcs
@@ -333,12 +334,13 @@ class StructuredSupply(ProblemSpecies):
             # this could have been set before calling gen_inst, e.g., for 
             # testing
             self._rlztn = StructuredSupply.pnt_to_realization(point)
-        reactors = self._get_reactors()        
-        requesters = self._get_requesters()        
-
+        print(self._rlztn)
+        reactors = self._get_reactors()    
+        requesters = self._get_requesters()     
+        
         # structure
         rx_groups, rx_nodes, arcs = self._gen_structure(point, reactors, requesters)
-
+        print(requesters)
         # combine groups, nodes
         groups = np.concatenate(
             (rx_groups, 
@@ -346,5 +348,5 @@ class StructuredSupply(ProblemSpecies):
         nodes = np.concatenate(
             (rx_nodes, 
              [x.nodes for ary in requesters.values() for x in ary]))
-
+        print(len(groups))
         return groups, nodes, arcs
