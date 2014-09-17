@@ -100,7 +100,7 @@ def test_requester():
 
     # recycle requester
     kind = data.Supports.f_mox
-    r = spmod.Requester(kind, p, gids, nids)
+    r = spmod.Requester(kind, gids, nids)
     assert_equal(r.kind, kind)
     assert_equal(len(r.nodes), len(data.sup_pref_basis[kind].keys()))
     assert_equal(len(r.commod_to_nodes.values()), 
@@ -116,7 +116,7 @@ def test_requester():
 
     # repo requester
     kind = data.Supports.repo
-    r = spmod.Requester(kind, p, gids, nids)
+    r = spmod.Requester(kind, gids, nids)
     assert_equal(r.kind, kind)
     assert_equal(len(r.nodes), len(data.sup_pref_basis[kind].keys()))
     assert_equal(len(r.commod_to_nodes.values()), 
@@ -129,7 +129,7 @@ def test_rqr_coeff():
     gids = cyctools.Incrementer()
     nids = cyctools.Incrementer()    
     kind = data.Supports.f_mox
-    r = spmod.Requester(kind, p, gids, nids)
+    r = spmod.Requester(kind, gids, nids)
 
     enrs = [4.5, 62.5,
             62.5, 17.5,
@@ -184,7 +184,7 @@ def test_arc():
     for i in range(len(kinds)):
         print(len(kinds), len(uids), len(ucaps))
         uid, kind, caps = uids[i], kinds[i], ucaps[i]
-        reqr = spmod.Requester(kind, p, gids, nids)    
+        reqr = spmod.Requester(kind, gids, nids)    
         obs = spmod.StructuredSupply.gen_arc(aid, p, commod, vid, rxtr, reqr)
         exp = exinst.ExArc(aid, 
                            uid, caps, 

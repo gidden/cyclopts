@@ -49,8 +49,8 @@ class Point(strtools.Point):
 
 class Reactor(strtools.Reactor):
     """An extension reactor model for Structured Supply Species"""
-    def __init__(self, kind, point):
-        super(Reactor, self).__init__(kind, point)
+    def __init__(self, kind, point=None, n_assems=None):
+        super(Reactor, self).__init__(kind, point, n_assems)
         self.assem_qty = data.fuel_unit * data.core_vol_frac[self.kind] \
             / self.n_assems
 
@@ -68,7 +68,7 @@ class Reactor(strtools.Reactor):
 
 class Requester(object):
     """A simplified requester model for Structured Supply Species"""
-    def __init__(self, kind, point, gids, nids):
+    def __init__(self, kind, gids, nids):
         self.kind = kind
         self.req_qty = data.sup_rhs[self.kind]
         gid = gids.next()
@@ -81,10 +81,10 @@ class Requester(object):
             rxtr = data.sup_to_rxtr[self.kind]
             grp.AddCap(self.req_qty * strtools.mean_enr(rxtr, commod) / 100 \
                            * data.relative_qtys[rxtr][commod])
-        self._gen_nodes(point, gid, nids)
+        self._gen_nodes(gid, nids)
         self.loc = data.loc()
         
-    def _gen_nodes(self, point, gid, nids):
+    def _gen_nodes(self, gid, nids):
         self.nodes = []
         self.commod_to_nodes = {}
         req = True
@@ -107,11 +107,13 @@ class StructuredSupply(ProblemSpecies):
         """Returns a realization of a structured supply instance given a point
         in parameter space.
         
-        A realization is a tuple of :
-          * a dictionary of the kind and number of each requester
-          * a dictionary of the kind and number of each reactor
-          * a dictionary of the kind of reactor to number of assemblies
-          * a dictionary of the kind of reactor to its assembly distribution
+        A realization is a namedtuple of :
+          * reqrs: a dictionary of the kind and number of each requester
+          * rxtrs: a dictionary of the kind and number of each reactor
+          * n_assems: a dictionary of the kind of reactor to number of 
+            assemblies
+          * assem_dists: a dictionary of the kind of reactor to its assembly 
+            distribution
         """
         rxtrs = {data.Reactor[i]: n \
                      for i, n in enumerate(strtools.reactor_breakdown(point))}
@@ -121,7 +123,8 @@ class StructuredSupply(ProblemSpecies):
         dists = {data.Reactor[i]: x \
                      for i, x in enumerate([point.d_th, point.d_f_mox, 
                                             point.d_f_thox])}
-        return reqrs, rxtrs, nassems, dists
+        keys = ['reqrs', 'rxtrs', 'nassems', 'assem_dists']
+        return namedtuple('Realization', keys)(reqrs, rxtrs, nassems, dists)
 
     @staticmethod
     def gen_arc(aid, point, commod, rx_node_id, rxtr, reqr):
@@ -154,6 +157,19 @@ class StructuredSupply(ProblemSpecies):
         self._sum_dtype = np.dtype(
             [('paramid', ('str', 16)), ('family', ('str', 30))] + \
                 [(name, np.uint32) for name in facs])
+        # reset id generation
+        self.nids = cyctools.Incrementer()
+        self.excl_ids = cyctools.Incrementer()
+        self.gids = cyctools.Incrementer()
+        self.arcids = cyctools.Incrementer()
+
+        # default realization is None
+        self._rlztn = None
+
+    def _set_realization(self, point):
+        """set the realization known to this species instance, useful for
+        testing"""
+        self._rlztn = realization(point)
 
     @property
     def family(self):
@@ -226,7 +242,7 @@ class StructuredSupply(ProblemSpecies):
         vals = self.space.values()
         for args in cyctools.expand_args(vals):
             d = {keys[i]: args[i] for i in range(len(args))}
-            yield Point(d)    
+            yield Point(d)
 
     def record_point(self, point, param_uuid, tables):
         """Parameters
@@ -250,72 +266,34 @@ class StructuredSupply(ProblemSpecies):
         data += strtools.support_breakdown(point)
         tables[self.sum_tbl_name].append_data([tuple(data)])
 
-    def _get_reactors(self, point):
-        n_uox, n_mox, n_thox = strtools.reactor_breakdown(point)
-        uox_th_r = np.ndarray(
-            shape=(n_uox,), 
-            buffer=np.array([Reactor(data.Reactors.th, point) \
-                                 for i in range(n_uox)]), 
+    def _get_reactors(self):
+        # requires self._rlztn to be set
+        gen_ary = lambda kind, num, n_assems: \
+            np.ndarray(
+            shape=(num,), 
+            buffer=np.array([Reactor(kind, n_assems=n_assems) \
+                                 for i in range(num)]), 
             dtype=Reactor)
-        mox_f_r = np.ndarray(
-            shape=(n_mox,), 
-            buffer=np.array([Reactor(data.Reactors.f_mox, point) \
-                                 for i in range(n_mox)]), 
-            dtype=Reactor)
-        thox_f_r = np.ndarray(
-            shape=(n_thox,), 
-            buffer=np.array([Reactor(data.Reactors.f_thox, point) \
-                                 for i in range(n_thox)]), 
-            dtype=Reactor)
-        reactors = {
-            data.Reactors.th: uox_th_r,
-            data.Reactors.f_mox: mox_f_r,
-            data.Reactors.f_thox: thox_f_r,
-            }
-        return reactors
+        rkinds = self._rlztn.rxtrs.keys()
+        return {k: gen_ary(k, self._rlztn.rxtrs[k], self._rlztn.nassems[k]) \
+                    for k in rkinds}
 
-    def _get_requesters(self, point):
-        n_uox, n_t_mox, n_f_mox, n_f_thox, n_repo = strtools.support_breakdown(point)
-        uox_s = np.ndarray(
-            shape=(n_uox,), 
-            buffer=np.array([Requester(data.Supports.uox, point, self.gids) \
-                                 for i in range(n_uox)]), 
+    def _get_requesters(self):
+        # requires self._rlztn to be set
+        gen_ary = lambda kind, num: \
+            np.ndarray(
+            shape=(num,), 
+            buffer=np.array([Requester(kind, self.gids, self.nids) \
+                                 for i in range(num)]), 
             dtype=Requester)
-        mox_th_s = np.ndarray(
-            shape=(n_t_mox,), 
-            buffer=np.array([Requester(data.Supports.th_mox, point, self.gids) \
-                                 for i in range(n_t_mox)]), 
-            dtype=Requester)
-        mox_f_s = np.ndarray(
-            shape=(n_f_mox,), 
-            buffer=np.array([Requester(data.Supports.f_mox, point, self.gids) \
-                                 for i in range(n_f_mox)]), 
-            dtype=Requester)
-        thox_s = np.ndarray(
-            shape=(n_f_thox,), 
-            buffer=np.array([Requester(data.Supports.f_thox, point, self.gids) \
-                                 for i in range(n_f_thox)]), 
-            dtype=Requester)
-        repo_s = np.ndarray(
-            shape=(n_f_thox,), 
-            buffer=np.array([Requester(data.Supports.repo, point, self.gids) \
-                                 for i in range(n_repo)]), 
-            dtype=Requester)
-        requesters = {
-            data.Supports.uox: uox_s,
-            data.Supports.th_mox: mox_th_s,
-            data.Supports.f_mox: mox_f_s,
-            data.Supports.f_thox: thox_s,
-            data.Supports.repo: repo_s,
-            }
-        return requesters
+        return {k: gen_ary(k, v) for k, v in self._rlztn.reqrs.items()}
 
     def _gen_structure(self, point, reactors, requesters):
+        # requires self._rlztn to be set
         grps, nodes, arcs = [], [], []
         for rx_kind, rx_ary in reactors:
-            assems = strtools.assembly_breakdown(point, rx_kind)
             for rxtr in rx_ary:
-                for commod, nassems in assems:
+                for commod, nassems in self._rlztn.nassems[rx_kind]:
                     for i in range(nassems):
                         excl_id = self.excl_ids.next()
                         gid = self.gids.next()
@@ -349,14 +327,18 @@ class StructuredSupply(ProblemSpecies):
         self.arcids = cyctools.Incrementer()
 
         # species objects
-        reactors = self._get_reactors(point)        
-        requesters = self._get_requesters(point)        
+        if self._rlztn is None: 
+            # this could have been set before calling gen_inst, e.g., for 
+            # testing
+            self._rlztn = self._set_realization(point)
+        reactors = self._get_reactors()        
+        requesters = self._get_requesters()        
 
         # structure
+        rx_groups, rx_nodes, arcs = self._gen_structure(point, reactors, requesters)
         rq_groups = [x.group for ary in requesters.values() for x in ary]
         rq_nodes = np.concatenate([x.nodes for ary in requesters.values() \
                                        for x in ary])
-        rx_groups, rx_nodes, arcs = self._gen_structure(point, reactors, requesters)
 
         groups = np.concatenate((rx_groups, rq_groups))
         nodes = np.concatenate((rx_nodes, rq_nodes))
