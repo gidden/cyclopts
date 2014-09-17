@@ -231,8 +231,9 @@ def test_minimal_run():
     solver = Solver('cbc') # segfault happens wither or not this is cbc
     soln = fam.run_inst((groups, nodes, arcs), solver)
     
-    # print('flows:', soln.flows)
-    # assert_true(len(soln.flows) == len(arcs))
-    # assert_almost_equal(soln.flows[0], 17500) # thmox from thermal reactors
-    # assert_almost_equal(soln.flows[4], 280) # fmox from fmox reactors
-    # assert_almost_equal(soln.flows[6], 280) # fthox from fthox reactors
+    print('flows:', soln.flows)
+    assert_equal(len(soln.flows), len(arcs))
+    assert_almost_equal(soln.flows[0], 17500) # thmox from thermal reactors
+    assert_almost_equal(soln.flows[4], 1400) # fmox from fmox reactors
+    assert_almost_equal(soln.flows[6], 1400) # fthox from fthox reactors
+    assert_almost_equal(sum(soln.flows.values()), 17500 + 1400 * 2)
