@@ -170,10 +170,13 @@ def assembly_breakdown(point, kind):
     
 class Reactor(object):
     """A simplified reactor model for Structured Species"""
-    
-    def __init__(self, kind, point):
+
+    def __init__(self, kind, point=None, n_assems=None):
         self.kind = kind
-        self.n_assems = 1 if point.f_rxtr == 0 else data.n_assemblies[kind]        
+        if point is not None:
+            self.n_assems = 1 if point.f_rxtr == 0 else data.n_assemblies[kind]
+        elif n_assems is not None:
+            self.n_assems = n_assems
         self.enr_rnd = random.uniform(0, 1) 
         self.loc = data.loc()
 
