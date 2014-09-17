@@ -213,11 +213,21 @@ def test_mininmal_run():
     # 3 arcs to thermal and fmox, 2 to thox
     assert_equal(len(arcs), 3 * 2 + 2)
 
-    # obs_prefs = [a.pref for a in arcs]
-    # exp_prefs = [0.5, 1.0, 0.1, 0.1, 0.5, 1.0, 0.25, 0.1, 0.25, 0.5, 1.0]
-    # assert_equal(obs_prefs, exp_prefs)
+    rxtr_to_commod = {
+        data.Reactors.th: data.Commodities.th_mox,
+        data.Reactors.f_mox: data.Commodities.f_mox,
+        data.Reactors.f_thox: data.Commodities.f_thox,
+        }
 
-    # solver = Solver('cbc')
+    obs_prefs = [a.pref for a in arcs]
+    exp_prefs = []
+    for rkind in sp._rlztn.n_rxtrs.keys():
+        commod = rxtr_to_commod[rkind]
+        for rq_kind in sp.commod_to_reqrs[commod]:
+            exp_prefs.append(data.sup_pref_basis[rq_kind][commod])
+    assert_equal(obs_prefs, exp_prefs)
+
+    # solver = Solver('cbc') # segfault happens wither or not this is cbc
     # soln = fam.run_inst((groups, nodes, arcs), solver)
     
     # print('flows:', soln.flows)

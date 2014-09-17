@@ -144,7 +144,6 @@ class StructuredSupply(ProblemSpecies):
     @staticmethod
     def gen_arc(aid, point, commod, rx_node_id, rxtr, reqr):
         """generate an arc"""
-        print(reqr.kind, commod)
         pref = strtools.preference(data.sup_pref_basis[reqr.kind][commod], 
                                    rxtr.loc, reqr.loc, 
                                    point.f_loc, point.r_l_c, point.n_reg)
