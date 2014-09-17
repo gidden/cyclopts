@@ -115,7 +115,7 @@ class StructuredSupply(ProblemSpecies):
         """
         reqrs = {data.Supports[i]: n \
                      for i, n in enumerate(strtools.support_breakdown(point))}
-        rxtrs = {data.Reactor[i]: n \
+        rxtrs = {data.Reactors[i]: n \
                      for i, n in enumerate(strtools.reactor_breakdown(point))}
         dists = {k: strtools.assembly_breakdown(point, k) \
                      for k in data.Reactors}
@@ -230,9 +230,18 @@ class StructuredSupply(ProblemSpecies):
             used by this species
         """
         keys = self.space.keys()
+        for k in keys:
+            if k in self.iter_params:
+                # iterable params must be iterable
+                if not cyctools.seq_not_str(self.space[k]):
+                    raise RuntimeError('{0} entry must be a Sequence'.format(k))
+                # if they are defined as a single value, make them a sequence
+                if not cyctools.seq_not_str(self.space[k][0]):
+                    self.space[k] = [self.space[k]]
         vals = self.space.values()
-        for args in cyctools.expand_args(vals):
+        for args in cyctools.expand_args(vals, iter_keys=self.iter_params):
             d = {keys[i]: args[i] for i in range(len(args))}
+            print(d)
             yield Point(d)
 
     def record_point(self, point, param_uuid, tables):
@@ -323,7 +332,7 @@ class StructuredSupply(ProblemSpecies):
         if self._rlztn is None: 
             # this could have been set before calling gen_inst, e.g., for 
             # testing
-            self._rlztn = pnt_to_realization(point)
+            self._rlztn = StructuredSupply.pnt_to_realization(point)
         reactors = self._get_reactors()        
         requesters = self._get_requesters()        
 
