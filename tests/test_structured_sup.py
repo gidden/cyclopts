@@ -1,12 +1,14 @@
 from cyclopts.structured_species import supply as spmod
 
-from nose.tools import assert_equal, assert_almost_equal, assert_true, assert_false
+from nose.tools import assert_equal, assert_almost_equal, assert_true, \
+    assert_false, assert_greater, assert_less
 from numpy.testing import assert_array_almost_equal
 
 import uuid
 import math
 import os
 from collections import Sequence, namedtuple
+import random
 
 from cyclopts import tools as cyctools
 from cyclopts.exchange_family import ResourceExchange
@@ -256,7 +258,7 @@ def test_repository_run():
     # assembly behavior is also tested.
     sp = spmod.StructuredSupply()
     fam = ResourceExchange()
-    point = spmod.Point({'f_rxtr': 1})
+    point = spmod.Point()
     
     # info for this test
     rx_kind = data.Reactors.th
@@ -298,4 +300,75 @@ def test_repository_run():
     assert_equal(len(non_zero_flows), n_assem_for_repo)
     assert_almost_equal(sum(soln.flows.values()), n_assem_for_repo * mass_per_assem)
 
+def test_fiss_constrained_run():
+    # This test confirms that demand specified by the fissile content behaves as
+    # expected.
+    #
+    # First a seed that returns smaller that 0.5 for a sufficient number of
+    # entries in a row is determined in order to select the appropriate
+    # enrichment level for each reactor (i.e., fissile content is less than the
+    # average expected, required more batches). Then the exchange is run,
+    # expecting an excess flow.
+    sp = spmod.StructuredSupply()
+    fam = ResourceExchange()
     
+    # info for this test
+    rx_kind = data.Reactors.f_mox
+    rq_kind = data.Supports.f_mox
+    c_kind = data.Commodities.f_mox
+    mass_per_rxtr = data.fuel_unit * data.core_vol_frac[rx_kind]
+    ## this is ceil because requesters *demand* fuel, i.e., are not constrained
+    ## by it
+    n_rxtrs_for_qty = int(math.ceil(data.sup_rhs[rq_kind] / mass_per_rxtr))
+    
+    # find seed where first n reactors is less than average
+    n = n_rxtrs_for_qty
+    avg = 1.
+    seed = 0
+    # 0.4 is used rather than 0.5 because a "close" lhs was still succeeding due
+    # to rounding errors (likely in cbc)
+    while avg >= 0.4:  
+        seed += 1
+        random.seed(seed)
+        # skip every second entry, because random.random is called for enr_rnd
+        # then loc (in that order)
+        avg = sum([random.random() for i in range(2 * n)][::2]) / n
+
+    point = spmod.Point({'seed': seed, 'f_fc': 1})
+    n_rxtrs = n_rxtrs_for_qty + 1
+    print('seed', seed, 'avg', avg)
+    print('n for qty', n_rxtrs_for_qty)
+    print('mass per rxtr', mass_per_rxtr)
+    print('n rxtrs', n_rxtrs)
+
+    # instance realization
+    reqrs = {rq_kind: 1}
+    rxtrs = {rx_kind: n_rxtrs}
+    dists = {rx_kind: {c_kind: 1}}
+    keys = ['n_reqrs', 'n_rxtrs', 'assem_dists']
+    sp._rlztn = namedtuple('Realization', keys)(reqrs, rxtrs, dists)
+    groups, nodes, arcs = sp.gen_inst(point)
+
+    # 1 req groups, 1 group per rxtr
+    assert_equal(len(groups), 1 + n_rxtrs)
+    # 3 req nodes, 1 node per rxtr
+    assert_equal(len(nodes), 3 + n_rxtrs)
+    # arcs = rxtr nodes
+    assert_equal(len(arcs), n_rxtrs)
+    
+    rhs = [data.sup_rhs[rq_kind],
+           data.sup_rhs[rq_kind] * strtools.mean_enr(rx_kind, c_kind) / 100 \
+               * data.relative_qtys[rx_kind][c_kind]]
+    lhs = [[sum([mass_per_rxtr * x.ucaps[i] for x in arcs[:-1]])] for i in range(2)]
+    print('rhs', rhs, 'lhs', lhs)       
+    # check qty demand
+    assert_greater(lhs[0], rhs[0])
+    # check fiss demand
+    assert_less(lhs[1], rhs[1])
+    
+    solver = Solver('cbc')
+    soln = fam.run_inst((groups, nodes, arcs), solver)
+
+    # flow testing
+    assert_almost_equal(sum(soln.flows.values()), n_rxtrs * mass_per_rxtr)
+    # currently fails for either cbc or greedy

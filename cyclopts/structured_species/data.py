@@ -152,11 +152,11 @@ sup_pref_basis = {
 
 """support limiting values"""
 sup_rhs = {
-    Supports.uox: 3.3e6/12, # 3.3M SWU/yr / 12 months/yr
-    Supports.th_mox: 800e3/12, # 800 t/yr / 12 months/yr
-    Supports.f_mox: 800e3/12,
-    Supports.f_thox: 800e3/12,
-    Supports.repo: 575e3/12, # 575 t/yr / 12 months/yr
+    Supports.uox: 3.3e6/12., # 3.3M SWU/yr / 12 months/yr
+    Supports.th_mox: 800e3/12., # 800 t/yr / 12 months/yr
+    Supports.f_mox: 800e3/12.,
+    Supports.f_thox: 800e3/12.,
+    Supports.repo: 575e3/12., # 575 t/yr / 12 months/yr
     }
 
 class Converter(object):

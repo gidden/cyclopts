@@ -95,7 +95,7 @@ class Requester(object):
         if self.kind != data.Supports.repo:
             commod = data.sup_to_commod[self.kind]
             rxtr = data.sup_to_rxtr[self.kind]
-            grp.AddCap(self.req_qty * strtools.mean_enr(rxtr, commod) / 100 \
+            grp.AddCap(self.req_qty * strtools.mean_enr(rxtr, commod) / 100. \
                            * data.relative_qtys[rxtr][commod])
         self._gen_nodes(gid, nids)
         self.loc = data.loc()
@@ -113,7 +113,7 @@ class Requester(object):
     def coeff(self, enr, rkind, commod):
         if self.kind == data.Supports.repo:
             raise RuntimeError('Coeff not supported for repos')
-        return enr / 100 * data.relative_qtys[rkind][commod] 
+        return enr / 100. * data.relative_qtys[rkind][commod] 
 
 class StructuredSupply(ProblemSpecies):
     """A class representing structured supply-based exchanges species."""
