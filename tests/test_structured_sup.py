@@ -105,13 +105,14 @@ def test_requester():
     assert_equal(len(r.nodes), len(data.sup_pref_basis[kind].keys()))
     assert_equal(len(r.commod_to_nodes.values()), 
                  len(data.sup_pref_basis[kind].keys()))
-    assert_equal(len(r.group.caps), 1)
+    assert_equal(len(r.group.caps), 2)
     commod, rxtr = data.sup_to_commod[kind], data.sup_to_rxtr[kind]
     mean_enr = strtools.mean_enr(rxtr, commod)
-    assert_almost_equal(
-        r.group.caps[0], 
-        data.sup_rhs[kind] * mean_enr / 100 * data.relative_qtys[rxtr][commod])
-    assert_equal(r.group.cap_dirs[0], True)
+    assert_array_almost_equal(
+        r.group.caps, 
+        [data.sup_rhs[kind], 
+         data.sup_rhs[kind] * mean_enr / 100 * data.relative_qtys[rxtr][commod]])
+    assert_array_almost_equal(r.group.cap_dirs, [True, True])
     assert_almost_equal(r.group.qty, data.sup_rhs[kind])
 
     # repo requester
@@ -121,7 +122,8 @@ def test_requester():
     assert_equal(len(r.nodes), len(data.sup_pref_basis[kind].keys()))
     assert_equal(len(r.commod_to_nodes.values()), 
                  len(data.sup_pref_basis[kind].keys()))
-    assert_equal(len(r.group.caps), 0)
+    assert_equal(len(r.group.caps), 1)
+    assert_array_almost_equal(r.group.caps, [data.sup_rhs[kind]])
     assert_almost_equal(r.group.qty, data.sup_rhs[kind])
 
 def test_rqr_coeff():
@@ -178,8 +180,8 @@ def test_arc():
     
     kinds = [data.Supports.f_thox, data.Supports.repo,]
     uids = [1, 4 + 1] # commod index of sup_pref_basis
-    ucaps = [[rxtr.enr(commod) / 100 * data.relative_qtys[rxtr.kind][commod]],
-             [],]
+    ucaps = [[1., rxtr.enr(commod) / 100 * data.relative_qtys[rxtr.kind][commod]],
+             [1.],]
     print(len(kinds), len(uids), len(ucaps))
     for i in range(len(kinds)):
         print(len(kinds), len(uids), len(ucaps))
@@ -192,7 +194,14 @@ def test_arc():
                            data.sup_pref_basis[kind][commod])
         assert_cyc_equal(obs, exp)
     
-def test_minimal_run():
+def test_primary_consumer_supplier():
+    # This test confirms that for each primary supplier and consumer, a single
+    # arcs is satisfied. This test does *not* check for the repository (see
+    # below).
+    #
+    # Additionally, this test confirms that a round trip from run control file
+    # to expected flows.
+
     fname = 'structured_supply_conv.py'
     base = os.path.dirname(os.path.abspath(__file__))
     fpath = os.path.join(base, 'files', fname)
@@ -238,42 +247,55 @@ def test_minimal_run():
     assert_almost_equal(soln.flows[6], 1400) # fthox from fthox reactors
     assert_almost_equal(sum(soln.flows.values()), 17500 + 1400 * 2)
 
-def test_assembly_run():
+def test_repository_run():
+    # This test confirms that flows to a constrainted repository behave as
+    # expected.
+    #
+    # Because reactor core sizes are determined via the data module, the number
+    # of reactors must be increased to reach capacity; however, multiple
+    # assembly behavior is also tested.
     sp = spmod.StructuredSupply()
     fam = ResourceExchange()
     point = spmod.Point({'f_rxtr': 1})
     
-    assem_per_rxtr = data.n_assemblies[data.Reactors.th]
-    mass_per_assem = data.fuel_unit * data.core_vol_frac[data.Reactors.th] \
-        / assem_per_rxtr
-    th_mox_cap = data.sup_rhs[data.Supports.th_mox]
-    repo_cap = data.sup_rhs[data.Supports.repo]
+    # info for this test
+    rx_kind = data.Reactors.th
+    assem_per_rxtr = data.n_assemblies[rx_kind]
+    mass_per_assem = data.fuel_unit * data.core_vol_frac[rx_kind] \
+        / assem_per_rxtr    
+    ## this is ceil because requesters *demand* fuel, i.e., are not constrained
+    ## by it
+    n_assem_for_repo = int(math.ceil(data.sup_rhs[data.Supports.repo] \
+                                         / mass_per_assem))
+    n_rxtrs = n_assem_for_repo / assem_per_rxtr + 1 # explicit int div
+    print('mass per assem', mass_per_assem)
+    print('assems per rxtr', assem_per_rxtr)
+    print('n for repo', n_assem_for_repo)
+    print('n rxtrs', n_rxtrs)
 
-    n_assem_cap = int(math.floor(th_mox_cap / mass_per_assem)) + \
-        int(math.floor(repo_cap / mass_per_assem))
-    n_rxtrs = int(math.ceil(n_assem_cap / assem_per_rxtr))
-    n_assem_supply = n_rxtrs * assem_per_rxtr 
-    print(n_rxtrs)
     # instance realization
-    reqrs = {data.Supports.th_mox: 1, data.Supports.repo: 1}
-    rxtrs = {data.Reactors.th: n_rxtrs}
-    dists = {data.Reactors.th: {
-            data.Commodities.th_mox: assem_per_rxtr}}
+    reqrs = {data.Supports.repo: 1}
+    rxtrs = {rx_kind: n_rxtrs}
+    dists = {rx_kind: {data.Commodities.th_mox: assem_per_rxtr}}
     keys = ['n_reqrs', 'n_rxtrs', 'assem_dists']
     sp._rlztn = namedtuple('Realization', keys)(reqrs, rxtrs, dists)
     groups, nodes, arcs = sp.gen_inst(point)
 
-    # 2 req groups, nassems rxtr groups
-    assert_equal(len(groups), 2 + n_assem_supply)
-    # 7 req nodes, 2 * n_assems rxtr nodes
-    assert_equal(len(nodes), 7 + 2 * n_assem_supply) 
+    # 1 req groups, nassems rxtr groups
+    assert_equal(len(groups), 1 + n_rxtrs * assem_per_rxtr)
+    # 4 req nodes, 2 * n_assems rxtr nodes
+    assert_equal(len(nodes), 4 + n_rxtrs * assem_per_rxtr) 
     # arcs = rxtr nodes
-    assert_equal(len(arcs), 2 * n_assem_supply)
+    assert_equal(len(arcs), n_rxtrs * assem_per_rxtr)
     solver = Solver('cbc')
     soln = fam.run_inst((groups, nodes, arcs), solver)
-    
+
+    # flow testing (a little overkill, maybe)
     assert_equal(len(soln.flows), len(arcs))
-    assert_almost_equal(
-        sum(soln.flows.values()), n_assem_cap * mass_per_assem)
+    non_zero_flows = [x for _, x in soln.flows.items() if x > 0]
+    for i in range(len(non_zero_flows)):
+        assert_almost_equal(non_zero_flows[i], mass_per_assem)
+    assert_equal(len(non_zero_flows), n_assem_for_repo)
+    assert_almost_equal(sum(soln.flows.values()), n_assem_for_repo * mass_per_assem)
 
     

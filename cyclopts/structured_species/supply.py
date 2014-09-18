@@ -90,10 +90,9 @@ class Requester(object):
         self.req_qty = data.sup_rhs[self.kind]
         gid = gids.next()
         req = True
-        if self.kind == data.Supports.repo:
-            self.group = grp = exinst.ExGroup(gid, req, self.req_qty)
-        else:
-            self.group = grp = exinst.ExGroup(gid, req, self.req_qty)
+        self.group = grp = exinst.ExGroup(gid, req, self.req_qty)
+        grp.AddCap(self.req_qty)
+        if self.kind != data.Supports.repo:
             commod = data.sup_to_commod[self.kind]
             rxtr = data.sup_to_rxtr[self.kind]
             grp.AddCap(self.req_qty * strtools.mean_enr(rxtr, commod) / 100 \
@@ -147,8 +146,9 @@ class StructuredSupply(ProblemSpecies):
         pref = strtools.preference(data.sup_pref_basis[reqr.kind][commod], 
                                    rxtr.loc, reqr.loc, 
                                    point.f_loc, point.r_l_c, point.n_reg)
-        rq_coeffs = [reqr.coeff(rxtr.enr(commod), rxtr.kind, commod)] \
-            if not reqr.kind == data.Supports.repo else []
+        # unit capacity for total mass constraint first
+        rq_coeffs = [1., reqr.coeff(rxtr.enr(commod), rxtr.kind, commod)] \
+            if not reqr.kind == data.Supports.repo else [1.]
         arc = exinst.ExArc(aid,
                            reqr.commod_to_nodes[commod].id, rq_coeffs,
                            rx_node_id, [1],
@@ -319,6 +319,8 @@ class StructuredSupply(ProblemSpecies):
                         grp = rxtr.gen_group(gid)
                         grps.append(grp)
                         for rq_kind in self.commod_to_reqrs[commod]:
+                            if rq_kind not in requesters:
+                                continue
                             for reqr in requesters[rq_kind]:
                                 nid = self.nids.next()
                                 node = rxtr.gen_node(nid, gid, excl_id)
