@@ -6,7 +6,7 @@ from numpy.testing import assert_array_almost_equal
 import uuid
 import math
 import os
-from collections import Sequence
+from collections import Sequence, namedtuple
 
 from cyclopts import tools as cyctools
 from cyclopts.exchange_family import ResourceExchange
@@ -228,7 +228,7 @@ def test_minimal_run():
             exp_prefs.append(data.sup_pref_basis[rq_kind][commod])
     assert_equal(obs_prefs, exp_prefs)
 
-    solver = Solver('cbc') # segfault happens wither or not this is cbc
+    solver = Solver('cbc')
     soln = fam.run_inst((groups, nodes, arcs), solver)
     
     print('flows:', soln.flows)
@@ -237,3 +237,43 @@ def test_minimal_run():
     assert_almost_equal(soln.flows[4], 1400) # fmox from fmox reactors
     assert_almost_equal(soln.flows[6], 1400) # fthox from fthox reactors
     assert_almost_equal(sum(soln.flows.values()), 17500 + 1400 * 2)
+
+def test_assembly_run():
+    sp = spmod.StructuredSupply()
+    fam = ResourceExchange()
+    point = spmod.Point({'f_rxtr': 1})
+    
+    assem_per_rxtr = data.n_assemblies[data.Reactors.th]
+    mass_per_assem = data.fuel_unit * data.core_vol_frac[data.Reactors.th] \
+        / assem_per_rxtr
+    th_mox_cap = data.sup_rhs[data.Supports.th_mox]
+    repo_cap = data.sup_rhs[data.Supports.repo]
+
+    n_assem_cap = int(math.floor(th_mox_cap / mass_per_assem)) + \
+        int(math.floor(repo_cap / mass_per_assem))
+    n_rxtrs = int(math.ceil(n_assem_cap / assem_per_rxtr))
+    n_assem_supply = n_rxtrs * assem_per_rxtr 
+    print(n_rxtrs)
+    # instance realization
+    reqrs = {data.Supports.th_mox: 1, data.Supports.repo: 1}
+    rxtrs = {data.Reactors.th: n_rxtrs}
+    dists = {data.Reactors.th: {
+            data.Commodities.th_mox: assem_per_rxtr}}
+    keys = ['n_reqrs', 'n_rxtrs', 'assem_dists']
+    sp._rlztn = namedtuple('Realization', keys)(reqrs, rxtrs, dists)
+    groups, nodes, arcs = sp.gen_inst(point)
+
+    # 2 req groups, nassems rxtr groups
+    assert_equal(len(groups), 2 + n_assem_supply)
+    # 7 req nodes, 2 * n_assems rxtr nodes
+    assert_equal(len(nodes), 7 + 2 * n_assem_supply) 
+    # arcs = rxtr nodes
+    assert_equal(len(arcs), 2 * n_assem_supply)
+    solver = Solver('cbc')
+    soln = fam.run_inst((groups, nodes, arcs), solver)
+    
+    assert_equal(len(soln.flows), len(arcs))
+    assert_almost_equal(
+        sum(soln.flows.values()), n_assem_cap * mass_per_assem)
+
+    
