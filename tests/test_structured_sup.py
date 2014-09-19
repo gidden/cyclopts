@@ -281,7 +281,7 @@ def test_repository_run():
     dists = {rx_kind: {data.Commodities.th_mox: assem_per_rxtr}}
     keys = ['n_reqrs', 'n_rxtrs', 'assem_dists']
     sp._rlztn = namedtuple('Realization', keys)(reqrs, rxtrs, dists)
-    groups, nodes, arcs = sp.gen_inst(point)
+    groups, nodes, arcs = sp.gen_inst(point, reset_rltzn=False)
 
     # 1 req groups, nassems rxtr groups
     assert_equal(len(groups), 1 + n_rxtrs * assem_per_rxtr)
@@ -347,7 +347,7 @@ def test_fiss_constrained_run():
     dists = {rx_kind: {c_kind: 1}}
     keys = ['n_reqrs', 'n_rxtrs', 'assem_dists']
     sp._rlztn = namedtuple('Realization', keys)(reqrs, rxtrs, dists)
-    groups, nodes, arcs = sp.gen_inst(point)
+    groups, nodes, arcs = sp.gen_inst(point, reset_rltzn=False)
 
     # 1 req groups, 1 group per rxtr
     assert_equal(len(groups), 1 + n_rxtrs)

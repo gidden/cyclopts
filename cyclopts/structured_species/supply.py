@@ -250,6 +250,7 @@ class StructuredSupply(ProblemSpecies):
         """
         keys = self.space.keys()
         for k in keys:
+            print(self.space[k])
             if k in self.iter_params:
                 # iterable params must be iterable
                 if not cyctools.seq_not_str(self.space[k]):
@@ -259,7 +260,9 @@ class StructuredSupply(ProblemSpecies):
                     self.space[k] = [self.space[k]]
         vals = self.space.values()
         for args in cyctools.expand_args(vals):
-            yield Point({keys[i]: args[i] for i in range(len(args))})
+            d = {keys[i]: args[i] for i in range(len(args))}
+            print('d', d)
+            yield Point(d)    
 
     def record_point(self, point, param_uuid, tables):
         """Parameters
@@ -331,11 +334,13 @@ class StructuredSupply(ProblemSpecies):
                                 arcs.append(arc)
         return grps, nodes, arcs
 
-    def gen_inst(self, point):
+    def gen_inst(self, point, reset_rltzn=True):
         """Parameters
         ----------
         point :  structured_species.Point
             A representation of a point in parameter space
+        reset_rltzn : bool, optional
+            Reset the internal realization
            
         Returns
         -------
@@ -343,6 +348,7 @@ class StructuredSupply(ProblemSpecies):
             A representation of a problem instance to be used by this species' 
             family
         """            
+        print('nrxtr', point.n_rxtr)
         # reset id generation
         self.nids = cyctools.Incrementer()
         self.excl_ids = cyctools.Incrementer()
@@ -352,7 +358,7 @@ class StructuredSupply(ProblemSpecies):
         self.commod_to_reqrs = commod_to_reqrs(point.f_fc)
 
         # species objects
-        if self._rlztn is None: 
+        if self._rlztn is None or reset_rltzn: 
             # this could have been set before calling gen_inst, e.g., for 
             # testing
             self._rlztn = StructuredSupply.pnt_to_realization(point)
@@ -368,4 +374,5 @@ class StructuredSupply(ProblemSpecies):
         nodes = np.concatenate(
             (rx_nodes, 
              [n for ary in requesters.values() for x in ary for n in x.nodes]))
+
         return groups, nodes, arcs
