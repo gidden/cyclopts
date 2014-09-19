@@ -1,7 +1,7 @@
 from cyclopts.structured_species import supply as spmod
 
-from nose.tools import assert_equal, assert_almost_equal, assert_true, \
-    assert_false, assert_greater, assert_less
+from nose.tools import assert_equal, assert_not_equal, assert_almost_equal, \
+    assert_true, assert_false, assert_greater, assert_less
 from numpy.testing import assert_array_almost_equal
 
 import uuid
@@ -249,6 +249,38 @@ def test_primary_consumer_supplier():
     assert_almost_equal(soln.flows[6], 1400) # fthox from fthox reactors
     assert_almost_equal(sum(soln.flows.values()), 17500 + 1400 * 2)
 
+def test_rlztn_reset():
+    sp = spmod.StructuredSupply()
+    fam = ResourceExchange()
+    one_rxtr_exp = 1
+    other_rxtr_exp = 42
+
+    point = spmod.Point()
+    _ = sp.gen_inst(point)
+    r1 = sp._rlztn
+    assert_equal(one_rxtr_exp, r1.n_rxtrs[0])
+    
+    _ = sp.gen_inst(point)
+    r2 = sp._rlztn
+    print('r1', r1.n_rxtrs)
+    assert_equal(one_rxtr_exp, r2.n_rxtrs[0])
+    point = spmod.Point({'n_rxtr': 42})
+    
+    _ = sp.gen_inst(point, reset_rlztn=False)
+    r3 = sp._rlztn
+    assert_equal(one_rxtr_exp, r3.n_rxtrs[0]) # the original bug
+    
+    point = spmod.Point()
+    _ = sp.gen_inst(point)
+    r4 = sp._rlztn
+    assert_equal(one_rxtr_exp, r4.n_rxtrs[0])
+    
+    point = spmod.Point({'n_rxtr': 42})
+    _ = sp.gen_inst(point)
+    r5 = sp._rlztn
+    print('r5', r5.n_rxtrs)
+    assert_equal(other_rxtr_exp, r5.n_rxtrs[0]) # bug fixed
+    
 def test_repository_run():
     # This test confirms that flows to a constrainted repository behave as
     # expected.
@@ -281,7 +313,7 @@ def test_repository_run():
     dists = {rx_kind: {data.Commodities.th_mox: assem_per_rxtr}}
     keys = ['n_reqrs', 'n_rxtrs', 'assem_dists']
     sp._rlztn = namedtuple('Realization', keys)(reqrs, rxtrs, dists)
-    groups, nodes, arcs = sp.gen_inst(point, reset_rltzn=False)
+    groups, nodes, arcs = sp.gen_inst(point, reset_rlztn=False)
 
     # 1 req groups, nassems rxtr groups
     assert_equal(len(groups), 1 + n_rxtrs * assem_per_rxtr)
@@ -347,7 +379,7 @@ def test_fiss_constrained_run():
     dists = {rx_kind: {c_kind: 1}}
     keys = ['n_reqrs', 'n_rxtrs', 'assem_dists']
     sp._rlztn = namedtuple('Realization', keys)(reqrs, rxtrs, dists)
-    groups, nodes, arcs = sp.gen_inst(point, reset_rltzn=False)
+    groups, nodes, arcs = sp.gen_inst(point, reset_rlztn=False)
 
     # 1 req groups, 1 group per rxtr
     assert_equal(len(groups), 1 + n_rxtrs)

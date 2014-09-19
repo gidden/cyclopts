@@ -250,7 +250,6 @@ class StructuredSupply(ProblemSpecies):
         """
         keys = self.space.keys()
         for k in keys:
-            print(self.space[k])
             if k in self.iter_params:
                 # iterable params must be iterable
                 if not cyctools.seq_not_str(self.space[k]):
@@ -261,7 +260,6 @@ class StructuredSupply(ProblemSpecies):
         vals = self.space.values()
         for args in cyctools.expand_args(vals):
             d = {keys[i]: args[i] for i in range(len(args))}
-            print('d', d)
             yield Point(d)    
 
     def record_point(self, point, param_uuid, tables):
@@ -334,7 +332,7 @@ class StructuredSupply(ProblemSpecies):
                                 arcs.append(arc)
         return grps, nodes, arcs
 
-    def gen_inst(self, point, reset_rltzn=True):
+    def gen_inst(self, point, reset_rlztn=True):
         """Parameters
         ----------
         point :  structured_species.Point
@@ -348,7 +346,6 @@ class StructuredSupply(ProblemSpecies):
             A representation of a problem instance to be used by this species' 
             family
         """            
-        print('nrxtr', point.n_rxtr)
         # reset id generation
         self.nids = cyctools.Incrementer()
         self.excl_ids = cyctools.Incrementer()
@@ -358,7 +355,7 @@ class StructuredSupply(ProblemSpecies):
         self.commod_to_reqrs = commod_to_reqrs(point.f_fc)
 
         # species objects
-        if self._rlztn is None or reset_rltzn: 
+        if self._rlztn is None or reset_rlztn: 
             # this could have been set before calling gen_inst, e.g., for 
             # testing
             self._rlztn = StructuredSupply.pnt_to_realization(point)
