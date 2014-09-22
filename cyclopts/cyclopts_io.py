@@ -9,6 +9,7 @@ import datetime
 
 import cyclopts
 import cyclopts.tools as tools
+import cyclopts.analysis as analysis
         
 class Table(object):
     """A thin wrapper for a PyTables Table to be used by Cyclopts.
@@ -166,7 +167,17 @@ class ResultTable(Table):
                     cyclopts.__version__, 
                     datetime.datetime.now().isoformat(' '),
                     )])
+
+class PathMap(analysis.PathMap):
+    """A simple container class for mapping columns to Hdf5 paths
+    for the Results table"""
+    
+    def __init__(self, col):
+        super(PathMap, self).__init__(col)
         
+    @property
+    def path(self):
+        return '/Results'        
         
 class TableManager(object):
     """A managing class that performs RAII for its tables by creating them if
