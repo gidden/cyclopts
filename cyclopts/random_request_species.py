@@ -20,6 +20,7 @@ from cyclopts.exchange_family import ResourceExchange
 from cyclopts.params import Param, BoolParam, CoeffParam, SupConstrParam, \
     PARAM_CTOR_ARGS
 import cyclopts.tools as tools
+import cyclopts.analysis as analysis
 
 class RandomRequestPoint(object):
     """A container class representing a point in parameter space for
@@ -609,16 +610,54 @@ class RandomRequestBuilder(object):
         s = self.sampler
         return np.array([s.sup_constr_val.sample() * capacity \
                              for i in range(n_constr)])
+    
+class PathMap(analysis.PathMap):
+    """A simple container class for mapping columns to Hdf5 paths
+    implemented for the RandomRequest problem species"""
+    
+    def __init__(self, col):
+        super(PathMap, self).__init__(col)
+        
+    @property
+    def path(self):
+        inst = RandomRequest()
+        return '/'.join([inst.table_prefix, inst.tbl_name])
 
 class RandomRequest(ProblemSpecies):
     """A problem species for random (non-fuel cycle specific) reactor request
     exchanges."""
 
+    @property
+    def family(cls):
+        """Returns
+        -------
+        family : ResourceExchange
+            An instance of this species' family
+        """
+        return ResourceExchange()
+
+    @property
+    def name(cls):
+        """Returns
+        -------
+        name : string
+            The name of this species
+        """
+        return 'RandomRequest'
+
+    @property
+    def tbl_name(cls):
+        """Returns
+        -------
+        name : string
+            the output table name
+        """
+        return cls.name + 'Parameters'
+
     def __init__(self):
         super(RandomRequest, self).__init__()
         self._params_it = None
         self._n_points = None
-        self.tbl_name = 'RandomRequestParameters'
 
     def _get_param_dict(self, rc_dict):
         """Provides a dictionary of parameter names to all constructor arguments
@@ -661,24 +700,6 @@ class RandomRequest(ProblemSpecies):
         s = RandomRequestPoint()
         for k, v in params_dict.items():
             yield k, [type(getattr(s, k))(*args) for args in v]
-
-    @property
-    def family(self):
-        """Returns
-        -------
-        family : ResourceExchange
-            An instance of this species' family
-        """
-        return ResourceExchange()
-
-    @property
-    def name(self):
-        """Returns
-        -------
-        name : string
-            The name of this species
-        """
-        return 'RandomRequest'
 
     def register_tables(self, h5file, prefix):
         """Parameters

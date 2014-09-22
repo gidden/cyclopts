@@ -26,6 +26,12 @@ def test_basics():
     assert_equal(obs, exp)
     assert_true(isinstance(sp.family, ResourceExchange))
 
+    base = '/Species/StructuredSupply'
+    col, tbl = 'n_repo', 'Summary'
+    assert_equal(spmod.PathMap(col).path, base + '/' + tbl)
+    col, tbl = 'r_repo', 'Points'
+    assert_equal(spmod.PathMap(col).path, base + '/' + tbl)
+
 def test_pnt():
     p = spmod.Point({'foo': 'bar', 'n_rxtr': 100, 'd_th': [0.7, 0.2, 0.1]})
     assert_equal(p.n_rxtr, 100) # not default

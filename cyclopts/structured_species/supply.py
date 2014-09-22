@@ -14,6 +14,7 @@ from cyclopts import cyclopts_io as cycio
 import cyclopts.exchange_instance as exinst
 from cyclopts.problems import ProblemSpecies
 from cyclopts.exchange_family import ResourceExchange
+import cyclopts.analysis as analysis
 
 from cyclopts.structured_species import data
 from cyclopts.structured_species import tools as strtools
@@ -114,9 +115,60 @@ class Requester(object):
         if self.kind == data.Supports.repo:
             raise RuntimeError('Coeff not supported for repos')
         return enr / 100. * data.relative_qtys[rkind][commod] 
+        
+class PathMap(analysis.PathMap):
+    """A simple container class for mapping columns to Hdf5 paths
+    implemented for the StructuredSupply problem species"""
+    
+    def __init__(self, col):
+        super(PathMap, self).__init__(col)
+        
+    @property
+    def path(self):
+        # this is an approx. heuristic, it might need to be updated
+        inst = StructuredSupply()
+        tbl = inst.sum_tbl_name if self.col.startswith('n_') \
+            else inst.param_tbl_name
+        return '/'.join([inst.table_prefix, tbl])
 
 class StructuredSupply(ProblemSpecies):
     """A class representing structured supply-based exchanges species."""
+
+    @property
+    def family(cls):
+        """Returns
+        -------
+        family : ResourceExchange
+            An instance of this species' family
+        """
+        return ResourceExchange()        
+
+    @property
+    def name(cls):
+        """Returns
+        -------
+        name : string
+            The name of this species
+        """
+        return 'StructuredSupply'
+
+    @property
+    def param_tbl_name(cls):
+        """Returns
+        -------
+        name : string
+            The name of parameter space output table
+        """
+        return 'Points'
+
+    @property
+    def sum_tbl_name(cls):
+        """Returns
+        -------
+        name : string
+            The name of summary output table
+        """
+        return 'Summary'
 
     @staticmethod
     def pnt_to_realization(point):
@@ -157,15 +209,12 @@ class StructuredSupply(ProblemSpecies):
     
     def __init__(self):
         super(StructuredSupply, self).__init__()
-        self._family = ResourceExchange()
         self.space = None
         self._n_points = None
         # 16 bytes for uuid
-        self.param_tbl_name = 'Points'
         self._param_dtype = np.dtype(
             [('paramid', ('str', 16)), ('family', ('str', 30))] + \
                 [(name, param.dtype) for name, param in Point.parameters.items()])
-        self.sum_tbl_name = 'Summary'
         facs = ['n_r_th', 'n_r_f_mox', 'n_r_f_thox', 'n_s_uox', 'n_s_th_mox', 
                 'n_s_f_mox', 'n_s_f_thox', 'n_s_repo']
         self.iter_params = ['d_th', 'd_f_mox', 'd_f_thox']
@@ -180,24 +229,6 @@ class StructuredSupply(ProblemSpecies):
 
         # default realization is None
         self._rlztn = None
-
-    @property
-    def family(self):
-        """Returns
-        -------
-        family : ResourceExchange
-            An instance of this species' family
-        """
-        return self._family        
-
-    @property
-    def name(self):
-        """Returns
-        -------
-        name : string
-            The name of this species
-        """
-        return 'StructuredSupply'
 
     def register_tables(self, h5file, prefix):
         """Parameters
@@ -275,11 +306,11 @@ class StructuredSupply(ProblemSpecies):
         uid = param_uuid.bytes if len(param_uuid.bytes) == 16 \
             else param_uuid.bytes + '\0' 
         
-        data = [param_uuid.bytes, self._family.name]
+        data = [param_uuid.bytes, self.family.name]
         data += [getattr(point, k) for k in Point.parameters.keys()]
         tables[self.param_tbl_name].append_data([tuple(data)])
         
-        data = [param_uuid.bytes, self._family.name]
+        data = [param_uuid.bytes, self.family.name]
         data += strtools.reactor_breakdown(point)
         data += strtools.support_breakdown(point)
         tables[self.sum_tbl_name].append_data([tuple(data)])

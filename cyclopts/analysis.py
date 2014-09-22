@@ -10,6 +10,40 @@ def imarkers():
 def icolors():
     return iter(['g', 'b', 'r', 'm', 'c', 'y'])
 
+class PathMap(object):
+    """A simple container class for mapping columns to Hdf5 paths"""
+    
+    def __init__(self, col):
+        self.col = col
+        
+    @property
+    def path(self):
+        """Subclasses must implement this method to provide the path to the
+        column name"""
+        raise NotImplementedError
+
+def grab_data(h5file, path, col, matching):
+    """Grabs data in a path matching parameters
+    
+    Parameters
+    ----------
+    h5file : PyTables HDF5 File handle
+    path : str
+        the path to the appropriate table
+    col : str
+        the target column name
+    matching : tuple
+        a tuple of col name and data to match
+
+    Returns
+    -------
+    data : list
+        a list of corresponding data in the same order as provided in matching
+    """
+    h5node = h5file.get_node(path)
+    data = {x[matching[0]]: x[col] for x in h5node.iterrows()}
+    data = [v for k, v in vals.items() if k in matching[1]]
+    return data
 
 def plot_xy(props, xhandle, yvals):
     vals = {x['instid']: x[xhandle] for x in props.iterrows()}

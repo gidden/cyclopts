@@ -9,6 +9,7 @@ from cyclopts.problems import ProblemFamily
 import cyclopts.cyclopts_io as cycio
 import cyclopts.tools as tools
 import cyclopts.exchange_instance as exinst
+import cyclopts.analysis as analysis
 
 _N_CAPS_MAX = 4
 
@@ -75,6 +76,18 @@ _dtypes = {
         ]),
     }
 
+def column_to_table(col):
+    """return the table in which the column resides"""
+    blacklist = ['paramid', 'instid', 'species', 'solnid']
+    if col in blacklist:
+        raise RuntimeError('Ambiguous column name.')
+    tbl = None
+    for tbl, dt in _dtypes.items():
+        if col in dt.fields.keys():
+            tbl = _tbl_names[tbl]
+            break
+    return tbl
+
 # these functions must be kept up to date with cyclopts.instance
 def grp_tpl(instid, obj):    
     return(instid.bytes, 
@@ -104,14 +117,23 @@ def prop_tpl(instid, paramid, species, groups, nodes, arcs):
     return (paramid.bytes, instid.bytes, species, len(arcs), nu_grps, nv_grps, 
             nu_nodes, nv_nodes, nconstr, excl_frac)
 
+class PathMap(analysis.PathMap):
+    """A simple container class for mapping columns to Hdf5 paths
+    implemented for the ResourceExchange problem family"""
+    
+    def __init__(self, col):
+        super(PathMap, self).__init__(col)
+        
+    @property
+    def path(self):
+        return '/'.join([ResourceExchange().table_prefix, 
+                         column_to_table(self.col)])
+
 class ResourceExchange(ProblemFamily):
     """A class representing families of resource exchange problems."""
-
-    def __init__(self):
-        super(ResourceExchange, self).__init__()
-
+    
     @property
-    def name(self):
+    def name(cls):
         """
         Returns
         -------
@@ -121,7 +143,7 @@ class ResourceExchange(ProblemFamily):
         return 'ResourceExchange'
 
     @property
-    def property_table_name(self):
+    def property_table_name(cls):
         """
         Returns
         -------
@@ -129,6 +151,9 @@ class ResourceExchange(ProblemFamily):
             The name of this family's instance property table
         """
         return _tbl_names['properties']
+    
+    def __init__(self):
+        super(ResourceExchange, self).__init__()
 
     def register_tables(self, h5file, prefix):
         """Parameters
@@ -147,7 +172,7 @@ class ResourceExchange(ProblemFamily):
                             '/'.join([prefix, _tbl_names[x]]), 
                             _dtypes[x]) for x in _tbl_names.keys()]
 
-    def record_inst(self, inst, inst_uuid, param_uuid, species, tables):
+    def record_inst(cls, inst, inst_uuid, param_uuid, species, tables):
         """Parameters
         ----------
         inst : tuple of lists of ExGroups, ExNodes, and ExArgs

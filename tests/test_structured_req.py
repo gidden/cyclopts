@@ -31,6 +31,12 @@ def test_basics():
     
     assert_true(isinstance(sp.family, ResourceExchange))
 
+    base = '/Species/StructuredRequest'
+    col, tbl = 'n_r_th', 'Summary'
+    assert_equal(spmod.PathMap(col).path, base + '/' + tbl)
+    col, tbl = 'f_inv_proc', 'Points'
+    assert_equal(spmod.PathMap(col).path, base + '/' + tbl)
+
 def test_read_space():
     space = {'n_rxtr': [100], 'f_fc': range(3)}
     sp = spmod.StructuredRequest()

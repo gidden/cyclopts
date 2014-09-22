@@ -1,5 +1,5 @@
 from cyclopts.random_request_species import RandomRequest, RandomRequestPoint, \
-    RandomRequestBuilder
+    RandomRequestBuilder, PathMap
 
 import numpy as np
 import os
@@ -28,6 +28,10 @@ def test_basics():
     for p in sp.points():
         i += 1
     assert_equal(i, 5)
+
+    base = '/Species/RandomRequest'
+    col, tbl = 'n_request_avg', 'RandomRequestParameters'
+    assert_equal(PathMap(col).path, base + '/' + tbl)
     
 def invalid_rr_builder():
     s = RandomRequestPoint()

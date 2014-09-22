@@ -1,4 +1,4 @@
-from cyclopts.exchange_family import ResourceExchange
+from cyclopts.exchange_family import ResourceExchange, PathMap
 from cyclopts import exchange_family
 
 import numpy as np
@@ -19,6 +19,14 @@ from utils import assert_cyc_equal
 def test_basics():
     fam = ResourceExchange()
     assert_equal(fam.name, 'ResourceExchange')
+    
+    base = '/Family/ResourceExchange'
+    col, tbl = 'pref_flow', 'ExchangeInstSolutionProperties'
+    assert_equal(PathMap(col).path, base + '/' + tbl)
+    col, tbl = 'flow', 'ExchangeInstSolutions'
+    assert_equal(PathMap(col).path, base + '/' + tbl)
+    col, tbl = 'n_arcs', 'ExchangeInstProperties'
+    assert_equal(PathMap(col).path, base + '/' + tbl)
 
 """This tests all possible features of a resource exchange graph generated using
 a Cyclopts instance:

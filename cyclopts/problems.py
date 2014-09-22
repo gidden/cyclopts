@@ -10,11 +10,13 @@ class ProblemFamily(object):
     structure.
     """
 
-    def __init__(self):
-        pass
+    @property            
+    def table_prefix(cls):
+        """Returns the HDF5 group location for tables of this family"""
+        return '/{0}/{1}'.format('Family', cls.name)
 
     @property
-    def name(self):
+    def name(cls):
         """Derived classes should implement this function, returning the name of
         the family
                
@@ -26,12 +28,7 @@ class ProblemFamily(object):
         raise NotImplementedError
 
     @property            
-    def table_prefix(self):
-        """Returns the HDF5 group location for tables of this family"""
-        return '/{0}/{1}'.format('Family', self.name)
-
-    @property            
-    def property_table_name(self):
+    def property_table_name(cls):
         """Derived classes must implement this function and return the name of
         the table associated with aggregate instance properties
 
@@ -41,6 +38,9 @@ class ProblemFamily(object):
             The name of this family's instance property table
         """
         raise NotImplementedError
+
+    def __init__(self):
+        pass
 
     def register_tables(self, h5file, prefix):
         """Derived classes must implement this function and return their list of
@@ -137,11 +137,8 @@ class ProblemSpecies(object):
     """A class represnting species of problems that share the same parameter
     space and ProblemFamiliy."""
 
-    def __init__(self):
-        pass
-
     @property
-    def family(self):
+    def family(cls):
         """Derived classes must implement this function and return and instance
         of this species' family
        
@@ -153,7 +150,7 @@ class ProblemSpecies(object):
         raise NotImplementedError
 
     @property
-    def name(self):
+    def name(cls):
         """Derived classes should implement this function, returning the name of
         the species
                
@@ -165,9 +162,12 @@ class ProblemSpecies(object):
         raise NotImplementedError
 
     @property            
-    def table_prefix(self):
+    def table_prefix(cls):
         """Returns the HDF5 group location for tables of this species"""
-        return '/{0}/{1}'.format('Species', self.name)
+        return '/{0}/{1}'.format('Species', cls.name)
+
+    def __init__(self):
+        pass
 
     def register_tables(self, h5file, prefix):
         """Derived classes must implement this function and return their list of
