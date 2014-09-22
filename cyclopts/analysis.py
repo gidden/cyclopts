@@ -43,8 +43,9 @@ def grab_data(h5file, path, col, matching=None):
 
     Returns
     -------
-    data : list
-        a list of corresponding data in the same order as provided in matching
+    data : list, dict, other
+        if a matching is provided, a dictionary from the instance id to the
+        data value is returned, otherwise a list of all column values is given
     """
     h5node = h5file.get_node(path)
     if matching is None:
@@ -52,7 +53,7 @@ def grab_data(h5file, path, col, matching=None):
     else:
         data = []
         scol, search = matching
-        data = [x[col] for x in h5node.iterrows() if x[scol] in search]
+        data = {x['instid']: x[col] for x in h5node.iterrows() if x[scol] in search}
     return data
 
 def multi_scatter(x, ys):
@@ -60,16 +61,22 @@ def multi_scatter(x, ys):
     
     Parameters
     ----------
-    x : array-like
+    x : array-like of tuples of instids and values
         x values
     ys : dict
-        dictionary of labels to y values
+        dictionary of labels to instid, tuple y values 
     """
     c_it = icolors()
     m_it = imarkers()
     fig, ax = plt.subplots()
+    keys = x.keys()
+    vals = x.values()
     for l, y in ys.items():
-         ax.scatter(x, y, c=c_it.next(), marker=m_it.next(), label=l)    
+         ax.scatter(vals, [y[k] for k in keys], c=c_it.next(), marker=m_it.next(), label=l)    
+    ax.set_xlim(0, max(vals))
+    ax.set_ylim(0)
+    ax.get_xaxis().get_major_formatter().set_powerlimits((0, 1))
+    ax.get_yaxis().get_major_formatter().set_powerlimits((0, 1))    
     return ax    
 
 def plot_xy(props, xhandle, yvals):
