@@ -13,9 +13,10 @@ import numpy as np
 from numpy.testing import assert_array_equal
 import paramiko as pm
 import warnings
+from collections import defaultdict
 
 import nose
-from nose.tools import assert_equal, assert_true
+from nose.tools import assert_equal, assert_true, assert_almost_equal
 
 from utils import timeout, TimeoutError
 
@@ -36,11 +37,17 @@ def test_exec():
     path = '/Results'
     h5node = h5file.get_node(path)
     assert_equal(h5node.nrows, ninst * len(solvers.split()))
+    objs = defaultdict(dict)
     for row in h5node.iterrows():
-        assert_true(row['objective'] > 0)
-        assert_true(row['time'] > 0)
+        objs[row['instid']][row['solver']] = [row['objective']]
     h5file.close()
     
+    # check that all solvers get the same answer
+    for iid, solvers in objs.items():
+        skey = 'greedy'
+        for solver, soln in solvers.items():
+            assert_almost_equal(soln, solvers[skey])
+            
     if os.path.exists(db):
         os.remove(db)
 
