@@ -172,7 +172,7 @@ class PathMap(analysis.PathMap):
     """A simple container class for mapping columns to Hdf5 paths
     for the Results table"""
     
-    def __init__(self, col):
+    def __init__(self, col=None):
         super(PathMap, self).__init__(col)
         
     @property

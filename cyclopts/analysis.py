@@ -13,7 +13,12 @@ def icolors():
 class PathMap(object):
     """A simple container class for mapping columns to Hdf5 paths"""
     
-    def __init__(self, col):
+    def __init__(self, col=None):
+        """Parameters
+        ----------
+        col : str
+            the column name
+        """
         self.col = col
         
     @property
@@ -22,7 +27,7 @@ class PathMap(object):
         column name"""
         raise NotImplementedError
 
-def grab_data(h5file, path, col, matching):
+def grab_data(h5file, path, col, matching=None):
     """Grabs data in a path matching parameters
     
     Parameters
@@ -32,8 +37,9 @@ def grab_data(h5file, path, col, matching):
         the path to the appropriate table
     col : str
         the target column name
-    matching : tuple
-        a tuple of col name and data to match
+    matching : tuple, optional
+        a tuple of col name and data to match, if no match is given, all column
+        values will be returned
 
     Returns
     -------
@@ -41,9 +47,30 @@ def grab_data(h5file, path, col, matching):
         a list of corresponding data in the same order as provided in matching
     """
     h5node = h5file.get_node(path)
-    data = {x[matching[0]]: x[col] for x in h5node.iterrows()}
-    data = [v for k, v in vals.items() if k in matching[1]]
+    if matching is None:
+        data = [x[col] for x in h5node.iterrows()]
+    else:
+        data = []
+        scol, search = matching
+        data = [x[col] for x in h5node.iterrows() if x[scol] in search]
     return data
+
+def multi_scatter(x, ys):
+    """returns a plot object with multiple y values
+    
+    Parameters
+    ----------
+    x : array-like
+        x values
+    ys : dict
+        dictionary of labels to y values
+    """
+    c_it = icolors()
+    m_it = imarkers()
+    fig, ax = plt.subplots()
+    for l, y in ys.items():
+         ax.scatter(x, y, c=c_it.next(), marker=m_it.next(), label=l)    
+    return ax    
 
 def plot_xy(props, xhandle, yvals):
     vals = {x['instid']: x[xhandle] for x in props.iterrows()}
