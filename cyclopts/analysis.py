@@ -2,14 +2,45 @@ import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.lines as lines
+from matplotlib.colors import colorConverter
 import sys
 from collections import defaultdict
+from pylab import asarray
 
 def imarkers():
     return iter(['x', 's', 'o', 'v', '^', '+'])
 
 def icolors():
     return iter(['g', 'b', 'r', 'm', 'c', 'y'])
+
+def ipastels():
+    for color in icolors():
+        yield pastel(color)
+
+#taken from pyplot_examples.py
+def pastel(color, weight=1.75):
+    """Color to pastel"""
+    rgb = asarray(colorConverter.to_rgb(color))
+    # scale color
+    maxc = max(rgb)
+    if maxc < 1.0 and maxc > 0:
+        # scale color
+        scale = 1.0 / maxc
+        rgb = rgb * scale
+    # now decrease saturation
+    total = sum(rgb)
+    slack = 0
+    for x in rgb:
+        slack += 1.0 - x
+
+    # want to increase weight from total to weight
+    # pick x s.t.  slack * x == weight - total
+    # x = (weight - total) / slack
+    x = (weight - total) / slack
+
+    rgb = [c + (x * (1.0-c)) for c in rgb]
+
+    return rgb
 
 class PathMap(object):
     """A simple container class for mapping columns to Hdf5 paths"""
@@ -106,7 +137,7 @@ def param_to_iids(h5file, fam_path, sp_path, col):
             ret[p].update(pid_to_iids[pid])
     return ret
 
-def multi_scatter(x, ys, ax=None):
+def multi_scatter(x, ys, colors=None, ax=None):
     """returns a plot object with multiple y values
     
     Parameters
@@ -115,7 +146,9 @@ def multi_scatter(x, ys, ax=None):
         x values
     ys : dict
         dictionary of labels to instid, tuple y values
-    ax : pyplot.axis
+    colors : array-like, optional
+        array of colors to use
+    ax : pyplot.axis, optional
         an axis on which to plot
     
     Return
@@ -123,14 +156,13 @@ def multi_scatter(x, ys, ax=None):
     ax : pyplot.axis
         the plotted axis
     """
-    c_it = icolors()
-    m_it = imarkers()
+    c_it = icolors() if colors is None else iter(colors)
     if ax is None:
         fig, ax = plt.subplots()
     keys = x.keys()
     vals = x.values()
     for l, y in ys.items():
-         ax.scatter(vals, [y[k] for k in keys], c=c_it.next(), marker=m_it.next(), label=l)    
+         ax.scatter(vals, [y[k] for k in keys], c=c_it.next(), label=l)    
     ax.set_xlim(0, max(vals))
     ax.set_ylim(0)
     if (max(vals) > 1e2):
