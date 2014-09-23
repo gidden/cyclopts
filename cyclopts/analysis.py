@@ -56,7 +56,7 @@ def grab_data(h5file, path, col, matching=None):
         data = {x['instid']: x[col] for x in h5node.iterrows() if x[scol] in search}
     return data
 
-def multi_scatter(x, ys):
+def multi_scatter(x, ys, ax=None):
     """returns a plot object with multiple y values
     
     Parameters
@@ -64,19 +64,29 @@ def multi_scatter(x, ys):
     x : array-like of tuples of instids and values
         x values
     ys : dict
-        dictionary of labels to instid, tuple y values 
+        dictionary of labels to instid, tuple y values
+    ax : pyplot.axis
+        an axis on which to plot
+    
+    Return
+    ------
+    ax : pyplot.axis
+        the plotted axis
     """
     c_it = icolors()
     m_it = imarkers()
-    fig, ax = plt.subplots()
+    if ax is None:
+        fig, ax = plt.subplots()
     keys = x.keys()
     vals = x.values()
     for l, y in ys.items():
          ax.scatter(vals, [y[k] for k in keys], c=c_it.next(), marker=m_it.next(), label=l)    
     ax.set_xlim(0, max(vals))
     ax.set_ylim(0)
-    ax.get_xaxis().get_major_formatter().set_powerlimits((0, 1))
-    ax.get_yaxis().get_major_formatter().set_powerlimits((0, 1))    
+    if (max(vals) > 1e2):
+        ax.get_xaxis().get_major_formatter().set_powerlimits((0, 1))
+    if (max([max(y) for y in ys.values()]) > 1e2):
+        ax.get_yaxis().get_major_formatter().set_powerlimits((0, 1))    
     return ax    
 
 def plot_xy(props, xhandle, yvals):
