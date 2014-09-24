@@ -51,9 +51,9 @@ def region(loc, n_reg=1):
     """assumes loc is on [0, 1]"""
     return int(math.floor(n_reg * loc))
 
-def preference(base_pref, r_loc, s_loc, loc_fidelity=0, ratio=1., n_reg=1):
-    """returns the preference between a requester and supplier for a commodity"""
-    commod_pref = base_pref
+def loc_pref(r_loc, s_loc, loc_fidelity=0, n_reg=1):
+    """returns the location-based preference between a requester and supplier
+    for a commodity"""
     loc_pref = 0
 
     if loc_fidelity > 0: # at least coarse
@@ -64,7 +64,7 @@ def preference(base_pref, r_loc, s_loc, loc_fidelity=0, ratio=1., n_reg=1):
     if loc_fidelity > 1: # fine
         loc_pref = (loc_pref + math.exp(-np.abs(r_loc - s_loc))) / 2
 
-    return commod_pref + ratio * loc_pref
+    return loc_pref
 
 def reactor_breakdown(point):
     """Returns

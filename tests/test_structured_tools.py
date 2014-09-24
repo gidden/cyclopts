@@ -15,21 +15,21 @@ def test_region():
     assert_equal(tools.region(0.72, n_reg=10), 7)
 
 def test_pref():
-    base, rloc, sloc, n_reg, ratio = 0.5, 0.42, 0.72, 5, 0.33
+    rloc, sloc, n_reg = 0.42, 0.72, 5
     
     fidelity = 0
-    obs = tools.preference(base, rloc, sloc, fidelity, ratio, n_reg)
-    exp = base
+    obs = tools.loc_pref(rloc, sloc, fidelity, n_reg)
+    exp = 0
     assert_equal(obs, exp)
 
     fidelity = 1
-    obs = tools.preference(base, rloc, sloc, fidelity, ratio, n_reg)
-    exp = base + ratio * math.exp(-1)
+    obs = tools.loc_pref(rloc, sloc, fidelity, n_reg)
+    exp = math.exp(-1)
     assert_almost_equal(obs, exp)
 
     fidelity = 2
-    obs = tools.preference(base, rloc, sloc, fidelity, ratio, n_reg)
-    exp = base + ratio * (math.exp(-1) + math.exp(rloc - sloc)) / 2
+    obs = tools.loc_pref(rloc, sloc, fidelity, n_reg)
+    exp = (math.exp(-1) + math.exp(rloc - sloc)) / 2
     assert_almost_equal(obs, exp)
 
 def test_pnt():    

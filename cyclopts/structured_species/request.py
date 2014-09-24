@@ -333,9 +333,9 @@ class StructuredRequest(ProblemSpecies):
     def _generate_supply(self, point, commod, requester, supplier):
         r = requester
         s = supplier
-        pref = strtools.preference(data.rxtr_pref_basis[r.kind][commod], 
-                                   r.loc, s.loc, 
-                                   point.f_loc, point.r_l_c, point.n_reg)
+        commod_pref = data.rxtr_pref_basis[r.kind][commod]
+        loc_pref = strtools.loc_pref(r.loc, s.loc, point.f_loc, point.n_reg)
+        pref = commod_pref + loc_pref * point.r_l_c
         rnodes = r.commod_to_nodes[commod]
         arcs = []
         enr = r.enr(commod)

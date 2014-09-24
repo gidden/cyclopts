@@ -195,9 +195,9 @@ class StructuredSupply(ProblemSpecies):
     @staticmethod
     def gen_arc(aid, point, commod, rx_node_id, rxtr, reqr):
         """generate an arc"""
-        pref = strtools.preference(data.sup_pref_basis[reqr.kind][commod], 
-                                   rxtr.loc, reqr.loc, 
-                                   point.f_loc, point.r_l_c, point.n_reg)
+        commod_pref = data.sup_pref_basis[reqr.kind][commod]
+        loc_pref = strtools.loc_pref(rxtr.loc, reqr.loc, point.f_loc, point.n_reg)
+        pref = commod_pref + loc_pref * point.r_l_c
         # unit capacity for total mass constraint first
         rq_coeffs = [1., reqr.coeff(rxtr.enr(commod), rxtr.kind, commod)] \
             if not reqr.kind == data.Supports.repo else [1.]
