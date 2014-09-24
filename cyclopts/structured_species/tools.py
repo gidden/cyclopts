@@ -35,7 +35,6 @@ class Point(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-
 def mean_enr(rxtr, commod):
     """the mean enrichment for a reactor and commodity"""
     return np.mean(data.enr_ranges[rxtr][commod])
@@ -187,3 +186,9 @@ class Reactor(object):
 
     def coeffs(self, commod):
         return [1 / data.relative_qtys[self.kind][commod]]
+
+"""Structured Arc Table Members"""
+arc_tbl_name = "Arcs"
+arc_tbl_dtype = np.dtype(
+    [('instid', ('str', 16)), ('arcid', np.uint32), 
+     ('pref_c', np.float32), ('pref_l', np.float32)])

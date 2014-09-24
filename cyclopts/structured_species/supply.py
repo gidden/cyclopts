@@ -193,11 +193,14 @@ class StructuredSupply(ProblemSpecies):
         return namedtuple('Realization', keys)(reqrs, rxtrs, dists)
 
     @staticmethod
-    def gen_arc(aid, point, commod, rx_node_id, rxtr, reqr):
+    def gen_arc(aid, point, commod, rx_node_id, rxtr, reqr, instid=None, tables=None):
         """generate an arc"""
         commod_pref = data.sup_pref_basis[reqr.kind][commod]
         loc_pref = strtools.loc_pref(rxtr.loc, reqr.loc, point.f_loc, point.n_reg)
         pref = commod_pref + loc_pref * point.r_l_c
+        if tables is not None:
+            tables[strtools.arc_tbl_name].append_data([
+                    (instid.bytes, aid, commod_pref, loc_pref)])
         # unit capacity for total mass constraint first
         rq_coeffs = [1., reqr.coeff(rxtr.enr(commod), rxtr.kind, commod)] \
             if not reqr.kind == data.Supports.repo else [1.]
@@ -226,6 +229,8 @@ class StructuredSupply(ProblemSpecies):
         self.excl_ids = cyctools.Incrementer()
         self.gids = cyctools.Incrementer()
         self.arcids = cyctools.Incrementer()
+        self.instid = None
+        self.tables = None
 
         # default realization is None
         self._rlztn = None
@@ -246,7 +251,9 @@ class StructuredSupply(ProblemSpecies):
         return [cycio.Table(h5file, '/'.join([prefix, self.param_tbl_name]), 
                             self._param_dtype),
                 cycio.Table(h5file, '/'.join([prefix, self.sum_tbl_name]), 
-                            self._sum_dtype)]
+                            self._sum_dtype),
+                cycio.Table(h5file, '/'.join([prefix, strtools.arc_tbl_name]), 
+                            strtools.arc_tbl_dtype),]
 
     def read_space(self, space_dict):
         """Parameters
@@ -358,16 +365,20 @@ class StructuredSupply(ProblemSpecies):
                                 node = rxtr.gen_node(nid, gid, excl_id)
                                 arc = StructuredSupply.gen_arc(
                                     self.arcids.next(), point, commod, 
-                                    nid, rxtr, reqr) 
+                                    nid, rxtr, reqr, self.instid, self.tables) 
                                 nodes.append(node)
                                 arcs.append(arc)
         return grps, nodes, arcs
 
-    def gen_inst(self, point, reset_rlztn=True):
+    def gen_inst(self, point, instid=None, tables=None, reset_rlztn=True):
         """Parameters
         ----------
         point :  structured_species.Point
             A representation of a point in parameter space
+        instid : uuid, optional
+            the id for the instance
+        tables : list of cyclopts_io.Table, optional
+            The tables that can be written to
         reset_rltzn : bool, optional
             Reset the internal realization
            
@@ -382,9 +393,10 @@ class StructuredSupply(ProblemSpecies):
         self.excl_ids = cyctools.Incrementer()
         self.gids = cyctools.Incrementer()
         self.arcids = cyctools.Incrementer()
-
+        self.instid = instid
+        self.tables = tables
         self.commod_to_reqrs = commod_to_reqrs(point.f_fc)
-
+        
         # species objects
         if self._rlztn is None or reset_rlztn: 
             # this could have been set before calling gen_inst, e.g., for 

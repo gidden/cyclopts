@@ -51,7 +51,7 @@ def test_read_space():
 
 def test_write_point():    
     sp = spmod.StructuredRequest()
-    param_tbl, sum_tbl = sp.register_tables(None, 'foo')
+    param_tbl, sum_tbl, arc_tbl = sp.register_tables(None, 'foo')
     uid = uuid.uuid4()
     p = spmod.Point({'n_rxtr': 100})
     sp.record_point(p, uid, {sp.param_tbl_name: param_tbl, sp.sum_tbl_name: sum_tbl})

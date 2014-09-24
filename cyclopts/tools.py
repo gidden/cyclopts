@@ -516,7 +516,7 @@ def conv_insts(fam, fam_tables, sp, sp_tables, ninst=1, update_freq=100, verbose
         sp.record_point(point, param_uuid, sp_tables)
         for i in range(ninst):
             inst_uuid = uuid.uuid4()
-            inst = sp.gen_inst(point)
+            inst = sp.gen_inst(point, inst_uuid, sp_tables)
             fam.record_inst(inst, inst_uuid, param_uuid, sp.name, 
                             fam_tables)
             if n % update_freq == 0:

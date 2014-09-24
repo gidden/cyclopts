@@ -769,12 +769,16 @@ class RandomRequest(ProblemSpecies):
         tables[self.tbl_name].append_data(
             [point.export_h5(param_uuid, self.family.name)])
         
-    def gen_inst(self, point):
+    def gen_inst(self, point, insid=None, tables=None):
         """Parameters
         ----------
         point :  RandomRequestPoint
             A representation of a point in parameter space
-           
+        instid : uuid
+            the id for the instance, optional
+        tables : list of cyclopts_io.Table
+            The tables that can be written to
+        
         Returns
         -------
         inst : tuple of lists of ExGroups, ExNodes, and ExArgs

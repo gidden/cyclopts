@@ -238,7 +238,7 @@ class ProblemSpecies(object):
         """
         raise NotImplementedError
 
-    def gen_inst(self, point):
+    def gen_inst(self, point, instid=None, tables=None):
         """Derived classes must implement this function, returning a
         representation of a problem instance.
         
@@ -246,7 +246,11 @@ class ProblemSpecies(object):
         ----------
         point : tuple or other
             A representation of a point in parameter space
-           
+        instid : uuid
+            the id for the instance, optional
+        tables : list of cyclopts_io.Table, optional
+            The tables that can be written to
+        
         Returns
         -------
         inst : tuple or other

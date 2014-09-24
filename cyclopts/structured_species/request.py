@@ -195,6 +195,8 @@ class StructuredRequest(ProblemSpecies):
         self.nids = cyctools.Incrementer()
         self.gids = cyctools.Incrementer()
         self.arcids = cyctools.Incrementer()
+        self.instid = None
+        self.tables = None
 
     def register_tables(self, h5file, prefix):
         """Parameters
@@ -212,7 +214,9 @@ class StructuredRequest(ProblemSpecies):
         return [cycio.Table(h5file, '/'.join([prefix, self.param_tbl_name]), 
                             self._param_dtype),
                 cycio.Table(h5file, '/'.join([prefix, self.sum_tbl_name]), 
-                            self._sum_dtype)]
+                            self._sum_dtype),
+                cycio.Table(h5file, '/'.join([prefix, strtools.arc_tbl_name]), 
+                            strtools.arc_tbl_dtype),]
 
     def read_space(self, space_dict):
         """Parameters
@@ -352,6 +356,9 @@ class StructuredRequest(ProblemSpecies):
             node = exinst.ExNode(nid, s.group.id, not req, qty)
             s.nodes.append(node)
             arcid = self.arcids.next()
+            if self.tables is not None:
+                self.tables[strtools.arc_tbl_name].append_data([
+                        (self.instid.bytes, arcid, commod_pref, loc_pref)])
             #print('id', arcid, 'commod', commod, 'pref', pref)
             arcs.append(exinst.ExArc(
                     arcid,
@@ -370,11 +377,15 @@ class StructuredRequest(ProblemSpecies):
                         arcs.append(supply)
         return np.concatenate(arcs)          
 
-    def gen_inst(self, point):
+    def gen_inst(self, point, instid=None, tables=None):
         """Parameters
         ----------
         point :  structured_species.Point
             A representation of a point in parameter space
+        instid : uuid
+            the id for the instance
+        tables : list of cyclopts_io.Table
+            The tables that can be written to
            
         Returns
         -------
@@ -386,6 +397,8 @@ class StructuredRequest(ProblemSpecies):
         self.nids = cyctools.Incrementer()
         self.gids = cyctools.Incrementer()
         self.arcids = cyctools.Incrementer()
+        self.instid = instid
+        self.tables = tables
 
         # species objects
         reactors = self._get_reactors(point)        
