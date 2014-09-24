@@ -190,5 +190,5 @@ class Reactor(object):
 """Structured Arc Table Members"""
 arc_tbl_name = "Arcs"
 arc_tbl_dtype = np.dtype(
-    [('instid', ('str', 16)), ('arcid', np.uint32), 
+    [('instid', ('str', 16)), ('arcid', np.uint32), ('commod', np.uint32), 
      ('pref_c', np.float32), ('pref_l', np.float32)])

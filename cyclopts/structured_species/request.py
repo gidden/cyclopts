@@ -358,7 +358,7 @@ class StructuredRequest(ProblemSpecies):
             arcid = self.arcids.next()
             if self.tables is not None:
                 self.tables[strtools.arc_tbl_name].append_data([
-                        (self.instid.bytes, arcid, commod_pref, loc_pref)])
+                        (self.instid.bytes, arcid, commod, commod_pref, loc_pref)])
             #print('id', arcid, 'commod', commod, 'pref', pref)
             arcs.append(exinst.ExArc(
                     arcid,

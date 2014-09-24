@@ -200,7 +200,7 @@ class StructuredSupply(ProblemSpecies):
         pref = commod_pref + loc_pref * point.r_l_c
         if tables is not None:
             tables[strtools.arc_tbl_name].append_data([
-                    (instid.bytes, aid, commod_pref, loc_pref)])
+                    (instid.bytes, aid, commod, commod_pref, loc_pref)])
         # unit capacity for total mass constraint first
         rq_coeffs = [1., reqr.coeff(rxtr.enr(commod), rxtr.kind, commod)] \
             if not reqr.kind == data.Supports.repo else [1.]
