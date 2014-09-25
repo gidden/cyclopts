@@ -72,7 +72,7 @@ _dtypes = {
         ("solnid", ('str', 16)), # 16 bytes for uuid
         ("instid", ('str', 16)), # 16 bytes for uuid
         ("pref_flow", np.float64),
-        ("cyclus_version", ('str', 12)),
+        ("cyclus_version", ('str', 20)),
         ]),
     }
 

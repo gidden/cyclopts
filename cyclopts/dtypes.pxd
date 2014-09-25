@@ -31,15 +31,8 @@ cdef extern from "Python.h":
     cdef long Py_TPFLAGS_CHECKTYPES
     cdef long Py_TPFLAGS_HEAPTYPE
 
-    ctypedef PyObject*(* getter)(PyObject *, void *)
-    ctypedef int(* setter)(PyObject *, PyObject *, void *)
-
     ctypedef struct PyGetSetDef:
         char * name
-        getter get
-        setter set
-        char * doc
-        void * closure
 
     ctypedef struct PyTypeObject:
         char * tp_name
@@ -136,9 +129,6 @@ cdef extern from "numpy/arrayobject.h":
         PyObject * fields
         PyObject * names
         PyArray_ArrFuncs * f
-
-    # description flags - #defined in C :(    
-    cdef int NPY_USE_GETITEM
 
     cdef int PyArray_RegisterDataType(PyArray_Descr *)
 

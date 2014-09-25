@@ -129,7 +129,7 @@ ExSolution Run(std::vector<ExGroup>& groups, std::vector<ExNode>& nodes,
   double dur = stop - start; // in seconds
   delete  s;
   std::string type = "ResourceExchange";
-  ExSolution soln(dur, obj, type, cyclus::version::core());
+  ExSolution soln(dur, obj, type, cyclus::version::describe());
 
   // update flows on ExArcs
   const std::vector<cyclus::Match>& matches = g.matches();
