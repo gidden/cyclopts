@@ -279,7 +279,8 @@ def ssh_test_connect(client, host, user, keyfile=None, auth=True):
         whether to prompt for a password authorization on failure
     """
     keyfile = keyfile if keyfile is not None else \
-        os.path.join(os.environ['HOME'], '.ssh','id_rsa.pub') 
+        [os.path.join(os.environ['HOME'], '.ssh','id_rsa'),
+         os.path.join(os.environ['HOME'], '.ssh','chtckey')]
 
     try:
         client.connect(host, username=user, key_filename=keyfile)

@@ -150,3 +150,10 @@ of the ``CMakeLists.txt`` file in ``cyclopts/cyclopts``.
     from cyclopts.mycpp import MyClass
     
     inst = MyClass()
+
+Remote Connections
+=============================
+
+Remote connections use the Paramiko library and automatically looks for the
+following private keys in ``~/.ssh/``: ``id_rsa`` and ``chtckey``. If either has
+no password, remote launching of Cyclopts jobs can be accomplished.
