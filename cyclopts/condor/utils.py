@@ -71,6 +71,36 @@ def _get_files(client, remotedir, localdir, re, verbose=False):
     os.remove(localtar)
     return nfiles
 
+def exec_remote_cmd_with_retry(client, cmd, t_sleep=5, verbose=False, retry=5, 
+                               error=IOError):
+    """A wrapper function around paramiko.client.exec_command that helps with
+    error handling and returns only once the command has been completed.
+
+    Parameters
+    ----------
+    client : paramiko ssh client
+        the client to use
+    cmd : str
+        the command to execute
+    t_sleep : float, optional
+        the amount of time to wait between querying if a job is complete
+    verbose : str, optional
+        print information about the command
+    retry : int, optional
+        the number of times to retry a command
+    error : python exception, optional
+        the exception to look for
+    """
+    if retry < 1: # bottom of recursion
+        return exec_remote_cmd(client, cmd, t_sleep, verbose)
+
+    try:
+        return exec_remote_cmd(client, cmd, t_sleep, verbose)
+    except error:
+        retry -= 1
+    time.sleep(t_sleep)
+    exec_remote_cmd_with_retry(client, cmd, t_sleep, verbose, retry, verbose)
+
 def exec_remote_cmd(client, cmd, t_sleep=5, verbose=False):
     """A wrapper function around paramiko.client.exec_command that helps with
     error handling and returns only once the command has been completed.
