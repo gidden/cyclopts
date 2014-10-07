@@ -2,7 +2,7 @@ from cyclopts import main
 from cyclopts import tools
 from cyclopts import condor
 
-from cyclopts.random_request_species import RandomRequest
+from cyclopts.structured_species.request import StructuredRequest
 
 import os
 import shutil
@@ -16,18 +16,19 @@ import warnings
 from collections import defaultdict
 
 import nose
-from nose.tools import assert_equal, assert_true, assert_almost_equal
+from nose.tools import assert_equal, assert_true, assert_almost_equal, \
+    assert_less_equal
 
 from utils import timeout, TimeoutError
 
 def test_exec():
     infile = 'obs_valid_in.h5'
-    ninst = 5
+    ninst = 4
     
     base = os.path.dirname(os.path.abspath(__file__))
     db = os.path.join(base, "tmp_{0}.h5".format(str(uuid.uuid4())))
     shutil.copy(os.path.join(base, 'files', infile), db)
-    solvers = "greedy, clp, cbc"
+    solvers = "greedy, clp, cbc" # greedy is different for one, unsure why
     cmd = ("cyclopts exec --db={0} --family_class ResourceExchange "
            "--family_module cyclopts.exchange_family "
            "--solvers {1}").format(db, solvers)
@@ -39,14 +40,13 @@ def test_exec():
     assert_equal(h5node.nrows, ninst * len(solvers.split()))
     objs = defaultdict(dict)
     for row in h5node.iterrows():
-        objs[row['instid']][row['solver']] = [row['objective']]
+        objs[row['instid']][row['solver']] = row['objective']
     h5file.close()
     
     # check that all solvers get the same answer
     for iid, solvers in objs.items():
-        skey = 'greedy'
-        for solver, soln in solvers.items():
-            assert_almost_equal(soln, solvers[skey])
+        assert_almost_equal(solvers['cbc'], solvers['greedy'])
+        assert_less_equal(solvers['clp'], solvers['cbc'])
             
     if os.path.exists(db):
         os.remove(db)
@@ -57,15 +57,15 @@ def test_convert():
     db = os.path.join(base, "tmp_{0}.h5".format(str(uuid.uuid4())))
 
     ninst = 2
-    nvalid = 5 # visual confirmation of obs_valid.rc
+    nvalid = 4
 
     cmd = "cyclopts convert --rc {0} --db {1} -n {2}".format(rc, db, ninst)
     assert_equal(0, subprocess.call(cmd.split(), shell=(os.name == 'nt')))
     h5file = t.open_file(db, 'r')
     
-    sp = RandomRequest()
+    sp = StructuredRequest()
     path = '/'.join(['', 'Species', sp.name])
-    h5node = h5file.get_node(path, sp.tbl_name)
+    h5node = h5file.get_node(path, sp.sum_tbl_name)
     assert_equal(h5node.nrows, nvalid)
     
     fam = sp.family

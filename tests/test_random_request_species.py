@@ -20,9 +20,9 @@ def test_basics():
     assert_equal(sp.name, 'RandomRequest')
     assert_true(isinstance(sp.family, ResourceExchange))
     
-    base = os.path.dirname(os.path.abspath(__file__))
-    rc = parse_rc(os.path.join(base, 'files', 'obs_valid.rc'))
-    sp.read_space(rc._dict)
+    sp.read_space({'n_commods': {'avg': range(1, 3)},
+                   'n_supply': {'avg': range(1, 3)},
+                   'n_request': {'avg': range(1, 3)}})
     i = 0
     assert_equal(len(range(1, 3)) ** 3, sp.n_points)
     for p in sp.points():

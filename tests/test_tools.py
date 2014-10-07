@@ -40,7 +40,7 @@ class TestCombine:
         self.nsoln1 = 1
         self.out4 = '4arcs.h5'
         self.nsoln4 = 2
-        self.ninsts = 5
+        self.ninsts = 4
         self.tmpfiles = {self.out1: os.path.join(self.workdir, self.out1), 
                          self.out4: os.path.join(self.workdir, self.out4), 
                          self.cp_in: os.path.join(self.workdir, self.cp_in), 
@@ -76,12 +76,12 @@ class TestCombine:
         for f in chkfiles:
             print("checking {0}".format(f))
             db = t.open_file(f, 'r')
+            path = '/Results'
+            assert_equal(db.get_node(path).nrows, 2) # 2 runs were performed
             path = '/Family/ResourceExchange/ExchangeInstProperties'
             assert_equal(db.get_node(path).nrows, self.ninsts)
             path = '/Family/ResourceExchange/ExchangeInstSolutions'
             assert_equal(db.get_node(path).nrows, self.nsoln1 + self.nsoln4)
-            path = '/Results'
-            assert_equal(db.get_node(path).nrows, 2) # 2 runs were performed
             db.close()
 
 def test_get_obj():    
