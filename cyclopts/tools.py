@@ -314,7 +314,13 @@ def ssh_test_connect(client, host, user, keyfile=None, auth=True):
             print("finished connecting")
     return can_connect, keyfile, password
 
+def read_uuid(x):
+    """return a uuid from a stored value"""
+    x = x + '\0' if len(x) == 15 else x
+    return uuid.UUID(bytes=x)
+
 def uuidhex(bytes=bytes):
+    
     return uuid.UUID(bytes=bytes).hex
 
 def memusg(pid):
@@ -449,16 +455,13 @@ def collect_instids(h5file, path, rc=None, instids=None, colname='instid'):
             [' '.join(i) for i in \
                  itools.izip_longest(conds, ops, fillvalue='')]).strip()
         vals = [x[colname] for x in h5node.where(cond)]
-        vals = [x + '\0' if len(x) == 15 else x for x in vals]
-        instids |= set(uuid.UUID(bytes=x) for x in vals)
+        vals = [read_uuid(x) for x in vals]
+        instids |= set(vals)
         
     # if no ids, then run everything
     if len(instids) == 0:
         for row in h5node.iterrows():
-            iid = row[colname]
-            if len(iid) == 15:
-                iid += '\0'
-            instids.add(uuid.UUID(bytes=iid))
+            instids.add(read_uuid(row[colname]))
     
     return instids
 

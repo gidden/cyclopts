@@ -40,7 +40,7 @@ def exp_uuid_arcs():
         h5file = t.open_file(pth, 'r')
         path = '/Family/ResourceExchange/ExchangeInstProperties'
         tbl = h5file.get_node(path)
-        _exp_uuid_arcs = [(uuid.UUID(bytes=row['instid']).hex, row['n_arcs']) \
+        _exp_uuid_arcs = [(tools.read_uuid(row['instid']).hex, row['n_arcs']) \
                               for row in tbl.iterrows()]
         h5file.close()
     return _exp_uuid_arcs
