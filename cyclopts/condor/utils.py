@@ -96,8 +96,13 @@ def exec_remote_cmd_with_retry(client, cmd, t_sleep=5, verbose=False, retry=5,
 
     try:
         return exec_remote_cmd(client, cmd, t_sleep, verbose)
-    except error:
-        retry -= 1
+    except error as e:
+        # keep retrying if this was a classad fetching error
+        less = 0 if 'Failed to fetch ads' in e.message else 1
+        retry -= less
+    if verbose:
+        print('failed command {0}, trying again in {1} seconds'.format(
+                cmd, t_sleep))
     time.sleep(t_sleep)
     exec_remote_cmd_with_retry(client, cmd, t_sleep, verbose, retry, verbose)
 
