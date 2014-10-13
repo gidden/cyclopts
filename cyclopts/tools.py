@@ -314,12 +314,6 @@ def ssh_test_connect(client, host, user, keyfile=None, auth=True):
             print("finished connecting")
     return can_connect, keyfile, password
 
-# deprecate this
-def read_uuid(x):
-    """return a uuid from a stored value, TO BE DEPRECATED in favor of 
-    str_to_uuid"""
-    return str_to_uuid(x)
-
 def str_to_uuid(x):
     """return a uuid from a stored value, allows strings of len == 15 which is 
     missing a null-padded value"""
@@ -467,13 +461,13 @@ def collect_instids(h5file, path, rc=None, instids=None, colname='instid'):
             [' '.join(i) for i in \
                  itools.izip_longest(conds, ops, fillvalue='')]).strip()
         vals = [x[colname] for x in h5node.where(cond)]
-        vals = [read_uuid(x) for x in vals]
+        vals = [str_to_uuid(x) for x in vals]
         instids |= set(vals)
         
     # if no ids, then run everything
     if len(instids) == 0:
         for row in h5node.iterrows():
-            instids.add(read_uuid(row[colname]))
+            instids.add(str_to_uuid(row[colname]))
     
     return instids
 
