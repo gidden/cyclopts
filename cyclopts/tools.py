@@ -550,7 +550,15 @@ def cyc_members(obj):
     members = obj.__class__.__dict__.keys()
     cycfilter = lambda x: x.startswith('_') or x.endswith('_') or x[0].isupper()
     return [x for x in members if not cycfilter(x)]
-    
+
+def drive_post_process(res_tbl, fam=None, fam_tbls=None, sp=None, sp_tbls=None):
+    iid_to_sids = res_tbl.id_mapping('instid', 'solnid', many=True)
+    for iid, sids in iid_to_sids.items():
+        props = None
+        if fam is not None:
+            props = fam.post_process(iid, sids, fam_tbls)
+        if sp is not None:
+            sp.post_process(iid, sids, props, sp_tbls)
 
 # def run_insts_mp():
 #     q = mp.Queue()
