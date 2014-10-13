@@ -196,7 +196,7 @@ class TableManager(object):
         self.tables = {tbl.path.split('/')[-1]: tbl for tbl in tables}
         self.h5file = h5file
         for tbl in self.tables.values():
-            if tbl.path not in self.h5file:
+            if tbl.path not in self.h5file and self.h5file.mode is not 'r':
                 tbl.create()
 
     def __del__(self):
