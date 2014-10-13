@@ -91,20 +91,22 @@ def exec_remote_cmd_with_retry(client, cmd, t_sleep=5, verbose=False, retry=5,
     error : python exception, optional
         the exception to look for
     """
-    if retry < 1: # bottom of recursion
-        return exec_remote_cmd(client, cmd, t_sleep, verbose)
-
     try:
         return exec_remote_cmd(client, cmd, t_sleep, verbose)
     except error as e:
         # keep retrying if this was a classad fetching error
         less = 0 if 'Failed to fetch ads' in e.message else 1
         retry -= less
+        if retry < 0: # bottom of recursion
+            raise e
+
     if verbose:
         print('failed command {0}, trying again in {1} seconds'.format(
                 cmd, t_sleep))
+
     time.sleep(t_sleep)
-    exec_remote_cmd_with_retry(client, cmd, t_sleep, verbose, retry, verbose)
+    return exec_remote_cmd_with_retry(client, cmd, t_sleep, verbose, retry, 
+                                      verbose)
 
 def exec_remote_cmd(client, cmd, t_sleep=5, verbose=False):
     """A wrapper function around paramiko.client.exec_command that helps with
