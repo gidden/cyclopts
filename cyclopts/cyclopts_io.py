@@ -80,8 +80,8 @@ class Table(object):
 
         self._tbl = self.h5file.get_node(self.path)
 
-    def instid_rows(self, uuid):
-        return self._tbl.where('instid == uuid')
+    def instid_rows(self, uuid, colname='instid'):
+        return self._tbl.where('{0} == uuid'.format(colname))
 
     def append_data(self, data):
         """Appends data to the Table. If the cachesize limit is reached, data is

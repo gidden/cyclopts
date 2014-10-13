@@ -314,13 +314,25 @@ def ssh_test_connect(client, host, user, keyfile=None, auth=True):
             print("finished connecting")
     return can_connect, keyfile, password
 
+# deprecate this
 def read_uuid(x):
-    """return a uuid from a stored value"""
+    """return a uuid from a stored value, TO BE DEPRECATED in favor of 
+    str_to_uuid"""
+    str_to_uuid(x)
+
+def str_to_uuid(x):
+    """return a uuid from a stored value, allows strings of len == 15 which is 
+    missing a null-padded value"""
     x = x + '\0' if len(x) == 15 else x
-    return uuid.UUID(bytes=x)
+    return uuid.UUID(bytes=x)    
+
+def uuid_to_str(x):
+    """return a string of a uuid, needed in case the uuid is missing a null-padded value"""
+    ret = x.hex
+    ret = ret if len(ret) == 16 else ret + '\0'
+    return ret
 
 def uuidhex(bytes=bytes):
-    
     return uuid.UUID(bytes=bytes).hex
 
 def memusg(pid):
@@ -409,7 +421,7 @@ def get_obj(kind=None, rcs=None, args=None):
     
     inst = getattr(mod, cname)() 
     return inst
-
+        
 def collect_instids(h5file, path, rc=None, instids=None, colname='instid'):
     """Collects all instids as specified. 
     

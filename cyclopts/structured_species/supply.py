@@ -416,3 +416,7 @@ class StructuredSupply(ProblemSpecies):
              [n for ary in requesters.values() for x in ary for n in x.nodes]))
 
         return groups, nodes, arcs
+
+    def post_process(self, intbls, outtbls, pptbls):
+        # use str_sp.tools.post_process
+        pass

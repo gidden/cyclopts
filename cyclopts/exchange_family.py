@@ -21,6 +21,7 @@ _tbl_names = {
     "properties": "ExchangeInstProperties",
     "solutions": "ExchangeInstSolutions",    
     "solution_properties": "ExchangeInstSolutionProperties",    
+    "pp": "PostProcess",
 }
 
 # this must be kept up to date with the cyclopts.instance classes
@@ -73,6 +74,10 @@ _dtypes = {
         ("instid", ('str', 16)), # 16 bytes for uuid
         ("pref_flow", np.float64),
         ("cyclus_version", ('str', 20)),
+        ]),
+    "pp": np.dtype([
+        ("solnid", ('str', 16)), # 16 bytes for uuid
+        ("pref_flow", np.float64),
         ]),
     }
 
@@ -151,6 +156,16 @@ class ResourceExchange(ProblemFamily):
             The name of this family's instance property table
         """
         return _tbl_names['properties']
+    
+    @property
+    def pp_table_name(cls):
+        """
+        Returns
+        -------
+        name : string
+            The name of this family's instance postprocessing table
+        """
+        return _tbl_names['pp']
     
     def __init__(self):
         super(ResourceExchange, self).__init__()
@@ -281,3 +296,45 @@ class ResourceExchange(ProblemFamily):
         groups, nodes, arcs = inst
         soln = exinst.Run(groups, nodes, arcs, solver, verbose)
         return soln
+
+    def _iid_to_prefs(self, iid, tbl, narcs):
+        """return a numpy array of preferences"""
+        
+        pass
+
+    def _sid_to_flows(self, sid, tbl, narcs):
+        """return a numpy array of flows"""
+        pass
+
+    def post_process(self, instid, solnids, tbls):
+        """Perform any post processing on input and output.
+        
+        Parameters
+        ----------
+        instid : UUID of the instance to post process
+        solnids : a collection of solution UUIDs corresponding the instid 
+        tbls : tuple of tables from an input file, tables from an output file,
+               and tables from a post-processed file
+
+        Returns
+        -------
+        props : tuple or other, information to provide to species post 
+                processing
+        """
+        intbls, outtbls, pptbls = tbls
+        prop_tbl = intbls[_tbl_names["properties"]]
+        arc_tbl = intbls[_tbl_names["ExArcs"]]
+        soln_tbl = outtbls[_tbl_names["solutions"]]
+        pp_tbl = pptbls[_tbl_names["pp"]]
+
+        narcs = prop_tbl.instid_rows(tools.uuid_to_str(instid))[0]['n_arcs']
+        prefs = self._iid_to_prefs(instid, arc_tbl, narcs)
+        sid_to_flows = {}
+        data = []
+        for sid in solnids:
+            flows = self._sid_to_flows(sid, soln_tbl, narcs)
+            pref_flow = prefs * flows
+            data.append((tools.uuid_to_str(sid), pref_flow))
+            sid_to_flows[sid] = flows
+        pp_tbl.append_data(data)
+        return narcs, sid_to_flows

@@ -192,3 +192,15 @@ arc_tbl_name = "Arcs"
 arc_tbl_dtype = np.dtype(
     [('instid', ('str', 16)), ('arcid', np.uint32), ('commod', np.uint32), 
      ('pref_c', np.float32), ('pref_l', np.float32)])
+
+def post_process(intbls, outtbls, pptbls):
+    # get {instids: solnids} from outtbls
+    # for each instid:
+    #   get {arcid: commod pref} from Arcs in intbls *species*
+    #   get {arcid: loc pref} from Arcs in intbls *species*
+    #   for each solnid:
+    #     get {arcid: flow} from solutions in outtbls *Family*
+    #     add zero flows if needed
+    #     record {solnid: (commod pref _dot_ flow, loc pref _dot_ flow)}
+    # for each solnid, append_data
+    pass

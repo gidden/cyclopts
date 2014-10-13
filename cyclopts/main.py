@@ -217,6 +217,20 @@ def execute(args):
     if h5out.isopen:
         h5out.close()
 
+def post_process(args):
+    # get sp, fam
+    # get in/out/pp h5files
+    # get in/out/pp tables for sp and fam
+
+    # get {instids: solnids} from outtbls
+    ## iid_to_sids = soln_prop_tbl.mapping('instid', 'solnid', many=True)
+    # for each iid, sids in iid_to_sids.items():
+    #   fam_props = fam.post_process(iid, sids, fam_tbls)
+    #   sp.post_process(iid, sids, fam_props, sp_tbls)
+    
+    # flush all tables
+    pass
+
 def update_cde(args):
     user = args.user
     host = args.host

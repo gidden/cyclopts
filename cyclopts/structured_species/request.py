@@ -420,3 +420,7 @@ class StructuredRequest(ProblemSpecies):
         groups = np.concatenate((r_groups, s_groups))
 
         return groups, nodes, arcs
+
+    def post_process(self, intbls, outtbls, pptbls):
+        # use str_sp.tools.post_process
+        pass

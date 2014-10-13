@@ -196,4 +196,3 @@ def test_expand_args():
                (0, 1.0, 0.2), (1, 1.0, 0.2), (2, 1.0, 0.2)])
     obs = set([x for x in tools.expand_args(args)])
     assert_equal(obs, exp)
-    
