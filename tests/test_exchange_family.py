@@ -143,13 +143,21 @@ def test_run():
             assert_equal(exp_flows[id], flow)
 
 class TestExchangeIO:
+    def cleanup(self):
+        if os.path.exists(self.fname):
+            os.remove(self.fname)
+
     def setUp(self):
-        self.fname = "tmp_{0}".format(uuid.uuid4())
+        self.fname = "test_exchange_io.h5"
+        self.cleanup()
+
+        self.passed = False
         self.h5file = t.open_file(self.fname, mode='w',)
-        
+
     def tearDown(self):
         self.h5file.close()
-        #os.remove(self.fname)
+        if self.passed:
+            self.cleanup()
 
     def test_inst_roundtrip(self):
         print('test file {0}'.format(self.fname))
@@ -184,6 +192,7 @@ class TestExchangeIO:
             assert_cyc_equal(exp_nodes[i], obs_nodes[i])
         assert_equal(len(exp_arcs), len(obs_arcs))
         for i in range(len(exp_arcs)):
-            assert_cyc_equal(exp_arcs[i], obs_arcs[i])
+            assert_cyc_equal(exp_arcs[i], obs_arcs[i])        
 
         del manager        
+        self.passed = True
