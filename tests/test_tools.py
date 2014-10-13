@@ -30,6 +30,11 @@ def test_incr():
 # this can be cleaned up in the future...
 class TestCombine:
 
+    def _cleanup(self):
+        for _, f in self.tmpfiles.items():
+            if os.path.exists(f):
+                os.remove(f)
+
     def setup(self):
         base = os.path.dirname(os.path.abspath(__file__))
         self.workdir = os.path.join(base, 'files')
@@ -45,13 +50,13 @@ class TestCombine:
                          self.out4: os.path.join(self.workdir, self.out4), 
                          self.cp_in: os.path.join(self.workdir, self.cp_in), 
                          self.tmp_out: os.path.join(self.workdir, self.tmp_out)}
+        self._cleanup()
+        self.passed = False
         
     def teardown(self):
         # teardown
-        for _, f in self.tmpfiles.items():
-            if os.path.exists(f):
-                os.remove(f)
-
+        if self.passed:
+            self._cleanup()
 
     def test_combine(self):    
         cmd = exec_cmd.format(indb=os.path.join(self.workdir, self.orig_in), 
@@ -83,7 +88,8 @@ class TestCombine:
             path = '/Family/ResourceExchange/ExchangeInstSolutions'
             assert_equal(db.get_node(path).nrows, self.nsoln1 + self.nsoln4)
             db.close()
-
+        self.passed = True
+        
 def test_get_obj():    
     class Args(object):
         def __init__(self, package=None, module='cyclopts.exchange_family', 
