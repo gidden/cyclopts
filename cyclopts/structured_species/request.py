@@ -421,6 +421,19 @@ class StructuredRequest(ProblemSpecies):
 
         return groups, nodes, arcs
 
-    def post_process(self, intbls, outtbls, pptbls):
-        # use str_sp.tools.post_process
-        pass
+    def post_process(self, instid, solnids, props, tbls):
+        """Perform any post processing on input and output.
+        
+        Parameters
+        ----------
+        instid : UUID 
+            UUID of the instance to post process
+        solnids : tuple of UUIDs
+            a collection of solution UUIDs corresponding the instid 
+        props : tuple, other
+            as defined by cyclopts.exchange_family 
+        tbls : tuple of cyclopts.cyclopts_io.Tables
+            tables from an input file, tables from an output file,
+            and tables from a post-processed file
+        """
+        strtools.post_process(instid, solnids, props, tbls)

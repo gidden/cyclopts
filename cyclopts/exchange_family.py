@@ -311,15 +311,19 @@ class ResourceExchange(ProblemFamily):
         
         Parameters
         ----------
-        instid : UUID of the instance to post process
-        solnids : a collection of solution UUIDs corresponding the instid 
-        tbls : tuple of tables from an input file, tables from an output file,
-               and tables from a post-processed file
+        instid : UUID 
+            UUID of the instance to post process
+        solnids : tuple of UUIDs
+            a collection of solution UUIDs corresponding the instid 
+        tbls : tuple of cyclopts.cyclopts_io.Tables
+            tables from an input file, tables from an output file,
+            and tables from a post-processed file
 
         Returns
         -------
-        props : tuple or other, information to provide to species post 
-                processing
+        props : tuple 
+            tuple of number of arcs and mapping of solution UUIDs to numpy 
+            arrays of arc flows
         """
         intbls, outtbls, pptbls = tbls
         prop_tbl = intbls[_tbl_names["properties"]]

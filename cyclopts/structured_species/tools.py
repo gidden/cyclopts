@@ -193,14 +193,28 @@ arc_tbl_dtype = np.dtype(
     [('instid', ('str', 16)), ('arcid', np.uint32), ('commod', np.uint32), 
      ('pref_c', np.float32), ('pref_l', np.float32)])
 
-def post_process(intbls, outtbls, pptbls):
-    # get {instids: solnids} from outtbls
-    # for each instid:
-    #   get {arcid: commod pref} from Arcs in intbls *species*
-    #   get {arcid: loc pref} from Arcs in intbls *species*
-    #   for each solnid:
-    #     get {arcid: flow} from solutions in outtbls *Family*
-    #     add zero flows if needed
-    #     record {solnid: (commod pref _dot_ flow, loc pref _dot_ flow)}
-    # for each solnid, append_data
-    pass
+def post_process(self, instid, solnids, props, tbls):
+    """Perform any post processing on input and output.
+    
+    Parameters
+    ----------
+    instid : UUID 
+        UUID of the instance to post process
+    solnids : tuple of UUIDs
+        a collection of solution UUIDs corresponding the instid 
+    props : tuple, other
+        as defined by cyclopts.exchange_family 
+    tbls : tuple of cyclopts.cyclopts_io.Tables
+        tables from an input file, tables from an output file,
+        and tables from a post-processed file
+    """
+    intbls, outtbls, pptbls = tbls
+    narcs, sid_to_flows = props
+    ## get l, c pref vector for iid from intbls
+    ## get pp table
+    # data = []
+    # for sid, flows in sid_to_flows.items():
+    #   lpref_flow = lpref * flows  
+    #   cpref_flow = cpref * flows
+    #   data.append((cyctools.uid_to_str(sid.hex), cpref_flow, lpref_flow))
+    # pp_tbl.append_data(data)
