@@ -318,7 +318,7 @@ def ssh_test_connect(client, host, user, keyfile=None, auth=True):
 def read_uuid(x):
     """return a uuid from a stored value, TO BE DEPRECATED in favor of 
     str_to_uuid"""
-    str_to_uuid(x)
+    return str_to_uuid(x)
 
 def str_to_uuid(x):
     """return a uuid from a stored value, allows strings of len == 15 which is 
