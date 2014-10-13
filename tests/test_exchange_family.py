@@ -21,7 +21,7 @@ def test_basics():
     assert_equal(fam.name, 'ResourceExchange')
     
     base = '/Family/ResourceExchange'
-    col, tbl = 'pref_flow', 'ExchangeInstSolutionProperties'
+    col, tbl = 'pref_flow', 'PostProcess'
     assert_equal(PathMap(col).path, base + '/' + tbl)
     col, tbl = 'flow', 'ExchangeInstSolutions'
     assert_equal(PathMap(col).path, base + '/' + tbl)
