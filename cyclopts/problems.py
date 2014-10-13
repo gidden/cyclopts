@@ -133,6 +133,29 @@ class ProblemFamily(object):
         """
         raise NotImplementedError
 
+    def post_process(self, instid, solnids, tbls):
+        """Derived classes can implement this function to output interesting
+        aggregate data during a post-processing step after some number of
+        instance executions.
+        
+        Parameters
+        ----------
+        instid : UUID 
+            UUID of the instance to post process
+        solnids : tuple of UUIDs
+            a collection of solution UUIDs corresponding the instid 
+        tbls : 3-tuple of cyclopts.cyclopts_io.Tables
+            tables from an input file, tables from an output file,
+            and tables from a post-processed file
+
+        Returns
+        -------
+        props : tuple 
+            tuple of number of arcs and mapping of solution UUIDs to numpy 
+            arrays of arc flows
+        """
+        pass
+
 class ProblemSpecies(object):
     """A class represnting species of problems that share the same parameter
     space and ProblemFamiliy."""
@@ -259,3 +282,21 @@ class ProblemSpecies(object):
         """
         raise NotImplementedError
     
+    def post_process(self, instid, solnids, props, tbls):
+        """Derived classes can implement this function to output interesting
+        aggregate data during a post-processing step after some number of
+        instance executions.
+        
+        Parameters
+        ----------
+        instid : UUID 
+            UUID of the instance to post process
+        solnids : tuple of UUIDs
+            a collection of solution UUIDs corresponding the instid 
+        props : tuple, other, possibly None
+            as defined by the return value of the species' family
+        tbls : 3-tuple of cyclopts.cyclopts_io.Tables
+            tables from an input file, tables from an output file,
+            and tables from a post-processed file
+        """
+        pass
