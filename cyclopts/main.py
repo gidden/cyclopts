@@ -412,7 +412,7 @@ def gen_parser():
     ppdb = ("An HDF5 Cyclopts post processed database (can be combined with "
             "others via 'cyclopts combine'.")
     pp_parser.add_argument('--ppdb', dest='ppdb', help=ppdb)
-    vf = ("Stdin is informed of progress at the given processed "
+    vf = ("Stdout is informed of progress at the given processed "
           "instance frequency.")
     pp_parser.add_argument('--verbose_freq', dest='verbose_freq', help=vf, 
                            default=None)
