@@ -299,8 +299,7 @@ def dump(args):
         for iid in instids:
             print(iid.hex)
 
-def main():
-    """Entry point for Cyclopts runs."""
+def gen_parser():
     parser = argparse.ArgumentParser("Cyclopts", add_help=True)    
 
     # parser for family info
@@ -551,9 +550,14 @@ def main():
     dump_parser.add_argument('--list', default=False, action='store_true', 
                              dest='list', help=listh)    
     
+    return parser
+
+def main():
+    """Entry point for Cyclopts runs."""
     #
     # and away we go!
     #
+    parser = gen_parser()
     if argcomplete is not None:
         argcomplete.autocomplete(parser)
     args = parser.parse_args()
