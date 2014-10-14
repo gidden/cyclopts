@@ -257,7 +257,7 @@ class ResourceExchange(ProblemFamily):
         objs = {'ExGroup': [], 'ExNode': [], 'ExArc': []}
         for name in ctors.keys():
             tbl = tables[_tbl_names[name]]
-            rows = tbl.instid_rows(uuid.bytes)
+            rows = tbl.uuid_rows(uuid)
             setattrs = tools.cyc_members(ctors[name]())
             for row in rows:
                 obj = ctors[name]()
@@ -299,12 +299,17 @@ class ResourceExchange(ProblemFamily):
 
     def _iid_to_prefs(self, iid, tbl, narcs):
         """return a numpy array of preferences"""
-        
-        pass
-
+        ret = np.zeros(narcs)
+        for x in tbl.uuid_rows(iid):
+            ret[x['id']] = x['pref']
+        return ret
+            
     def _sid_to_flows(self, sid, tbl, narcs):
         """return a numpy array of flows"""
-        pass
+        ret = np.zeros(narcs)
+        for x in tbl.uuid_rows(sid, colname='solnid'):
+            ret[x['arc_id']] = x['flow']
+        return ret
 
     def post_process(self, instid, solnids, tbls):
         """Perform any post processing on input and output.
@@ -331,14 +336,13 @@ class ResourceExchange(ProblemFamily):
         soln_tbl = outtbls[_tbl_names["solutions"]]
         pp_tbl = pptbls[_tbl_names["pp"]]
 
-        narcs = prop_tbl.instid_rows(tools.uuid_to_str(instid))[0]['n_arcs']
+        narcs = prop_tbl.uuid_rows(tools.uuid_to_str(instid))[0]['n_arcs']
         prefs = self._iid_to_prefs(instid, arc_tbl, narcs)
         sid_to_flows = {}
         data = []
         for sid in solnids:
             flows = self._sid_to_flows(sid, soln_tbl, narcs)
-            pref_flow = prefs * flows
-            data.append((tools.uuid_to_str(sid), pref_flow))
+            data.append((sid.bytes, prefs * flows))
             sid_to_flows[sid] = flows
         pp_tbl.append_data(data)
         return narcs, sid_to_flows

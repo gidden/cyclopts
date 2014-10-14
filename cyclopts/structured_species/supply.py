@@ -127,8 +127,12 @@ class PathMap(analysis.PathMap):
     def path(self):
         # this is an approx. heuristic, it might need to be updated
         inst = StructuredSupply()
-        tbl = inst.sum_tbl_name if self.col.startswith('n_') \
-            else inst.param_tbl_name
+        if self.col.startswith('n_'):
+            tbl = inst.sum_tbl_name
+        elif self.col.endswith('pref_flow'):
+            tbl = strtools.pp_tbl_name
+        else:
+            tbl = inst.param_tbl_name
         return '/'.join([inst.table_prefix, tbl])
 
 class StructuredSupply(ProblemSpecies):
@@ -253,7 +257,9 @@ class StructuredSupply(ProblemSpecies):
                 cycio.Table(h5file, '/'.join([prefix, self.sum_tbl_name]), 
                             self._sum_dtype),
                 cycio.Table(h5file, '/'.join([prefix, strtools.arc_tbl_name]), 
-                            strtools.arc_tbl_dtype),]
+                            strtools.arc_tbl_dtype),
+                cycio.Table(h5file, '/'.join([prefix, strtools.pp_tbl_name]), 
+                            strtools.pp_tbl_dtype),]
 
     def read_space(self, space_dict):
         """Parameters

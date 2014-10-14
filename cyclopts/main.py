@@ -218,18 +218,30 @@ def execute(args):
         h5out.close()
 
 def post_process(args):
-    # get sp, fam
+    # process cli args
+    fam, sp = tools.fam_and_sp(args)
     # get in/out/pp h5files
+    h5in, h5out, h5pp = None #TODO
     # get in/out/pp tables for sp and fam
-
-    # get {instids: solnids} from outtbls
-    ## iid_to_sids = soln_prop_tbl.mapping('instid', 'solnid', many=True)
-    # for each iid, sids in iid_to_sids.items():
-    #   fam_props = fam.post_process(iid, sids, fam_tbls)
-    #   sp.post_process(iid, sids, fam_props, sp_tbls)
+    fam_managers = (1, 2, 3) #TODO
+    sp_managers = (1, 2, 3) #TODO
+    result_manager = cycio.TableManager(
+        h5out, [cycio.ResultTable(h5out, path='/Results')])
     
-    # flush all tables
-    pass
+    # do pp
+    tools.drive_post_process(res_tbl=result_manager.tables['Results'],
+                             fam=fam, fam_tbls=(m.tables for m in fam_managers),
+                             sp=sp, sp_tbls=(m.tables for m in sp_managers),)
+    
+    # clean up
+    for m in fam_managers + sp_managers:
+        m.flush_tables()
+    result_manager.flush_tables()
+    h5in.close()
+    if h5out.isopen:
+        h5out.close()
+    if h5pp.isopen:
+        h5pp.close()
 
 def update_cde(args):
     user = args.user

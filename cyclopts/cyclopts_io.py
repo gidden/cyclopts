@@ -80,8 +80,23 @@ class Table(object):
 
         self._tbl = self.h5file.get_node(self.path)
 
-    def instid_rows(self, uuid, colname='instid'):
-        return self._tbl.where('{0} == uuid'.format(colname))
+    def value_mapping(self, x, y, uuids=True):
+        ret = defaultdict(list)
+        if uuids:
+            for row in self.tbl.iterrows():
+                ret[tools.str_to_uuid(row[x])].append(tools.str_to_uuid(row[y]))
+        else:
+            for row in self.tbl.iterrows():
+                ret[row[x]].append(row[y])
+        return ret
+
+    def rows_where(self, cond, condvars=None):
+        return self._tbl.where(cond, condvars=condvars)
+        
+    def uuid_rows(self, uuid, colname='instid'):
+        condvars = {'uuid': uuid.bytes}
+        return self.rows_where('{0} == uuid'.format(colname), 
+                               condvars=condvars)
 
     def append_data(self, data):
         """Appends data to the Table. If the cachesize limit is reached, data is

@@ -321,7 +321,8 @@ def str_to_uuid(x):
     return uuid.UUID(bytes=x)    
 
 def uuid_to_str(x):
-    """return a string of a uuid, needed in case the uuid is missing a null-padded value"""
+    """return a string of a uuid, needed in case the uuid is missing a null-
+    padded value"""
     ret = x.hex
     ret = ret if len(ret) == 16 else ret + '\0'
     return ret
@@ -551,8 +552,16 @@ def cyc_members(obj):
     cycfilter = lambda x: x.startswith('_') or x.endswith('_') or x[0].isupper()
     return [x for x in members if not cycfilter(x)]
 
+def fam_and_sp(args):
+    rc = tools.parse_rc(args.rc)
+    obj_rcs = [rc, tools.parse_rc(args.cycrc)] \
+        if os.path.exists(args.cycrc) else [rc]
+    sp = get_obj(kind='species', rcs=obj_rcs, args=args)
+    fam = sp.family
+    return fam, sp
+
 def drive_post_process(res_tbl, fam=None, fam_tbls=None, sp=None, sp_tbls=None):
-    iid_to_sids = res_tbl.id_mapping('instid', 'solnid', many=True)
+    iid_to_sids = res_tbl.value_mapping('instid', 'solnid', uuids=True)
     for iid, sids in iid_to_sids.items():
         props = None
         if fam is not None:

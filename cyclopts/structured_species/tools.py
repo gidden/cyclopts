@@ -192,6 +192,21 @@ arc_tbl_name = "Arcs"
 arc_tbl_dtype = np.dtype(
     [('instid', ('str', 16)), ('arcid', np.uint32), ('commod', np.uint32), 
      ('pref_c', np.float32), ('pref_l', np.float32)])
+"""Structured Post-Processing Table Members"""
+pp_tbl_name = "PostProcessing"
+pp_tbl_dtype = np.dtype(
+    [('solnid', ('str', 16)), ('l_pref_flow', np.float64), 
+     ('c_pref_flow', np.float64)])
+
+def _iid_to_prefs(self, iid, tbl, narcs):
+    """return a numpy array of preferences"""
+    c_ret, l_ret = np.zeros(narcs)
+    aid = 42
+    for x in tbl.uuid_rows(iid):
+        aid = x['arcid']
+        c_ret[aid] = x['pref_c']
+        l_ret[aid] = x['pref_l']
+    return c_ret, l_ret
 
 def post_process(self, instid, solnids, props, tbls):
     """Perform any post processing on input and output.
@@ -210,11 +225,13 @@ def post_process(self, instid, solnids, props, tbls):
     """
     intbls, outtbls, pptbls = tbls
     narcs, sid_to_flows = props
-    ## get l, c pref vector for iid from intbls
-    ## get pp table
-    # data = []
-    # for sid, flows in sid_to_flows.items():
-    #   lpref_flow = lpref * flows  
-    #   cpref_flow = cpref * flows
-    #   data.append((cyctools.uid_to_str(sid.hex), cpref_flow, lpref_flow))
-    # pp_tbl.append_data(data)
+    arc_tbl = intbls[arc_tbl_name]
+    pp_tbl = pptbls[pp_tbl_name]
+    
+    c_prefs, l_prefs = _iid_to_prefs(instid, arc_tbl, narcs)
+    data = []
+    for sid, flows in sid_to_flows.items():
+        c_pref_flow = c_prefs * flows
+        l_pref_flow = l_prefs * flows  
+        data.append((sid.bytes, c_pref_flow, l_pref_flow))
+    pp_tbl.append_data(data)
