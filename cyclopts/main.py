@@ -239,7 +239,8 @@ def post_process(args):
     # do pp
     tools.drive_post_process(res_tbl=result_manager.tables['Results'],
                              fam=fam, fam_tbls=tuple(m.tables for m in fam_managers),
-                             sp=sp, sp_tbls=tuple(m.tables for m in sp_managers),)
+                             sp=sp, sp_tbls=tuple(m.tables for m in sp_managers),
+                             verbose_freq=args.verbose_freq)
     
     # clean up
     for m in list(fam_managers) + list(sp_managers) + [result_manager]:
@@ -411,6 +412,10 @@ def gen_parser():
     ppdb = ("An HDF5 Cyclopts post processed database (can be combined with "
             "others via 'cyclopts combine'.")
     pp_parser.add_argument('--ppdb', dest='ppdb', help=ppdb)
+    vf = ("Stdin is informed of progress at the given processed "
+          "instance frequency.")
+    pp_parser.add_argument('--verbose_freq', dest='verbose_freq', help=vf, 
+                           default=None)
             
     #
     # execute instances with condor

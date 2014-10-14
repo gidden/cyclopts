@@ -561,9 +561,18 @@ def fam_and_sp(args):
     fam = sp.family
     return fam, sp
 
-def drive_post_process(res_tbl, fam=None, fam_tbls=None, sp=None, sp_tbls=None):
+def drive_post_process(res_tbl, fam=None, fam_tbls=None, sp=None, sp_tbls=None,
+                       verbose_freq=None):
     iid_to_sids = res_tbl.value_mapping('instid', 'solnid', uuids=True)
+    niids = len(iid_to_sids.keys())
+    count = 0
+    verbose = verbose_freq is not None
     for iid, sids in iid_to_sids.items():
+        if verbose:
+            if count % verbose_freq == 0:
+                print('{0}/{1} instances have been post processed.'.format(
+                        count, verbose_freq))
+            count += 1
         props = None
         if fam is not None:
             props = fam.post_process(iid, sids, fam_tbls)
