@@ -8,7 +8,6 @@ import os
 import shutil
 import tables as t
 import uuid
-import subprocess
 import numpy as np
 from numpy.testing import assert_array_equal
 import paramiko as pm
@@ -19,6 +18,7 @@ import nose
 from nose.tools import assert_equal, assert_true, assert_almost_equal, \
     assert_less_equal
 
+from cyclopts import main as cycmain
 from utils import timeout, TimeoutError
 
 def test_exec():
@@ -29,10 +29,11 @@ def test_exec():
     db = os.path.join(base, "tmp_{0}.h5".format(str(uuid.uuid4())))
     shutil.copy(os.path.join(base, 'files', infile), db)
     solvers = "greedy, clp, cbc" # greedy is different for one, unsure why
-    cmd = ("cyclopts exec --db={0} --family_class ResourceExchange "
+    cmd = ("exec --db={0} --family_class ResourceExchange "
            "--family_module cyclopts.exchange_family "
            "--solvers {1}").format(db, solvers)
-    assert_equal(0, subprocess.call(cmd.split(), shell=(os.name == 'nt')))
+    parser = cycmain.gen_parser()
+    cycmain.execute(parser.parse_args(args=cmd.split()))
     
     h5file = t.open_file(db, 'r')
     path = '/Results'
@@ -59,8 +60,9 @@ def test_convert():
     ninst = 2
     nvalid = 4
 
-    cmd = "cyclopts convert --rc {0} --db {1} -n {2}".format(rc, db, ninst)
-    assert_equal(0, subprocess.call(cmd.split(), shell=(os.name == 'nt')))
+    cmd = "convert --rc {0} --db {1} -n {2}".format(rc, db, ninst)
+    parser = cycmain.gen_parser()
+    cycmain.convert(parser.parse_args(args=cmd.split()))
     h5file = t.open_file(db, 'r')
     
     sp = StructuredRequest()
@@ -90,16 +92,25 @@ def test_combine():
         h5file.close()
 
     outdb = os.path.join(localbase, '.tmp_{0}.h5'.format(uuid.uuid4()))
-    cmd = "cyclopts combine --files {0} --outdb {1}".format(
+    cmd = "combine --files {0} --outdb {1}".format(
         " ".join([os.path.join(localpath, f) for f in exp_files]), outdb)
-    rtn = subprocess.call(cmd.split(), shell=(os.name == 'nt'))
-    assert_equal(0, rtn)
-
+    parser = cycmain.gen_parser()
+    cycmain.cyclopts_combine(parser.parse_args(args=cmd.split()))
     h5file = t.open_file(outdb, 'r')
     h5node = h5file.root.Results.General
     assert_equal(h5node.nrows, exp_total)
     h5file.close()
     os.remove(outdb)
+
+# def test_pp():
+#     cycrc = os.path.join()
+#     h5in = os.path.join()
+#     h5out = os.path.join()
+#     h5pp = os.path.join()
+#     args = '--cycrc {0} --indb {1} --outdb {2} --ppdb {3}'.format(
+#         cycrc, h5in, h5out, h5pp)
+#     cycmain.post_process(argparse.ArgumentParser.parse_args(args.split()))
+    
 
 @timeout()
 def test_collect():
@@ -142,10 +153,10 @@ def test_collect():
 
     tmppath = os.path.join(localbase, '.tmp_{0}'.format(uuid.uuid4()))
     outdb = os.path.join(tmppath, 'test_collect_out.h5')
-    cmd = "cyclopts condor-collect -l {0} -d {1} --outdb {2}".format(
+    cmd = "condor-collect -l {0} -d {1} --outdb {2}".format(
         tmppath, remotedir, outdb)
-    rtn = subprocess.call(cmd.split(), shell=(os.name == 'nt'))
-    assert_equal(0, rtn)
+    parser = cycmain.gen_parser()
+    cycmain.condor_collect(parser.parse_args(args=cmd.split()))
     cmd = "rm -rf {0}".format(remotepath)
     client.exec_command(cmd)
     client.close()
