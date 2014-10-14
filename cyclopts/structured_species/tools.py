@@ -193,7 +193,7 @@ arc_tbl_dtype = np.dtype(
     [('instid', ('str', 16)), ('arcid', np.uint32), ('commod', np.uint32), 
      ('pref_c', np.float32), ('pref_l', np.float32)])
 """Structured Post-Processing Table Members"""
-pp_tbl_name = "PostProcessing"
+pp_tbl_name = "PostProcess"
 pp_tbl_dtype = np.dtype(
     [('solnid', ('str', 16)), ('l_pref_flow', np.float64), 
      ('c_pref_flow', np.float64)])
