@@ -553,9 +553,10 @@ def cyc_members(obj):
     return [x for x in members if not cycfilter(x)]
 
 def fam_and_sp(args):
-    rc = tools.parse_rc(args.rc)
-    obj_rcs = [rc, tools.parse_rc(args.cycrc)] \
-        if os.path.exists(args.cycrc) else [rc]
+    rc = parse_rc(args.rc) if hasattr(args, 'rc') else None
+    if hasattr(args, 'cycrc'):
+        obj_rcs = [rc, parse_rc(args.cycrc)] \
+            if os.path.exists(args.cycrc) else [rc]
     sp = get_obj(kind='species', rcs=obj_rcs, args=args)
     fam = sp.family
     return fam, sp

@@ -34,6 +34,7 @@ import cyclopts.tools as tools
 import cyclopts.exchange_instance as inst
 import cyclopts.params as params
 import cyclopts.cyclopts_io as cycio
+
 from cyclopts.problems import Solver
 
 def condor_submit(args):
@@ -220,28 +221,32 @@ def execute(args):
 def post_process(args):
     # process cli args
     fam, sp = tools.fam_and_sp(args)
-    # get in/out/pp h5files
-    h5in, h5out, h5pp = None #TODO
-    # get in/out/pp tables for sp and fam
-    fam_managers = (1, 2, 3) #TODO
-    sp_managers = (1, 2, 3) #TODO
+    h5files = (t.open_file(args.indb, mode='r'), 
+               t.open_file(args.outdb, mode='r'), 
+               t.open_file(args.ppdb, mode='a'),)
+    
+    # setup table managers
+    fam_managers = tuple(
+        cycio.TableManager(h5f, fam.register_tables(h5f, fam.table_prefix))
+        for h5f in h5files)
+    sp_managers = tuple(
+        cycio.TableManager(h5f, sp.register_tables(h5f, sp.table_prefix))
+        for h5f in h5files)
+    h5out = h5files[1]
     result_manager = cycio.TableManager(
         h5out, [cycio.ResultTable(h5out, path='/Results')])
     
     # do pp
     tools.drive_post_process(res_tbl=result_manager.tables['Results'],
-                             fam=fam, fam_tbls=(m.tables for m in fam_managers),
-                             sp=sp, sp_tbls=(m.tables for m in sp_managers),)
+                             fam=fam, fam_tbls=tuple(m.tables for m in fam_managers),
+                             sp=sp, sp_tbls=tuple(m.tables for m in sp_managers),)
     
     # clean up
-    for m in fam_managers + sp_managers:
+    for m in list(fam_managers) + list(sp_managers) + [result_manager]:
         m.flush_tables()
-    result_manager.flush_tables()
-    h5in.close()
-    if h5out.isopen:
-        h5out.close()
-    if h5pp.isopen:
-        h5pp.close()
+    for h5f in h5files:
+        if h5f.isopen:
+            h5f.close()
 
 def update_cde(args):
     user = args.user
@@ -387,7 +392,26 @@ def gen_parser():
     verbose = ("Print verbose output during execution.")
     exec_parser.add_argument('-v', '--verbose', dest='verbose', 
                              action='store_true', default=False, help=verbose)
-        
+
+    #
+    # post process
+    #
+    pp = ("Post process input and output.")
+    pp_parser = sp.add_parser('pp', 
+                              parents=[cyclopts_parser, family_parser, 
+                                       species_parser], 
+                              help=pp)
+    pp_parser.set_defaults(func=post_process)
+    indb = ("An HDF5 Cyclopts input database (e.g., the result of "
+            "'cyclopts convert').")
+    pp_parser.add_argument('--indb', dest='indb', help=indb)
+    outdb = ("An HDF5 Cyclopts output database (e.g., the result of "
+             "'cyclopts exec').")
+    pp_parser.add_argument('--outdb', dest='outdb', help=outdb)
+    ppdb = ("An HDF5 Cyclopts post processed database (can be combined with "
+            "others via 'cyclopts combine'.")
+    pp_parser.add_argument('--ppdb', dest='ppdb', help=ppdb)
+            
     #
     # execute instances with condor
     #
@@ -438,7 +462,6 @@ def gen_parser():
     verbose = ("Print output during the submisison process.")
     submit_parser.add_argument('-v', '--verbose', dest='verbose', 
                                action='store_true', default=False, help=verbose)
-
 
     #
     # collect condor results

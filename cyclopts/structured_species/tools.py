@@ -195,12 +195,13 @@ arc_tbl_dtype = np.dtype(
 """Structured Post-Processing Table Members"""
 pp_tbl_name = "PostProcess"
 pp_tbl_dtype = np.dtype(
-    [('solnid', ('str', 16)), ('l_pref_flow', np.float64), 
-     ('c_pref_flow', np.float64)])
+    [('solnid', ('str', 16)), ('c_pref_flow', np.float64), 
+     ('l_pref_flow', np.float64)])
 
-def _iid_to_prefs(self, iid, tbl, narcs):
+def _iid_to_prefs(iid, tbl, narcs):
     """return a numpy array of preferences"""
-    c_ret, l_ret = np.zeros(narcs)
+    c_ret = np.zeros(narcs)
+    l_ret = np.zeros(narcs)
     aid = 42
     for x in tbl.uuid_rows(iid):
         aid = x['arcid']
@@ -208,7 +209,7 @@ def _iid_to_prefs(self, iid, tbl, narcs):
         l_ret[aid] = x['pref_l']
     return c_ret, l_ret
 
-def post_process(self, instid, solnids, props, tbls):
+def post_process(instid, solnids, props, tbls):
     """Perform any post processing on input and output.
     
     Parameters
@@ -231,7 +232,7 @@ def post_process(self, instid, solnids, props, tbls):
     c_prefs, l_prefs = _iid_to_prefs(instid, arc_tbl, narcs)
     data = []
     for sid, flows in sid_to_flows.items():
-        c_pref_flow = c_prefs * flows
-        l_pref_flow = l_prefs * flows  
+        c_pref_flow = np.dot(c_prefs, flows)
+        l_pref_flow = np.dot(l_prefs, flows)
         data.append((sid.bytes, c_pref_flow, l_pref_flow))
     pp_tbl.append_data(data)

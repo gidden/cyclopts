@@ -6,6 +6,7 @@ import numpy as np
 import tables as t
 import math
 import datetime
+from collections import defaultdict
 
 import cyclopts
 import cyclopts.tools as tools
@@ -83,10 +84,10 @@ class Table(object):
     def value_mapping(self, x, y, uuids=True):
         ret = defaultdict(list)
         if uuids:
-            for row in self.tbl.iterrows():
+            for row in self._tbl.iterrows():
                 ret[tools.str_to_uuid(row[x])].append(tools.str_to_uuid(row[y]))
         else:
-            for row in self.tbl.iterrows():
+            for row in self._tbl.iterrows():
                 ret[row[x]].append(row[y])
         return ret
 
@@ -107,6 +108,9 @@ class Table(object):
         data : array-like
             data to append to the table
         """
+        if self._tbl._v_file.mode == 'r':
+            raise IOError('Cannot append data to a read-only file.')
+        
         ndata = len(data)
         idx = self._idx
         arylen = self.cachesize
@@ -129,11 +133,19 @@ class Table(object):
         self._idx = ndata - (n_writes - 1) * arylen - space
         if self._idx > 0:
             self._data[:self._idx] = data[-self._idx:]
+
+    def writeable(self):
+        return self._tbl is not None and self._tbl._v_file._iswritable()
             
     def flush(self, data=None):
         """Writes cached data to the table."""
-        if self._tbl is None:
-            raise IOError('Table must be created before it can be written to.')
+        if not self.writeable() and data is not None and self._idx != 0:
+            # not writeable but there was data to write
+            raise IOError('Cannot write to an unwriteable table')
+        if not self.writeable():
+            # not writeable, don't do anything
+            return
+
         if data is None:
             self._tbl.append(self._data[:self._idx])
             self._idx = 0
@@ -215,7 +227,7 @@ class TableManager(object):
                 tbl.create()
 
     def __del__(self):
-        if self.h5file.isopen:
+        if self.h5file.isopen and self.h5file.mode is not 'r':
             self.flush_tables()
     
     def flush_tables(self):

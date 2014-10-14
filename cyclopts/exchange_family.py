@@ -332,17 +332,17 @@ class ResourceExchange(ProblemFamily):
         """
         intbls, outtbls, pptbls = tbls
         prop_tbl = intbls[_tbl_names["properties"]]
-        arc_tbl = intbls[_tbl_names["ExArcs"]]
+        arc_tbl = intbls[_tbl_names["ExArc"]]
         soln_tbl = outtbls[_tbl_names["solutions"]]
         pp_tbl = pptbls[_tbl_names["pp"]]
 
-        narcs = prop_tbl.uuid_rows(tools.uuid_to_str(instid))[0]['n_arcs']
+        narcs = prop_tbl.uuid_rows(instid).next()['n_arcs']
         prefs = self._iid_to_prefs(instid, arc_tbl, narcs)
         sid_to_flows = {}
         data = []
         for sid in solnids:
             flows = self._sid_to_flows(sid, soln_tbl, narcs)
-            data.append((sid.bytes, prefs * flows))
+            data.append((sid.bytes, np.dot(prefs, flows)))
             sid_to_flows[sid] = flows
         pp_tbl.append_data(data)
         return narcs, sid_to_flows

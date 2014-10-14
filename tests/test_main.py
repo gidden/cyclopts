@@ -16,9 +16,10 @@ from collections import defaultdict
 
 import nose
 from nose.tools import assert_equal, assert_true, assert_almost_equal, \
-    assert_less_equal
+    assert_less_equal, assert_greater, assert_greater_equal
 
 from cyclopts import main as cycmain
+from cyclopts import tools
 from utils import timeout, TimeoutError
 
 def test_exec():
@@ -102,15 +103,42 @@ def test_combine():
     h5file.close()
     os.remove(outdb)
 
-# def test_pp():
-#     cycrc = os.path.join()
-#     h5in = os.path.join()
-#     h5out = os.path.join()
-#     h5pp = os.path.join()
-#     args = '--cycrc {0} --indb {1} --outdb {2} --ppdb {3}'.format(
-#         cycrc, h5in, h5out, h5pp)
-#     cycmain.post_process(argparse.ArgumentParser.parse_args(args.split()))
+def test_pp():
+    # this test depends on implementation in cyclopts.exchange_family and
+    # cyclopts.structured_species.request
+    base = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        'files')
+    cycrc = os.path.join(base, 'cycloptsrc.py')
+    h5in = os.path.join(base, 'obs_valid_in.h5')
+    h5out = os.path.join(base, 'obs_valid_out.h5')
+    h5pp = os.path.join(base, 'tmp_pp.h5')
+    if os.path.exists(h5pp):
+        os.remove(h5pp)
+        
+    cmd = 'pp --cycrc {0} --indb {1} --outdb {2} --ppdb {3}'.format(
+        cycrc, h5in, h5out, h5pp)
+    parser = cycmain.gen_parser()
+    cycmain.post_process(parser.parse_args(cmd.split()))
+
+    with t.open_file(h5out, 'r') as f:
+        obs = f.root.Results.nrows
     
+    with t.open_file(h5pp, 'r') as f:
+        exp1 = f.root.Family.ResourceExchange.PostProcess.nrows
+        exp2 = f.root.Species.StructuredRequest.PostProcess.nrows
+    
+    assert_equal(obs, exp1)
+    assert_equal(obs, exp2)
+    
+    with t.open_file(h5pp, 'r') as f:
+        for x in f.root.Family.ResourceExchange.PostProcess.iterrows():
+            assert_greater(x['pref_flow'], 0)
+        for x in f.root.Species.StructuredRequest.PostProcess.iterrows():
+            assert_greater(x['c_pref_flow'], 0)
+            assert_greater_equal(x['l_pref_flow'], 0)
+        
+    if os.path.exists(h5pp):
+        os.remove(h5pp)    
 
 @timeout()
 def test_collect():
