@@ -108,7 +108,7 @@ class Table(object):
         data : array-like
             data to append to the table
         """
-        if self._tbl._v_file.mode == 'r':
+        if self._tbl is not None and self._tbl._v_file.mode == 'r':
             raise IOError('Cannot append data to a read-only file.')
         
         ndata = len(data)
