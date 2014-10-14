@@ -108,9 +108,6 @@ class Table(object):
         data : array-like
             data to append to the table
         """
-        if self._tbl is not None and self._tbl._v_file.mode == 'r':
-            raise IOError('Cannot append data to a read-only file.')
-        
         ndata = len(data)
         idx = self._idx
         arylen = self.cachesize
@@ -141,7 +138,9 @@ class Table(object):
         """Writes cached data to the table."""
         if not self.writeable() and data is not None and self._idx != 0:
             # not writeable but there was data to write
-            raise IOError('Cannot write to an unwriteable table')
+            raise IOError(("Cannot write data to the table {0} in unwriteable"
+                           " file {1}").format(self._tbl._v_name, 
+                                               self._tbl._v_file.filename))
         if not self.writeable():
             # not writeable, don't do anything
             return
