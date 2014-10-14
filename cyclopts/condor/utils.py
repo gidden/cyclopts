@@ -91,10 +91,13 @@ def exec_remote_cmd_with_retry(client, cmd, t_sleep=5, verbose=False, retry=5,
     error : python exception, optional
         the exception to look for
     """
+    retry = retry
     try:
         return exec_remote_cmd(client, cmd, t_sleep, verbose)
     except error as e:
         # keep retrying if this was a classad fetching error
+        warnings.warn('Receieved error: {0}, {1} retries remaining'.format(
+                e.message, retry))
         less = 0 if 'Failed to fetch ads' in e.message else 1
         retry -= less
         if retry < 0: # bottom of recursion
