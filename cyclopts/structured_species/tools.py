@@ -203,8 +203,6 @@ def _iid_to_prefs(iid, tbl, narcs):
     c_ret = np.zeros(narcs)
     l_ret = np.zeros(narcs)
     rows = tbl.uuid_rows(iid)
-    x = rows[0]
-    if x['pref_l']
     for x in rows:
         aid = x['arcid']
         c_ret[aid] = x['pref_c']

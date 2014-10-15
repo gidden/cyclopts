@@ -99,7 +99,7 @@ class Table(object):
         
     def uuid_rows(self, uuid, colname='instid'):
         condvars = {'uuid': uuid.bytes}
-        return self.rows_where('{0} == uuid'.format(colname), 
+        return self.rows_where("""{0} == uuid""".format(colname), 
                                condvars=condvars)
 
     def append_data(self, data):
