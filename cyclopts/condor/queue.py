@@ -116,7 +116,7 @@ def gen_tar(remotedir, db, instids, module, cname, solvers,
 submit_cmd = """
 mkdir -p {remotedir} && cd {remotedir} &&
 tar -xf {tarfile} && rm {tarfile} && cd {cddir} && 
-nohup python -u launch_master.py port={port} user={user} nids={nids} indb={indb} nodes={nodes} --log={log} &> launch_master.out &
+nohup python -u launch_master.py port={port} user={user} nids={nids} indb={indb} nodes={nodes} --log={log} > launch_master.out 2>&1 &
 """
 
 def _submit(client, remotedir, tarname, nids, indb, log=False,
