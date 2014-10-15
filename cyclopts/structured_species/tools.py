@@ -202,8 +202,10 @@ def _iid_to_prefs(iid, tbl, narcs):
     """return a numpy array of preferences"""
     c_ret = np.zeros(narcs)
     l_ret = np.zeros(narcs)
-    aid = 42
-    for x in tbl.uuid_rows(iid):
+    rows = tbl.uuid_rows(iid)
+    x = rows[0]
+    if x['pref_l']
+    for x in rows:
         aid = x['arcid']
         c_ret[aid] = x['pref_c']
         l_ret[aid] = x['pref_l']

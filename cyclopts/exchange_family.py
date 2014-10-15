@@ -300,15 +300,19 @@ class ResourceExchange(ProblemFamily):
     def _iid_to_prefs(self, iid, tbl, narcs):
         """return a numpy array of preferences"""
         ret = np.zeros(narcs)
-        for x in tbl.uuid_rows(iid):
-            ret[x['id']] = x['pref']
+        rows = tbl.uuid_rows(iid)
+        ret[rows['id']] = rows['pref']
+        # for x in rows:
+        #     ret[x['id']] = x['pref']
         return ret
             
     def _sid_to_flows(self, sid, tbl, narcs):
         """return a numpy array of flows"""
         ret = np.zeros(narcs)
-        for x in tbl.uuid_rows(sid, colname='solnid'):
-            ret[x['arc_id']] = x['flow']
+        rows = tbl.uuid_rows(sid, colname='solnid')
+        ret[rows['arc_id']] = rows['flow']
+        # for x in rows:
+        #     ret[x['arc_id']] = x['flow']
         return ret
 
     def post_process(self, instid, solnids, tbls):
@@ -336,7 +340,7 @@ class ResourceExchange(ProblemFamily):
         soln_tbl = outtbls[_tbl_names["solutions"]]
         pp_tbl = pptbls[_tbl_names["pp"]]
 
-        narcs = prop_tbl.uuid_rows(instid).next()['n_arcs']
+        narcs = prop_tbl.uuid_rows(instid)[0]['n_arcs']
         prefs = self._iid_to_prefs(instid, arc_tbl, narcs)
         sid_to_flows = {}
         data = []
