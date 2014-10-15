@@ -315,7 +315,7 @@ def _file_default(pathlist):
 def gen_parser():
     parser = argparse.ArgumentParser("Cyclopts", add_help=True)    
 
-    # parser for family info
+    # parser for global cyclopts options
     cyclopts_parser = argparse.ArgumentParser(add_help=False)
     cycrc = ('A global run control file, defaults to $HOME/.cyclopts.rc '
              'useful for declaring global family/species information.')
@@ -325,6 +325,11 @@ def gen_parser():
                 os.path.join(os.getcwd(), 'cycloptsrc.py'),
                 os.path.expanduser(os.path.join('~', '.cycloptsrc.py'))]),
         help=cycrc)
+    prof = "Enable profiling."
+    cyclopts_parser.add_argument('--profile', default=False, 
+                                 action='store_true', help=prof)
+    
+    # parser for family info
     family_parser = argparse.ArgumentParser(add_help=False)    
     fam_mod = ('The module for the problem family')
     family_parser.add_argument('--family_module', default=None, help=fam_mod)
@@ -483,7 +488,8 @@ def gen_parser():
     # collect condor results
     #
     collect = ("Collects a condor submission's output.")
-    collect_parser = sp.add_parser('condor-collect', help=collect)
+    collect_parser = sp.add_parser('condor-collect', parents=[cyclopts_parser], 
+                                   help=collect)
     collect_parser.set_defaults(func=condor_collect)
     collect_parser.add_argument('--outdb', dest='outdb', 
                                 default='cyclopts_results.h5', help=outdb)
@@ -511,7 +517,7 @@ def gen_parser():
     # remove processes on condor
     #
     rm = ("Removes processes on condor for a user.")
-    rm_parser = sp.add_parser('condor-rm', help=rm)
+    rm_parser = sp.add_parser('condor-rm', parents=[cyclopts_parser], help=rm)
     rm_parser.set_defaults(func=condor_rm)
     uh = ("The condor user name.")
     rm_parser.add_argument('-u', '--user', dest='user', help=uh, 
@@ -560,7 +566,7 @@ def gen_parser():
     # combine a collection of databases
     #
     combine = ("Combines a collection of databases, merging their content.")
-    combine_parser = sp.add_parser('combine', help=combine)
+    combine_parser = sp.add_parser('combine', parents=[cyclopts_parser], help=combine)
     combine_parser.set_defaults(func=cyclopts_combine)
     files = ("All files to combine.")
     combine_parser.add_argument('--files', nargs='+', dest='files', help=files)
@@ -600,6 +606,11 @@ def main():
     if argcomplete is not None:
         argcomplete.autocomplete(parser)
     args = parser.parse_args()
+    # invoke profiling if we're asked to
+    if args.profile:
+        import line_profiler as lprof
+        lp = lprof.LineProfiler()
+        lp.add_function(args.func)
     args.func(args)
 
 if __name__ == "__main__":
