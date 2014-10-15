@@ -414,8 +414,8 @@ def gen_parser():
     pp_parser.add_argument('--ppdb', dest='ppdb', help=ppdb)
     vf = ("Stdout is informed of progress at the given processed "
           "instance frequency.")
-    pp_parser.add_argument('--verbose_freq', dest='verbose_freq', help=vf, 
-                           default=None)
+    pp_parser.add_argument('--verbose_freq', dest='verbose_freq', type=int, 
+                           default=None, help=vf)
             
     #
     # execute instances with condor

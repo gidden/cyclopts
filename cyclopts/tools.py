@@ -571,7 +571,7 @@ def drive_post_process(res_tbl, fam=None, fam_tbls=None, sp=None, sp_tbls=None,
         if verbose:
             if count % verbose_freq == 0:
                 print('{0}/{1} instances have been post processed.'.format(
-                        count, verbose_freq))
+                        count, niids))
             count += 1
         props = None
         if fam is not None:
