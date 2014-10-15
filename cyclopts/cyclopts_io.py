@@ -81,6 +81,9 @@ class Table(object):
 
         self._tbl = self.h5file.get_node(self.path)
 
+    def table(self):
+        return self._tbl
+
     def value_mapping(self, x, y, uuids=True):
         ret = defaultdict(list)
         if uuids:

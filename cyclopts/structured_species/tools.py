@@ -209,7 +209,7 @@ def _iid_to_prefs(iid, tbl, narcs):
         l_ret[aid] = x['pref_l']
     return c_ret, l_ret
 
-def post_process(instid, solnids, props, tbls):
+def post_process(instid, solnids, props, tbls, sp_name):
     """Perform any post processing on input and output.
     
     Parameters
@@ -223,11 +223,17 @@ def post_process(instid, solnids, props, tbls):
     tbls : tuple of cyclopts.cyclopts_io.Tables
         tables from an input file, tables from an output file,
         and tables from a post-processed file
+    sp_name : str
+        the name of the species being post processed
     """
     intbls, outtbls, pptbls = tbls
     narcs, sid_to_flows = props
     arc_tbl = intbls[arc_tbl_name]
     pp_tbl = pptbls[pp_tbl_name]
+
+    if arc_tbl.table() is None:
+        raise IOError(("Could not find input Structured Species table"
+                       " {0} for species {1}.".format(arc_tbl.name, sp_name)))
     
     c_prefs, l_prefs = _iid_to_prefs(instid, arc_tbl, narcs)
     data = []

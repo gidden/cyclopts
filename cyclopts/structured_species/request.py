@@ -444,4 +444,4 @@ class StructuredRequest(ProblemSpecies):
             tables from an input file, tables from an output file,
             and tables from a post-processed file
         """
-        strtools.post_process(instid, solnids, props, tbls)
+        strtools.post_process(instid, solnids, props, tbls, self.name)
