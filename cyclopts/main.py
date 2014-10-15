@@ -328,6 +328,9 @@ def gen_parser():
     prof = "Enable profiling."
     cyclopts_parser.add_argument('--profile', default=False, 
                                  action='store_true', help=prof)
+    proffile = "Name of profiling filename if profile is set."
+    cyclopts_parser.add_argument('--proffile', default='cyclopts.prof', 
+                                 help=proffile)
     
     # parser for family info
     family_parser = argparse.ArgumentParser(add_help=False)    
@@ -615,7 +618,7 @@ def main():
     args.func(args)
 
     if args.profile:
-        pr.dump_stats('cyclopts.prof')
+        pr.dump_stats(args.proffile)
         pr.disable()
 
 if __name__ == "__main__":
