@@ -95,7 +95,7 @@ class Table(object):
         return ret
 
     def rows_where(self, cond, condvars=None):
-        return self._tbl.where(cond, condvars=condvars)
+        return self._tbl.read_where(cond, condvars=condvars)
         
     def uuid_rows(self, uuid, colname='instid'):
         condvars = {'uuid': uuid.bytes}
