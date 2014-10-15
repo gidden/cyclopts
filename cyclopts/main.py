@@ -240,7 +240,7 @@ def post_process(args):
     tools.drive_post_process(res_tbl=result_manager.tables['Results'],
                              fam=fam, fam_tbls=tuple(m.tables for m in fam_managers),
                              sp=sp, sp_tbls=tuple(m.tables for m in sp_managers),
-                             verbose_freq=args.verbose_freq)
+                             verbose_freq=args.verbose_freq, limit=args.limit)
     
     # clean up
     for m in list(fam_managers) + list(sp_managers) + [result_manager]:
@@ -425,6 +425,8 @@ def gen_parser():
           "instance frequency.")
     pp_parser.add_argument('--verbose_freq', dest='verbose_freq', type=int, 
                            default=None, help=vf)
+    lim = ("Post process only X instances (used for profiling/testing).")
+    pp_parser.add_argument('--limit', dest='limit', type=int, default=None, help=lim)
             
     #
     # execute instances with condor
