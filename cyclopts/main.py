@@ -305,6 +305,13 @@ def dump(args):
         for iid in instids:
             print(iid.hex)
 
+def _file_default(pathlist):
+    """TODO: Document this"""
+    for p in pathlist:
+        if os.path.exists(p):
+            return p
+    return pathlist[-1]
+
 def gen_parser():
     parser = argparse.ArgumentParser("Cyclopts", add_help=True)    
 
@@ -314,7 +321,9 @@ def gen_parser():
              'useful for declaring global family/species information.')
     cyclopts_parser.add_argument(
         '--cycrc', 
-        default=os.path.expanduser(os.path.join('~', '.cyclopts.rc')),
+        default=_file_default([
+                os.path.join(os.getcwd(), 'cycloptsrc.py'),
+                os.path.expanduser(os.path.join('~', '.cycloptsrc.py'))]),
         help=cycrc)
     family_parser = argparse.ArgumentParser(add_help=False)    
     fam_mod = ('The module for the problem family')
