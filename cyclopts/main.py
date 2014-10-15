@@ -608,10 +608,15 @@ def main():
     args = parser.parse_args()
     # invoke profiling if we're asked to
     if args.profile:
-        import line_profiler as lprof
-        lp = lprof.LineProfiler()
-        lp.add_function(args.func)
+        import cProfile as cprof
+        pr = cprof.Profile()
+        pr.enable()
+    
     args.func(args)
+
+    if args.profile:
+        pr.dump_stats('cyclopts.prof')
+        pr.disable()
 
 if __name__ == "__main__":
     main()
