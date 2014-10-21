@@ -141,7 +141,7 @@ def _sid_to_flows(sid, tbl, narcs):
     return ret
 
 def _pp_work(instid, solnids, prop_tbl, arc_tbl, soln_tbl):
-    narcs = prop_tbl.uuid_rows(instid)[0]['n_arcs']
+    narcs = cycio.uuid_rows(prop_tbl, instid)[0]['n_arcs']
     prefs = _iid_to_prefs(instid, arc_tbl, narcs)
     sid_to_flows = {}
     data = []
