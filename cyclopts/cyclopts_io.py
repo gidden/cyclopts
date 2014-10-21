@@ -12,7 +12,7 @@ import cyclopts
 import cyclopts.tools as tools
 import cyclopts.analysis as analysis
 
-def value_mapping(x, y, tbl=None, uuids=True):
+def value_mapping(tbl, x, y, uuids=True):
     """Returns a mapping from x to a list of ys in a table. A table can be
     supplied, or the underlying table will be used by default. If uuids is
     true, the cyclopts.tools.str_to_uuid function is used for both x and
@@ -98,9 +98,9 @@ class Table(object):
     def table(self):
         return self._tbl
 
-    def value_mapping(self, x, y, tbl=None, uuids=True):
+    def value_mapping(self, x, y, uuids=True):
         """Returns the result of value_mapping() using the underlying table."""
-        return value_mapping(c, y, tbl=self._tbl, uuids=uuids)
+        return value_mapping(self._tbl, x, y, uuids=uuids)
 
     def rows_where(self, cond, condvars=None):
         return self._tbl.read_where(cond, condvars=condvars)
