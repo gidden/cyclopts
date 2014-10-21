@@ -25,6 +25,15 @@ def value_mapping(tbl, x, y, uuids=True):
         for row in tbl.iterrows():
             ret[row[x]].append(row[y])
     return ret
+
+def rows_where(tbl, cond, condvars=None):
+    tbl = tbl._tbl if isinstance(tbl, Table) else tbl
+    return tbl.read_where(cond, condvars=condvars)
+        
+def uuid_rows(tbl, uuid, colname='instid'):
+    condvars = {'uuid': uuid.bytes}
+    return rows_where(tbl, """{0} == uuid""".format(colname), 
+                      condvars=condvars)
         
 class Table(object):
     """A thin wrapper for a PyTables Table to be used by Cyclopts.
@@ -102,13 +111,8 @@ class Table(object):
         """Returns the result of value_mapping() using the underlying table."""
         return value_mapping(self._tbl, x, y, uuids=uuids)
 
-    def rows_where(self, cond, condvars=None):
-        return self._tbl.read_where(cond, condvars=condvars)
-        
     def uuid_rows(self, uuid, colname='instid'):
-        condvars = {'uuid': uuid.bytes}
-        return self.rows_where("""{0} == uuid""".format(colname), 
-                               condvars=condvars)
+        return uuid_rows(self._tbl, uuid, colname=colname)
 
     def append_data(self, data):
         """Appends data to the Table. If the cachesize limit is reached, data is

@@ -125,7 +125,7 @@ def prop_tpl(instid, paramid, species, groups, nodes, arcs):
 def _iid_to_prefs(iid, tbl, narcs):
     """return a numpy array of preferences"""
     ret = np.zeros(narcs)
-    rows = tbl.uuid_rows(iid)
+    rows = cycio.uuid_rows(tbl, iid)
     ret[rows['id']] = rows['pref']
     # for x in rows:
     #     ret[x['id']] = x['pref']
@@ -134,7 +134,7 @@ def _iid_to_prefs(iid, tbl, narcs):
 def _sid_to_flows(sid, tbl, narcs):
     """return a numpy array of flows"""
     ret = np.zeros(narcs)
-    rows = tbl.uuid_rows(sid, colname='solnid')
+    rows = cycio.uuid_rows(tbl, sid, colname='solnid')
     ret[rows['arc_id']] = rows['flow']
     # for x in rows:
     #     ret[x['arc_id']] = x['flow']
