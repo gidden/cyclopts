@@ -84,13 +84,18 @@ class Table(object):
     def table(self):
         return self._tbl
 
-    def value_mapping(self, x, y, uuids=True):
+    def value_mapping(self, x, y, tbl=None, uuids=True):
+        """Returns a mapping from x to a list of ys in a table. A table can be
+        supplied, or the underlying table will be used by default. If uuids is
+        true, the cyclopts.tools.str_to_uuid function is used for both x and
+        y."""
+        tbl = self._tbl if tbl is None else tbl
         ret = defaultdict(list)
         if uuids:
-            for row in self._tbl.iterrows():
+            for row in tbl.iterrows():
                 ret[tools.str_to_uuid(row[x])].append(tools.str_to_uuid(row[y]))
         else:
-            for row in self._tbl.iterrows():
+            for row in tbl.iterrows():
                 ret[row[x]].append(row[y])
         return ret
 
