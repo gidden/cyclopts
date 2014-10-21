@@ -3,6 +3,7 @@ import numpy as np
 from collections import namedtuple
 import random
 
+from cyclopts import cyclopts_io as cycio
 from cyclopts.structured_species import data
 
 """default values and np.dtypes for points making up parameter space"""
@@ -202,7 +203,7 @@ def _iid_to_prefs(iid, tbl, narcs):
     """return a numpy array of preferences"""
     c_ret = np.zeros(narcs)
     l_ret = np.zeros(narcs)
-    rows = tbl.uuid_rows(iid)
+    rows = cycio.uuid_rows(tbl, iid)
     for x in rows:
         aid = x['arcid']
         c_ret[aid] = x['pref_c']
