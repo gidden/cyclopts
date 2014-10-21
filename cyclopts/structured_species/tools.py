@@ -209,6 +209,15 @@ def _iid_to_prefs(iid, tbl, narcs):
         l_ret[aid] = x['pref_l']
     return c_ret, l_ret
 
+def _pp_work(instid, solnids, narcs, sid_to_flows, arc_tbl):
+    c_prefs, l_prefs = _iid_to_prefs(instid, arc_tbl, narcs)
+    data = []
+    for sid, flows in sid_to_flows.items():
+        c_pref_flow = np.dot(c_prefs, flows)
+        l_pref_flow = np.dot(l_prefs, flows)
+        data.append((sid.bytes, c_pref_flow, l_pref_flow))
+    return data
+
 def post_process(instid, solnids, props, tbls, sp_name):
     """Perform any post processing on input and output.
     
@@ -235,10 +244,6 @@ def post_process(instid, solnids, props, tbls, sp_name):
         raise IOError(("Could not find input Structured Species table"
                        " {0} for species {1}.".format(arc_tbl.name, sp_name)))
     
-    c_prefs, l_prefs = _iid_to_prefs(instid, arc_tbl, narcs)
-    data = []
-    for sid, flows in sid_to_flows.items():
-        c_pref_flow = np.dot(c_prefs, flows)
-        l_pref_flow = np.dot(l_prefs, flows)
-        data.append((sid.bytes, c_pref_flow, l_pref_flow))
+    data = _pp_work(instid, solnids, narcs, sid_to_flows, arc_tbl)
+
     pp_tbl.append_data(data)
