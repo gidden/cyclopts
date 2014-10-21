@@ -11,6 +11,20 @@ from collections import defaultdict
 import cyclopts
 import cyclopts.tools as tools
 import cyclopts.analysis as analysis
+
+def value_mapping(self, x, y, tbl=None, uuids=True):
+    """Returns a mapping from x to a list of ys in a table. A table can be
+    supplied, or the underlying table will be used by default. If uuids is
+    true, the cyclopts.tools.str_to_uuid function is used for both x and
+    y."""
+    ret = defaultdict(list)
+    if uuids:
+        for row in tbl.iterrows():
+            ret[tools.str_to_uuid(row[x])].append(tools.str_to_uuid(row[y]))
+        else:
+            for row in tbl.iterrows():
+                ret[row[x]].append(row[y])
+    return ret
         
 class Table(object):
     """A thin wrapper for a PyTables Table to be used by Cyclopts.
@@ -85,19 +99,8 @@ class Table(object):
         return self._tbl
 
     def value_mapping(self, x, y, tbl=None, uuids=True):
-        """Returns a mapping from x to a list of ys in a table. A table can be
-        supplied, or the underlying table will be used by default. If uuids is
-        true, the cyclopts.tools.str_to_uuid function is used for both x and
-        y."""
-        tbl = self._tbl if tbl is None else tbl
-        ret = defaultdict(list)
-        if uuids:
-            for row in tbl.iterrows():
-                ret[tools.str_to_uuid(row[x])].append(tools.str_to_uuid(row[y]))
-        else:
-            for row in tbl.iterrows():
-                ret[row[x]].append(row[y])
-        return ret
+        """Returns the result of value_mapping() using the underlying table."""
+        return value_mapping(c, y, tbl=self._tbl, uuids=uuids)
 
     def rows_where(self, cond, condvars=None):
         return self._tbl.read_where(cond, condvars=condvars)
