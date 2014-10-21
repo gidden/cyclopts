@@ -315,6 +315,17 @@ class ResourceExchange(ProblemFamily):
         #     ret[x['arc_id']] = x['flow']
         return ret
 
+    def _pp_work(self, instid, solnids, prop_tbl, arc_tbl, soln_tbl):
+        narcs = prop_tbl.uuid_rows(instid)[0]['n_arcs']
+        prefs = self._iid_to_prefs(instid, arc_tbl, narcs)
+        sid_to_flows = {}
+        data = []
+        for sid in solnids:
+            flows = self._sid_to_flows(sid, soln_tbl, narcs)
+            data.append((sid.bytes, np.dot(prefs, flows)))
+            sid_to_flows[sid] = flows
+        return narcs, sid_to_flows, data
+
     def post_process(self, instid, solnids, tbls):
         """Perform any post processing on input and output.
         
@@ -340,13 +351,8 @@ class ResourceExchange(ProblemFamily):
         soln_tbl = outtbls[_tbl_names["solutions"]]
         pp_tbl = pptbls[_tbl_names["pp"]]
 
-        narcs = prop_tbl.uuid_rows(instid)[0]['n_arcs']
-        prefs = self._iid_to_prefs(instid, arc_tbl, narcs)
-        sid_to_flows = {}
-        data = []
-        for sid in solnids:
-            flows = self._sid_to_flows(sid, soln_tbl, narcs)
-            data.append((sid.bytes, np.dot(prefs, flows)))
-            sid_to_flows[sid] = flows
+        narcs, sid_to_flows, data = self._pp_work(instid, solnids, prop_tbl, 
+                                                  arc_tbl, soln_tbl)
         pp_tbl.append_data(data)
+
         return narcs, sid_to_flows
