@@ -122,6 +122,35 @@ def prop_tpl(instid, paramid, species, groups, nodes, arcs):
     return (paramid.bytes, instid.bytes, species, len(arcs), nu_grps, nv_grps, 
             nu_nodes, nv_nodes, nconstr, excl_frac)
 
+def _iid_to_prefs(iid, tbl, narcs):
+    """return a numpy array of preferences"""
+    ret = np.zeros(narcs)
+    rows = tbl.uuid_rows(iid)
+    ret[rows['id']] = rows['pref']
+    # for x in rows:
+    #     ret[x['id']] = x['pref']
+    return ret
+
+def _sid_to_flows(sid, tbl, narcs):
+    """return a numpy array of flows"""
+    ret = np.zeros(narcs)
+    rows = tbl.uuid_rows(sid, colname='solnid')
+    ret[rows['arc_id']] = rows['flow']
+    # for x in rows:
+    #     ret[x['arc_id']] = x['flow']
+    return ret
+
+def _pp_work(instid, solnids, prop_tbl, arc_tbl, soln_tbl):
+    narcs = prop_tbl.uuid_rows(instid)[0]['n_arcs']
+    prefs = _iid_to_prefs(instid, arc_tbl, narcs)
+    sid_to_flows = {}
+    data = []
+    for sid in solnids:
+        flows = _sid_to_flows(sid, soln_tbl, narcs)
+        data.append((sid.bytes, np.dot(prefs, flows)))
+        sid_to_flows[sid] = flows
+    return narcs, sid_to_flows, data
+
 class PathMap(analysis.PathMap):
     """A simple container class for mapping columns to Hdf5 paths
     implemented for the ResourceExchange problem family"""
@@ -297,35 +326,6 @@ class ResourceExchange(ProblemFamily):
         soln = exinst.Run(groups, nodes, arcs, solver, verbose)
         return soln
 
-    def _iid_to_prefs(self, iid, tbl, narcs):
-        """return a numpy array of preferences"""
-        ret = np.zeros(narcs)
-        rows = tbl.uuid_rows(iid)
-        ret[rows['id']] = rows['pref']
-        # for x in rows:
-        #     ret[x['id']] = x['pref']
-        return ret
-            
-    def _sid_to_flows(self, sid, tbl, narcs):
-        """return a numpy array of flows"""
-        ret = np.zeros(narcs)
-        rows = tbl.uuid_rows(sid, colname='solnid')
-        ret[rows['arc_id']] = rows['flow']
-        # for x in rows:
-        #     ret[x['arc_id']] = x['flow']
-        return ret
-
-    def _pp_work(self, instid, solnids, prop_tbl, arc_tbl, soln_tbl):
-        narcs = prop_tbl.uuid_rows(instid)[0]['n_arcs']
-        prefs = self._iid_to_prefs(instid, arc_tbl, narcs)
-        sid_to_flows = {}
-        data = []
-        for sid in solnids:
-            flows = self._sid_to_flows(sid, soln_tbl, narcs)
-            data.append((sid.bytes, np.dot(prefs, flows)))
-            sid_to_flows[sid] = flows
-        return narcs, sid_to_flows, data
-
     def post_process(self, instid, solnids, tbls):
         """Perform any post processing on input and output.
         
@@ -351,8 +351,8 @@ class ResourceExchange(ProblemFamily):
         soln_tbl = outtbls[_tbl_names["solutions"]]
         pp_tbl = pptbls[_tbl_names["pp"]]
 
-        narcs, sid_to_flows, data = self._pp_work(instid, solnids, prop_tbl, 
-                                                  arc_tbl, soln_tbl)
+        narcs, sid_to_flows, data = _pp_work(instid, solnids, prop_tbl, 
+                                             arc_tbl, soln_tbl)
         pp_tbl.append_data(data)
 
         return narcs, sid_to_flows
