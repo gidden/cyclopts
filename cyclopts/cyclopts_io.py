@@ -12,7 +12,7 @@ import cyclopts
 import cyclopts.tools as tools
 import cyclopts.analysis as analysis
 
-def value_mapping(self, x, y, tbl=None, uuids=True):
+def value_mapping(x, y, tbl=None, uuids=True):
     """Returns a mapping from x to a list of ys in a table. A table can be
     supplied, or the underlying table will be used by default. If uuids is
     true, the cyclopts.tools.str_to_uuid function is used for both x and
