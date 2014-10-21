@@ -21,9 +21,9 @@ def value_mapping(x, y, tbl=None, uuids=True):
     if uuids:
         for row in tbl.iterrows():
             ret[tools.str_to_uuid(row[x])].append(tools.str_to_uuid(row[y]))
-        else:
-            for row in tbl.iterrows():
-                ret[row[x]].append(row[y])
+    else:
+        for row in tbl.iterrows():
+            ret[row[x]].append(row[y])
     return ret
         
 class Table(object):
