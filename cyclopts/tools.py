@@ -204,10 +204,12 @@ def _merge_leaf(node, dest_file):
         dest.flush()
     
 def _copy_node(node, dest_file):
-    print('node: ', node._v_name)
     if node._v_depth == 0: # base recursion level, don't copy root
         return
     
+    if dest_file.__contains__(node._v_pathname):
+        return
+
     parent = node._v_parent
     if not dest_file.__contains__(parent._v_pathname):
         _copy_node(parent, dest_file) # parent doesn't exist, copy it
