@@ -202,14 +202,26 @@ def _merge_leaf(node, dest_file):
                 dest_row[dtypes[j]] = src_row[j]
             dest_row.append()
         dest.flush()
+    
+def _copy_node(node, dest_file):
+    print('node: ', node._v_name)
+    if node._v_depth == 0: # base recursion level, don't copy root
+        return
+    
+    parent = node._v_parent
+    if not dest_file.__contains__(parent._v_pathname):
+        _copy_node(parent, dest_file) # parent doesn't exist, copy it
+
+    # copy node
+    node._v_file.copy_node(
+        node._v_pathname, 
+        newparent=dest_file.get_node(node._v_parent._v_pathname),
+        recursive=False)
+    dest_file.flush()
         
 def _merge_node(node, dest_file):
     if not dest_file.__contains__(node._v_pathname):
-        node._v_file.copy_node(
-            node._v_pathname, 
-            newparent=dest_file.get_node(node._v_parent._v_pathname),
-            recursive=True)
-        dest_file.flush()
+        _copy_node(node, dest_file)
         return 
 
     if isinstance(node, t.Leaf):
