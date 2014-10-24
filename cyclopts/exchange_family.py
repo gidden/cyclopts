@@ -122,25 +122,32 @@ def prop_tpl(instid, paramid, species, groups, nodes, arcs):
     return (paramid.bytes, instid.bytes, species, len(arcs), nu_grps, nv_grps, 
             nu_nodes, nv_nodes, nconstr, excl_frac)
 
-def _iid_to_prefs(iid, tbl, narcs):
+def _iid_to_prefs(iid, tbl, narcs, strategy='col'):
     """return a numpy array of preferences"""
+    if strategy == 'grp':
+        return tbl.read(field='pref')
+    # otherwise, do column strat
     ret = np.zeros(narcs)
     rows = cycio.uuid_rows(tbl, iid)
     ret[rows['id']] = rows['pref']
     # for x in rows:
     #     ret[x['id']] = x['pref']
     return ret
-
-def _sid_to_flows(sid, tbl, narcs):
+    
+def _sid_to_flows(sid, tbl, narcs, strategy='col'):
     """return a numpy array of flows"""
     ret = np.zeros(narcs)
-    rows = cycio.uuid_rows(tbl, sid, colname='solnid')
-    ret[rows['arc_id']] = rows['flow']
+    if strategy == 'col':
+        rows = cycio.uuid_rows(tbl, sid, colname='solnid')
+        ret[rows['arc_id']] = rows['flow']
+    elif strategy == 'grp':
+        #rows = tbl[:]
+        ret[tbl.read(field='arc_id')] = tbl.read(field='flow')
     # for x in rows:
     #     ret[x['arc_id']] = x['flow']
     return ret
 
-def _pp_work(instid, solnids, prop_tbl, arc_tbl, soln_tbl):
+def _pp_work_col(instid, solnids, prop_tbl, arc_tbl, soln_tbl):
     narcs = cycio.uuid_rows(prop_tbl, instid)[0]['n_arcs']
     prefs = _iid_to_prefs(instid, arc_tbl, narcs)
     sid_to_flows = {}
@@ -150,6 +157,25 @@ def _pp_work(instid, solnids, prop_tbl, arc_tbl, soln_tbl):
         data.append((sid.bytes, np.dot(prefs, flows)))
         sid_to_flows[sid] = flows
     return narcs, sid_to_flows, data
+
+def _pp_work_grp(instid, solnids, prop_tbl, arc_tbl, soln_tbl):
+    narcs = cycio.uuid_rows(prop_tbl, instid)[0]['n_arcs']
+    arc_tbl = arc_tbl._f_get_child('id_'+instid.hex)
+    prefs = _iid_to_prefs(instid, arc_tbl, narcs, strategy='grp')
+    sid_to_flows = {}
+    data = []
+    for sid in solnids:
+        tbl = soln_tbl._f_get_child('id_'+sid.hex)
+        flows = _sid_to_flows(sid, tbl, narcs, strategy='grp')
+        data.append((sid.bytes, np.dot(prefs, flows)))
+        sid_to_flows[sid] = flows
+    return narcs, sid_to_flows, data
+
+def _pp_work(instid, solnids, prop_tbl, arc_tbl, soln_tbl, strategy='col'):
+    if strategy == 'col':
+        return _pp_work_col(instid, solnids, prop_tbl, arc_tbl, soln_tbl)
+    else:
+        return _pp_work_grp(instid, solnids, prop_tbl, arc_tbl, soln_tbl)
 
 class PathMap(analysis.PathMap):
     """A simple container class for mapping columns to Hdf5 paths

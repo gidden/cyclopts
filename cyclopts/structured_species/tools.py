@@ -199,8 +199,11 @@ pp_tbl_dtype = np.dtype(
     [('solnid', ('str', 16)), ('c_pref_flow', np.float64), 
      ('l_pref_flow', np.float64)])
 
-def _iid_to_prefs(iid, tbl, narcs):
+def _iid_to_prefs(iid, tbl, narcs, strategy='col'):
     """return a numpy array of preferences"""
+    if strategy == 'grp':
+        return tbl.read(field='pref_c'), tbl.read(field='pref_l')
+    # otherwise, do column strat
     c_ret = np.zeros(narcs)
     l_ret = np.zeros(narcs)
     rows = cycio.uuid_rows(tbl, iid)
@@ -210,8 +213,10 @@ def _iid_to_prefs(iid, tbl, narcs):
         l_ret[aid] = x['pref_l']
     return c_ret, l_ret
 
-def _pp_work(instid, solnids, narcs, sid_to_flows, arc_tbl):
-    c_prefs, l_prefs = _iid_to_prefs(instid, arc_tbl, narcs)
+def _pp_work(instid, solnids, narcs, sid_to_flows, arc_tbl, strategy='col'):
+    if strategy == 'grp':
+        arc_tbl = arc_tbl._f_get_child('id_'+instid.hex)
+    c_prefs, l_prefs = _iid_to_prefs(instid, arc_tbl, narcs, strategy=strategy)
     data = []
     for sid, flows in sid_to_flows.items():
         c_pref_flow = np.dot(c_prefs, flows)
