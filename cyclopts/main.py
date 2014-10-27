@@ -249,6 +249,13 @@ def post_process(args):
         if h5f.isopen:
             h5f.close()
 
+def col2grp(args):
+    in_old = args.in_old
+    out_old = args.out_old
+    in_new = args.in_new
+    out_new = args.out_new
+    tools.col2grp(in_old, out_old, in_new, out_new)    
+
 def update_cde(args):
     user = args.user
     host = args.host
@@ -580,7 +587,21 @@ def gen_parser():
     clean = ("Clean up (remove) the original files.")
     combine_parser.add_argument('--clean', dest='clean', help=clean,
                                 action='store_true', default=False)    
-                
+    
+    #
+    # translate a database in id-column form to id-group form 
+    #
+    col2grph = ("Moves input and output databases from id-column form to id-group form.")
+    col2grp_parser = sp.add_parser('col2grp', parents=[cyclopts_parser], help=col2grph)
+    col2grp_parser.set_defaults(func=col2grp)
+    in_old = 'the old input database'
+    col2grp_parser.add_argument('in_old', help=in_old, default='in_old.h5')
+    out_old = 'the old output database'
+    col2grp_parser.add_argument('out_old', help=out_old, default='out_old.h5')
+    in_new = 'the old input database'
+    col2grp_parser.add_argument('--in_new', help=in_new, default='in_new.h5')
+    out_new = 'the new output database'
+    col2grp_parser.add_argument('--out_new', help=out_new, default='out_new.h5')
 
     #
     # dump information about an instance db

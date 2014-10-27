@@ -595,6 +595,59 @@ def drive_post_process(res_tbl, fam=None, fam_tbls=None, sp=None, sp_tbls=None,
         if sp is not None:
             sp.post_process(iid, sids, props, sp_tbls)
 
+def col2grp(in_old, out_old, in_new, out_new):    
+    in_old = t.open_file(in_old, mode='r')
+    out_old = t.open_file(out_old, mode='r')
+    in_new = t.open_file(in_new, mode='w')
+    out_new = t.open_file(out_new, mode='w')
+
+    # do xlation work
+    arctbl = in_old.root.Species.StructuredRequest.Arcs \
+        if in_old.__contains__('/Species/StructuredRequest') else \
+        in_old.root.Species.StructuredSupply.Arcs
+
+    all_tbls = {in_new: [in_old.root.Family.ResourceExchange.ExchangeArcs,
+                         arctbl,],
+                out_new: [out_old.root.Family.ResourceExchange.ExchangeInstSolutions,]}
+
+    old_files = {in_new: in_old,
+                 out_new: out_old}
+    
+    for h5f, tbls in all_tbls.items():
+        pths = [x._v_pathname for x in tbls]
+        oldf = old_files[h5f]
+        for node in oldf.walk_nodes(classname='Leaf'):
+            pth = node._v_pathname
+            if pth not in pths:
+                _copy_node(oldf.get_node(pth), h5f)
+    
+    for h5f, tbls in all_tbls.items():
+        for tbl in tbls:
+            dtype = np.dtype(tbl.dtype.descr[1:])
+            path = tbl._v_pathname
+            colid = ''
+            ntbl = None
+            _copy_node(tbl._v_parent, h5f)
+            h5f.create_group(tbl._v_parent._v_pathname, tbl._v_name, 
+                             filters=FILTERS)
+            for x in tbl.iterrows():
+                y = uuid.UUID(bytes=x[0]).hex
+                if y != colid:
+                    if ntbl is not None:
+                        ntbl.flush()
+                    colid = y
+                    ntbl = cyclopts.cyclopts_io.Table(h5f, '/'.join([path, 'id_'+colid]), dt=dtype)
+                    ntbl.create()
+                # either do [x[1:]] or append
+                ntbl.append_data([x[1:]])
+            ntbl.flush()
+            
+    in_old.close()
+    out_old.close()
+    in_new.close()
+    out_new.close()
+
+
 # def run_insts_mp():
 #     q = mp.Queue()
 #     pool = mp.Pool(4, multi_proc_gen, (q,))
