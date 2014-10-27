@@ -277,7 +277,7 @@ def update_cde(args):
                 indb=indb, outdb=outdb, ppdb=ppdb)]
     cmd += " && ".join(cmds)
     print(cmd)
-    subprocess.call(cmd, shell=True) # shell must be True to get &&
+    subprocess.check_call(cmd, shell=True) # shell must be True to get &&
 
     pkgdir  = 'cde-package'
     tarname = 'cde-cyclopts.tar.gz'
