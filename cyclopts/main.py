@@ -297,7 +297,7 @@ def update_cde(args):
     pkgdir  = 'cde-package'
     tarname = 'cde-cyclopts-{0}.tar.gz'.format(fname)
 
-    print('tarring up', pkgdir, 'into', tarnameo)
+    print('tarring up', pkgdir, 'into', tarname)
     with tarfile.open(tarname, 'w:gz') as tar:
         tar.add(pkgdir)
     
