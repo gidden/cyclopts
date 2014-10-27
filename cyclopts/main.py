@@ -14,12 +14,17 @@ import subprocess
 import tarfile
 import os
 import shutil
-import paramiko as pm
 import getpass
 import ast
 import sys
 import gc
 import io
+import warnings
+
+try:
+    import paramiko as pm
+except:
+    warnings.warn('could not import paramiko')
 
 try:
     import argcomplete
@@ -261,11 +266,15 @@ def update_cde(args):
     host = args.host
     clean = args.clean
     keyfile = args.keyfile
-
+    fname = args.fname
+    
     indb, outdb, ppdb = '.in.h5', '.out.h5', '.pp.h5'
     newin, newout = '.newin.h5', '.newout.h5'
     rc = os.path.join(args.prefix, 'tests', 'files', 'obs_valid.rc')
-    cmd = "cde "
+    
+    ordering = ['convert', 'exec', 'col2grp', 'pp']
+    ordering = {ordering[i]: i for i in range(len(ordering))}
+    idx = ordering[fname]
     cmds = [("cyclopts convert --rc {rc} "
              "--db {indb}").format(rc=rc, indb=indb),
             ("cyclopts exec --db {indb} --outdb {outdb} "
@@ -274,15 +283,21 @@ def update_cde(args):
              "--in_new {in_new} --out_new {out_new}").format(
                 indb=indb, outdb=outdb, in_new=newin, out_new=newout),
             ("cyclopts pp --indb {indb} --outdb {outdb} --ppdb {ppdb}").format(
-                indb=indb, outdb=outdb, ppdb=ppdb)]
-    cmd += " && ".join(cmds)
+                indb=indb, outdb=outdb, ppdb=ppdb),
+            ("python -c 'import sys; print sys.version'"),]
+    cmd = " && ".join(cmds[:idx])
     print(cmd)
     subprocess.check_call(cmd, shell=True) # shell must be True to get &&
+    
+    cmd = "cde "
+    cmd += cmds[idx]
+    print(cmd)
+    subprocess.check_call(cmd.split(), shell=False)
 
     pkgdir  = 'cde-package'
-    tarname = 'cde-cyclopts.tar.gz'
+    tarname = 'cde-cyclopts-{0}.tar.gz'.format(fname)
 
-    print('tarring up', pkgdir)
+    print('tarring up', pkgdir, 'into', tarnameo)
     with tarfile.open(tarname, 'w:gz') as tar:
         tar.add(pkgdir)
     
@@ -303,7 +318,8 @@ def update_cde(args):
     if clean:
         rms = [tarname, 'cde.options', indb, outdb, ppdb, newin, newout]
         for rm in rms:
-            os.remove(rm)
+            if os.path.exists(rm):
+                os.remove(rm)
         shutil.rmtree(pkgdir)
     
 def dump(args):
@@ -580,6 +596,9 @@ def gen_parser():
     keyfile = ("An ssh public key file.")
     cde_parser.add_argument('--keyfile', dest='keyfile', help=keyfile, 
                                default=None)    
+    fname = ("The function to wrap with cde.")
+    cde_parser.add_argument('--fname', dest='fname', default='exec', 
+                            help=fname)    
     
     #
     # combine a collection of databases

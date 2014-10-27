@@ -275,7 +275,7 @@ def main():
     idgen = open(uuidfile)
     bring_files = {
         'run_file': run_file,
-        'cyclopts_tar': '/home/gidden/cde-cyclopts.tar.gz', 
+        'cyclopts_tar': '/home/gidden/cde-cyclopts-exec.tar.gz', 
         'cde_tar': '/home/gidden/CDE.tar.gz',
         }
 
