@@ -262,15 +262,24 @@ def update_cde(args):
     clean = args.clean
     keyfile = args.keyfile
 
-    db = '.tmp.h5'
-    
-    shutil.copy(os.path.join(args.prefix, 'tests', 'files', 'obs_valid_in.h5'), 
-                db)    
-    cmd = "cde cyclopts exec --db {db} --solvers cbc greedy clp"
-    cmd = cmd.format(db=db)
-    subprocess.call(cmd.split(), shell=(os.name == 'nt'))
+    indb, outdb, ppdb = '.in.h5', '.out.h5', '.pp.h5'
+    newin, newout = '.newin.h5', '.newout.h5'
+    rc = os.path.join(args.prefix, 'tests', 'files', 'obs_valid.rc')
+    cmd = "cde "
+    cmds = [("cyclopts convert --rc {rc} "
+             "--db {indb}").format(rc=rc, indb=indb),
+            ("cyclopts exec --db {indb} --outdb {outdb} "
+             "--solvers cbc greedy clp").format(indb=indb, outdb=outdb),
+            ("cyclopts col2grp {indb} {outdb} "
+             "--in_new {in_new} --out_new {out_new}").format(
+                indb=indb, outdb=outdb, in_new=newin, out_new=newout),
+            ("cyclopts pp --indb {indb} --outdb {outdb} --ppdb {ppdb}").format(
+                indb=indb, outdb=outdb, ppdb=ppdb)]
+    cmd += " && ".join(cmds)
+    print(cmd)
+    subprocess.call(cmd, shell=True) # shell must be True to get &&
 
-    pkgdir = 'cde-package'
+    pkgdir  = 'cde-package'
     tarname = 'cde-cyclopts.tar.gz'
 
     print('tarring up', pkgdir)
@@ -292,7 +301,7 @@ def update_cde(args):
     client.close()
 
     if clean:
-        rms = [tarname, db, 'cde.options']
+        rms = [tarname, 'cde.options', indb, outdb, ppdb, newin, newout]
         for rm in rms:
             os.remove(rm)
         shutil.rmtree(pkgdir)
