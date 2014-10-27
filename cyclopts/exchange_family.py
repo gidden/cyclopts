@@ -17,11 +17,14 @@ _N_CAPS_MAX = 4
 _tbl_names = {
     "ExGroup": "ExchangeGroups",
     "ExNode": "ExchangeNodes",
-    "ExArc": "ExchangeArcs",
     "properties": "ExchangeInstProperties",
-    "solutions": "ExchangeInstSolutions",    
     "solution_properties": "ExchangeInstSolutionProperties",    
     "pp": "PostProcess",
+}
+
+_grp_names = {
+    "ExArc": "ExchangeArcs",
+    "solutions": "ExchangeInstSolutions",    
 }
 
 # this must be kept up to date with the cyclopts.instance classes
@@ -373,12 +376,28 @@ class ResourceExchange(ProblemFamily):
         """
         intbls, outtbls, pptbls = tbls
         prop_tbl = intbls[_tbl_names["properties"]]
-        arc_tbl = intbls[_tbl_names["ExArc"]]
-        soln_tbl = outtbls[_tbl_names["solutions"]]
         pp_tbl = pptbls[_tbl_names["pp"]]
-
+        
+        # determining column or group-based layout
+        arc_tbl_name = _tbl_names["ExArc"]
+        if arc_tbl_name in intbls.keys():
+            # column based layout
+            arc_tbl = intbls[_tbl_names["ExArc"]]
+            soln_tbl = outtbls[_tbl_names["solutions"]]
+            strategy = 'col'
+        else:
+            # group-based layout
+            base_pathname = '/'.join(prop_tbl._tbl._v_pathname.split('/')[:-1])
+            arc_pathname = '/'.join([base_pathname, _tbl_names["ExArc"]])
+            arc_tbl = prop_tbl.table()._v_file.get_node(arc_pathname)
+            soln_pathname = '/'.join([base_pathname, _tbl_names["solutions"]])
+            soln_tbl = outtbls[_tbl_names["properties"]].table()._v_file.get_node(
+                soln_pathname)
+            strategy = 'grp'
+        
         narcs, sid_to_flows, data = _pp_work(instid, solnids, prop_tbl, 
-                                             arc_tbl, soln_tbl)
+                                             arc_tbl, soln_tbl, 
+                                             strategy=strategy)
         pp_tbl.append_data(data)
 
         return narcs, sid_to_flows

@@ -243,13 +243,18 @@ def post_process(instid, solnids, props, tbls, sp_name):
     """
     intbls, outtbls, pptbls = tbls
     narcs, sid_to_flows = props
-    arc_tbl = intbls[arc_tbl_name]
     pp_tbl = pptbls[pp_tbl_name]
 
-    if arc_tbl.table() is None:
-        raise IOError(("Could not find input Structured Species table"
-                       " {0} for species {1}.".format(arc_tbl.name, sp_name)))
+    if arc_tbl_name in intbls.keys():
+        arc_tbl = intbls[arc_tbl_name]
+        strategy = 'col'
+    else:
+        base_pathname = '/'.join(pp_tbl._tbl._v_pathname.split('/')[:-1])
+        arc_pathname = '/'.join([base_pathname, arc_tbl_name])
+        arc_tbl = prop_tbl.table()._v_file.get_node(arc_pathname) # actually a node
+        strategy = 'grp'
     
-    data = _pp_work(instid, solnids, narcs, sid_to_flows, arc_tbl)
+    data = _pp_work(instid, solnids, narcs, sid_to_flows, arc_tbl, 
+                    strategy=strategy)
 
     pp_tbl.append_data(data)
