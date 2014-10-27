@@ -33,7 +33,7 @@ log = {id}.log
 requirements = (OpSysAndVer =?= "SL6") && Arch == "X86_64" && ( ForGidden == true )
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
-transfer_input_files = {homedir}/cde-cyclopts.tar.gz, {homedir}/CDE.tar.gz, {db}
+transfer_input_files = {homedir}/cde-cyclopts-exec.tar.gz, {homedir}/CDE.tar.gz, {db}
 request_cpus = 1
 #request_memory = 2500
 #request_disk = 10242880
@@ -45,7 +45,7 @@ pwd=$PWD
 ls -l
 
 tar -xf CDE.tar.gz
-tar -xf cde-cyclopts.tar.gz
+tar -xf cde-cyclopts-exec.tar.gz
 export PATH=$pwd/CDE/:$PATH
 ls -l
 

@@ -39,7 +39,7 @@ fi
 echo "pwd pre-tar:"
 ls -l
 tar -xf CDE.tar.gz
-tar -xf cde-cyclopts.tar.gz
+tar -xf cde-cyclopts-exec.tar.gz
 export PATH=$pwd/CDE/:$PATH
 echo "pwd post-tar:"
 ls -l
