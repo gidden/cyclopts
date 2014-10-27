@@ -604,7 +604,7 @@ def col2grp(in_old, out_old, in_new, out_new):
     in_new = t.open_file(in_new, mode='w')
     out_new = t.open_file(out_new, mode='w')
 
-    # do xlation work
+    # setup tables
     arctbl = in_old.root.Species.StructuredRequest.Arcs \
         if in_old.__contains__('/Species/StructuredRequest') else \
         in_old.root.Species.StructuredSupply.Arcs
@@ -634,7 +634,7 @@ def col2grp(in_old, out_old, in_new, out_new):
             h5f.create_group(tbl._v_parent._v_pathname, tbl._v_name, 
                              filters=FILTERS)
             for x in tbl.iterrows():
-                y = uuid.UUID(bytes=x[0]).hex
+                y = str_to_uuid(x[0]).hex
                 if y != colid:
                     if ntbl is not None:
                         ntbl.flush()
