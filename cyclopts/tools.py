@@ -596,6 +596,9 @@ def drive_post_process(res_tbl, fam=None, fam_tbls=None, sp=None, sp_tbls=None,
             sp.post_process(iid, sids, props, sp_tbls)
 
 def col2grp(in_old, out_old, in_new, out_new):    
+    """Make old input/output files using a columnar id-based schema into a group
+    id-based schema. Currently only works for ExchangeFamily and
+    StructuredSpecies."""
     in_old = t.open_file(in_old, mode='r')
     out_old = t.open_file(out_old, mode='r')
     in_new = t.open_file(in_new, mode='w')
