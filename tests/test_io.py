@@ -105,7 +105,7 @@ class TestIO:
 
     def test_manager(self):
         tbls = [cycio.Table(self.h5file, self.pth, self.dt, chunksize=3, cachesize=3)]
-        manager = cycio.TableManager(self.h5file, tbls)
+        manager = cycio.IOManager(self.h5file, tbls)
         h5tbl = self.h5file.root.tbl
         data = np.empty(2, dtype=self.dt)
         data['data'] = range(2)

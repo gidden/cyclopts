@@ -173,7 +173,7 @@ class TestExchangeIO:
         # setup
         fam = exchange_family.ResourceExchange()
         tbls = fam.register_tables(self.h5file, '')
-        manager = cycio.TableManager(self.h5file, tbls)
+        manager = cycio.IOManager(self.h5file, tbls)
         paramid, instid = uuid.uuid4(), uuid.uuid4()
 
         # work
