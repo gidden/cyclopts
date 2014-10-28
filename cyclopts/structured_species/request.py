@@ -203,6 +203,7 @@ class StructuredRequest(ProblemSpecies):
         self.arcids = cyctools.Incrementer()
         self.instid = None
         self.tables = None
+        self.groups = None
 
     def register_tables(self, h5file, prefix):
         """Parameters
@@ -223,6 +224,21 @@ class StructuredRequest(ProblemSpecies):
                             self._sum_dtype),
                 cycio.Table(h5file, '/'.join([prefix, strtools.pp_tbl_name]), 
                             strtools.pp_tbl_dtype),]
+
+    def register_groups(self, h5file, prefix):
+        """Parameters
+        ----------
+        h5file : PyTables File
+            the hdf5 file
+        prefix : string
+            the absolute path to the group for tables of this family
+
+        Returns
+        -------
+        groups : list of cyclopts_io.Groups
+            All groups that could be written to by this species.
+        """
+        return [cycio.Group(h5file, '/'.join([prefix, strtools.arc_tbl_name]))]
 
     def read_space(self, space_dict):
         """Parameters
@@ -363,9 +379,8 @@ class StructuredRequest(ProblemSpecies):
             node = exinst.ExNode(nid, s.group.id, not req, qty)
             s.nodes.append(node)
             arcid = self.arcids.next()
-            if self.tables is not None:
-                self.tables[strtools.arc_tbl_name].append_data([
-                        (self.instid.bytes, arcid, commod, commod_pref, loc_pref)])
+            if self.arc_tbl is not None:
+                self.arc_tbl.append_data([(arcid, commod, commod_pref, loc_pref)])
             #print('id', arcid, 'commod', commod, 'pref', pref)
             arcs.append(exinst.ExArc(
                     arcid,
@@ -406,7 +421,18 @@ class StructuredRequest(ProblemSpecies):
         self.arcids = cyctools.Incrementer()
         self.instid = instid
         self.tables = None if io_manager is None else io_manager.tables()
-        ### add arc table and gruop here
+        self.groups = None if io_manager is None else io_manager.groups()
+        
+        # set up IO
+        self.tables = None if io_manager is None else io_manager.tables()
+        self.groups = None if io_manager is None else io_manager.groups()
+        self.arc_tbl = None
+        if self.groups is not None:
+            arc_grp = self.groups[strtools.arc_tbl_name]
+            arc_tbl_path = '/'.join([arc_grp.path, 
+                                     'id_' + cyctools.uuid_to_str(self.instid)])
+            self.arc_tbl = cycio.Table(arc_grp.h5file, arc_tbl_path, strtools.arc_tbl_dtype)
+            self.arc_tbl.cond_create()
 
         # species objects
         reactors = self._get_reactors(point)        

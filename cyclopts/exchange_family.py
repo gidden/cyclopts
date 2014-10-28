@@ -245,6 +245,23 @@ class ResourceExchange(ProblemFamily):
                             '/'.join([prefix, _tbl_names[x]]), 
                             _dtypes[x]) for x in _tbl_names.keys()]
 
+    def register_groups(self, h5file, prefix):
+        """Parameters
+        ----------
+        h5file : PyTables File
+            the hdf5 file
+        prefix : string
+            the absolute path to the group for tables of this family
+
+        Returns
+        -------
+        groups : list of cyclopts_io.Groups
+            All groups that could be written to by this species.
+        """
+        return [cycio.Group(h5file, 
+                            '/'.join([prefix, _grp_names[x]])) 
+                for x in _grp_names.keys()]
+
     def record_inst(cls, inst, inst_uuid, param_uuid, species, io_manager=None):
         """Parameters
         ----------
@@ -259,7 +276,8 @@ class ResourceExchange(ProblemFamily):
         io_manager : cyclopts_io.IOManager, optional
             IOManager that gives access to tables/groups for writing
         """
-        tables = io_manager.tables()
+        tables = None if io_manager is None else io_manager.tables()
+        h5groups = None if io_manager is None else io_manager.groups()
         groups, nodes, arcs = inst
         
         data = [grp_tpl(inst_uuid, x) for x in groups]
@@ -267,12 +285,12 @@ class ResourceExchange(ProblemFamily):
         
         data = [node_tpl(inst_uuid, x) for x in nodes]
         tables[_tbl_names['ExNode']].append_data(data)
-        
-        grp = tables[_tbl_names['ExNode']].table()._v_parent._f_get_child(_tbl_names['ExArc'])
-        arc_tbl_name = 'id_' + inst_uuid.hex
-        arc_tbl = cycio.Table(grp._v_file, 
-                              '/'.join([grp._v_pathname, arc_tbl_name]), 
-                              _dtypes['ExArc'])
+
+        arc_grp = groups[_grp_names['ExArc']]
+        arc_tbl_path = '/'.join([arc_grp.path, 
+                                 'id_' + cyctools.uuid_to_str(inst_uuid)])
+        arc_tbl = cycio.Table(arc_grp.h5file, arc_tbl_path, _dtypes['ExArc'])
+        arc_tbl.cond_create()
         data = [arc_tpl(x) for x in arcs]
         arc_tbl.append_data(data)
         

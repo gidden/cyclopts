@@ -76,6 +76,11 @@ class Group(object):
 
         self.grp = self.h5file.get_node(self.path)
 
+    def cond_create(self):
+        """Create the group if it does not already exist in the h5file."""
+        if self.path not in self.h5file and self.h5file.mode is not 'r':
+            self.create()
+
     def group(self):
         return self._grp
         
@@ -147,6 +152,11 @@ class Table(object):
                                  chunkshape=(self.chunksize,))
 
         self._tbl = self.h5file.get_node(self.path)
+
+    def cond_create(self):
+        """Create the table if it does not already exist in the h5file."""
+        if self.path not in self.h5file and self.h5file.mode is not 'r':
+            self.create()
 
     def table(self):
         return self._tbl
@@ -284,12 +294,10 @@ class IOManager(object):
         self.groups = {grp.path.split('/')[-1]: grp for grp in groups}
         self.h5file = h5file
         for tbl in self.tables.values():
-            if tbl.path not in self.h5file and self.h5file.mode is not 'r':
-                tbl.create()
+            tbl.cond_create()
         for grp in self.groups.values():
-            if grp.path not in self.h5file and self.h5file.mode is not 'r':
-                grp.create()
-
+            grp.cond_create()
+        
     def __del__(self):
         if self.h5file.isopen and self.h5file.mode is not 'r':
             self.flush_tables()

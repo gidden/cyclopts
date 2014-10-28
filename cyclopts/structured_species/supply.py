@@ -197,14 +197,13 @@ class StructuredSupply(ProblemSpecies):
         return namedtuple('Realization', keys)(reqrs, rxtrs, dists)
 
     @staticmethod
-    def gen_arc(aid, point, commod, rx_node_id, rxtr, reqr, instid=None, tables=None):
+    def gen_arc(aid, point, commod, rx_node_id, rxtr, reqr, instid=None, arc_tbl=None):
         """generate an arc"""
         commod_pref = data.sup_pref_basis[reqr.kind][commod]
         loc_pref = strtools.loc_pref(rxtr.loc, reqr.loc, point.f_loc, point.n_reg)
         pref = commod_pref + loc_pref * point.r_l_c
-        if tables is not None:
-            tables[strtools.arc_tbl_name].append_data([
-                    (instid.bytes, aid, commod, commod_pref, loc_pref)])
+        if arc_tbl is not None:
+            arc_tbl.append_data([(aid, commod, commod_pref, loc_pref)])
         # unit capacity for total mass constraint first
         rq_coeffs = [1., reqr.coeff(rxtr.enr(commod), rxtr.kind, commod)] \
             if not reqr.kind == data.Supports.repo else [1.]
@@ -258,6 +257,21 @@ class StructuredSupply(ProblemSpecies):
                             self._sum_dtype),
                 cycio.Table(h5file, '/'.join([prefix, strtools.pp_tbl_name]), 
                             strtools.pp_tbl_dtype),]
+
+    def register_groups(self, h5file, prefix):
+        """Parameters
+        ----------
+        h5file : PyTables File
+            the hdf5 file
+        prefix : string
+            the absolute path to the group for tables of this family
+
+        Returns
+        -------
+        groups : list of cyclopts_io.Groups
+            All groups that could be written to by this species.
+        """
+        return [cycio.Group(h5file, '/'.join([prefix, strtools.arc_tbl_name]))]
 
     def read_space(self, space_dict):
         """Parameters
@@ -370,7 +384,7 @@ class StructuredSupply(ProblemSpecies):
                                 node = rxtr.gen_node(nid, gid, excl_id)
                                 arc = StructuredSupply.gen_arc(
                                     self.arcids.next(), point, commod, 
-                                    nid, rxtr, reqr, self.instid, self.tables) 
+                                    nid, rxtr, reqr, self.instid, self.arc_tbl) 
                                 nodes.append(node)
                                 arcs.append(arc)
         return grps, nodes, arcs
@@ -399,9 +413,18 @@ class StructuredSupply(ProblemSpecies):
         self.gids = cyctools.Incrementer()
         self.arcids = cyctools.Incrementer()
         self.instid = instid
-        self.tables = None if io_manager is None else io_manager.tables()
-        ### create arc table here
         
+        # set up IO
+        self.tables = None if io_manager is None else io_manager.tables()
+        self.groups = None if io_manager is None else io_manager.groups()
+        self.arc_tbl = None
+        if self.groups is not None:
+            arc_grp = self.groups[strtools.arc_tbl_name]
+            arc_tbl_path = '/'.join([arc_grp.path, 
+                                     'id_' + cyctools.uuid_to_str(self.instid)])
+            self.arc_tbl = cycio.Table(arc_grp.h5file, arc_tbl_path, strtools.arc_tbl_dtype)
+            self.arc_tbl.cond_create()
+
         self.commod_to_reqrs = commod_to_reqrs(point.f_fc)
         
         # species objects
