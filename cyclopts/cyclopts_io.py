@@ -35,6 +35,40 @@ def uuid_rows(tbl, uuid, colname='instid'):
     return rows_where(tbl, """{0} == uuid""".format(colname), 
                       condvars=condvars)
         
+class Group(object):
+    """A thin wrapper for a PyTables Group to be used by Cyclopts.
+    """
+    def __init__(self, h5file=None, path=None, dt=None):
+        """Parameters
+        ----------
+        h5file : PyGroups File
+            the hdf5 file
+        path : string
+            the absolute path to the group
+        """
+        self.h5file = h5file
+        self.path = path if path is not None else '/'
+        self.prefix = '/'.join(self.path.split('/')[:-1])
+        if not self.prefix.startswith('/'):
+            self.prefix = '/{0}'.format(self.prefix)
+        self.name = self.path.split('/')[-1]
+
+    def create(self):
+        """Creates a group in the h5file."""
+        groups = [x for x in self.prefix.split('/') if x]
+        prefix = ''
+        for name in groups:
+            path = '/'.join([prefix, name])
+            prefix = '/' if not prefix else prefix
+            if not path in self.h5file:
+                self.h5file.create_group(prefix, name, title=name, 
+                                         filters=tools.FILTERS)
+                self.h5file.flush()
+        
+        self.h5file.create_group(self.prefix, self.name, title=self.name, 
+                                 filters=tools.FILTERS)
+        self.h5file.flush()
+        
 class Table(object):
     """A thin wrapper for a PyTables Table to be used by Cyclopts.
     """
@@ -242,6 +276,9 @@ class IOManager(object):
         for tbl in self.tables.values():
             if tbl.path not in self.h5file and self.h5file.mode is not 'r':
                 tbl.create()
+        for grp in self.groups.values():
+            if grp.path not in self.h5file and self.h5file.mode is not 'r':
+                grp.create()
 
     def __del__(self):
         if self.h5file.isopen and self.h5file.mode is not 'r':

@@ -122,12 +122,14 @@ def convert(args):
     fam = sp.family
 
     # table set up
-    sp_manager = cycio.IOManager(h5file, 
-                                    sp.register_tables(h5file, 
-                                                       sp.io_prefix))
-    fam_manager = cycio.IOManager(h5file, 
-                                     fam.register_tables(h5file, 
-                                                         fam.io_prefix))
+    sp_manager = cycio.IOManager(
+        h5file, 
+        sp.register_tables(h5file, sp.io_prefix),
+        sp.register_groups(h5file, sp.io_prefix))
+    fam_manager = cycio.IOManager(
+        h5file, 
+        fam.register_tables(h5file, fam.io_prefix),
+        fam.register_groups(h5file, fam.io_prefix))
     
     # convert
     sp.read_space(rc._dict)
@@ -185,12 +187,14 @@ def execute(args):
         h5out = h5in
 
     # table set up
-    in_manager = cycio.IOManager(h5in, 
-                                    fam.register_tables(h5in, 
-                                                        fam.io_prefix))
-    out_manager = cycio.IOManager(h5out, 
-                                     fam.register_tables(h5out, 
-                                                         fam.io_prefix))
+    in_manager = cycio.IOManager(
+        h5in, 
+        fam.register_tables(h5in, fam.io_prefix),
+        fam.register_groups(h5in, fam.io_prefix))
+    out_manager = cycio.IOManager(
+        h5out, 
+        fam.register_tables(h5out, fam.io_prefix),
+        fam.register_groups(h5out, fam.io_prefix))
     result_tbl_name = 'Results'
     result_manager = cycio.IOManager(
         h5out, [cycio.ResultTable(h5out, path='/{0}'.format(result_tbl_name))])
@@ -232,10 +236,16 @@ def post_process(args):
     
     # setup table managers
     fam_managers = tuple(
-        cycio.IOManager(h5f, fam.register_tables(h5f, fam.io_prefix))
+        cycio.IOManager(
+            h5f, 
+            fam.register_tables(h5f, fam.io_prefix),
+            fam.register_groups(h5f, fam.io_prefix))
         for h5f in h5files)
     sp_managers = tuple(
-        cycio.IOManager(h5f, sp.register_tables(h5f, sp.io_prefix))
+        cycio.IOManager(
+            h5f, 
+            sp.register_tables(h5f, sp.io_prefix),
+            sp.register_groups(h5f, sp.io_prefix))
         for h5f in h5files)
     h5out = h5files[1]
     result_manager = cycio.IOManager(

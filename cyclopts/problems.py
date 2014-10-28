@@ -42,8 +42,26 @@ class ProblemFamily(object):
     def __init__(self):
         pass
 
+    def register_groups(self, h5file, prefix):
+        """Derived classes can implement this function and return their list of
+        groups
+        
+        Parameters
+        ----------
+        h5file : PyTables File
+            the hdf5 file
+        prefix : string
+            the absolute path to the group for tables of this species
+
+        Returns
+        -------
+        groups : list of cyclopts_io.Groups
+            All groups that could be written to by this species.
+        """
+        return []
+
     def register_tables(self, h5file, prefix):
-        """Derived classes must implement this function and return their list of
+        """Derived classes can implement this function and return their list of
         tables
         
         Parameters
@@ -58,7 +76,7 @@ class ProblemFamily(object):
         tables : list of cyclopts_io.Tables
             All tables that could be written to by this species.
         """
-        raise NotImplementedError
+        return []
 
     def record_inst(self, inst, inst_uuid, param_uuid, species, tables):
         """Derived classes must implement this function.
@@ -192,8 +210,26 @@ class ProblemSpecies(object):
     def __init__(self):
         pass
 
+    def register_groups(self, h5file, prefix):
+        """Derived classes can implement this function and return their list of
+        groups
+        
+        Parameters
+        ----------
+        h5file : PyTables File
+            the hdf5 file
+        prefix : string
+            the absolute path to the group for tables of this species
+
+        Returns
+        -------
+        groups : list of cyclopts_io.Groups
+            All groups that could be written to by this species.
+        """
+        return []
+
     def register_tables(self, h5file, prefix):
-        """Derived classes must implement this function and return their list of
+        """Derived classes can implement this function and return their list of
         tables
         
         Parameters
@@ -208,7 +244,7 @@ class ProblemSpecies(object):
         tables : list of cyclopts_io.Tables
             All tables that could be written to by this species.
         """
-        raise NotImplementedError
+        return []
 
     def read_space(self, space_dict):
         """Derived classes must implement this function.
