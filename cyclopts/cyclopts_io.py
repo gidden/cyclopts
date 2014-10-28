@@ -52,6 +52,11 @@ class Group(object):
         if not self.prefix.startswith('/'):
             self.prefix = '/{0}'.format(self.prefix)
         self.name = self.path.split('/')[-1]
+        
+        if self.h5file is not None and self.path in self.h5file:
+            self.grp = self.h5file.get_node(self.path)
+        else:
+            self.grp = None
 
     def create(self):
         """Creates a group in the h5file."""
@@ -68,6 +73,11 @@ class Group(object):
         self.h5file.create_group(self.prefix, self.name, title=self.name, 
                                  filters=tools.FILTERS)
         self.h5file.flush()
+
+        self.grp = self.h5file.get_node(self.path)
+
+    def group(self):
+        return self._grp
         
 class Table(object):
     """A thin wrapper for a PyTables Table to be used by Cyclopts.
