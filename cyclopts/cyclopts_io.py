@@ -275,9 +275,9 @@ class IOManager(object):
         ----------
         h5file : PyTables File
             the hdf5 file
-        tables : list of Tables, optional
+        tables : list of cyclopts_io.Tables, optional
             the list of tables to manage
-        groups : list of Groups, optional
+        groups : list of cyclopts_io.Groups, optional
             the list of groups to manage
         """
         self.tables = {tbl.path.split('/')[-1]: tbl for tbl in tables}

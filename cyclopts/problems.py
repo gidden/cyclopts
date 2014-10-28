@@ -78,7 +78,8 @@ class ProblemFamily(object):
         """
         return []
 
-    def record_inst(self, inst, inst_uuid, param_uuid, species, tables):
+    def record_inst(self, inst, inst_uuid, param_uuid, species, 
+                    io_manager=None):
         """Derived classes must implement this function.
         
         Parameters
@@ -91,8 +92,8 @@ class ProblemFamily(object):
             The uuid of the point in parameter space
         species : str
             The name of the species that generated this instance
-        tables : list of cyclopts_io.Table
-            The tables that can be written to
+        io_manager : cyclopts_io.IOManager, optional
+            IOManager that gives access to tables/groups for writing
         """
         raise NotImplementedError
 
@@ -282,7 +283,7 @@ class ProblemSpecies(object):
         """
         raise NotImplementedError    
 
-    def record_point(self, point, param_uuid, tables):
+    def record_point(self, point, param_uuid, io_manager=None):
         """Derived classes must implement this function, recording information
         about a parameter point in the appropriate tables.
         
@@ -292,12 +293,12 @@ class ProblemSpecies(object):
             A representation of a point in parameter space
         param_uuid : uuid
             The uuid of the point in parameter space
-        tables : list of cyclopts_io.Table
-            The tables that can be written to
+        io_manager : cyclopts_io.IOManager, optional
+            IOManager that gives access to tables/groups for writing
         """
         raise NotImplementedError
 
-    def gen_inst(self, point, instid=None, tables=None):
+    def gen_inst(self, point, instid=None, io_manager=None):
         """Derived classes must implement this function, returning a
         representation of a problem instance.
         
@@ -307,8 +308,8 @@ class ProblemSpecies(object):
             A representation of a point in parameter space
         instid : uuid
             the id for the instance, optional
-        tables : list of cyclopts_io.Table, optional
-            The tables that can be written to
+        io_manager : cyclopts_io.IOManager, optional
+            IOManager that gives access to tables/groups for writing
         
         Returns
         -------

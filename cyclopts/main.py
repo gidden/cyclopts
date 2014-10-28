@@ -140,7 +140,7 @@ def convert(args):
         h5file.close()
         return
     
-    tools.conv_insts(fam, fam_manager.tables, sp, sp_manager.tables, 
+    tools.conv_insts(fam, fam_manager, sp, sp_manager, 
                      ninst=ninst, update_freq=update_freq, verbose=verbose)
 
     # clean up

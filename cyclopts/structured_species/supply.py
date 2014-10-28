@@ -304,16 +304,17 @@ class StructuredSupply(ProblemSpecies):
             d = {keys[i]: args[i] for i in range(len(args))}
             yield Point(d)    
 
-    def record_point(self, point, param_uuid, tables):
+    def record_point(self, point, param_uuid, io_manager):
         """Parameters
         ----------
         point : tuple or other
             A representation of a point in parameter space
         param_uuid : uuid
             The uuid of the point in parameter space
-        tables : list of cyclopts_io.Table
-            The tables that can be written to
+        io_manager : cyclopts_io.IOManager, optional
+            IOManager that gives access to tables/groups for writing
         """
+        tables = io_manager.tables()
         uid = param_uuid.bytes if len(param_uuid.bytes) == 16 \
             else param_uuid.bytes + '\0' 
         
@@ -374,15 +375,15 @@ class StructuredSupply(ProblemSpecies):
                                 arcs.append(arc)
         return grps, nodes, arcs
 
-    def gen_inst(self, point, instid=None, tables=None, reset_rlztn=True):
+    def gen_inst(self, point, instid=None, io_manager=None, reset_rlztn=True):
         """Parameters
         ----------
         point :  structured_species.Point
             A representation of a point in parameter space
         instid : uuid, optional
             the id for the instance
-        tables : list of cyclopts_io.Table, optional
-            The tables that can be written to
+        io_manager : cyclopts_io.IOManager, optional
+            IOManager that gives access to tables/groups for writing
         reset_rltzn : bool, optional
             Reset the internal realization
            
@@ -398,7 +399,7 @@ class StructuredSupply(ProblemSpecies):
         self.gids = cyctools.Incrementer()
         self.arcids = cyctools.Incrementer()
         self.instid = instid
-        self.tables = tables
+        self.tables = None if io_manager is None else io_manager.tables()
         ### create arc table here
         
         self.commod_to_reqrs = commod_to_reqrs(point.f_fc)

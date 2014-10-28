@@ -245,7 +245,7 @@ class ResourceExchange(ProblemFamily):
                             '/'.join([prefix, _tbl_names[x]]), 
                             _dtypes[x]) for x in _tbl_names.keys()]
 
-    def record_inst(cls, inst, inst_uuid, param_uuid, species, tables):
+    def record_inst(cls, inst, inst_uuid, param_uuid, species, io_manager=None):
         """Parameters
         ----------
         inst : tuple of lists of ExGroups, ExNodes, and ExArgs
@@ -256,9 +256,10 @@ class ResourceExchange(ProblemFamily):
             The uuid of the point in parameter space
         species : str
             The name of the species that generated this instance
-        tables : list of cyclopts_io.Table
-            The tables that can be written to
+        io_manager : cyclopts_io.IOManager, optional
+            IOManager that gives access to tables/groups for writing
         """
+        tables = io_manager.tables()
         groups, nodes, arcs = inst
         
         data = [grp_tpl(inst_uuid, x) for x in groups]

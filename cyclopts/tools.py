@@ -534,16 +534,17 @@ def expand_args(x):
     for y in itools.product(*x):
         yield y
 
-def conv_insts(fam, fam_tables, sp, sp_tables, ninst=1, update_freq=100, verbose=False):
+def conv_insts(fam, fam_io_manager, sp, sp_io_manager, 
+               ninst=1, update_freq=100, verbose=False):
     n = 0
     for point in sp.points():
         param_uuid = uuid.uuid4()
-        sp.record_point(point, param_uuid, sp_tables)
+        sp.record_point(point, param_uuid, sp_io_manager)
         for i in range(ninst):
             inst_uuid = uuid.uuid4()
-            inst = sp.gen_inst(point, inst_uuid, sp_tables)
+            inst = sp.gen_inst(point, inst_uuid, sp_io_manager)
             fam.record_inst(inst, inst_uuid, param_uuid, sp.name, 
-                            fam_tables)
+                            fam_io_manager)
             if n % update_freq == 0:
                 if verbose:
                     print('Total writes: {0}'.format(

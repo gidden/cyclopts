@@ -261,16 +261,17 @@ class StructuredRequest(ProblemSpecies):
             d = {keys[i]: args[i] for i in range(len(args))}
             yield Point(d)    
 
-    def record_point(self, point, param_uuid, tables):
+    def record_point(self, point, param_uuid, io_manager):
         """Parameters
         ----------
         point : tuple or other
             A representation of a point in parameter space
         param_uuid : uuid
             The uuid of the point in parameter space
-        tables : list of cyclopts_io.Table
-            The tables that can be written to
+        io_manager : cyclopts_io.IOManager, optional
+            IOManager that gives access to tables/groups for writing
         """
+        tables = io_manager.tables()
         uid = param_uuid.bytes if len(param_uuid.bytes) == 16 \
             else param_uuid.bytes + '\0' 
         
@@ -383,28 +384,28 @@ class StructuredRequest(ProblemSpecies):
                         arcs.append(supply)
         return np.concatenate(arcs)          
 
-    def gen_inst(self, point, instid=None, tables=None):
+    def gen_inst(self, point, instid=None, io_manager=None):
         """Parameters
         ----------
         point :  structured_species.Point
             A representation of a point in parameter space
         instid : uuid
             the id for the instance
-        tables : list of cyclopts_io.Table
-            The tables that can be written to
+        io_manager : cyclopts_io.IOManager, optional
+            IOManager that gives access to tables/groups for writing
            
         Returns
         -------
         inst : tuple of lists of ExGroups, ExNodes, and ExArgs
             A representation of a problem instance to be used by this species' 
             family
-        """            
+        """      
         # reset id generation
         self.nids = cyctools.Incrementer()
         self.gids = cyctools.Incrementer()
         self.arcids = cyctools.Incrementer()
         self.instid = instid
-        self.tables = tables
+        self.tables = None if io_manager is None else io_manager.tables()
         ### add arc table and gruop here
 
         # species objects
