@@ -208,7 +208,7 @@ def execute(args):
 
     # run each instance for each solver
     for instid in instids:
-        inst = fam.read_inst(instid, in_manager.tables)
+        inst = fam.read_inst(instid, in_manager)
         for kind in solvers:
             solver = Solver(kind)
             if verbose:
@@ -216,7 +216,7 @@ def execute(args):
                         instid.hex, kind))
             soln = fam.run_inst(inst, solver)
             solnid = uuid.uuid4()
-            fam.record_soln(soln, solnid, inst, instid, out_manager.tables)
+            fam.record_soln(soln, solnid, inst, instid, out_manager)
             tbl = result_manager.tables[result_tbl_name]
             tbl.record_soln(soln, solnid, instid, solver)
             

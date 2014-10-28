@@ -67,7 +67,6 @@ _dtypes = {
         ("excl_frac", np.float64),
         ]),
     "solutions": np.dtype([
-        ("solnid", ('str', 16)), # 16 bytes for uuid
         ("arc_id", np.int64),
         ("flow", np.float64),
         ]),
@@ -289,15 +288,14 @@ class ResourceExchange(ProblemFamily):
         arc_tbl_path = '/'.join([arc_grp.path, 
                                  'id_' + inst_uuid.hex])
         arc_tbl = cycio.Table(arc_grp.h5file, arc_tbl_path, _dtypes['ExArc'])
-        arc_tbl.cond_create()
+        io_manager.add_table(arc_tbl)
         data = [arc_tpl(x) for x in arcs]
         arc_tbl.append_data(data)
-        arc_tbl.flush()
 
         data = [prop_tpl(inst_uuid, param_uuid, species, groups, nodes, arcs)]
         tables[_tbl_names['properties']].append_data(data)
 
-    def record_soln(self, soln, soln_uuid, inst, inst_uuid, tables):
+    def record_soln(self, soln, soln_uuid, inst, inst_uuid, io_manager):
         """Parameters
         ----------
         soln : ExSolution
@@ -307,29 +305,36 @@ class ResourceExchange(ProblemFamily):
         inst : tuple of lists of ExGroups, ExNodes, and ExArgs
             A representation of a problem instance
         inst_uuid : uuid
-            The uuid of the instance
-        tables : list of cyclopts_io.Table
-            The tables that can be written to
+            The uuid of the instance        
+        io_manager : cyclopts_io.IOManager, optional
+            IOManager that gives access to tables/groups for writing
         """
+        tables = io_manager.tables
+        h5groups = io_manager.groups
         groups, nodes, arcs = inst
-        grp = tables[_tbl_names['ExNode']].table()._v_parent._f_get_child(_grp_names['solutions'])
-        tbl_name = 'id_' + soln_uuid.hex
-        tbl = cycio.Table(grp._v_file, 
-                          '/'.join([grp._v_pathname, tbl_name]), 
-                          _dtypes['solutions'])
+        
+        # full solution table
+        soln_grp = h5groups[_grp_names['solutions']]
+        soln_tbl_path = '/'.join([soln_grp.path, 
+                                  'id_' + inst_uuid.hex])
+        soln_tbl = cycio.Table(soln_grp.h5file, soln_tbl_path, 
+                               _dtypes['solutions'])
+        io_manager.add_table(soln_tbl)
         data = [(arcid, flow) for arcid, flow in soln.flows.items()]
-        tbl.append_data(data)
+        soln_tbl.append_data(data)
+        
+        # solution properties, 1 entry per soln
         tbl = tables[_tbl_names['solution_properties']]
         tbl.append_data([(soln_uuid.bytes, inst_uuid.bytes, soln.pref_flow, 
                           soln.cyclus_version)])
             
-    def read_inst(self, uuid, tables):
+    def read_inst(self, uuid, io_manager):
         """Parameters
         ----------
         uuid : uuid
             The uuid of the instance to read
-        tables : list of cyclopts_io.Table
-            The tables that can be written to
+        io_manager : cyclopts_io.IOManager, optional
+            IOManager that gives access to tables/groups for writing
 
         Returns
         -------
@@ -339,6 +344,10 @@ class ResourceExchange(ProblemFamily):
         ctors = {'ExGroup': exinst.ExGroup, 
                  'ExNode': exinst.ExNode}
         objs = {'ExGroup': [], 'ExNode': []}
+        tables = io_manager.tables
+        groups = io_manager.groups
+        
+        # this could be sped up by making groups and nodes their own simid tables
         for name in ctors.keys():
             tbl = tables[_tbl_names[name]]
             rows = tbl.uuid_rows(uuid)
@@ -360,9 +369,13 @@ class ResourceExchange(ProblemFamily):
                     #print('setting {0} to {1}'.format(var, attr))
                     setattr(obj, var, attr)
                 objs[name].append(obj)
-        grp = tables.values()[0]._v_parent.get_child(_grp_names['ExArc']) 
+        
+        grp = groups[_grp_names['ExArc']] 
         arcs = []
-        for row in grp.get_child('id_' + uuid.hex).read():
+        # this could be sped up by directly populating members rather than 
+        # dynamically typechecking each one 
+        setattrs = tools.cyc_members(exinst.ExArc())
+        for row in grp.group()._f_get_child('id_' + uuid.hex).read():
             obj = exinst.ExArc()
             for var in setattrs:
                 attr = getattr(obj, var)

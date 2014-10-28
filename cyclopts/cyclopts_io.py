@@ -54,9 +54,9 @@ class Group(object):
         self.name = self.path.split('/')[-1]
         
         if self.h5file is not None and self.path in self.h5file:
-            self.grp = self.h5file.get_node(self.path)
+            self._grp = self.h5file.get_node(self.path)
         else:
-            self.grp = None
+            self._grp = None
 
     def create(self):
         """Creates a group in the h5file."""
@@ -75,7 +75,7 @@ class Group(object):
                                  filters=tools.FILTERS)
         self.h5file.flush()
 
-        self.grp = self.h5file.get_node(self.path)
+        self._grp = self.h5file.get_node(self.path)
 
     def cond_create(self):
         """Create the group if it does not already exist in the h5file."""
@@ -291,18 +291,26 @@ class IOManager(object):
         groups : list of cyclopts_io.Groups, optional
             the list of groups to manage
         """
-        self.tables = {tbl.path.split('/')[-1]: tbl for tbl in tables}
-        self.groups = {grp.path.split('/')[-1]: grp for grp in groups}
         self.h5file = h5file
-        for tbl in self.tables.values():
-            tbl.cond_create()
-        for grp in self.groups.values():
-            grp.cond_create()
+        self.tables = {}
+        for tbl in tables:
+            self.add_table(tbl)
+        self.groups = {}
+        for grp in groups:
+            self.add_group(grp)
         
     def __del__(self):
         if self.h5file.isopen and self.h5file.mode is not 'r':
             self.flush_tables()
-    
+
+    def add_table(self, tbl):
+        self.tables[tbl.path.split('/')[-1]] = tbl
+        tbl.cond_create()
+        
+    def add_group(self, grp):
+        self.groups[grp.path.split('/')[-1]] = grp
+        grp.cond_create()
+        
     def flush_tables(self):
         for tbl in self.tables.values():
             tbl.flush()
