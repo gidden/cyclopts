@@ -287,7 +287,7 @@ class StructuredRequest(ProblemSpecies):
         io_manager : cyclopts_io.IOManager, optional
             IOManager that gives access to tables/groups for writing
         """
-        tables = io_manager.tables()
+        tables = io_manager.tables
         uid = param_uuid.bytes if len(param_uuid.bytes) == 16 \
             else param_uuid.bytes + '\0' 
         
@@ -420,17 +420,15 @@ class StructuredRequest(ProblemSpecies):
         self.gids = cyctools.Incrementer()
         self.arcids = cyctools.Incrementer()
         self.instid = instid
-        self.tables = None if io_manager is None else io_manager.tables()
-        self.groups = None if io_manager is None else io_manager.groups()
         
         # set up IO
-        self.tables = None if io_manager is None else io_manager.tables()
-        self.groups = None if io_manager is None else io_manager.groups()
+        self.tables = None if io_manager is None else io_manager.tables
+        self.groups = None if io_manager is None else io_manager.groups
         self.arc_tbl = None
         if self.groups is not None:
             arc_grp = self.groups[strtools.arc_tbl_name]
             arc_tbl_path = '/'.join([arc_grp.path, 
-                                     'id_' + cyctools.uuid_to_str(self.instid)])
+                                     'id_' + self.instid.hex])
             self.arc_tbl = cycio.Table(arc_grp.h5file, arc_tbl_path, strtools.arc_tbl_dtype)
             self.arc_tbl.cond_create()
 
@@ -440,6 +438,8 @@ class StructuredRequest(ProblemSpecies):
 
         # create arcs
         arcs = self._get_arcs(point, reactors, suppliers)
+        if self.arc_tbl is not None:
+            self.arc_tbl.flush()
         
         # collect nodes
         r_nodes = np.concatenate([x.nodes for ary in reactors.values() \

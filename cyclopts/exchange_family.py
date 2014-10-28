@@ -47,7 +47,6 @@ _dtypes = {
         ("excl_id", np.int64),
         ]),
     "ExArc": np.dtype([
-        ("instid", ('str', 16)), # 16 bytes for uuid
         ("id", np.int64),
         ("uid", np.int64),
         ("ucaps", (np.float64, _N_CAPS_MAX),), # array of size N_CAPS_MAX
@@ -276,8 +275,8 @@ class ResourceExchange(ProblemFamily):
         io_manager : cyclopts_io.IOManager, optional
             IOManager that gives access to tables/groups for writing
         """
-        tables = None if io_manager is None else io_manager.tables()
-        h5groups = None if io_manager is None else io_manager.groups()
+        tables = None if io_manager is None else io_manager.tables
+        h5groups = None if io_manager is None else io_manager.groups
         groups, nodes, arcs = inst
         
         data = [grp_tpl(inst_uuid, x) for x in groups]
@@ -286,14 +285,15 @@ class ResourceExchange(ProblemFamily):
         data = [node_tpl(inst_uuid, x) for x in nodes]
         tables[_tbl_names['ExNode']].append_data(data)
 
-        arc_grp = groups[_grp_names['ExArc']]
+        arc_grp = h5groups[_grp_names['ExArc']]
         arc_tbl_path = '/'.join([arc_grp.path, 
-                                 'id_' + cyctools.uuid_to_str(inst_uuid)])
+                                 'id_' + inst_uuid.hex])
         arc_tbl = cycio.Table(arc_grp.h5file, arc_tbl_path, _dtypes['ExArc'])
         arc_tbl.cond_create()
         data = [arc_tpl(x) for x in arcs]
         arc_tbl.append_data(data)
-        
+        arc_tbl.flush()
+
         data = [prop_tpl(inst_uuid, param_uuid, species, groups, nodes, arcs)]
         tables[_tbl_names['properties']].append_data(data)
 
