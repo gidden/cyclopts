@@ -576,7 +576,9 @@ def fam_and_sp(args):
     fam = sp.family
     return fam, sp
 
-def drive_post_process(res_tbl, fam=None, fam_tbls=None, sp=None, sp_tbls=None,
+def drive_post_process(res_tbl, 
+                       fam=None, fam_io_managers=None, 
+                       sp=None, sp_io_managers=None,
                        verbose_freq=None, limit=None):
     iid_to_sids = res_tbl.value_mapping('instid', 'solnid', uuids=True)
     niids = len(iid_to_sids.keys())
@@ -592,9 +594,9 @@ def drive_post_process(res_tbl, fam=None, fam_tbls=None, sp=None, sp_tbls=None,
             count += 1
         props = None
         if fam is not None:
-            props = fam.post_process(iid, sids, fam_tbls)
+            props = fam.post_process(iid, sids, fam_io_managers)
         if sp is not None:
-            sp.post_process(iid, sids, props, sp_tbls)
+            sp.post_process(iid, sids, props, sp_io_managers)
 
 def col2grp(in_old, out_old, in_new, out_new):    
     """Make old input/output files using a columnar id-based schema into a group

@@ -253,8 +253,8 @@ def post_process(args):
     
     # do pp
     tools.drive_post_process(res_tbl=result_manager.tables['Results'],
-                             fam=fam, fam_tbls=tuple(m.tables for m in fam_managers),
-                             sp=sp, sp_tbls=tuple(m.tables for m in sp_managers),
+                             fam=fam, fam_io_managers=fam_managers,
+                             sp=sp, sp_io_managers=sp_managers,
                              verbose_freq=args.verbose_freq, limit=args.limit)
     
     # clean up

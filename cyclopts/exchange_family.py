@@ -137,13 +137,18 @@ def _iid_to_prefs(iid, tbl, narcs, strategy='col'):
     
 def _sid_to_flows(sid, tbl, narcs, strategy='col'):
     """return a numpy array of flows"""
-    ret = np.zeros(narcs)
     if strategy == 'col':
+        ret = np.zeros(narcs)
         rows = cycio.uuid_rows(tbl, sid, colname='solnid')
         ret[rows['arc_id']] = rows['flow']
     elif strategy == 'grp':
-        #rows = tbl[:]
-        ret[tbl.read(field='arc_id')] = tbl.read(field='flow')
+        # conditional can be removed when all legacy dbs are converted
+        if tbl.nrows == narcs:
+            # fast
+            return tbl.read(field='flow')
+        else:
+            ret = np.zeros(narcs)
+            ret[tbl.read(field='arc_id')] = tbl.read(field='flow')
     # for x in rows:
     #     ret[x['arc_id']] = x['flow']
     return ret
@@ -161,7 +166,6 @@ def _pp_work_col(instid, solnids, prop_tbl, arc_tbl, soln_tbl):
 
 def _pp_work_grp(instid, solnids, prop_tbl, arc_tbl, soln_tbl):
     narcs = cycio.uuid_rows(prop_tbl, instid)[0]['n_arcs']
-    arc_tbl = arc_tbl._f_get_child('id_' + instid.hex)
     prefs = _iid_to_prefs(instid, arc_tbl, narcs, strategy='grp')
     sid_to_flows = {}
     data = []
@@ -316,7 +320,7 @@ class ResourceExchange(ProblemFamily):
         # full solution table
         soln_grp = h5groups[_grp_names['solutions']]
         soln_tbl_path = '/'.join([soln_grp.path, 
-                                  'id_' + inst_uuid.hex])
+                                  'id_' + soln_uuid.hex])
         soln_tbl = cycio.Table(soln_grp.h5file, soln_tbl_path, 
                                _dtypes['solutions'])
         io_manager.add_table(soln_tbl)
@@ -409,7 +413,7 @@ class ResourceExchange(ProblemFamily):
         soln = exinst.Run(groups, nodes, arcs, solver, verbose)
         return soln
 
-    def post_process(self, instid, solnids, tbls):
+    def post_process(self, instid, solnids, io_managers):
         """Perform any post processing on input and output.
         
         Parameters
@@ -418,9 +422,9 @@ class ResourceExchange(ProblemFamily):
             UUID of the instance to post process
         solnids : tuple of UUIDs
             a collection of solution UUIDs corresponding the instid 
-        tbls : tuple of cyclopts.cyclopts_io.Tables
-            tables from an input file, tables from an output file,
-            and tables from a post-processed file
+        io_managers : tuple of cyclopts.cyclopts_io.IOManager
+            iomanager from an input file, iomanager from an output file,
+            and iomanager from a post-processed file
 
         Returns
         -------
@@ -428,25 +432,24 @@ class ResourceExchange(ProblemFamily):
             tuple of number of arcs and mapping of solution UUIDs to numpy 
             arrays of arc flows
         """
-        intbls, outtbls, pptbls = tbls
+        intbls, outtbls, pptbls = (m.tables for m in io_managers)
+        ingrps, outgrps, ppgrps = (m.groups for m in io_managers)
         prop_tbl = intbls[_tbl_names["properties"]]
         pp_tbl = pptbls[_tbl_names["pp"]]
         
         # determining column or group-based layout
-        arc_tbl_name = _tbl_names["ExArc"]
-        if arc_tbl_name in intbls.keys():
+        arc_io_name = _grp_names["ExArc"]
+        soln_io_name = _grp_names["solutions"]
+        if arc_io_name in intbls.keys():
             # column based layout
-            arc_tbl = intbls[_tbl_names["ExArc"]]
-            soln_tbl = outtbls[_tbl_names["solutions"]]
+            arc_tbl = intbls[arc_io_name]
+            soln_tbl = outtbls[soln_io_name]
             strategy = 'col'
         else:
             # group-based layout
-            base_pathname = '/'.join(prop_tbl._tbl._v_pathname.split('/')[:-1])
-            arc_pathname = '/'.join([base_pathname, _tbl_names["ExArc"]])
-            arc_tbl = prop_tbl.table()._v_file.get_node(arc_pathname)
-            soln_pathname = '/'.join([base_pathname, _tbl_names["solutions"]])
-            soln_tbl = outtbls[_tbl_names["properties"]].table()._v_file.get_node(
-                soln_pathname)
+            arc_tbl = ingrps[arc_io_name].group()._f_get_child('id_' + 
+                                                               instid.hex)
+            soln_tbl = outgrps[soln_io_name].group() # actually a group
             strategy = 'grp'
         
         narcs, sid_to_flows, data = _pp_work(instid, solnids, prop_tbl, 
