@@ -260,14 +260,14 @@ class IOManager(object):
     accessed through the manager by its tables member, which is a dictionary
     from table names to Table objects."""
 
-    def __init__(self, h5file, tables, groups=[]):
+    def __init__(self, h5file, tables=[], groups=[]):
         """Parameters
         ----------
         h5file : PyTables File
             the hdf5 file
-        tables : list of Tables
+        tables : list of Tables, optional
             the list of tables to manage
-        groups : list of Groups
+        groups : list of Groups, optional
             the list of groups to manage
         """
         self.tables = {tbl.path.split('/')[-1]: tbl for tbl in tables}
