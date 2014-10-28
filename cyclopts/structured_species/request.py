@@ -221,8 +221,6 @@ class StructuredRequest(ProblemSpecies):
                             self._param_dtype),
                 cycio.Table(h5file, '/'.join([prefix, self.sum_tbl_name]), 
                             self._sum_dtype),
-                cycio.Table(h5file, '/'.join([prefix, strtools.arc_tbl_name]), 
-                            strtools.arc_tbl_dtype),
                 cycio.Table(h5file, '/'.join([prefix, strtools.pp_tbl_name]), 
                             strtools.pp_tbl_dtype),]
 
@@ -407,6 +405,7 @@ class StructuredRequest(ProblemSpecies):
         self.arcids = cyctools.Incrementer()
         self.instid = instid
         self.tables = tables
+        ### add arc table and gruop here
 
         # species objects
         reactors = self._get_reactors(point)        

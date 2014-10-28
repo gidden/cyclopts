@@ -256,8 +256,6 @@ class StructuredSupply(ProblemSpecies):
                             self._param_dtype),
                 cycio.Table(h5file, '/'.join([prefix, self.sum_tbl_name]), 
                             self._sum_dtype),
-                cycio.Table(h5file, '/'.join([prefix, strtools.arc_tbl_name]), 
-                            strtools.arc_tbl_dtype),
                 cycio.Table(h5file, '/'.join([prefix, strtools.pp_tbl_name]), 
                             strtools.pp_tbl_dtype),]
 
@@ -401,6 +399,8 @@ class StructuredSupply(ProblemSpecies):
         self.arcids = cyctools.Incrementer()
         self.instid = instid
         self.tables = tables
+        ### create arc table here
+        
         self.commod_to_reqrs = commod_to_reqrs(point.f_fc)
         
         # species objects

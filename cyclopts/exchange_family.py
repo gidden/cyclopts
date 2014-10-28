@@ -108,8 +108,8 @@ def grp_tpl(instid, obj):
 def node_tpl(instid, obj):    
     return(instid.bytes, obj.id, obj.gid, obj.kind, obj.qty, obj.excl, obj.excl_id)
 
-def arc_tpl(instid, obj):
-    return(instid.bytes, obj.id, 
+def arc_tpl(obj):
+    return(obj.id, 
            obj.uid, np.append(obj.ucaps, [0] * (_N_CAPS_MAX - len(obj.ucaps))), 
            obj.vid, np.append(obj.vcaps, [0] * (_N_CAPS_MAX - len(obj.vcaps))), 
            obj.pref)
@@ -163,12 +163,12 @@ def _pp_work_col(instid, solnids, prop_tbl, arc_tbl, soln_tbl):
 
 def _pp_work_grp(instid, solnids, prop_tbl, arc_tbl, soln_tbl):
     narcs = cycio.uuid_rows(prop_tbl, instid)[0]['n_arcs']
-    arc_tbl = arc_tbl._f_get_child('id_'+instid.hex)
+    arc_tbl = arc_tbl._f_get_child('id_' + instid.hex)
     prefs = _iid_to_prefs(instid, arc_tbl, narcs, strategy='grp')
     sid_to_flows = {}
     data = []
     for sid in solnids:
-        tbl = soln_tbl._f_get_child('id_'+sid.hex)
+        tbl = soln_tbl._f_get_child('id_' + sid.hex)
         flows = _sid_to_flows(sid, tbl, narcs, strategy='grp')
         data.append((sid.bytes, np.dot(prefs, flows)))
         sid_to_flows[sid] = flows
@@ -267,8 +267,13 @@ class ResourceExchange(ProblemFamily):
         data = [node_tpl(inst_uuid, x) for x in nodes]
         tables[_tbl_names['ExNode']].append_data(data)
         
-        data = [arc_tpl(inst_uuid, x) for x in arcs]
-        tables[_tbl_names['ExArc']].append_data(data)
+        grp = tables[_tbl_names['ExNode']].table()._v_parent._f_get_child(_tbl_names['ExArc'])
+        arc_tbl_name = 'id_' + inst_uuid.hex
+        arc_tbl = cycio.Table(grp._v_file, 
+                              '/'.join([grp._v_pathname, arc_tbl_name]), 
+                              _dtypes['ExArc'])
+        data = [arc_tpl(x) for x in arcs]
+        arc_tbl.append_data(data)
         
         data = [prop_tpl(inst_uuid, param_uuid, species, groups, nodes, arcs)]
         tables[_tbl_names['properties']].append_data(data)
@@ -288,10 +293,13 @@ class ResourceExchange(ProblemFamily):
             The tables that can be written to
         """
         groups, nodes, arcs = inst
-        tbl = tables[_tbl_names['solutions']]
-        for arcid, flow in soln.flows.iteritems():
-            if flow > 0:
-                tbl.append_data([(soln_uuid.bytes, arcid, flow)])
+        grp = tables[_tbl_names['ExNode']].table()._v_parent._f_get_child(_grp_names['solutions'])
+        tbl_name = 'id_' + soln_uuid.hex
+        tbl = cycio.Table(grp._v_file, 
+                          '/'.join([grp._v_pathname, tbl_name]), 
+                          _dtypes['solutions'])
+        data = [(arcid, flow) for arcid, flow in soln.flows.items()]
+        tbl.append_data(data)
         tbl = tables[_tbl_names['solution_properties']]
         tbl.append_data([(soln_uuid.bytes, inst_uuid.bytes, soln.pref_flow, 
                           soln.cyclus_version)])
@@ -310,9 +318,8 @@ class ResourceExchange(ProblemFamily):
             A representation of a problem instance
         """
         ctors = {'ExGroup': exinst.ExGroup, 
-                 'ExNode': exinst.ExNode, 
-                 'ExArc': exinst.ExArc}
-        objs = {'ExGroup': [], 'ExNode': [], 'ExArc': []}
+                 'ExNode': exinst.ExNode}
+        objs = {'ExGroup': [], 'ExNode': []}
         for name in ctors.keys():
             tbl = tables[_tbl_names[name]]
             rows = tbl.uuid_rows(uuid)
@@ -334,7 +341,22 @@ class ResourceExchange(ProblemFamily):
                     #print('setting {0} to {1}'.format(var, attr))
                     setattr(obj, var, attr)
                 objs[name].append(obj)
-        return objs['ExGroup'], objs['ExNode'], objs['ExArc']
+        grp = tables.values()[0]._v_parent.get_child(_grp_names['ExArc']) 
+        arcs = []
+        for row in grp.get_child('id_' + uuid.hex).read():
+            obj = exinst.ExArc()
+            for var in setattrs:
+                attr = getattr(obj, var)
+                if isinstance(attr, Iterable):
+                    ary = row[var]
+                    attr = ary[ary > 0]
+                else:
+                    attr = row[var]
+                    #print('setting {0} to {1}'.format(var, attr))
+                setattr(obj, var, attr)
+            arcs.append(obj)
+            
+        return objs['ExGroup'], objs['ExNode'], arcs
             
     def run_inst(self, inst, solver, verbose=False):
         """Parameters
