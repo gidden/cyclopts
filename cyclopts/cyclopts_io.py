@@ -66,12 +66,11 @@ class Group(object):
             path = '/'.join([prefix, name])
             prefix = '/' if not prefix else prefix
             if not path in self.h5file:
-                print('creating in group', prefix, name)
                 self.h5file.create_group(prefix, name, title=name, 
                                          filters=tools.FILTERS)
                 self.h5file.flush()
+            prefix = path
 
-        print('creating in group', self.prefix, self.name)
         self.h5file.create_group(self.prefix, self.name, title=self.name, 
                                  filters=tools.FILTERS)
         self.h5file.flush()
@@ -142,7 +141,6 @@ class Table(object):
             path = '/'.join([prefix, name])
             prefix = '/' if not prefix else prefix
             if not path in self.h5file:
-                print('creating in table', prefix, name)
                 self.h5file.create_group(prefix, name, title=name, 
                                          filters=tools.FILTERS)
                 self.h5file.flush()
