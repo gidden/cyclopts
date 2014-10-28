@@ -189,7 +189,7 @@ class Reactor(object):
         return [1 / data.relative_qtys[self.kind][commod]]
 
 """Structured Arc Table Members"""
-arc_tbl_name = "Arcs"
+arc_io_name = "Arcs"
 arc_tbl_dtype = np.dtype(
     [('arcid', np.uint32), ('commod', np.uint32), 
      ('pref_c', np.float32), ('pref_l', np.float32)])
@@ -214,8 +214,6 @@ def _iid_to_prefs(iid, tbl, narcs, strategy='col'):
     return c_ret, l_ret
 
 def _pp_work(instid, solnids, narcs, sid_to_flows, arc_tbl, strategy='col'):
-    if strategy == 'grp':
-        arc_tbl = arc_tbl._f_get_child('id_'+instid.hex)
     c_prefs, l_prefs = _iid_to_prefs(instid, arc_tbl, narcs, strategy=strategy)
     data = []
     for sid, flows in sid_to_flows.items():
@@ -224,7 +222,7 @@ def _pp_work(instid, solnids, narcs, sid_to_flows, arc_tbl, strategy='col'):
         data.append((sid.bytes, c_pref_flow, l_pref_flow))
     return data
 
-def post_process(instid, solnids, props, tbls, sp_name):
+def post_process(instid, solnids, props, io_managers, sp_name):
     """Perform any post processing on input and output.
     
     Parameters
@@ -235,23 +233,23 @@ def post_process(instid, solnids, props, tbls, sp_name):
         a collection of solution UUIDs corresponding the instid 
     props : tuple, other
         as defined by cyclopts.exchange_family 
-    tbls : tuple of cyclopts.cyclopts_io.Tables
-        tables from an input file, tables from an output file,
-        and tables from a post-processed file
+    io_managers : tuple of cyclopts.cyclopts_io.IOManager
+        iomanager from an input file, iomanager from an output file,
+        and iomanager from a post-processed file
     sp_name : str
         the name of the species being post processed
     """
-    intbls, outtbls, pptbls = tbls
+    intbls, outtbls, pptbls = (m.tables for m in io_managers)
+    ingrps, outgrps, ppgrps = (m.groups for m in io_managers)
     narcs, sid_to_flows = props
     pp_tbl = pptbls[pp_tbl_name]
 
-    if arc_tbl_name in intbls.keys():
-        arc_tbl = intbls[arc_tbl_name]
+    if arc_io_name in intbls.keys():
+        arc_tbl = intbls[arc_io_name]
         strategy = 'col'
     else:
-        base_pathname = '/'.join(pp_tbl._tbl._v_pathname.split('/')[:-1])
-        arc_pathname = '/'.join([base_pathname, arc_tbl_name])
-        arc_tbl = prop_tbl.table()._v_file.get_node(arc_pathname) # actually a node
+        arc_tbl = ingrps[arc_io_name].group()._f_get_child('id_' + 
+                                                           instid.hex)
         strategy = 'grp'
     
     data = _pp_work(instid, solnids, narcs, sid_to_flows, arc_tbl, 

@@ -271,7 +271,7 @@ class StructuredSupply(ProblemSpecies):
         groups : list of cyclopts_io.Groups
             All groups that could be written to by this species.
         """
-        return [cycio.Group(h5file, '/'.join([prefix, strtools.arc_tbl_name]))]
+        return [cycio.Group(h5file, '/'.join([prefix, strtools.arc_io_name]))]
 
     def read_space(self, space_dict):
         """Parameters
@@ -419,7 +419,7 @@ class StructuredSupply(ProblemSpecies):
         self.groups = None if io_manager is None else io_manager.groups
         self.arc_tbl = None
         if self.groups is not None:
-            arc_grp = self.groups[strtools.arc_tbl_name]
+            arc_grp = self.groups[strtools.arc_io_name]
             arc_tbl_path = '/'.join([arc_grp.path, 
                                      'id_' + self.instid.hex])
             self.arc_tbl = cycio.Table(arc_grp.h5file, arc_tbl_path, strtools.arc_tbl_dtype)
@@ -450,7 +450,7 @@ class StructuredSupply(ProblemSpecies):
 
         return groups, nodes, arcs
 
-    def post_process(self, instid, solnids, props, tbls):
+    def post_process(self, instid, solnids, props, io_managers):
         """Perform any post processing on input and output.
         
         Parameters
@@ -461,8 +461,8 @@ class StructuredSupply(ProblemSpecies):
             a collection of solution UUIDs corresponding the instid 
         props : tuple, other
             as defined by cyclopts.exchange_family 
-        tbls : tuple of cyclopts.cyclopts_io.Tables
-            tables from an input file, tables from an output file,
-            and tables from a post-processed file
+        io_managers : tuple of cyclopts.cyclopts_io.IOManager
+            iomanager from an input file, iomanager from an output file,
+            and iomanager from a post-processed file
         """
-        strtools.post_process(instid, solnids, props, tbls, self.name)
+        strtools.post_process(instid, solnids, props, io_managers, self.name)

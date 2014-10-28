@@ -353,6 +353,26 @@ def memusg(pid):
         lines = f.readlines()
     return float(next(l for l in lines if l.startswith('VmSize')).split()[1])
 
+def attr_from_sources(attr, sources):
+    """Returns an attribute from a priority queue of sources, returns None if no
+    source has that attribute"""
+    for source in sources:
+        if hasattr(source, attr) and getattr(source, attr) is not None:
+            return getattr(source, attr)
+    return None
+
+def all_obj_rcs(rc=None, args=None):
+    """Return all run control files in priority order known to cyclopts"""
+    ret = []
+    if rc is not None:
+        ret.append(rc)
+    if args is not None and hasattr(args, 'cycrc') and os.path.exists(args.cycrc):
+        ret.append(parse_rc(args.cycrc))
+    check = os.path.expanduser('~/.cycloptsrc.py')
+    if os.path.exists(check):
+        ret.append(parse_rc(check))
+    return ret
+
 def obj_info(kind=None, rcs=None, args=None):
     """Get information about an importable object
 
@@ -370,30 +390,11 @@ def obj_info(kind=None, rcs=None, args=None):
     info : tuple of package, module, and class names
     """
     mod, cname, pack = None, None, None
-
     rcs = [rcs] if not isinstance(rcs, list) else rcs
     sources = [args] + rcs # try CLI first, then rcs in order
-
-    for source in sources:
-        if source is None:
-            continue
-        
-        attr = '{0}_package'.format(kind)
-        if pack is None and mod is None and cname is None:
-            if hasattr(source, attr):
-                pack = getattr(source, attr)
-        
-        if mod is None:
-            attr = '{0}_module'.format(kind)
-            if hasattr(source, attr):
-                mod = getattr(source, attr)
-    
-        if cname is None:
-            attr = '{0}_class'.format(kind)
-            if hasattr(source, attr):
-                cname = getattr(source, attr)
-                
-    return pack, mod, cname
+    attrs = ['{0}_package'.format(kind), '{0}_module'.format(kind), 
+             '{0}_class'.format(kind)]
+    return tuple(attr_from_sources(x, sources) for x in attrs)
     
 def get_obj(kind=None, rcs=None, args=None):
     """Get an object of certain kind, e.g. species or family. Both the rc and

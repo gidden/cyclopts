@@ -47,15 +47,15 @@ def condor_submit(args):
     h5file = t.open_file(args.db, mode='r', filters=tools.FILTERS)
     instids = set(uuid.UUID(x).bytes for x in args.instids)
     rc = tools.parse_rc(args.rc) if args.rc is not None else tools.RunControl()
-    cycrc = tools.parse_rc(args.cycrc)
-    fam = tools.get_obj(kind='family', rcs=cycrc, args=args)
+    obj_rcs = tools.all_obj_rcs(rc, args)    
+    fam = tools.get_obj(kind='family', rcs=obj_rcs, args=args)
     path = '{0}/{1}'.format(fam.io_prefix, fam.property_table_name)
     instids = tools.collect_instids(h5file=h5file, path=path, rc=rc, 
                                     instids=instids)
     h5file.close()
 
     instids = [x.hex for x in instids]
-    _, module, cname = tools.obj_info(kind='family', rcs=cycrc, args=args)
+    _, module, cname = tools.obj_info(kind='family', rcs=obj_rcs, args=args)
 
 
     print('Submitting a {kind} job with {n} instances of the '
@@ -114,9 +114,8 @@ def convert(args):
 
     h5file = t.open_file(fout, 'w', filters=tools.FILTERS)
 
-    obj_rcs = [rc, tools.parse_rc(args.cycrc)] \
-        if os.path.exists(args.cycrc) else [rc]
-    
+    obj_rcs = tools.all_obj_rcs(rc, args)
+        
     # conversion objects
     sp = tools.get_obj(kind='species', rcs=obj_rcs, args=args)
     fam = sp.family
@@ -168,8 +167,7 @@ def execute(args):
     instids = set(uuid.UUID(x) for x in args.instids)
     verbose = args.verbose
 
-    obj_rcs = [rc, tools.parse_rc(args.cycrc)] \
-        if os.path.exists(args.cycrc) else [rc]        
+    obj_rcs = tools.all_obj_rcs(rc, args)
     
     if not os.path.exists(indb):
         raise IOError('Input database {0} does not exist.'.format(indb))
@@ -335,7 +333,8 @@ def update_cde(args):
 def dump(args):
     """Dumps information about instances in a database"""
     h5file = t.open_file(args.db, mode='r', filters=tools.FILTERS)
-    fam = tools.get_obj(kind='family', rcs=tools.parse_rc(args.cycrc), 
+    obj_rcs = tools.all_obj_rcs(rc, args)
+    fam = tools.get_obj(kind='family', rcs=obj_rcs, 
                         args=args)
     path = '{0}/{1}'.format(fam.io_prefix, fam.property_table_name)
     instids = tools.collect_instids(h5file=h5file, path=path)
