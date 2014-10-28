@@ -49,7 +49,7 @@ def condor_submit(args):
     rc = tools.parse_rc(args.rc) if args.rc is not None else tools.RunControl()
     cycrc = tools.parse_rc(args.cycrc)
     fam = tools.get_obj(kind='family', rcs=cycrc, args=args)
-    path = '{0}/{1}'.format(fam.table_prefix, fam.property_table_name)
+    path = '{0}/{1}'.format(fam.io_prefix, fam.property_table_name)
     instids = tools.collect_instids(h5file=h5file, path=path, rc=rc, 
                                     instids=instids)
     h5file.close()
@@ -122,12 +122,12 @@ def convert(args):
     fam = sp.family
 
     # table set up
-    sp_manager = cycio.TableManager(h5file, 
+    sp_manager = cycio.IOManager(h5file, 
                                     sp.register_tables(h5file, 
-                                                       sp.table_prefix))
-    fam_manager = cycio.TableManager(h5file, 
+                                                       sp.io_prefix))
+    fam_manager = cycio.IOManager(h5file, 
                                      fam.register_tables(h5file, 
-                                                         fam.table_prefix))
+                                                         fam.io_prefix))
     
     # convert
     sp.read_space(rc._dict)
@@ -144,7 +144,7 @@ def convert(args):
     # clean up
     sp_manager.flush_tables()
     fam_manager.flush_tables()
-    path = '{0}/{1}'.format(fam.table_prefix, fam.property_table_name)
+    path = '{0}/{1}'.format(fam.io_prefix, fam.property_table_name)
     instids = tools.collect_instids(h5file=h5file, path=path)
     print(('Upon completion of instance coversion, '
            'Cyclopts reads a total of {0} instances in {1}').format(
@@ -185,18 +185,18 @@ def execute(args):
         h5out = h5in
 
     # table set up
-    in_manager = cycio.TableManager(h5in, 
+    in_manager = cycio.IOManager(h5in, 
                                     fam.register_tables(h5in, 
-                                                        fam.table_prefix))
-    out_manager = cycio.TableManager(h5out, 
+                                                        fam.io_prefix))
+    out_manager = cycio.IOManager(h5out, 
                                      fam.register_tables(h5out, 
-                                                         fam.table_prefix))
+                                                         fam.io_prefix))
     result_tbl_name = 'Results'
-    result_manager = cycio.TableManager(
+    result_manager = cycio.IOManager(
         h5out, [cycio.ResultTable(h5out, path='/{0}'.format(result_tbl_name))])
 
     # get instids to run
-    path = '{0}/{1}'.format(fam.table_prefix, fam.property_table_name)
+    path = '{0}/{1}'.format(fam.io_prefix, fam.property_table_name)
     instids = tools.collect_instids(h5file=h5in, path=path, rc=rc, 
                                     instids=instids)
     if verbose: 
@@ -232,13 +232,13 @@ def post_process(args):
     
     # setup table managers
     fam_managers = tuple(
-        cycio.TableManager(h5f, fam.register_tables(h5f, fam.table_prefix))
+        cycio.IOManager(h5f, fam.register_tables(h5f, fam.io_prefix))
         for h5f in h5files)
     sp_managers = tuple(
-        cycio.TableManager(h5f, sp.register_tables(h5f, sp.table_prefix))
+        cycio.IOManager(h5f, sp.register_tables(h5f, sp.io_prefix))
         for h5f in h5files)
     h5out = h5files[1]
-    result_manager = cycio.TableManager(
+    result_manager = cycio.IOManager(
         h5out, [cycio.ResultTable(h5out, path='/Results')])
     
     # do pp
@@ -327,7 +327,7 @@ def dump(args):
     h5file = t.open_file(args.db, mode='r', filters=tools.FILTERS)
     fam = tools.get_obj(kind='family', rcs=tools.parse_rc(args.cycrc), 
                         args=args)
-    path = '{0}/{1}'.format(fam.table_prefix, fam.property_table_name)
+    path = '{0}/{1}'.format(fam.io_prefix, fam.property_table_name)
     instids = tools.collect_instids(h5file=h5file, path=path)
     h5file.close()
 

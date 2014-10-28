@@ -189,7 +189,7 @@ class PathMap(analysis.PathMap):
         
     @property
     def path(self):
-        return '/'.join([ResourceExchange().table_prefix, 
+        return '/'.join([ResourceExchange().io_prefix, 
                          column_to_table(self.col)])
 
 class ResourceExchange(ProblemFamily):

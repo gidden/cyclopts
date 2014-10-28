@@ -143,7 +143,7 @@ class PathMap(analysis.PathMap):
             tbl = strtools.pp_tbl_name
         else:
             tbl = inst.param_tbl_name
-        return '/'.join([inst.table_prefix, tbl])
+        return '/'.join([inst.io_prefix, tbl])
 
 class StructuredRequest(ProblemSpecies):
     """A class representing structured request-based exchanges species."""

@@ -11,7 +11,7 @@ class ProblemFamily(object):
     """
 
     @property            
-    def table_prefix(cls):
+    def io_prefix(cls):
         """Returns the HDF5 group location for tables of this family"""
         return '/{0}/{1}'.format('Family', cls.name)
 
@@ -185,7 +185,7 @@ class ProblemSpecies(object):
         raise NotImplementedError
 
     @property            
-    def table_prefix(cls):
+    def io_prefix(cls):
         """Returns the HDF5 group location for tables of this species"""
         return '/{0}/{1}'.format('Species', cls.name)
 

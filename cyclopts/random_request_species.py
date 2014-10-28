@@ -621,7 +621,7 @@ class PathMap(analysis.PathMap):
     @property
     def path(self):
         inst = RandomRequest()
-        return '/'.join([inst.table_prefix, inst.tbl_name])
+        return '/'.join([inst.io_prefix, inst.tbl_name])
 
 class RandomRequest(ProblemSpecies):
     """A problem species for random (non-fuel cycle specific) reactor request

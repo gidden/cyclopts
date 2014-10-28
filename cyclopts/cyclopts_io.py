@@ -220,21 +220,24 @@ class PathMap(analysis.PathMap):
     def path(self):
         return '/Results'        
         
-class TableManager(object):
+class IOManager(object):
     """A managing class that performs RAII for its tables by creating them if
     needed upon acquisition and flushing them upon deletion. Tables can be
     accessed through the manager by its tables member, which is a dictionary
     from table names to Table objects."""
 
-    def __init__(self, h5file, tables):
+    def __init__(self, h5file, tables, groups=[]):
         """Parameters
         ----------
         h5file : PyTables File
             the hdf5 file
         tables : list of Tables
             the list of tables to manage
+        groups : list of Groups
+            the list of groups to manage
         """
         self.tables = {tbl.path.split('/')[-1]: tbl for tbl in tables}
+        self.groups = {grp.path.split('/')[-1]: grp for grp in groups}
         self.h5file = h5file
         for tbl in self.tables.values():
             if tbl.path not in self.h5file and self.h5file.mode is not 'r':
