@@ -548,8 +548,8 @@ def conv_insts(fam, fam_io_manager, sp, sp_io_manager,
                             fam_io_manager)
             if n % update_freq == 0:
                 if verbose:
-                    print('Total writes: {0}'.format(
-                            sum([tbl.n_writes for tbl in fam_tables.values() + sp_tables.values()])))
+                    # print('Total writes: {0}'.format(
+                    #         sum([tbl.n_writes for tbl in fam_tables.values() + sp_tables.values()])))
                     print('Memusg before collect: {0}'.format(
                             resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
                 gc.collect()
