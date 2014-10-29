@@ -203,7 +203,7 @@ def _merge_leaf(node, dest_file):
             dest_row.append()
         dest.flush()
     
-def _copy_node(node, dest_file):
+def _copy_node(node, dest_file, recursive=False):
     if node._v_depth == 0: # base recursion level, don't copy root
         return
     
@@ -218,12 +218,12 @@ def _copy_node(node, dest_file):
     node._v_file.copy_node(
         node._v_pathname, 
         newparent=dest_file.get_node(node._v_parent._v_pathname),
-        recursive=False)
+        recursive=recursive)
     dest_file.flush()
         
 def _merge_node(node, dest_file):
     if not dest_file.__contains__(node._v_pathname):
-        _copy_node(node, dest_file)
+        _copy_node(node, dest_file, recursive=True)
         return 
 
     if isinstance(node, t.Leaf):
@@ -233,7 +233,7 @@ def _merge_node(node, dest_file):
             _merge_node(node._v_file.get_node(node._v_pathname + '/' + child), 
                         dest_file)
             
-def combine(files, new_file=None, clean=False):
+def combine(files, new_file=None, clean=False, verbose=False):
     """Combines two or more databases with identical layout, writing their
     output into a new file or appending to the first in the list.
     
@@ -246,12 +246,16 @@ def combine(files, new_file=None, clean=False):
         end of the first database in the list.
     clean : bool, optional
         Whether to remove original files after combining them
+    verbose : bool, optional
+        Whether to print output
     """ 
     if new_file is not None and os.path.exists(new_file):
         raise ValueError('Cannot write combined hdf5 files to an existing location.')
 
     first = files.next()
     if new_file is not None:
+        if verbose:
+            print('Starting with base file {0}'.format(first))
         shutil.copyfile(first, new_file)
         fname = new_file
         if clean:
@@ -261,6 +265,8 @@ def combine(files, new_file=None, clean=False):
 
     aggdb = t.open_file(fname, 'a')
     for f in files:
+        if verbose:
+            print('Merging {0}'.format(f))
         db = t.open_file(f, 'r')
         _merge_node(db.root, aggdb)
         aggdb.flush()

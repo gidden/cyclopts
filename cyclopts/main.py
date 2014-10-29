@@ -91,7 +91,8 @@ def condor_rm(args):
 def cyclopts_combine(args):
     print("Combining {0} files into one master named {1}".format(
             len(args.files), args.outdb))
-    tools.combine(iter(args.files), new_file=args.outdb, clean=args.clean)    
+    tools.combine(iter(args.files), new_file=args.outdb, clean=args.clean,
+                  verbose=True)    
 
 def convert(args):
     """Converts a contiguous dataspace as defined by an input run control file
