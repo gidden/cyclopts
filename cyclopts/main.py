@@ -626,8 +626,8 @@ def gen_parser():
     combine_parser.add_argument('--clean', dest='clean', help=clean,
                                 action='store_true', default=False)    
     verbose = ("Print output during the combination process.")
-    submit_parser.add_argument('-v', '--verbose', dest='verbose', 
-                               action='store_true', default=False, help=verbose)
+    combine_parser.add_argument('-v', '--verbose', dest='verbose', 
+                                action='store_true', default=False, help=verbose)
     
     #
     # translate a database in id-column form to id-group form 
