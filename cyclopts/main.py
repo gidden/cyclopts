@@ -92,7 +92,7 @@ def cyclopts_combine(args):
     print("Combining {0} files into one master named {1}".format(
             len(args.files), args.outdb))
     tools.combine(iter(args.files), new_file=args.outdb, clean=args.clean,
-                  verbose=True)    
+                  verbose=args.verbose)    
 
 def convert(args):
     """Converts a contiguous dataspace as defined by an input run control file
@@ -625,6 +625,9 @@ def gen_parser():
     clean = ("Clean up (remove) the original files.")
     combine_parser.add_argument('--clean', dest='clean', help=clean,
                                 action='store_true', default=False)    
+    verbose = ("Print output during the combination process.")
+    submit_parser.add_argument('-v', '--verbose', dest='verbose', 
+                               action='store_true', default=False, help=verbose)
     
     #
     # translate a database in id-column form to id-group form 
