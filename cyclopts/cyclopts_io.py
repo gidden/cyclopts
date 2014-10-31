@@ -12,20 +12,6 @@ import cyclopts
 import cyclopts.tools as tools
 import cyclopts.analysis as analysis
 
-def value_mapping(tbl, x, y, uuids=True):
-    """Returns a mapping from x to a list of ys in a table. A table can be
-    supplied, or the underlying table will be used by default. If uuids is
-    true, the cyclopts.tools.str_to_uuid function is used for both x and
-    y."""
-    ret = defaultdict(list)
-    if uuids:
-        for row in tbl.iterrows():
-            ret[tools.str_to_uuid(row[x])].append(tools.str_to_uuid(row[y]))
-    else:
-        for row in tbl.iterrows():
-            ret[row[x]].append(row[y])
-    return ret
-
 def rows_where(tbl, cond, condvars=None):
     tbl = tbl._tbl if isinstance(tbl, Table) else tbl
     return tbl.read_where(cond, condvars=condvars)
@@ -164,7 +150,7 @@ class Table(object):
 
     def value_mapping(self, x, y, uuids=True):
         """Returns the result of value_mapping() using the underlying table."""
-        return value_mapping(self._tbl, x, y, uuids=uuids)
+        return analysis.value_mapping(self._tbl, x, y, uuids=uuids)
 
     def uuid_rows(self, uuid, colname='instid'):
         return uuid_rows(self._tbl, uuid, colname=colname)

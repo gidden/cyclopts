@@ -112,6 +112,26 @@ def param_mapping(h5file, path, kcol, vcol):
         data[x[kcol]].add(x[vcol])
     return data
 
+def value_mapping(tbl, x, y, uuids=True):
+    """Returns a mapping from x to a list of ys in a table. A table can be
+    supplied, or the underlying table will be used by default. If uuids is
+    true, the cyclopts.tools.str_to_uuid function is used for both x and
+    y."""
+    ret = defaultdict(list)
+    if uuids:
+        for row in tbl.iterrows():
+            ret[tools.str_to_uuid(row[x])].append(tools.str_to_uuid(row[y]))
+    else:
+        for row in tbl.iterrows():
+            ret[row[x]].append(row[y])
+    return ret
+
+def tbl_to_dict(tbl, key):
+    rows = tbl.read()
+    keys = tbl.coltypes.keys()
+    keys.remove(key)
+    return {x[key]: {x[k] for k in keys} for x in rows}
+
 def param_to_iids(h5file, fam_path, sp_path, col):
     """Return a mapping of parameter values to instids
     
