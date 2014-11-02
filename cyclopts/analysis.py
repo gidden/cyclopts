@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 from matplotlib.font_manager import FontProperties
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.lines as lines
@@ -6,6 +7,11 @@ from matplotlib.colors import colorConverter
 import sys
 from collections import defaultdict
 from pylab import asarray
+import tables as t
+import os
+
+import cyclopts.cyclopts_io as cycio
+import cyclopts.io_tools as io_tools
 
 def imarkers():
     return iter(['x', 's', 'o', 'v', '^', '+'])
@@ -41,121 +47,6 @@ def pastel(color, weight=1.75):
     rgb = [c + (x * (1.0-c)) for c in rgb]
 
     return rgb
-
-class PathMap(object):
-    """A simple container class for mapping columns to Hdf5 paths"""
-    
-    def __init__(self, col=None):
-        """Parameters
-        ----------
-        col : str
-            the column name
-        """
-        self.col = col
-        
-    @property
-    def path(self):
-        """Subclasses must implement this method to provide the path to the
-        column name"""
-        raise NotImplementedError
-
-def grab_data(h5file, path, col, matching=None):
-    """Grabs data in a path matching parameters
-    
-    Parameters
-    ----------
-    h5file : PyTables HDF5 File handle
-    path : str
-        the path to the appropriate table
-    col : str
-        the target column name
-    matching : tuple, optional
-        a tuple of col name and data to match, if no match is given, all column
-        values will be returned
-
-    Returns
-    -------
-    data : list, dict, other
-        if a matching is provided, a dictionary from the instance id to the
-        data value is returned, otherwise a list of all column values is given
-    """
-    h5node = h5file.get_node(path)
-    if matching is None:
-        data = [x[col] for x in h5node.iterrows()]
-    else:
-        data = []
-        scol, search = matching
-        data = {x['instid']: x[col] for x in h5node.iterrows() if x[scol] in search}
-    return data
-
-def param_mapping(h5file, path, kcol, vcol):
-    """return a mapping of params to all values found
-    
-    Parameters
-    ----------
-    h5file : PyTables HDF5 File handle
-    path : str
-        the path to the appropriate table
-    kcol : str
-        the key column name
-    vcol : str
-        the value column name
-    
-    Return
-    ------
-    mapping : dict
-        a mapping from key columns to a set of all found value columns
-    """
-    h5node = h5file.get_node(path)
-    data = defaultdict(set)
-    for x in h5node.iterrows():
-        data[x[kcol]].add(x[vcol])
-    return data
-
-def value_mapping(tbl, x, y, uuids=True):
-    """Returns a mapping from x to a list of ys in a table. A table can be
-    supplied, or the underlying table will be used by default. If uuids is
-    true, the cyclopts.tools.str_to_uuid function is used for both x and
-    y."""
-    ret = defaultdict(list)
-    if uuids:
-        for row in tbl.iterrows():
-            ret[tools.str_to_uuid(row[x])].append(tools.str_to_uuid(row[y]))
-    else:
-        for row in tbl.iterrows():
-            ret[row[x]].append(row[y])
-    return ret
-
-def tbl_to_dict(tbl, key):
-    rows = tbl.read()
-    keys = tbl.coltypes.keys()
-    keys.remove(key)
-    return {x[key]: {k: x[k] for k in keys} for x in rows}
-
-def param_to_iids(h5file, fam_path, sp_path, col):
-    """Return a mapping of parameter values to instids
-    
-    Parameters
-    ----------
-    h5file : PyTables HDF5 File handle
-    fam_path : str
-        the path to the appropriate family table (for param ids to inst ids)
-    sp_path : str
-        the path to the appropriate species table (for param to param ids)
-    col : str
-        the parameter column name
-
-    Return
-    ------
-    mapping : dict
-        a mapping from key columns to a set of all found value columns
-    """
-    pid_to_iids = param_mapping(h5file, fam_path, 'paramid', 'instid')
-    ret = defaultdict(set)
-    for p, pids in param_mapping(h5file, sp_path, col, 'paramid').items():
-        for pid in pids:
-            ret[p].update(pid_to_iids[pid])
-    return ret
 
 def multi_scatter(x, ys, colors=None, ax=None):
     """returns a plot object with multiple y values
@@ -259,3 +150,170 @@ def plot_xyz(xtbl, xhandle, ytbl, yhandle, zvals, toinst=None, fromkey=None):
     ax.legend([proxy[s] for s in solvers], solvers, loc='center left', 
               bbox_to_anchor=(1, 0.5))
     return ax
+
+_ax_labels = {
+    'n_arcs': 'Number of Arcs',
+    'n_constrs': 'Number of Constraints',
+    'pref_flow': 'Product of Preference and Flow',
+    }
+
+def add_limit_line(ax, x, y):
+    ax.plot(x, y, c=plt.get_cmap('Greys')(0.75), linestyle='--')
+
+"""A utility class for analyzing Cyclopts output"""
+class Context(object):
+
+    def __init__(self, fname, fam_mod, fam_cls, sp_mod, sp_class, save=False, savepath='.', show=True):
+        import importlib
+        self.fam_mod = importlib.import_module(fam_mod)
+        self.fam_cls = getattr(self.fam_mod, fam_cls)
+        self.sp_mod = importlib.import_module(sp_mod)
+        self.sp_cls = getattr(self.sp_mod, sp_class)
+        self.f = t.open_file(fname, mode='r')
+        self.save = save
+        self.savepath = savepath
+        self.show = show
+
+        res_path = cycio.PathMap().path
+        self.instids = set(io_tools.grab_data(self.f, res_path, 'instid'))
+        self.solvers = ['greedy', 'clp', 'cbc']
+        self.times = {s: io_tools.grab_data(self.f, res_path, 'time', ('solver', [s])) for s in self.solvers}
+        self.objs = {s: io_tools.grab_data(self.f, res_path, 'objective', ('solver', [s])) for s in self.solvers}
+
+    def __del__(self):
+        self.f.close()
+        
+    def _save_and_show(self, fig, save, fname, show):
+        if fig is None:
+            self._plt_save_and_show(save, fname, show)
+            return
+
+        if self.save and save:
+            fig.savefig(fname)
+        if show:
+            fig.show()
+
+    def _plt_save_and_show(self, save, fname, show):
+        if self.save and save:
+            plt.savefig(fname)
+        if show:
+            plt.show()
+
+    def simple_scatter(self, x, param, kind, color=None, ax=None, save=False, show=True):
+        fig = None
+        if ax is None:
+            fig, ax = plt.subplots()
+        lim = 3 * 60 * 60 # 3 hour limit
+        if max(self.times[kind].values()) > lim:
+            add_limit_line(ax, x.values(), len(x) * [lim])
+        color = icolors().next() if color is None else color
+        ax.scatter(x.values(), [self.times[kind][k] for k in x.keys()], c=color)
+        ax.set_xlim(0, max(x.values()))
+        ax.set_ylim(0)
+        ax.set_xlabel(param)
+        ax.set_ylabel('Time (s)')
+        ax.set_title(kind)
+        if (max(x) > 1e3):
+            ax.get_xaxis().get_major_formatter().set_powerlimits((0, 1))
+        if (max(self.times[kind].values()) > 1e3):
+            ax.get_yaxis().get_major_formatter().set_powerlimits((0, 1))
+
+        fname = os.path.join(self.savepath, '{param}_{kind}.{ext}'.format(param=param, kind=kind, ext='png'))
+        self._save_and_show(fig, save, fname, show)
+        return ax
+
+    def all_scatter(self, param, colors=None, ax=None, save=False, show=True):
+        xpmap = self.fam_mod.PathMap(param)
+        x = io_tools.grab_data(self.f, xpmap.path, xpmap.col, ('instid', self.instids))
+        ax = multi_scatter(x, self.times, colors=colors, ax=ax)
+        lim = [3 * 60 * 60] # 3 hour limit
+        add_limit_line(ax, x.values(), len(x) * lim)
+        ax.set_title('all')
+        ax.set_xlabel(param)
+        ax.set_ylabel('Time (s)')
+        fname = os.path.join(self.savepath, '{param}_all.{ext}'.format(param=param, ext='png'))
+        #self._save_and_show(save, fname, False)
+        return x, ax
+
+    def four_pane_scatter(self, param, save=False, saveall=False, show=True):
+        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, sharex=True)
+        x, ax1 = self.all_scatter(param, colors=ipastels(), ax=ax1, save=False, show=False)
+        kinds = ['cbc', 'greedy', 'clp']
+        c_it = ipastels()
+        axs = [ax2, ax3, ax4]
+        for i in range(len(kinds)):
+            axs[i] = self.simple_scatter(x, param, kinds[i], color=c_it.next(), ax=axs[i], save=False, show=False)
+        fig.set_size_inches(1.5 * fig.get_size_inches())
+
+        # add only one label for all subplots
+        ax = fig.add_axes( [0., 0., 1, 1] )
+        ax.set_axis_off()
+        ax.text( 
+            .0, 0.5, "Time (s)", rotation='vertical',
+             horizontalalignment='center', verticalalignment='center'
+             )
+        ax.text( 
+            0.5, 0, _ax_labels[param], horizontalalignment='center', verticalalignment='center'
+            )
+        fname = os.path.join(self.savepath, '{param}_4pane.{ext}'.format(param=param, ext='png'))
+        self._save_and_show(fig, save, fname, show)
+        
+        if saveall:
+            self.all_scatter(param, colors=ipastels(), save=saveall, show=False)
+            plt.close()
+            c_it = ipastels()
+            for i in range(len(kinds)):
+                self.simple_scatter(x, param, kinds[i], color=c_it.next(), save=saveall, show=show)
+                plt.close()
+
+    def colored_scatter(self, x, kind, id_mapping, color_map, ax=None):
+        if ax is None:
+            fig, ax = plt.subplots()
+        lim = 3 * 60 * 60 # 3 hour limit
+        if max(self.times[kind].values()) > lim:
+            add_limit_line(ax, x.values(), len(x) * [lim])
+        ax.scatter(x.values(), [self.times[kind][k] for k in x.keys()], c=[color_map[id_mapping[k]] for k in x.keys()])
+        ax.set_xlim(0, max(x.values()))
+        ax.set_ylim(0)
+        if (max(x) > 1e3):
+            ax.get_xaxis().get_major_formatter().set_powerlimits((0, 1))
+        if (max(self.times[kind].values()) > 1e3):
+            ax.get_yaxis().get_major_formatter().set_powerlimits((0, 1))
+        return ax 
+
+    def three_pane_color_scatter(self, param, cparam, famparam='n_arcs', 
+                                 title=None, save=False, show=True):
+        to_iids = io_tools.param_to_iids(
+            self.f, self.fam_mod.PathMap(famparam).path, 
+            self.sp_mod.PathMap(cparam).path, cparam)
+        id_mapping = {iid: k for k, v in to_iids.items() for iid in v}
+        xpmap = self.fam_mod.PathMap(param)
+        x = io_tools.grab_data(self.f, xpmap.path, xpmap.col, ('instid', self.instids))
+        fig, ((off, ax1), (ax2, ax3)) = plt.subplots(2, 2, sharex=True)
+        off.axis('off')
+        axs = [ax1, ax2, ax3]
+        kinds = ['cbc', 'greedy', 'clp']
+        c_it = ipastels()
+        color_map = {k: c_it.next() for k in to_iids.keys()}
+        for i in range(len(kinds)):
+            ax = self.colored_scatter(x, kinds[i], id_mapping, color_map, ax=axs[i])
+            ax.set_title(kinds[i].capitalize())
+        handles = [patches.Patch(color=color_map[x], label=kinds[i]) for i, x in enumerate(color_map.keys())]
+        fig.legend(handles=handles, labels=to_iids.keys(), loc=(0.2, 0.65))
+        fig.set_size_inches(1.5 * fig.get_size_inches())
+        title = cparam if title is None else title
+        plt.suptitle(title)
+
+        # add only one label for all subplots
+        ax = fig.add_axes( [0., 0., 1, 1] )
+        ax.set_axis_off()
+        ax.text( 
+            .0, 0.5, "Time (s)", rotation='vertical',
+             horizontalalignment='center', verticalalignment='center'
+             )
+        ax.text( 
+            0.5, 0, _ax_labels[param], horizontalalignment='center', verticalalignment='center'
+            )
+        fname = os.path.join(self.savepath, '{cparam}_{param}_color.{ext}'.format(cparam=cparam, param=param, ext='png'))
+        self._save_and_show(fig, save, fname, show)
+            

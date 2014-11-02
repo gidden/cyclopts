@@ -7,9 +7,9 @@ from collections import Iterable
 
 from cyclopts.problems import ProblemFamily
 import cyclopts.cyclopts_io as cycio
+import cyclopts.io_tools as io_tools
 import cyclopts.tools as tools
 import cyclopts.exchange_instance as exinst
-import cyclopts.analysis as analysis
 
 _N_CAPS_MAX = 4
 
@@ -182,7 +182,7 @@ def _pp_work(instid, solnids, prop_tbl, arc_tbl, soln_tbl, strategy='col'):
     else:
         return _pp_work_grp(instid, solnids, prop_tbl, arc_tbl, soln_tbl)
 
-class PathMap(analysis.PathMap):
+class PathMap(io_tools.PathMap):
     """A simple container class for mapping columns to Hdf5 paths
     implemented for the ResourceExchange problem family"""
     

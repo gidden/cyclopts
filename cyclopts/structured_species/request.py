@@ -11,10 +11,10 @@ from collections import OrderedDict, defaultdict, Iterable
 
 from cyclopts import tools as cyctools
 from cyclopts import cyclopts_io as cycio
+from cyclopts import io_tools as io_tools
 import cyclopts.exchange_instance as exinst
 from cyclopts.problems import ProblemSpecies
 from cyclopts.exchange_family import ResourceExchange
-import cyclopts.analysis as analysis
 
 from cyclopts.structured_species import data
 from cyclopts.structured_species import tools as strtools
@@ -124,7 +124,7 @@ class Supplier(object):
                 qty, enr, data.sup_to_commod[self.kind]) / qty \
                     for k in ['proc', 'inv']]
 
-class PathMap(analysis.PathMap):
+class PathMap(io_tools.PathMap):
     """A simple container class for mapping columns to Hdf5 paths
     implemented for the StructuredRequest problem species"""
     

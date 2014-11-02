@@ -10,7 +10,7 @@ from collections import defaultdict
 
 import cyclopts
 import cyclopts.tools as tools
-import cyclopts.analysis as analysis
+import cyclopts.io_tools as io_tools
 
 def rows_where(tbl, cond, condvars=None):
     tbl = tbl._tbl if isinstance(tbl, Table) else tbl
@@ -150,7 +150,7 @@ class Table(object):
 
     def value_mapping(self, x, y, uuids=True):
         """Returns the result of value_mapping() using the underlying table."""
-        return analysis.value_mapping(self._tbl, x, y, uuids=uuids)
+        return io_tools.value_mapping(self._tbl, x, y, uuids=uuids)
 
     def uuid_rows(self, uuid, colname='instid'):
         return uuid_rows(self._tbl, uuid, colname=colname)
@@ -250,7 +250,7 @@ class ResultTable(Table):
                     datetime.datetime.now().isoformat(' '),
                     )])
 
-class PathMap(analysis.PathMap):
+class PathMap(io_tools.PathMap):
     """A simple container class for mapping columns to Hdf5 paths
     for the Results table"""
     

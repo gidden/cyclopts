@@ -11,10 +11,10 @@ from collections import OrderedDict, defaultdict, Iterable, namedtuple
 
 from cyclopts import tools as cyctools
 from cyclopts import cyclopts_io as cycio
+from cyclopts import io_tools as io_tools
 import cyclopts.exchange_instance as exinst
 from cyclopts.problems import ProblemSpecies
 from cyclopts.exchange_family import ResourceExchange
-import cyclopts.analysis as analysis
 
 from cyclopts.structured_species import data
 from cyclopts.structured_species import tools as strtools
@@ -116,7 +116,7 @@ class Requester(object):
             raise RuntimeError('Coeff not supported for repos')
         return enr / 100. * data.relative_qtys[rkind][commod] 
         
-class PathMap(analysis.PathMap):
+class PathMap(io_tools.PathMap):
     """A simple container class for mapping columns to Hdf5 paths
     implemented for the StructuredSupply problem species"""
     
