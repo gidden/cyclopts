@@ -88,6 +88,9 @@ def column_to_table(col):
     if col in blacklist:
         raise RuntimeError('Ambiguous column name.')
     tbl = None
+    # hack for now
+    if col == 'pref_flow':
+        return _tbl_names["solution_properties"]
     for tbl, dt in _dtypes.items():
         if col in dt.fields.keys():
             tbl = _tbl_names[tbl]
