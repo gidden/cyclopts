@@ -130,7 +130,7 @@ def tbl_to_dict(tbl, key):
     rows = tbl.read()
     keys = tbl.coltypes.keys()
     keys.remove(key)
-    return {x[key]: {x[k] for k in keys} for x in rows}
+    return {x[key]: {k: x[k] for k in keys} for x in rows}
 
 def param_to_iids(h5file, fam_path, sp_path, col):
     """Return a mapping of parameter values to instids
