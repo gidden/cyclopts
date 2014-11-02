@@ -157,6 +157,11 @@ _ax_labels = {
     'pref_flow': 'Product of Preference and Flow',
     }
 
+_legends = {
+    'f_fc': ['Once Through', 'MOX Recycle', 'THOX/MOX Recycle'],
+    'f_loc': ['None', 'Region', 'Region + Location'],
+}
+
 def add_limit_line(ax, x, y):
     ax.plot(x, y, c=plt.get_cmap('Greys')(0.75), linestyle='--')
 
@@ -199,7 +204,7 @@ class Context(object):
         if show:
             plt.show()
 
-    def simple_scatter(self, x, param, kind, color=None, ax=None, save=False, show=True):
+    def simple_scatter(self, x, param, kind, color=None, ax=None, labels=True, save=False, show=True):
         fig = None
         if ax is None:
             fig, ax = plt.subplots()
@@ -210,8 +215,9 @@ class Context(object):
         ax.scatter(x.values(), [self.times[kind][k] for k in x.keys()], c=color)
         ax.set_xlim(0, max(x.values()))
         ax.set_ylim(0)
-        ax.set_xlabel(param)
-        ax.set_ylabel('Time (s)')
+        if labels:
+            ax.set_xlabel(param)
+            ax.set_ylabel('Time (s)')
         ax.set_title(kind)
         if (max(x) > 1e3):
             ax.get_xaxis().get_major_formatter().set_powerlimits((0, 1))
@@ -229,21 +235,24 @@ class Context(object):
         lim = [3 * 60 * 60] # 3 hour limit
         add_limit_line(ax, x.values(), len(x) * lim)
         ax.set_title('all')
-        ax.set_xlabel(param)
-        ax.set_ylabel('Time (s)')
+        #ax.set_xlabel(param)
+        #ax.set_ylabel('Time (s)')
         fname = os.path.join(self.savepath, '{param}_all.{ext}'.format(param=param, ext='png'))
         #self._save_and_show(save, fname, False)
         return x, ax
 
-    def four_pane_scatter(self, param, save=False, saveall=False, show=True):
+    def four_pane_scatter(self, param, save=False, saveall=False, show=True, title=None):
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, sharex=True)
         x, ax1 = self.all_scatter(param, colors=ipastels(), ax=ax1, save=False, show=False)
         kinds = ['cbc', 'greedy', 'clp']
         c_it = ipastels()
         axs = [ax2, ax3, ax4]
         for i in range(len(kinds)):
-            axs[i] = self.simple_scatter(x, param, kinds[i], color=c_it.next(), ax=axs[i], save=False, show=False)
+            axs[i] = self.simple_scatter(x, param, kinds[i], color=c_it.next(), ax=axs[i], labels=False, save=False, show=False)
         fig.set_size_inches(1.5 * fig.get_size_inches())
+
+        title = cparam if title is None else title
+        plt.suptitle(title)
 
         # add only one label for all subplots
         ax = fig.add_axes( [0., 0., 1, 1] )
@@ -263,7 +272,7 @@ class Context(object):
             plt.close()
             c_it = ipastels()
             for i in range(len(kinds)):
-                self.simple_scatter(x, param, kinds[i], color=c_it.next(), save=saveall, show=show)
+                self.simple_scatter(x, param, kinds[i], color=c_it.next(), labels=False, save=saveall, show=show)
                 plt.close()
 
     def colored_scatter(self, x, kind, id_mapping, color_map, ax=None):
@@ -299,7 +308,8 @@ class Context(object):
             ax = self.colored_scatter(x, kinds[i], id_mapping, color_map, ax=axs[i])
             ax.set_title(kinds[i].capitalize())
         handles = [patches.Patch(color=color_map[x], label=kinds[i]) for i, x in enumerate(color_map.keys())]
-        fig.legend(handles=handles, labels=to_iids.keys(), loc=(0.2, 0.65))
+        labels = _legends[cparam] if cparam in _legends.keys() else to_iids.keys() 
+        fig.legend(handles=handles, labels=labels, loc=(0.2, 0.65))
         fig.set_size_inches(1.5 * fig.get_size_inches())
         title = cparam if title is None else title
         plt.suptitle(title)
