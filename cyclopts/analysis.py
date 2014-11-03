@@ -258,11 +258,11 @@ class Context(object):
         ax = fig.add_axes( [0., 0., 1, 1] )
         ax.set_axis_off()
         ax.text( 
-            .0, 0.5, "Time (s)", rotation='vertical',
+            .05, 0.5, "Time (s)", rotation='vertical',
              horizontalalignment='center', verticalalignment='center'
              )
         ax.text( 
-            0.5, 0, _ax_labels[param], horizontalalignment='center', verticalalignment='center'
+            0.5, .05, _ax_labels[param], horizontalalignment='center', verticalalignment='center'
             )
         fname = os.path.join(self.savepath, '{param}_4pane.{ext}'.format(param=param, ext='png'))
         self._save_and_show(fig, save, fname, show)
@@ -318,11 +318,11 @@ class Context(object):
         ax = fig.add_axes( [0., 0., 1, 1] )
         ax.set_axis_off()
         ax.text( 
-            .0, 0.5, "Time (s)", rotation='vertical',
+            .05, 0.5, "Time (s)", rotation='vertical',
              horizontalalignment='center', verticalalignment='center'
              )
         ax.text( 
-            0.5, 0, _ax_labels[param], horizontalalignment='center', verticalalignment='center'
+            0.5, .05, _ax_labels[param], horizontalalignment='center', verticalalignment='center'
             )
         fname = os.path.join(self.savepath, '{cparam}_{param}_color.{ext}'.format(cparam=cparam, param=param, ext='png'))
         self._save_and_show(fig, save, fname, show)
