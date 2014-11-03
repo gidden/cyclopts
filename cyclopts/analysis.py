@@ -212,7 +212,8 @@ class Context(object):
         if max(self.times[kind].values()) > lim:
             add_limit_line(ax, x.values(), len(x) * [lim])
         color = icolors().next() if color is None else color
-        ax.scatter(x.values(), [self.times[kind][k] for k in x.keys()], c=color)
+        y = [self.times[kind][k] for k in x.keys()]
+        ax.scatter(x.values(), y, c=color)
         ax.set_xlim(0, max(x.values()))
         ax.set_ylim(0)
         if labels:
@@ -226,7 +227,14 @@ class Context(object):
 
         fname = os.path.join(self.savepath, '{param}_{kind}.{ext}'.format(param=param, kind=kind, ext='png'))
         self._save_and_show(fig, save, fname, show)
-        return ax
+        return x, y, ax
+
+    def solver_scatter(self, param, solver, save=False, show=True, title=None):
+        xpmap = self.fam_mod.PathMap(param)
+        x = io_tools.grab_data(self.f, xpmap.path, xpmap.col, ('instid', self.instids))
+        _, y, ax = self.simple_scatter(x, param, solver, color=ipastels().next(), 
+                                      labels=True, save=save, show=show)
+        return x, y, ax
 
     def all_scatter(self, param, colors=None, ax=None, save=False, show=True):
         xpmap = self.fam_mod.PathMap(param)
