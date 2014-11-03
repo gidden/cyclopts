@@ -2,6 +2,8 @@
 
 from collections import defaultdict
 
+import cyclopts.tools as tools
+
 class PathMap(object):
     """A simple container class for mapping columns to Hdf5 paths"""
     
