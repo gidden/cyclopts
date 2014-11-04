@@ -178,8 +178,34 @@ class RatioContext(object):
         self.lim = lim
         self.ctxs = [Context(f, fam_mod, fam_cls, sp_mod, sp_cls, 
                              save=save, savepath=savepath) for f in self.fnames]
+        
+    def _save_and_show(self, fig, save, fname, show):
+        if fig is None:
+            self._plt_save_and_show(save, fname, show)
+            return
 
-    def ratio_scatter(self, param, solver, colors=None, where=None, **kwargs):
+        if self.save and save:
+            fig.savefig(fname)
+        if show:
+            fig.show()
+
+    def _plt_save_and_show(self, save, fname, show):
+        if self.save and save:
+            plt.savefig(fname)
+        if show:
+            plt.show()
+
+    def count(self, param, solver, where=None, **kwargs):
+        count = []
+        lim = None if where is None else self.lim
+        for i, ctx in enumerate(self.ctxs):
+            _, _, _, y = ctx.solver_scatter(
+                param, solver, show=False, lim=lim, where=where, **kwargs)
+            count.append(len(y))
+        return count
+
+    def ratio_scatter(self, param, solver, colors=None, where=None, savename=None, 
+                      **kwargs):
         fig, ax = plt.subplots()
         xs = [None] * len(self.fnames)
         ids = [None] * len(self.fnames)
@@ -188,14 +214,27 @@ class RatioContext(object):
             c_it = ipastels()
             colors = [c_it.next() for i in range(len(self.fnames))]
         lim = None if where is None else self.lim
+        ymin, ymax = float('inf'), 0
+        xmin, xmax = float('inf'), 0
+        # update kwargs, only save top-level graph
+        save = kwargs['save'] if 'save' in kwargs else False
+        kwargs['save'] = False
+        show = kwargs['show'] if 'show' in kwargs else False
+        kwargs['show'] = False
         for i, ctx in enumerate(self.ctxs):
             _, ids[i], xs[i], ys[i] = ctx.solver_scatter(
-                param, solver, show=False, ax=ax, lim=lim, where=where, color=colors[i], 
+                param, solver, ax=ax, lim=lim, where=where, color=colors[i], 
                 label=self.labels[i], 
                 **kwargs)
-        ax.legend(loc='upper left')
-        ax.set_xlim(0)
-        ax.set_ylim(0)
+            xmax = max(xs[i]) if max(xs[i]) > xmax else xmax
+            xmin = min(xs[i]) if min(xs[i]) < xmin else xmin
+            ymax = max(ys[i]) if max(ys[i]) > ymax else ymax
+            ymin = min(ys[i]) if min(ys[i]) < ymin else ymin
+        ymin = 0 if ymin < lim else lim
+        ax.set_xlim(xmin, xmax)
+        ax.set_ylim(ymin, 1.1 * ymax)
+        ax.legend(loc=0)
+        self._save_and_show(fig, save, savename, show)
         return fig, ax
 
 """A utility class for analyzing Cyclopts output"""
@@ -250,13 +289,14 @@ class Context(object):
             plt.show()
 
     def simple_scatter(self, x, param, solver, color=None, ax=None, labels=True, 
-                       save=False, show=True, lim=None, where=None, **kwargs):
+                       save=False, show=True, lim=None, where=None, title=None, 
+                       **kwargs):
         """return an axis with scatter plot as well as the ids, x, and y
         values"""
         fig = None
         if ax is None:
             fig, ax = plt.subplots()
-        ids = x.keys()
+        ids = np.array(x.keys())
         x = np.array(x.values())
         y = np.array([self.times[solver][k] for k in ids])
         if lim is not None:
@@ -273,12 +313,13 @@ class Context(object):
                 add_limit_line(ax, x, len(x) * [lim])
         color = icolors().next() if color is None else color
         ax.scatter(x, y, c=color, **kwargs)
-        ax.set_xlim(0, max(x))
+        ax.set_xlim(0)#, max(x))
         ax.set_ylim(0)
         if labels:
-            ax.set_xlabel(param)
+            ax.set_xlabel(_ax_labels[param])
             ax.set_ylabel('Time (s)')
-        ax.set_title(solver)
+        title = solver if title is None else title
+        ax.set_title(title)
         self._set_power_limits(x, y, ax)
 
         fname = os.path.join(
