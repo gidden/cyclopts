@@ -660,6 +660,12 @@ def col2grp(in_old, out_old, in_new, out_new):
     in_new.close()
     out_new.close()
 
+def masked_filter(c, mask, unmask=False):
+    """Return a subset of a collection with a mask applied"""
+    if not unmask:
+        return [c[i] for i in range(len(c)) if mask[i]]
+    else:
+        return [c[i] for i in range(len(c)) if not mask[i]]
 
 # def run_insts_mp():
 #     q = mp.Queue()
