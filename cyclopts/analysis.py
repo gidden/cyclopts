@@ -226,10 +226,10 @@ class RatioContext(object):
                 param, solver, ax=ax, lim=lim, where=where, color=colors[i], 
                 label=self.labels[i], 
                 **kwargs)
-            xmax = max(xs[i]) if max(xs[i]) > xmax else xmax
-            xmin = min(xs[i]) if min(xs[i]) < xmin else xmin
-            ymax = max(ys[i]) if max(ys[i]) > ymax else ymax
-            ymin = min(ys[i]) if min(ys[i]) < ymin else ymin
+            xmax = max(xs[i]) if len(xs[i]) > 0 and max(xs[i]) > xmax else xmax
+            xmin = min(xs[i]) if len(xs[i]) > 0 and min(xs[i]) < xmin else xmin
+            ymax = max(ys[i]) if len(ys[i]) > 0 and max(ys[i]) > ymax else ymax
+            ymin = min(ys[i]) if len(ys[i]) > 0 and min(ys[i]) < ymin else ymin
         ymin = 0 if ymin < lim else lim
         ax.set_xlim(xmin, xmax)
         ax.set_ylim(ymin, 1.1 * ymax)
@@ -304,9 +304,13 @@ class Context(object):
                 raise RuntimeError('Lim and Where must both be specified')
             mfunc = np.ma.masked_less if where == 'below' else np.ma.masked_greater
             mask = mfunc(y, lim).mask
-            ids = ids[mask]
-            x = x[mask]
-            y = y[mask]
+            if isinstance(mask, np.bool_): # true if all are below or above
+                if not mask:
+                    return ax, [], [], []
+            else:
+                ids = ids[mask]
+                x = x[mask]
+                y = y[mask]
         else:
             lim = 3 * 60 * 60 # 3 hour limit
             if max(y) > lim:
