@@ -10,6 +10,7 @@ from pylab import asarray
 import tables as t
 import os
 import numpy as np
+import inspect
 
 import cyclopts.cyclopts_io as cycio
 import cyclopts.io_tools as io_tools
@@ -156,6 +157,8 @@ _ax_labels = {
     'n_arcs': 'Number of Arcs',
     'n_constrs': 'Number of Constraints',
     'pref_flow': 'Product of Preference and Flow',
+    'time': 'Time (s)',
+    'obj': 'Objective Value',
     }
 
 _legends = {
@@ -237,6 +240,57 @@ class RatioContext(object):
         self._save_and_show(fig, save, savename, show)
         return fig, ax
 
+class Plot(object):    
+    def __init__(self, id_to_x, id_to_y, above=None, below=None):
+        self.id_to_x = id_to_x
+        self.id_to_y = id_to_y
+        self.restrict = above is not None or below is not None
+        if self.restrict and above is None and below is None:
+            raise RuntimeError('Cannot specify below and above.')
+        self.maskfunc = np.ma.masked_less if below is not None \
+            else np.ma.masked_greater
+        self.lim = above if above is not None else below
+        self._data = None
+        self._plot = None
+
+    def _generate_data(self):
+        ids = np.array(self.id_to_x.keys())
+        x = np.array(self.id_to_x.values())
+        y = np.array([self.id_to_y[_] for _ in ids])
+        if self.restrict:
+            mask = self.maskfunc(y, self.lim).mask
+            if isinstance(mask, np.bool_): # true if all are below or above
+                if not mask:
+                    return [], [], []
+            else:
+                ids = ids[mask]
+                x = x[mask]
+                y = y[mask]
+        return ids, x, y
+
+    def _generate_plot(self, ax=None, id_to_color=None, addline=False, **kwargs):
+        ids, x, y = self.data()
+        fig, ax = plt.subplots() if ax is None else (None, ax)
+        lim = 3 * 60 * 60 # 3 hour limit
+        if addline and len(y) > 0 and max(y) > lim:
+            add_limit_line(ax, x, len(x) * [lim])
+        if id_to_color is not None:
+            kwargs['c'] = [id_to_color[k] for k in ids]
+        if 'c' not in kwargs:
+            kwargs['c'] = ipastels().next()
+        ax.scatter(x, y, **kwargs)
+        return fig, ax
+
+    def data(self):
+        if self._data is None:
+            self._data = self._generate_data()
+        return self._data
+
+    def plot(self, *args, **kwargs):
+        if self._plot is None:
+            self._plot = self._generate_plot(*args, **kwargs)
+        return self._plot
+
 """A utility class for analyzing Cyclopts output"""
 class Context(object):
 
@@ -253,7 +307,7 @@ class Context(object):
 
         res_path = cycio.PathMap().path
         self.instids = set(io_tools.grab_data(self.f, res_path, 'instid'))
-        self.solvers = ['greedy', 'clp', 'cbc']
+        self.solvers = ['cbc', 'greedy', 'clp']
         self.times = {
             s: io_tools.grab_data(self.f, res_path, 'time', 
                                   ('solver', [s])) for s in self.solvers
@@ -277,9 +331,9 @@ class Context(object):
             fig.show()
 
     def _set_power_limits(self, x, y, ax):
-        if (max(x) > 1e3):
+        if len(x) > 0 and max(x) > 1e3:
             ax.get_xaxis().get_major_formatter().set_powerlimits((0, 1))
-        if (max(y) > 1e3):
+        if len(y) > 0 and max(y) > 1e3:
             ax.get_yaxis().get_major_formatter().set_powerlimits((0, 1))
 
     def _plt_save_and_show(self, save, fname, show):
@@ -288,182 +342,151 @@ class Context(object):
         if show:
             plt.show()
 
-    def _condition_kwargs(kwargs, func):
+    def _dress(self, x, y, ax, title=None, labels=None):
+        if labels is not None:
+            ax.set_xlabel(labels[0])
+            ax.set_ylabel(labels[1])
+        if title is not None:
+            ax.set_title(title)
+        _, xmax = ax.get_xlim()
+        xmin = 0
+        if len(x) > 0:
+            xmax = xmax if max(x) < xmax else max(x)
+        ax.set_xlim(xmin, xmax)
+        _, ymax = ax.get_ylim()
+        ymin = 0
+        if len(y) > 0:
+            ymax = ymax if max(y) < ymax else max(y)
+        ax.set_ylim(ymin, ymax)
+        self._set_power_limits(x, y, ax)
+
+    def _id_maps(self, param, solver, ykind, colorparam=None):
+        xpmap = self.fam_mod.PathMap(param)
+        id_to_x = io_tools.grab_data(self.f, xpmap.path, xpmap.col, 
+                                     ('instid', self.instids))
+        if ykind == 'time':
+            id_to_y = self.times[solver]
+        elif ykind == 'obj':
+            id_to_y = self.objs[solver]
+        id_to_color = None
+        if colorparam is not None:
+            c_it = ipastels()
+            to_iids = io_tools.param_to_iids(
+                self.f, self.fam_mod.PathMap(param).path, 
+                self.sp_mod.PathMap(colorparam).path, colorparam)
+            color_map = {k: c_it.next() for k in to_iids.keys()}
+            id_to_color = {iid: color_map[k] for k, v in to_iids.items() for iid in v}
+        return id_to_x, id_to_y, id_to_color
+        
+    def _filter_kwargs(self, kwargs, func):
         """returns kwargs only applicable to a function"""
         spec = inspect.getargspec(func)
         if spec.keywords is not None:
             return kwargs
         return {k: v for k, v in kwargs.items() if k in spec.args[-len(spec.defaults):]}
-    
-    def data(self, id_to_x, solver, kind='time', above=None, below=None, **kwargs):
-        ids = np.array(id_to_x.keys())
-        x = np.array(id_to_x.values())
-        if kind == 'time':
-            y = np.array([self.times[solver][k] for k in ids])
-        elif kind == 'obj':
-            y = np.array([self.objs[solver][k] for k in ids])
-        if above is not None or below is not None:
-            if above is None and below is None:
-                raise RuntimeError('Cannot specify below and above.')
-            lim = above if above is not None else below
-            mfunc = np.ma.masked_less if below is not None else np.ma.masked_greater
-            mask = mfunc(y, lim).mask
-            if isinstance(mask, np.bool_): # true if all are below or above
-                if not mask:
-                    return [], [], []
-            else:
-                ids = ids[mask]
-                x = x[mask]
-                y = y[mask]
-        return ids, x, y
 
-    def simple_scatter(self, x, param, solver, color=None, ax=None, labels=True, 
-                       save=False, show=True, lim=None, where=None, title=None, 
-                       **kwargs):
+    def scatter(self, param, solver, ykind='time', colorparam=None, ax=None, 
+                labels=True, 
+                save=False, show=True, lim=None, where=None, title=None, 
+                **kwargs):
         """return an axis with scatter plot as well as the ids, x, and y
         values"""
-        fig = None
-        if ax is None:
-            fig, ax = plt.subplots()
-        ids = np.array(x.keys())
-        x = np.array(x.values())
-        y = np.array([self.times[solver][k] for k in ids])
-        if lim is not None:
-            if where is None:
-                raise RuntimeError('Lim and Where must both be specified')
-            mfunc = np.ma.masked_less if where == 'below' else np.ma.masked_greater
-            mask = mfunc(y, lim).mask
-            if isinstance(mask, np.bool_): # true if all are below or above
-                if not mask:
-                    return ax, [], [], []
-            else:
-                ids = ids[mask]
-                x = x[mask]
-                y = y[mask]
-        else:
-            lim = 3 * 60 * 60 # 3 hour limit
-            if max(y) > lim:
-                add_limit_line(ax, x, len(x) * [lim])
-        color = icolors().next() if color is None else color
-        ax.scatter(x, y, c=color, **kwargs)
-        ax.set_xlim(0)#, max(x))
-        ax.set_ylim(0)
-        if labels:
-            ax.set_xlabel(_ax_labels[param])
-            ax.set_ylabel('Time (s)')
-        title = solver if title is None else title
-        ax.set_title(title)
-        self._set_power_limits(x, y, ax)
+        id_to_x, id_to_y, id_to_color = self._id_maps(param, solver, ykind, 
+                                                      colorparam)
+        fkwargs = self._filter_kwargs(kwargs, Plot.__init__)
+        kwargs = {k: v for k, v in kwargs.items() if not k in fkwargs.keys()}
+        plot = Plot(id_to_x, id_to_y, **fkwargs)
+        ids, x, y = plot.data()
+        addline = ykind == 'time'
+        fig, ax = plot.plot(ax=ax, addline=addline, id_to_color=id_to_color, 
+                            **kwargs)
+        labels = (_ax_labels[param], _ax_labels[ykind]) if labels else None
+        self._dress(x, y, ax, title=title, labels=labels)
+        if save:
+            fname = os.path.join(
+                self.savepath, '{param}_{kind}.{ext}'.format(
+                    param=param, kind=solver, ext='png'))
+            fig.savefig(fname)
+        return fig, ax
 
-        fname = os.path.join(
-            self.savepath, '{param}_{kind}.{ext}'.format(
-                param=param, kind=solver, ext='png'))
-        self._save_and_show(fig, save, fname, show)
-        return ax, ids, x, y
+    def multi_solver_scatter(self, param, ax=None, solvers=None, legend=True,
+                             save=False, **kwargs):
+        solvers = self.solvers if solvers is None else solvers
+        fig, ax = plt.subplots() if ax is None else (None, ax)
+        c_it = ipastels()
+        for s in solvers:
+            label = s if legend else None
+            _, ax = self.scatter(param, s, ax=ax, c=c_it.next(), label=label, 
+                                 **kwargs)
+        ax.legend(loc=0)
+        if save:
+            fname = os.path.join(
+                self.savepath, '{param}_{kind}.{ext}'.format(
+                    param=param, kind=solver, ext='png'))
+            fig.savefig(fname)
+        return fig, ax
 
-    def solver_scatter(self, param, solver, **kwargs):
-        xpmap = self.fam_mod.PathMap(param)
-        id_to_x = io_tools.grab_data(self.f, xpmap.path, xpmap.col, 
-                                     ('instid', self.instids))
-        ax, ids, x, y = self.simple_scatter(id_to_x, param, solver, labels=True, **kwargs)
-        return ax, ids, x, y
-
-    def all_scatter(self, param, colors=None, ax=None, save=False, show=True):
-        xpmap = self.fam_mod.PathMap(param)
-        x = io_tools.grab_data(self.f, xpmap.path, xpmap.col, ('instid', self.instids))
-        ax = multi_scatter(x, self.times, colors=colors, ax=ax)
-        lim = [3 * 60 * 60] # 3 hour limit
-        add_limit_line(ax, x.values(), len(x) * lim)
-        ax.set_title('all')
-        #ax.set_xlabel(param)
-        #ax.set_ylabel('Time (s)')
-        fname = os.path.join(self.savepath, '{param}_all.{ext}'.format(param=param, ext='png'))
-        #self._save_and_show(save, fname, False)
-        return x, ax
-
-    def four_pane_scatter(self, param, saveall=False, title=None, **kwargs):
+    def four_pane_scatter(self, param, save=False, title=None, **kwargs):
+        solvers = self.solvers
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, sharex=True)
-        x, ax1 = self.all_scatter(param, colors=ipastels(), ax=ax1, save=False, show=False)
-        kinds = ['cbc', 'greedy', 'clp']
+        _, ax1 = self.multi_solver_scatter(param, ax=ax1, solvers=solvers, 
+                                           save=False, legend=False, **kwargs)
         c_it = ipastels()
         axs = [ax2, ax3, ax4]
-        for i in range(len(kinds)):
-            axs[i], _, _, _ = self.simple_scatter(x, param, kinds[i], color=c_it.next(), ax=axs[i], labels=False, save=False, **kwargs)
+        for i, s in enumerate(solvers):
+            _, axs[i] = self.scatter(param, s, ax=axs[i], c=c_it.next(), title=s, 
+                                     save=False, **kwargs)
         fig.set_size_inches(1.5 * fig.get_size_inches())
 
-        title = cparam if title is None else title
+        title = param if title is None else title
         plt.suptitle(title)
 
-        # add only one label for all subplots
-        ax = fig.add_axes( [0., 0., 1, 1] )
-        ax.set_axis_off()
-        ax.text( 
-            .05, 0.5, "Time (s)", rotation='vertical',
-             horizontalalignment='center', verticalalignment='center'
-             )
-        ax.text( 
-            0.5, .05, _ax_labels[param], horizontalalignment='center', verticalalignment='center'
-            )
-        fname = os.path.join(self.savepath, '{param}_4pane.{ext}'.format(param=param, ext='png'))
-        self._save_and_show(fig, save, fname, show)
-        
-        if saveall:
-            self.all_scatter(param, colors=ipastels(), save=saveall, show=False)
-            plt.close()
-            c_it = ipastels()
-            for i in range(len(kinds)):
-                self.simple_scatter(x, param, kinds[i], color=c_it.next(), labels=False, save=saveall, show=show)
-                plt.close()
+        # # add only one label for all subplots
+        # ax = fig.add_axes( [0., 0., 1, 1] )
+        # ax.set_axis_off()
+        # ax.text( 
+        #     .05, 0.5, "Time (s)", rotation='vertical',
+        #      horizontalalignment='center', verticalalignment='center'
+        #      )
+        # ax.text( 
+        #     0.5, .05, _ax_labels[param], horizontalalignment='center', verticalalignment='center'
+        #     )
+        if save:
+            fname = os.path.join(self.savepath, 
+                                 '{param}_4pane.{ext}'.format(param=param, ext='png'))
+            fig.savefig(fname)
 
-    def colored_scatter(self, x, kind, id_mapping, color_map, ax=None):
-        if ax is None:
-            fig, ax = plt.subplots()
-        lim = 3 * 60 * 60 # 3 hour limit
-        if max(self.times[kind].values()) > lim:
-            add_limit_line(ax, x.values(), len(x) * [lim])
-        ax.scatter(x.values(), [self.times[kind][k] for k in x.keys()], c=[color_map[id_mapping[k]] for k in x.keys()])
-        ax.set_xlim(0, max(x.values()))
-        ax.set_ylim(0)
-        if (max(x) > 1e3):
-            ax.get_xaxis().get_major_formatter().set_powerlimits((0, 1))
-        if (max(self.times[kind].values()) > 1e3):
-            ax.get_yaxis().get_major_formatter().set_powerlimits((0, 1))
-        return ax 
-
-    def three_pane_color_scatter(self, param, cparam, famparam='n_arcs', 
-                                 title=None, save=False, show=True):
-        to_iids = io_tools.param_to_iids(
-            self.f, self.fam_mod.PathMap(famparam).path, 
-            self.sp_mod.PathMap(cparam).path, cparam)
-        id_mapping = {iid: k for k, v in to_iids.items() for iid in v}
-        xpmap = self.fam_mod.PathMap(param)
-        x = io_tools.grab_data(self.f, xpmap.path, xpmap.col, ('instid', self.instids))
+    def three_pane_colorparam(self, param, cparam, save=False, title=None, **kwargs):
+        solvers = self.solvers
         fig, ((off, ax1), (ax2, ax3)) = plt.subplots(2, 2, sharex=True)
         off.axis('off')
         axs = [ax1, ax2, ax3]
-        kinds = ['cbc', 'greedy', 'clp']
-        c_it = ipastels()
-        color_map = {k: c_it.next() for k in to_iids.keys()}
-        for i in range(len(kinds)):
-            ax = self.colored_scatter(x, kinds[i], id_mapping, color_map, ax=axs[i])
-            ax.set_title(kinds[i].capitalize())
-        handles = [patches.Patch(color=color_map[x], label=kinds[i]) for i, x in enumerate(color_map.keys())]
+        for i, s in enumerate(solvers):
+            _, axs[i] = self.scatter(param, s, ax=axs[i], colorparam=cparam, 
+                                     title=s, save=False, **kwargs)
+        
         labels = _legends[cparam] if cparam in _legends.keys() else to_iids.keys() 
+        c_it = ipastels()
+        handles = [patches.Patch(color=c_it.next()) for _ in labels]
+        # handles = [patches.Patch(color=color_map[x], label=solvers[i]) \
+        #                for i, x in enumerate(color_map.keys())]
         fig.legend(handles=handles, labels=labels, loc=(0.2, 0.65))
         fig.set_size_inches(1.5 * fig.get_size_inches())
         title = cparam if title is None else title
-        plt.suptitle(title)
+        fig.suptitle(title)
 
-        # add only one label for all subplots
-        ax = fig.add_axes( [0., 0., 1, 1] )
-        ax.set_axis_off()
-        ax.text( 
-            .05, 0.5, "Time (s)", rotation='vertical',
-             horizontalalignment='center', verticalalignment='center'
-             )
-        ax.text( 
-            0.5, .05, _ax_labels[param], horizontalalignment='center', verticalalignment='center'
-            )
-        fname = os.path.join(self.savepath, '{cparam}_{param}_color.{ext}'.format(cparam=cparam, param=param, ext='png'))
-        self._save_and_show(fig, save, fname, show)
-
+        # # add only one label for all subplots
+        # ax = fig.add_axes( [0., 0., 1, 1] )
+        # ax.set_axis_off()
+        # ax.text( 
+        #     .05, 0.5, "Time (s)", rotation='vertical',
+        #      horizontalalignment='center', verticalalignment='center'
+        #      )
+        # ax.text( 
+        #     0.5, .05, _ax_labels[param], horizontalalignment='center', verticalalignment='center'
+        #     )
+        if save:
+            fname = os.path.join(
+                self.savepath, '{cparam}_{param}_color.{ext}'.format(
+                    cparam=cparam, param=param, ext='png'))
+            fig.savefig(fname)
