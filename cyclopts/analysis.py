@@ -169,52 +169,6 @@ _legends = {
 def add_limit_line(ax, x, y):
     ax.plot(x, y, c=plt.get_cmap('Greys')(0.75), linestyle='--')
 
-"""A utility class for doing Ratio analyses"""
-class RatioContext(object):
-    def __init__(self, fnames, labels, fam_mod, fam_cls, sp_mod, sp_cls, 
-                 savepath='.', save=False, show=True, lim=10800):
-        self.fnames = fnames
-        self.labels = labels
-        self.save = save
-        self.show = show
-        self.savepath = savepath
-        self.lim = lim
-        self.ctxs = [Context(f, fam_mod, fam_cls, sp_mod, sp_cls, 
-                             save=save, savepath=savepath) for f in self.fnames]
-        
-    def count(self, param, solver, **kwargs):
-        count = []
-        for i, ctx in enumerate(self.ctxs):
-            _, _, y = ctx.scatter(param, solver, dataonly=True, **kwargs)
-            count.append(len(y))
-        return count
-
-    def ratio_scatter(self, param, solver, save=False, savename=None, **kwargs):
-        fig, ax = plt.subplots()
-        xs = [None] * len(self.fnames)
-        ids = [None] * len(self.fnames)
-        ys = [None] * len(self.fnames)
-        c_it = ipastels()
-        colors = [c_it.next() for i in range(len(self.fnames))]
-        ymin, ymax = float('inf'), 0
-        xmin, xmax = float('inf'), 0
-        for i, ctx in enumerate(self.ctxs):
-            ids[i], xs[i], ys[i] = ctx.scatter(param, solver, dataonly=True)
-            _, ax = ctx.scatter(param, solver, ax=ax, c=colors[i], 
-                                label=self.labels[i], **kwargs)
-            xmax = max(xs[i]) if len(xs[i]) > 0 and max(xs[i]) > xmax else xmax
-            xmin = min(xs[i]) if len(xs[i]) > 0 and min(xs[i]) < xmin else xmin
-            ymax = max(ys[i]) if len(ys[i]) > 0 and max(ys[i]) > ymax else ymax
-            ymin = min(ys[i]) if len(ys[i]) > 0 and min(ys[i]) < ymin else ymin
-        trys = ['above', 'below']
-        for x in trys:
-            lim = x if x in kwargs and kwargs[x] is not None else float('inf') 
-        ymin = 0 if ymin < lim else lim
-        ax.set_xlim(xmin, xmax)
-        ax.set_ylim(ymin, 1.1 * ymax)
-        ax.legend(loc=0)
-        return fig, ax
-
 class Plot(object):    
     def __init__(self, id_to_x, id_to_y, above=None, below=None):
         self.id_to_x = id_to_x
@@ -467,3 +421,67 @@ class Context(object):
                 self.savepath, '{cparam}_{param}_color.{ext}'.format(
                     cparam=cparam, param=param, ext='png'))
             fig.savefig(fname)
+
+"""A utility class for doing Ratio analyses"""
+class RatioContext(object):
+    def __init__(self, fnames, labels, fam_mod, fam_cls, sp_mod, sp_cls, 
+                 savepath='.', save=False, show=True, lim=10800):
+        self.fnames = fnames
+        self.labels = labels
+        self.save = save
+        self.show = show
+        self.savepath = savepath
+        self.lim = lim
+        self.ctxs = [Context(f, fam_mod, fam_cls, sp_mod, sp_cls, 
+                             save=save, savepath=savepath) for f in self.fnames]
+        
+    def count(self, param, solver, **kwargs):
+        count = []
+        for i, ctx in enumerate(self.ctxs):
+            _, _, y = ctx.scatter(param, solver, dataonly=True, **kwargs)
+            count.append(len(y))
+        return count
+
+    def ratio_scatter(self, param, solver, save=False, savename=None, **kwargs):
+        fig, ax = plt.subplots()
+        xs = [None] * len(self.fnames)
+        ids = [None] * len(self.fnames)
+        ys = [None] * len(self.fnames)
+        c_it = ipastels()
+        colors = [c_it.next() for i in range(len(self.fnames))]
+        ymin, ymax = float('inf'), 0
+        xmin, xmax = float('inf'), 0
+        for i, ctx in enumerate(self.ctxs):
+            ids[i], xs[i], ys[i] = ctx.scatter(param, solver, dataonly=True)
+            _, ax = ctx.scatter(param, solver, ax=ax, c=colors[i], 
+                                label=self.labels[i], **kwargs)
+            xmax = max(xs[i]) if len(xs[i]) > 0 and max(xs[i]) > xmax else xmax
+            xmin = min(xs[i]) if len(xs[i]) > 0 and min(xs[i]) < xmin else xmin
+            ymax = max(ys[i]) if len(ys[i]) > 0 and max(ys[i]) > ymax else ymax
+            ymin = min(ys[i]) if len(ys[i]) > 0 and min(ys[i]) < ymin else ymin
+        trys = ['above', 'below']
+        for x in trys:
+            lim = x if x in kwargs and kwargs[x] is not None else float('inf') 
+        ymin = 0 if ymin < lim else lim
+        ax.set_xlim(xmin, xmax)
+        ax.set_ylim(ymin, 1.1 * ymax)
+        ax.legend(loc=0)
+        return fig, ax
+
+    def count_hist(self, param, solver, lim, save=False, 
+                   savename='count_hist.png'):
+        fig, ax = plt.subplots()
+        nbelow = np.array(self.count('n_arcs', 'cbc', below=lim))
+        nabove = np.array(self.count('n_arcs', 'cbc', above=lim))
+
+        width = 0.35
+        idx = np.arange(len(nbelow))
+        c_it = ipastels()
+        below = ax.bar(idx, nbelow, width, color=c_it.next())
+        above = ax.bar(idx, nabove, width, color=c_it.next(), bottom=nbelow)
+        ax.set_xticks(idx + width / 2., self.labels)
+        ax.legend((below[0], above[0]), ('Below', 'Above'))
+        ax.set_ylabel('Number')
+        ax.set_ylim(0, 1.4 * (nbelow[0] + nabove[0]))
+        if save:
+            fig.savefig(savename)
