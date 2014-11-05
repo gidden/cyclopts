@@ -182,22 +182,6 @@ class RatioContext(object):
         self.ctxs = [Context(f, fam_mod, fam_cls, sp_mod, sp_cls, 
                              save=save, savepath=savepath) for f in self.fnames]
         
-    def _save_and_show(self, fig, save, fname, show):
-        if fig is None:
-            self._plt_save_and_show(save, fname, show)
-            return
-
-        if self.save and save:
-            fig.savefig(fname)
-        if show:
-            fig.show()
-
-    def _plt_save_and_show(self, save, fname, show):
-        if self.save and save:
-            plt.savefig(fname)
-        if show:
-            plt.show()
-
     def count(self, param, solver, where=None, **kwargs):
         count = []
         lim = None if where is None else self.lim
@@ -207,37 +191,30 @@ class RatioContext(object):
             count.append(len(y))
         return count
 
-    def ratio_scatter(self, param, solver, colors=None, where=None, savename=None, 
-                      **kwargs):
+    def ratio_scatter(self, param, solver, save=False, savename=None, **kwargs):
         fig, ax = plt.subplots()
         xs = [None] * len(self.fnames)
         ids = [None] * len(self.fnames)
         ys = [None] * len(self.fnames)
-        if colors is None:
-            c_it = ipastels()
-            colors = [c_it.next() for i in range(len(self.fnames))]
-        lim = None if where is None else self.lim
+        c_it = ipastels()
+        colors = [c_it.next() for i in range(len(self.fnames))]
         ymin, ymax = float('inf'), 0
         xmin, xmax = float('inf'), 0
-        # update kwargs, only save top-level graph
-        save = kwargs['save'] if 'save' in kwargs else False
-        kwargs['save'] = False
-        show = kwargs['show'] if 'show' in kwargs else False
-        kwargs['show'] = False
         for i, ctx in enumerate(self.ctxs):
-            _, ids[i], xs[i], ys[i] = ctx.solver_scatter(
-                param, solver, ax=ax, lim=lim, where=where, color=colors[i], 
-                label=self.labels[i], 
-                **kwargs)
+            ids[i], xs[i], ys[i] = ctx.scatter(param, solver, dataonly=True)
+            _, ax = ctx.scatter(param, solver, ax=ax, c=colors[i], 
+                                label=self.labels[i], **kwargs)
             xmax = max(xs[i]) if len(xs[i]) > 0 and max(xs[i]) > xmax else xmax
             xmin = min(xs[i]) if len(xs[i]) > 0 and min(xs[i]) < xmin else xmin
             ymax = max(ys[i]) if len(ys[i]) > 0 and max(ys[i]) > ymax else ymax
             ymin = min(ys[i]) if len(ys[i]) > 0 and min(ys[i]) < ymin else ymin
+        trys = ['above', 'below']
+        for x in trys:
+            lim = x if x in kwargs and kwargs[x] is not None else float('inf') 
         ymin = 0 if ymin < lim else lim
         ax.set_xlim(xmin, xmax)
         ax.set_ylim(ymin, 1.1 * ymax)
         ax.legend(loc=0)
-        self._save_and_show(fig, save, savename, show)
         return fig, ax
 
 class Plot(object):    
@@ -386,7 +363,7 @@ class Context(object):
         return {k: v for k, v in kwargs.items() if k in spec.args[-len(spec.defaults):]}
 
     def scatter(self, param, solver, ykind='time', colorparam=None, ax=None, 
-                labels=True, 
+                labels=True, dataonly=False,
                 save=False, show=True, lim=None, where=None, title=None, 
                 **kwargs):
         """return an axis with scatter plot as well as the ids, x, and y
@@ -397,6 +374,8 @@ class Context(object):
         kwargs = {k: v for k, v in kwargs.items() if not k in fkwargs.keys()}
         plot = Plot(id_to_x, id_to_y, **fkwargs)
         ids, x, y = plot.data()
+        if dataonly:
+            return ids, x, y
         addline = ykind == 'time'
         fig, ax = plot.plot(ax=ax, addline=addline, id_to_color=id_to_color, 
                             **kwargs)
