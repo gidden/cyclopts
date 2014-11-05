@@ -182,12 +182,10 @@ class RatioContext(object):
         self.ctxs = [Context(f, fam_mod, fam_cls, sp_mod, sp_cls, 
                              save=save, savepath=savepath) for f in self.fnames]
         
-    def count(self, param, solver, where=None, **kwargs):
+    def count(self, param, solver, **kwargs):
         count = []
-        lim = None if where is None else self.lim
         for i, ctx in enumerate(self.ctxs):
-            _, _, _, y = ctx.solver_scatter(
-                param, solver, show=False, lim=lim, where=where, **kwargs)
+            _, _, y = ctx.scatter(param, solver, dataonly=True, **kwargs)
             count.append(len(y))
         return count
 
