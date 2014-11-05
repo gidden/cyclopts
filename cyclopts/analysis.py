@@ -288,6 +288,35 @@ class Context(object):
         if show:
             plt.show()
 
+    def _condition_kwargs(kwargs, func):
+        """returns kwargs only applicable to a function"""
+        spec = inspect.getargspec(func)
+        if spec.keywords is not None:
+            return kwargs
+        return {k: v for k, v in kwargs.items() if k in spec.args[-len(spec.defaults):]}
+    
+    def data(self, id_to_x, solver, kind='time', above=None, below=None, **kwargs):
+        ids = np.array(id_to_x.keys())
+        x = np.array(id_to_x.values())
+        if kind == 'time':
+            y = np.array([self.times[solver][k] for k in ids])
+        elif kind == 'obj':
+            y = np.array([self.objs[solver][k] for k in ids])
+        if above is not None or below is not None:
+            if above is None and below is None:
+                raise RuntimeError('Cannot specify below and above.')
+            lim = above if above is not None else below
+            mfunc = np.ma.masked_less if below is not None else np.ma.masked_greater
+            mask = mfunc(y, lim).mask
+            if isinstance(mask, np.bool_): # true if all are below or above
+                if not mask:
+                    return [], [], []
+            else:
+                ids = ids[mask]
+                x = x[mask]
+                y = y[mask]
+        return ids, x, y
+
     def simple_scatter(self, x, param, solver, color=None, ax=None, labels=True, 
                        save=False, show=True, lim=None, where=None, title=None, 
                        **kwargs):
