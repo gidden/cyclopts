@@ -468,20 +468,21 @@ class RatioContext(object):
         ax.legend(loc=0)
         return fig, ax
 
-    def count_hist(self, param, solver, lim, save=False, 
-                   savename='count_hist.png'):
+    def count_hist(self, solver, lim, save=False, savename='count_hist.png'):
         fig, ax = plt.subplots()
-        nbelow = np.array(self.count('n_arcs', 'cbc', below=lim))
-        nabove = np.array(self.count('n_arcs', 'cbc', above=lim))
+        nbelow = np.array(self.count('n_arcs', solver, below=lim))
+        nabove = np.array(self.count('n_arcs', solver, above=lim))
 
         width = 0.35
         idx = np.arange(len(nbelow))
         c_it = ipastels()
         below = ax.bar(idx, nbelow, width, color=c_it.next())
         above = ax.bar(idx, nabove, width, color=c_it.next(), bottom=nbelow)
-        ax.set_xticks(idx + width / 2., self.labels)
+        ax.set_xticks(idx + width / 2.)
+        ax.set_xticklabels(self.labels)
         ax.legend((below[0], above[0]), ('Below', 'Above'))
         ax.set_ylabel('Number')
         ax.set_ylim(0, 1.4 * (nbelow[0] + nabove[0]))
         if save:
             fig.savefig(savename)
+        return fig, ax
