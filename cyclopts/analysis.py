@@ -156,6 +156,8 @@ def plot_xyz(xtbl, xhandle, ytbl, yhandle, zvals, toinst=None, fromkey=None):
 _ax_labels = {
     'n_arcs': 'Number of Arcs',
     'n_constrs': 'Number of Constraints',
+    'n_u_grps': 'Number of Request Groups',
+    'n_v_grps': 'Number of Supply Groups',
     'pref_flow': 'Product of Preference and Flow',
     'time': 'Time (s)',
     'obj': 'Objective Value',
@@ -271,12 +273,15 @@ class Context(object):
         if show:
             plt.show()
 
-    def _dress(self, x, y, ax, title=None, labels=None):
+    def _dress(self, x, y, ax, title=None, labels=None, reset_limits=False):
         if labels is not None:
             ax.set_xlabel(labels[0])
             ax.set_ylabel(labels[1])
         if title is not None:
             ax.set_title(title)
+        if reset_limits:
+            ax.set_xlim(0, 0)
+            ax.set_ylim(0, 0)
         _, xmax = ax.get_xlim()
         xmin = 0
         if len(x) > 0:
@@ -329,10 +334,12 @@ class Context(object):
         if dataonly:
             return ids, x, y
         addline = ykind == 'time'
+        reset_limits = ax is None
         fig, ax = plot.plot(ax=ax, addline=addline, id_to_color=id_to_color, 
                             **kwargs)
         labels = (_ax_labels[param], _ax_labels[ykind]) if labels else None
-        self._dress(x, y, ax, title=title, labels=labels)
+        self._dress(x, y, ax, title=title, labels=labels, 
+                    reset_limits=reset_limits)
         if save:
             fname = os.path.join(
                 self.savepath, '{param}_{kind}.{ext}'.format(
