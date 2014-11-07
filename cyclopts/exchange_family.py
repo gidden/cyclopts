@@ -93,9 +93,8 @@ def column_to_table(col):
         return _tbl_names["solution_properties"]
     for tbl, dt in _dtypes.items():
         if col in dt.fields.keys():
-            tbl = _tbl_names[tbl]
-            break
-    return tbl
+            return _tbl_names[tbl]
+    raise RuntimeError('Could not find table for column {0}'.format(col))
 
 # these functions must be kept up to date with cyclopts.instance
 def grp_tpl(instid, obj):    
