@@ -158,9 +158,10 @@ def _submit(client, remotedir, tarname, nids, indb, log=False,
         ftp = client.open_sftp()
         ftp.put(ffrom, fto)
         ftp.close()
-    except IOError:
+    except IOError as e:
         raise IOError(
-            'Could not find {0} on the submit node.'.format(remotedir))
+            ('Error transferring files to {0}: {1}.').format(remotedir, 
+                                                             e.message))
     
     cddir = tarname.split(".tar.gz")[0]
     
