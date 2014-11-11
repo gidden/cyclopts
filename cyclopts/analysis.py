@@ -462,9 +462,13 @@ class RatioContext(object):
         self.show = show
         self.savepath = savepath
         self.lim = lim
+        # TODO rework context to use new cyclopts_data
         self.ctxs = [Context(f, fam_mod, fam_cls, sp_mod, sp_cls, 
                              save=save, savepath=savepath) for f in self.fnames]
-        
+        # new for histograms
+        fam_cls, sp_cls = fam_and_sp_cls(fam_mod, fam_cls, sp_mod, sp_cls)
+        self.data = [cyclopts_data(f, fam_cls(), sp_cls()) for f in self.fnames]
+
     def count(self, param, solver, **kwargs):
         count = []
         for i, ctx in enumerate(self.ctxs):
@@ -516,6 +520,10 @@ class RatioContext(object):
         if save:
             fig.savefig(savename)
         return fig, ax
+
+    def popn_hist(self, solver, lim):
+        solver_data = [[x[x['solver'] == solver] for x in d] for d in self.data]
+        
 
 def fam_and_sp_cls(fam_mod, fam_cls, sp_mod, sp_class):
     """return constructors for problem.Family and problem.Species"""
@@ -584,6 +592,19 @@ def value_split(a, col, lim):
     idx = next(find(a, lambda a: a[col] > lim))[0][0]
     return a[:idx], a[idx:]
 
+def cleanse(x, y, col):
+    xvals = set(x[col])
+    yvals = set(y[col])
+    xdiff = xvals.difference(yvals)
+    ydiff = yvals.difference(xvals)
+    if len(xdiff) > 0:
+        xmask = np.array([_[col] in xdiff for _ in x], dtype=bool)
+        x = np.delete(x, x[xmask])
+    if len(ydiff) > 0:
+        ymask = np.array([_[col] in ydiff for _ in y], dtype=bool)
+        y = np.delete(y, y[ymask])
+    return x, y
+
 def split_group_by(x, y, col, lim, groupby, sortby=True):
     """Splits x and y into three sections each: x1, x2, x3 and y1, y2, y3. x1 is
     all below the limit, y3 is all above the limit. 
@@ -598,6 +619,12 @@ def split_group_by(x, y, col, lim, groupby, sortby=True):
     yret = [ys[0][ymask], ys[0][~ymask], ys[1]]
     if sortby:
         for i in range(len(xret)):
-            xret[i].sort(order=groupby)
-            yret[i].sort(order=groupby)
+            x, y = xret[i], yret[i]
+            x.sort(order=groupby)
+            y.sort(order=groupby)
+            if len(x) != len(y):
+                x, y = cleanse(x, y, groupby)
+                xret[i] = x
+                yret[i] = y
+                
     return xret, yret
