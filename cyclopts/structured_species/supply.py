@@ -174,6 +174,21 @@ class StructuredSupply(ProblemSpecies):
         """
         return 'Summary'
 
+    @property
+    def summary_tbls(cls):
+        """
+        Returns
+        -------
+        name : list
+            A list of cyclopts_io.TblDesc for summary tables.
+        """
+        return strtools.tbl_descs(cls.io_prefix) + [
+            cycio.TblDesc('/'.join([cls.io_prefix, cls.sum_tbl_name]), 
+                          'param', 'paramid'),
+            cycio.TblDesc('/'.join([cls.io_prefix, cls.param_tbl_name]), 
+                          'param', 'paramid'),
+            ]
+
     @staticmethod
     def pnt_to_realization(point):
         """Returns a realization of a structured supply instance given a point

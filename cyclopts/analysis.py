@@ -221,7 +221,9 @@ class Plot(object):
         if self._plot is None:
             self._plot = self._generate_plot(*args, **kwargs)
         return self._plot
+    
 
+        
 """A utility class for analyzing Cyclopts output"""
 class Context(object):
 
@@ -493,3 +495,59 @@ class RatioContext(object):
         if save:
             fig.savefig(savename)
         return fig, ax
+
+def fam_and_sp_cls(fam_mod, fam_cls, sp_mod, sp_class):
+    """return constructors for problem.Family and problem.Species"""
+    import importlib
+    return getattr(importlib.import_module(fam_mod), fam_cls), \
+        getattr(importlib.import_module(sp_mod), sp_class)
+
+def idx_map(h5file, fam, sp):
+    """return a mapping from all unique ids to an index, where each index
+    corresponds to a specific solution"""
+    sids = set(io_tools.grab_data(h5file, '/Results', 'solnid'))
+    soln_idxs = {sid: i for i, sid in enumerate(sids)}
+    pid_to_iids = io_tools.param_mapping(
+        h5file, '/'.join([fam.io_prefix, fam.property_table_name]), 
+        'paramid', 'instid')
+    iid_to_sids = io_tools.param_mapping(h5file, '/Results', 'instid', 'solnid')
+    idx_map = defaultdict(list)
+    for p, iids in pid_to_iids.items():
+        for i in iids:
+            for s in iid_to_sids[i]:
+                 idx_map[p].append(soln_idxs[s])
+                 idx_map[i].append(soln_idxs[s])
+                 idx_map[s].append(soln_idxs[s])
+    return idx_map
+
+def cyclopts_data(fname, fam, sp):
+    """Return an numpy.ndarray of all aggregate data in a Cyclopts HDF5 file. 
+    
+    Parameters
+    ----------
+    fname : str
+        the name of the hdf5 file
+    fam : Problem.Family instance
+        an instance of the family used in the table
+    sp : Problem.Species instance
+        an instance of the species used in the table
+    """
+    h5file = t.open_file(fname, mode='r')
+    tbl_descs = fam.summary_tbls + sp.summary_tbls
+    id_to_idxs = idx_map(h5file, fam, sp)
+    nsolns = h5file.get_node('/Results').nrows
+    dtypes = [h5file.get_node(x.path).dtype.descr for x in tbl_descs]
+    dtype = list(set(sum((x for x in dtypes), [])))
+    print(dtype)
+
+    data = np.empty(shape=(nsolns,), dtype=dtype)
+    for desc in tbl_descs:
+        tbl = h5file.get_node(desc.path)
+        for row in tbl.read():
+            idxs = id_to_idxs[row[desc.idcol]]
+            for i in idxs:
+                for k in tbl.coltypes.keys():
+                    data[i][k] = row[k]
+
+    h5file.close()
+    return data

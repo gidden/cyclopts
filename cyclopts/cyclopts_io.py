@@ -6,7 +6,7 @@ import numpy as np
 import tables as t
 import math
 import datetime
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 import cyclopts
 import cyclopts.tools as tools
@@ -20,6 +20,8 @@ def uuid_rows(tbl, uuid, colname='instid'):
     condvars = {'uuid': uuid.bytes}
     return rows_where(tbl, """{0} == uuid""".format(colname), 
                       condvars=condvars)
+
+TblDesc = namedtuple('TblDesc', ['path', 'kind', 'idcol'])
         
 class Group(object):
     """A thin wrapper for a PyTables Group to be used by Cyclopts.

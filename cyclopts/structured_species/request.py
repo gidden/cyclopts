@@ -184,6 +184,21 @@ class StructuredRequest(ProblemSpecies):
         """
         return 'Summary'
 
+    @property
+    def summary_tbls(cls):
+        """
+        Returns
+        -------
+        name : list
+            A list of cyclopts_io.TblDesc for summary tables.
+        """
+        return strtools.tbl_descs(cls.io_prefix) + [
+            cycio.TblDesc('/'.join([cls.io_prefix, cls.sum_tbl_name]), 
+                          'param', 'paramid'),
+            cycio.TblDesc('/'.join([cls.io_prefix, cls.param_tbl_name]), 
+                          'param', 'paramid'),
+            ]
+    
     def __init__(self):
         super(StructuredRequest, self).__init__()
         self.space = None

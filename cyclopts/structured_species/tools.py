@@ -199,6 +199,11 @@ pp_tbl_dtype = np.dtype(
     [('solnid', ('str', 16)), ('c_pref_flow', np.float64), 
      ('l_pref_flow', np.float64)])
 
+def tbl_descs(io_prefix): 
+    return [
+        cycio.TblDesc('/'.join([io_prefix, pp_tbl_name]), 'soln', 'solnid'),
+        ]
+
 def _iid_to_prefs(iid, tbl, narcs, strategy='col'):
     """return a numpy array of preferences"""
     if strategy == 'grp':

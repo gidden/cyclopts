@@ -27,6 +27,18 @@ _grp_names = {
     "solutions": "ExchangeInstSolutions",    
 }
 
+_id_cols = {
+    "properties": "instid",
+    "solution_properties": "solnid",    
+    "pp": "solnid",
+}
+
+_tbl_kinds = {
+    "properties": "inst",
+    "solution_properties": "soln",    
+    "pp": "soln",
+}
+
 # this must be kept up to date with the cyclopts.instance classes
 _dtypes = {
     "ExGroup": np.dtype([
@@ -218,6 +230,18 @@ class ResourceExchange(ProblemFamily):
             The name of this family's instance property table
         """
         return _tbl_names['properties']
+
+    @property
+    def summary_tbls(cls):
+        """
+        Returns
+        -------
+        name : list
+            A list of cyclopts_io.TblDesc for summary tables.
+        """
+        return [cycio.TblDesc('/'.join([cls.io_prefix, _tbl_names[x]]), 
+                              _tbl_kinds[x], _id_cols[x]) \
+                    for x in _tbl_kinds.keys()]
     
     @property
     def pp_table_name(cls):
