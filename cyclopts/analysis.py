@@ -11,9 +11,30 @@ import tables as t
 import os
 import numpy as np
 import inspect
+from itertools import chain, izip
 
 import cyclopts.cyclopts_io as cycio
 import cyclopts.io_tools as io_tools
+
+def find(a, predicate, chunk_size=1024):
+    """
+    Find first index of occurance given a predicate, e.g., `next(find(a,
+    lambda a: a > 4))`. 
+
+    This was taken directly from https://github.com/numpy/numpy/issues/2269.
+    """
+    if a.ndim != 1:
+        raise ValueError('The array must be 1D, not {}.'.format(a.ndim))
+
+    i0 = 0
+    chunk_inds = chain(xrange(chunk_size, a.size, chunk_size), 
+                 [None])
+
+    for i1 in chunk_inds:
+        chunk = a[i0:i1]
+        for inds in izip(*predicate(chunk).nonzero()):
+            yield (inds[0] + i0, ), chunk[inds]
+        i0 = i1
 
 def imarkers():
     return iter(['x', 's', 'o', 'v', '^', '+'])
@@ -533,12 +554,12 @@ def cyclopts_data(fname, fam, sp):
         an instance of the species used in the table
     """
     h5file = t.open_file(fname, mode='r')
-    tbl_descs = fam.summary_tbls + sp.summary_tbls
+    tbl_descs = fam.summary_tbls + sp.summary_tbls + \
+        [cycio.TblDesc('/Results', 'soln', 'solnid')]
     id_to_idxs = idx_map(h5file, fam, sp)
     nsolns = h5file.get_node('/Results').nrows
     dtypes = [h5file.get_node(x.path).dtype.descr for x in tbl_descs]
     dtype = list(set(sum((x for x in dtypes), [])))
-    print(dtype)
 
     data = np.empty(shape=(nsolns,), dtype=dtype)
     for desc in tbl_descs:
@@ -551,3 +572,32 @@ def cyclopts_data(fname, fam, sp):
 
     h5file.close()
     return data
+
+def value_split(a, col, lim):
+    """Return an ndarray split given some limit. For example, 
+    value_split(a, 'time', 500)
+
+    returns [a1, a2] where all values of a1 have time <= 500, and all values of
+    a2 have time > 500.
+    """
+    a.sort(order=col)
+    idx = next(find(a, lambda a: a[col] > lim))[0][0]
+    return a[:idx], a[idx:]
+
+def split_group_by(x, y, col, lim, groupby, sortby=True):
+    """Splits x and y into three sections each: x1, x2, x3 and y1, y2, y3. x1 is
+    all below the limit, y3 is all above the limit. 
+    """
+    xs = value_split(x, col, lim)
+    ys = value_split(y, col, lim)
+    agrp = xs[0][groupby]
+    bgrp = ys[1][groupby]
+    xmask = np.array([_[groupby] in bgrp for _ in xs[1]], dtype=bool)
+    ymask = np.array([_[groupby] in agrp for _ in ys[0]], dtype=bool)
+    xret = [xs[0], xs[1][~xmask], xs[1][xmask]]
+    yret = [ys[0][ymask], ys[0][~ymask], ys[1]]
+    if sortby:
+        for i in range(len(xret)):
+            xret[i].sort(order=groupby)
+            yret[i].sort(order=groupby)
+    return xret, yret
