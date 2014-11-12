@@ -51,3 +51,12 @@ def test_split_group_by():
     assert_equal(ys[1], b[1:2])
     assert_equal(xs[2], a[2:])
     assert_equal(ys[2], b[2:])
+
+def test_reduce():
+    a = np.array(zip(range(10), range(10, 20)), dtype=[('x', int), ('y', int)])
+    obs = sis.reduce_eq(a, 'x', 1)
+    assert_equal(obs, a[1:2])
+    obs = sis.reduce_gt(a, 'x', 1)
+    assert_equal(obs, a[2:])
+    obs = sis.reduce_lt(a, 'x', 1)
+    assert_equal(obs, a[:1])

@@ -649,3 +649,37 @@ def split_group_by(x, y, col, lim, groupby, sortby=True):
                 yret[i] = y
                 
     return xret, yret
+
+def reduce_eq(a, k, v):
+    """Returns a reduced array where all keys are equal to a given value.
+    
+    Parameters
+    ----------
+    a : array-like
+    k : column key
+    v : column value
+    """
+    return a[a[k] == v]
+    
+def reduce_gt(a, k, v):
+    """Returns a reduced array where all keys are equal to a given value.
+    
+    Parameters
+    ----------
+    a : array-like
+    k : column key
+    v : column value
+    """
+    return a[a[k] > v]
+    
+def reduce_lt(a, k, v):
+    """Returns a reduced array where all keys are equal to a given value.
+    
+    Parameters
+    ----------
+    a : array-like
+    k : column key
+    v : column value
+    """
+    return a[a[k] < v]
+    
