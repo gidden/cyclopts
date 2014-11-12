@@ -388,7 +388,7 @@ class Context(object):
             fig.savefig(fname)
         return fig, ax
 
-    def four_pane_scatter(self, param, save=False, title=None, **kwargs):
+    def four_pane_scatter(self, param, save=False, title=None, saveall=False, **kwargs):
         solvers = self.solvers
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, sharex=True)
         _, ax1 = self.multi_solver_scatter(param, ax=ax1, solvers=solvers, 
