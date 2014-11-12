@@ -44,7 +44,7 @@ class TestCombine:
         self.out1 = '1arcs.h5'
         self.nsoln1 = 1
         self.out4 = '4arcs.h5'
-        self.nsoln4 = 2
+        self.nsoln4 = 4
         self.ninsts = 4
         self.tmpfiles = {self.out1: os.path.join(self.workdir, self.out1), 
                          self.out4: os.path.join(self.workdir, self.out4), 
@@ -86,7 +86,10 @@ class TestCombine:
             path = '/Family/ResourceExchange/ExchangeInstProperties'
             assert_equal(db.get_node(path).nrows, self.ninsts)
             path = '/Family/ResourceExchange/ExchangeInstSolutions'
-            assert_equal(db.get_node(path).nrows, self.nsoln1 + self.nsoln4)
+            n = 0
+            for tbl in db.get_node(path)._f_walknodes(classname='Table'):
+                n += tbl.nrows
+            assert_equal(n, self.nsoln1 + self.nsoln4)
             db.close()
         self.passed = True
         
