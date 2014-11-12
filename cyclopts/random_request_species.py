@@ -20,7 +20,7 @@ from cyclopts.exchange_family import ResourceExchange
 from cyclopts.params import Param, BoolParam, CoeffParam, SupConstrParam, \
     PARAM_CTOR_ARGS
 import cyclopts.tools as tools
-import cyclopts.analysis as analysis
+import cyclopts.io_tools as io_tools
 
 class RandomRequestPoint(object):
     """A container class representing a point in parameter space for
@@ -611,7 +611,7 @@ class RandomRequestBuilder(object):
         return np.array([s.sup_constr_val.sample() * capacity \
                              for i in range(n_constr)])
     
-class PathMap(analysis.PathMap):
+class PathMap(io_tools.PathMap):
     """A simple container class for mapping columns to Hdf5 paths
     implemented for the RandomRequest problem species"""
     
