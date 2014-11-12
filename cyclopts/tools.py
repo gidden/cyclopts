@@ -337,14 +337,14 @@ def ssh_test_connect(client, host, user, keyfile=None, auth=True):
 def str_to_uuid(x):
     """return a uuid from a stored value, allows strings of len == 15 which is 
     missing a null-padded value"""
-    x = x + '\0' if len(x) == 15 else x
+    x = x + '\0' if len(x) != 16 else x
     return uuid.UUID(bytes=x)    
 
 def uuid_to_str(x):
     """return a string of a uuid, needed in case the uuid is missing a null-
     padded value"""
     ret = x.hex
-    ret = ret if len(ret) == 16 else ret + '\0'
+    ret = ret + '\0' if len(ret) != 16 else ret
     return ret
 
 def uuidhex(bytes=bytes):
