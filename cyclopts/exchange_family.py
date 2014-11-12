@@ -103,6 +103,7 @@ def column_to_table(col):
     # hack for now
     if col == 'pref_flow':
         return _tbl_names["solution_properties"]
+        #return _tbl_names["pp"] # to be fixed later with analysis
     for tbl, dt in _dtypes.items():
         if col in dt.fields.keys():
             return _tbl_names[tbl]
