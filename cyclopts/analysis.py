@@ -15,6 +15,7 @@ from itertools import chain, izip
 
 import cyclopts.cyclopts_io as cycio
 import cyclopts.io_tools as io_tools
+import cyclopts.tools as tools
 
 def find(a, predicate, chunk_size=1024):
     """
@@ -521,9 +522,24 @@ class RatioContext(object):
             fig.savefig(savename)
         return fig, ax
 
-    def popn_hist(self, solver, lim):
-        solver_data = [[x[x['solver'] == solver] for x in d] for d in self.data]
+    def popn_hist(self, solver='cbc', lim=None, idxs=[0, 1], 
+                  splitkind='time', popkind='objective', zone='a', 
+                  ax=None, **kwargs):
+        if not tools.seq_not_str(zone):
+            zone = [zone]
+            
+        x, y = self.data[idxs[0]], self.data[idxs[1]]
+        x, y = [x[x['solver'] == solver], y[y['solver'] == solver]]
+        xs, ys = split_group_by(x, y, splitkind, lim, 'instid')
+        toplt = [np.array((xs[i][popkind] - ys[i][popkind]) / xs[i][popkind]) \
+                     for i in range(len(xs))]
         
+        zone_to_idx = {'a': 0, 'b': 1, 'c': 2}
+        if ax is None:
+            fig, ax = plt.subplots()
+        for z in zone:
+            _, _, _ = ax.hist(toplt[zone_to_idx[z]], **kwargs)
+        return fig, ax
 
 def fam_and_sp_cls(fam_mod, fam_cls, sp_mod, sp_class):
     """return constructors for problem.Family and problem.Species"""
@@ -593,6 +609,8 @@ def value_split(a, col, lim):
     return a[:idx], a[idx:]
 
 def cleanse(x, y, col):
+    """If x or y have different col values, remove them.
+    """
     xvals = set(x[col])
     yvals = set(y[col])
     xdiff = xvals.difference(yvals)
