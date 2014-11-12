@@ -255,6 +255,8 @@ class Context(object):
         self.fam_cls = getattr(self.fam_mod, fam_cls)
         self.sp_mod = importlib.import_module(sp_mod)
         self.sp_cls = getattr(self.sp_mod, sp_class)
+        self.data = cyclopts_data(fname, self.fam_cls(), self.sp_cls())
+
         self.f = t.open_file(fname, mode='r')
         self.save = save
         self.savepath = savepath
@@ -453,6 +455,30 @@ class Context(object):
                     cparam=cparam, param=param, ext='png'))
             fig.savefig(fname)
 
+    def solver_hist(self, solver, source, ax=None, **kwargs):
+        """Return figure and axis for histograms of solver data.
+        
+        Parameters
+        ----------
+        solver : string or list
+            the solvers to include
+        source : str
+            the histogram source (e.g., time, objective)
+        ax : pyplot.Axes, optional
+        kwargs : pyplot.Axes.hist kwargs
+        """
+        if not tools.seq_not_str(solver):
+            solver = [solver]
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        for s in solver:
+            data = reduce_eq(self.data, 'solver', s)
+            _, _, _ = ax.hist(data[source], **kwargs)
+        
+        return fig, ax
+        
+
 """A utility class for doing Ratio analyses"""
 class RatioContext(object):
     def __init__(self, fnames, labels, fam_mod, fam_cls, sp_mod, sp_cls, 
@@ -527,6 +553,8 @@ class RatioContext(object):
                   ax=None, **kwargs):
         if not tools.seq_not_str(zone):
             zone = [zone]
+        if ax is None:
+            fig, ax = plt.subplots()
             
         x, y = self.data[idxs[0]], self.data[idxs[1]]
         x, y = [x[x['solver'] == solver], y[y['solver'] == solver]]
@@ -535,8 +563,6 @@ class RatioContext(object):
                      for i in range(len(xs))]
         
         zone_to_idx = {'a': 0, 'b': 1, 'c': 2}
-        if ax is None:
-            fig, ax = plt.subplots()
         for z in zone:
             _, _, _ = ax.hist(toplt[zone_to_idx[z]], **kwargs)
         return fig, ax
