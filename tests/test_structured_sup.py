@@ -62,10 +62,13 @@ def test_read_space():
 
 def test_write_point():    
     sp = spmod.StructuredSupply()
-    param_tbl, sum_tbl, arc_tbl, _ = sp.register_tables(None, 'foo')
+    param_tbl, sum_tbl, _ = sp.register_tables(None, 'foo')
+    Manager = namedtuple('Manager', ['tables', 'groups'])
+    manager = Manager({sp.param_tbl_name: param_tbl, sp.sum_tbl_name: sum_tbl}, 
+                      [])
     uid = uuid.uuid4()
     p = spmod.Point({'d_th': [0.7, 0.2, 0.1]})
-    sp.record_point(p, uid, {sp.param_tbl_name: param_tbl, sp.sum_tbl_name: sum_tbl})
+    sp.record_point(p, uid, manager)
 
     ## params are alphabetcially ordered 
     exp_ary = [
