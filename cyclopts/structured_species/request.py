@@ -219,7 +219,8 @@ class StructuredRequest(ProblemSpecies):
         self.instid = None
         self.tables = None
         self.groups = None
-
+        self.arc_tbl = None
+        
     def register_tables(self, h5file, prefix):
         """Parameters
         ----------
