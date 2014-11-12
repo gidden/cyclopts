@@ -605,7 +605,10 @@ def value_split(a, col, lim):
     a2 have time > 500.
     """
     a.sort(order=col)
-    idx = next(find(a, lambda a: a[col] > lim))[0][0]
+    try:
+        idx = next(find(a, lambda a: a[col] > lim))[0][0]
+    except StopIteration:
+        idx = len(a)
     return a[:idx], a[idx:]
 
 def cleanse(x, y, col):
