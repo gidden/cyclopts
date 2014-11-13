@@ -614,12 +614,17 @@ def cyclopts_data(fname, fam, sp):
     data = np.empty(shape=(nsolns,), dtype=dtype)
     for desc in tbl_descs:
         tbl = h5file.get_node(desc.path)
+        keys = tbl.coltypes.keys()
         for row in tbl.read():
             idxs = id_to_idxs[row[desc.idcol]]
             for i in idxs:
-                for k in tbl.coltypes.keys():
+                for k in keys:
                     data[i][k] = row[k]
 
+    # hack because l_pref_flow doesn't include f_l_c
+    if 'l_pref_flow' in data.dtype.fields.keys():
+        data['l_pref_flow'] = data['pref_flow'] - data['c_pref_flow']
+ 
     h5file.close()
     return data
 
