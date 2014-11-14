@@ -135,12 +135,12 @@ def assign_workers(open_cores, n_tasks=1):
 def assign_workers_new(open_cores, n_tasks=1, n_threads=16, use_max_threads=True):
     if n_tasks > n_threads * len(open_cores) and use_max_threads: 
         # use the bazooka
-        return {n: n_threads for n in open_cores.keys()}
+        return dict((n, n_threads) for n in open_cores.keys())
     
     # be more precise
     to_assign = min(n_tasks, sum(open_cores.values()))
     # don't use defaultdict -- python on htcondor is old
-    workers = {n: 0 for n in open_cores.keys()} 
+    workers = dict((n, 0) for n in open_cores.keys())
     n_assigned = 0
     while n_assigned != to_assign:
         # get node with most available threads
@@ -148,7 +148,7 @@ def assign_workers_new(open_cores, n_tasks=1, n_threads=16, use_max_threads=True
         n_assigned += 1
         workers[node] += 1
         open_cores[node] -= 1
-    return {k: v for k, v in workers.iteritems() if v > 0}
+    return dict((k, v) for k, v in workers.iteritems() if v > 0)
 
 def _start_workers(node, n, port, memory=None):
     cmd_pre = ("""condor_submit_workers -t 600 --cores 1""")
