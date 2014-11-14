@@ -681,8 +681,23 @@ def split_group_by(x, y, col, lim, groupby, sortby=True):
                 
     return xret, yret
 
+def reduce(a, k, v, op):
+    """Returns a reduced array where all values given a key equate as True given
+    an condition.
+    
+    Parameters
+    ----------
+    a : array-like
+    k : column key
+    v : column value
+    op : operator to use, given the form f(a, b). See for example,
+         https://docs.python.org/2/library/operator.html.
+    """
+    return a[op(a[k], v)]
+
 def reduce_eq(a, k, v):
-    """Returns a reduced array where all keys are equal to a given value.
+    """Returns a reduced array where all values given a key are equal to a given
+    value.
     
     Parameters
     ----------
@@ -693,7 +708,8 @@ def reduce_eq(a, k, v):
     return a[a[k] == v]
     
 def reduce_gt(a, k, v):
-    """Returns a reduced array where all keys are equal to a given value.
+    """Returns a reduced array where all values given a key are greater than to
+    a given value.
     
     Parameters
     ----------
@@ -704,8 +720,9 @@ def reduce_gt(a, k, v):
     return a[a[k] > v]
     
 def reduce_lt(a, k, v):
-    """Returns a reduced array where all keys are equal to a given value.
-    
+    """Returns a reduced array where all values given a key are less than to
+    a given value.
+
     Parameters
     ----------
     a : array-like
@@ -714,3 +731,14 @@ def reduce_lt(a, k, v):
     """
     return a[a[k] < v]
     
+def reduce_in(a, k, v):
+    """Returns a reduced array where entries have values in a collection.
+
+    Parameters
+    ----------
+    a : array-like
+    k : column key
+    v : collection
+    """
+    mask = np.array([_[k] in v for _ in a], dtype=bool)
+    return a[mask]
