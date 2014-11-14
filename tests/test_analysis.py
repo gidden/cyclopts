@@ -66,4 +66,6 @@ def test_reduce():
     yield assert_equal, obs, a[:1]
     obs = sis.reduce_in(a, 'x', range(1, 9))
     yield assert_equal, obs, a[1:-1]
+    obs = sis.reduce_not_in(a, 'x', range(1, 9))
+    yield assert_equal, obs, np.concatenate((a[:1], a[-1:]))
     
