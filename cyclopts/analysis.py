@@ -771,3 +771,15 @@ def reduce_in(a, k, v):
     """
     mask = np.array([_[k] in v for _ in a], dtype=bool)
     return a[mask]
+    
+def reduce_not_in(a, k, v):
+    """Returns a reduced array where entries do not have values in a collection.
+
+    Parameters
+    ----------
+    a : array-like
+    k : column key
+    v : collection
+    """
+    mask = np.array([_[k] in v for _ in a], dtype=bool)
+    return a[~mask]

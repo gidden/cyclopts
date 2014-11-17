@@ -129,6 +129,27 @@ def assign_workers(open_cores, n_tasks=1):
         open_cores[node] -= 1
     return dict((node, n) for node, n in workers.items() if n > 0)
 
+#
+# this function can be used if there are future slow downs
+#
+def assign_workers_new(open_cores, n_tasks=1, n_threads=16, use_max_threads=True):
+    if n_tasks > n_threads * len(open_cores) and use_max_threads: 
+        # use the bazooka
+        return dict((n, n_threads) for n in open_cores.keys())
+    
+    # be more precise
+    to_assign = min(n_tasks, sum(open_cores.values()))
+    # don't use defaultdict -- python on htcondor is old
+    workers = dict((n, 0) for n in open_cores.keys())
+    n_assigned = 0
+    while n_assigned != to_assign:
+        # get node with most available threads
+        node = max(open_cores.iteritems(), key=operator.itemgetter(1))[0]
+        n_assigned += 1
+        workers[node] += 1
+        open_cores[node] -= 1
+    return dict((k, v) for k, v in workers.iteritems() if v > 0)
+
 def _start_workers(node, n, port, memory=None):
     cmd_pre = ("""condor_submit_workers -t 600 --cores 1""")
     cmd_post = ("""{machine}.chtc.wisc.edu {port} {n}""") # machine is the submit node
@@ -281,7 +302,7 @@ def main():
 
     # get workers to launch  
     cores = open_cores(user, exec_nodes)
-    workers = assign_workers(cores, n_tasks=nids)
+    workers = assign_workers_new(cores, n_tasks=nids)
     if sum([n for _, n in workers.iteritems()]) == 0:
         raise ValueError("No available cores for workers were found")
     config = ", ".join(["{0}: {1}".format(node, n) for node, n in workers.iteritems()])
