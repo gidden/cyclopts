@@ -477,6 +477,35 @@ class Context(object):
             _, _, _ = ax.hist(data[source], **kwargs)
         
         return fig, ax
+
+    def avg_std(self, solver, source, ax=None, **kwargs):
+        """Return figure and axis for the cumulative average and standard
+        devation given solver data.
+        
+        Parameters
+        ----------
+        solver : string or list
+            the solvers to include
+        source : str
+            the histogram source (e.g., time, objective)
+        ax : pyplot.Axes, optional
+        kwargs : pyplot.Axes.hist kwargs
+        """
+        if not tools.seq_not_str(solver):
+            solver = [solver]
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        for s in solver:
+            data = reduce_eq(self.data, 'solver', s)
+            a = data[source]
+            x = range(len(a))
+            ax.plot(x, [np.average(a[:i]) for i in x], 
+                    label='{0} avg'.format(s), **kwargs)
+            ax.plot(x, [np.std(a[:i]) for i in x], 
+                    label='{0} std'.format(s), **kwargs)
+        
+        return fig, ax
         
 
 """A utility class for doing Ratio analyses"""
