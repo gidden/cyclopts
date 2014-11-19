@@ -11,6 +11,7 @@ import tables as t
 import os
 import numpy as np
 import inspect
+import itertools
 from itertools import chain, izip
 
 import cyclopts.cyclopts_io as cycio
@@ -183,6 +184,7 @@ _ax_labels = {
     'pref_flow': 'Product of Preference and Flow',
     'time': 'Time (s)',
     'obj': 'Objective Value',
+    'objective': 'Objective Value',
     }
 
 _legends = {
@@ -277,6 +279,12 @@ class Context(object):
     def __del__(self):
         self.f.close()
         
+
+    # these save/show functions need to be combined/refactor
+    def _do_save(self, fig, save, fname):
+        if self.save and save:
+            fig.savefig(os.path.join(self.savepath, fname))
+
     def _save_and_show(self, fig, save, fname, show):
         if fig is None:
             self._plt_save_and_show(save, fname, show)
@@ -293,7 +301,7 @@ class Context(object):
         if len(y) > 0 and max(y) > 1e3:
             ax.get_yaxis().get_major_formatter().set_powerlimits((0, 1))
 
-    def _plt_save_and_show(self, save, fname, show):
+    def _plt_save_and_show(self, save, fname):
         if self.save and save:
             plt.savefig(fname)
         if show:
@@ -455,7 +463,7 @@ class Context(object):
                     cparam=cparam, param=param, ext='png'))
             fig.savefig(fname)
 
-    def solver_hist(self, solver, source, ax=None, **kwargs):
+    def solver_hist(self, solver, source, ax=None, title='', save=True, **kwargs):
         """Return figure and axis for histograms of solver data.
         
         Parameters
@@ -467,6 +475,7 @@ class Context(object):
         ax : pyplot.Axes, optional
         kwargs : pyplot.Axes.hist kwargs
         """
+        fig = None
         if not tools.seq_not_str(solver):
             solver = [solver]
         if ax is None:
@@ -475,10 +484,18 @@ class Context(object):
         for s in solver:
             data = reduce_eq(self.data, 'solver', s)
             _, _, _ = ax.hist(data[source], **kwargs)
+
+        
+        ax.set_ylabel('Number of Observations')
+        ax.set_xlabel(_ax_labels[source])
+        ax.set_title(title)
+
+        fname = 'solverhist_{0}_{1}.png'.format(source, '_'.join(solver))
+        self._do_save(fig, save, fname)
         
         return fig, ax
 
-    def avg_std(self, solver, source, ax=None, **kwargs):
+    def avg_std(self, solver, source, ax=None, title='', save=True, **kwargs):
         """Return figure and axis for the cumulative average and standard
         devation given solver data.
         
@@ -491,6 +508,7 @@ class Context(object):
         ax : pyplot.Axes, optional
         kwargs : pyplot.Axes.hist kwargs
         """
+        fig = None
         if not tools.seq_not_str(solver):
             solver = [solver]
         if ax is None:
@@ -501,22 +519,31 @@ class Context(object):
             a = data[source]
             x = range(len(a))
             ax.plot(x, [np.average(a[:i]) for i in x], 
-                    label='{0} avg'.format(s), **kwargs)
+                    label='avg', **kwargs)
             ax.plot(x, [np.std(a[:i]) for i in x], 
-                    label='{0} std'.format(s), **kwargs)
+                    label='std', **kwargs)
+
+        ax.legend(loc=0)
+        ax.set_ylabel(_ax_labels[source])
+        ax.set_xlabel('Number of Observations')
+        ax.set_title(title)
         
+        fname = 'avgstd_{0}_{1}.png'.format(source, '_'.join(solver))
+        self._do_save(fig, save, fname)
+
         return fig, ax
-        
 
 """A utility class for doing Ratio analyses"""
 class RatioContext(object):
     def __init__(self, fnames, labels, fam_mod, fam_cls, sp_mod, sp_cls, 
-                 savepath='.', save=False, show=True, lim=10800):
+                 savepath='.', saveprefix='', save=False, show=True, 
+                 lim=10800):
         self.fnames = fnames
         self.labels = labels
         self.save = save
         self.show = show
         self.savepath = savepath
+        self.saveprefix = saveprefix
         self.lim = lim
         # TODO rework context to use new cyclopts_data
         self.ctxs = [Context(f, fam_mod, fam_cls, sp_mod, sp_cls, 
@@ -524,6 +551,10 @@ class RatioContext(object):
         # new for histograms
         fam_cls, sp_cls = fam_and_sp_cls(fam_mod, fam_cls, sp_mod, sp_cls)
         self.data = [cyclopts_data(f, fam_cls(), sp_cls()) for f in self.fnames]
+
+    def _do_save(self, fig, save, fname):
+        if self.save and save:
+            fig.savefig(os.path.join(self.savepath, self.saveprefix + fname))
 
     def count(self, param, solver, **kwargs):
         count = []
@@ -558,7 +589,7 @@ class RatioContext(object):
         ax.legend(loc=0)
         return fig, ax
 
-    def count_hist(self, solver, lim, save=False, savename='count_hist.png'):
+    def count_hist(self, solver, lim, save=True, savename='count_hist.png'):
         fig, ax = plt.subplots()
         nbelow = np.array(self.count('n_arcs', solver, below=lim))
         nabove = np.array(self.count('n_arcs', solver, above=lim))
@@ -573,13 +604,15 @@ class RatioContext(object):
         ax.legend((below[0], above[0]), ('Below', 'Above'))
         ax.set_ylabel('Number')
         ax.set_ylim(0, 1.4 * (nbelow[0] + nabove[0]))
-        if save:
-            fig.savefig(savename)
+        self._do_save(fig, save, savename)
         return fig, ax
-
+            
     def popn_hist(self, solver='cbc', lim=None, idxs=[0, 1], 
                   splitkind='time', popkind='objective', zone='a', 
-                  ax=None, **kwargs):
+                  ax=None, save=True, **kwargs):
+        fig = None
+        lim = lim or self.lim
+        label = '{0} vs. {1}'.format(self.labels[idxs[0]], self.labels[idxs[1]])
         if not tools.seq_not_str(zone):
             zone = [zone]
         if ax is None:
@@ -588,12 +621,34 @@ class RatioContext(object):
         x, y = self.data[idxs[0]], self.data[idxs[1]]
         x, y = [x[x['solver'] == solver], y[y['solver'] == solver]]
         xs, ys = split_group_by(x, y, splitkind, lim, 'instid')
-        toplt = [np.array((xs[i][popkind] - ys[i][popkind]) / xs[i][popkind]) \
+        toplt = [np.array((xs[i][popkind] - ys[i][popkind]) / xs[i][popkind]) * 100 \
                      for i in range(len(xs))]
         
         zone_to_idx = {'a': 0, 'b': 1, 'c': 2}
         for z in zone:
-            _, _, _ = ax.hist(toplt[zone_to_idx[z]], **kwargs)
+            label = label if len(zone) == 1 else label + ', {0}'.format(z)
+            _, _, _ = ax.hist(toplt[zone_to_idx[z]], label=label, **kwargs)
+
+        ax.set_title('{0} vs. {1}, {2} Population, Zone: {3}'.format(
+                self.labels[idxs[0]], self.labels[idxs[1]], 
+                popkind.capitalize(), ', '.join(zone)))
+        ax.set_ylabel('Number of Observations')
+        ax.set_xlabel('% Relative Difference')
+
+        fname = 'pophist_{0}_{1}_{2}.png'.format(popkind, '_'.join(zone), solver)
+        self._do_save(fig, save, fname)
+
+        return fig, ax
+
+    def group_popn_hist(self, popkind='objective', zone='a', 
+                        ax=None, save=True, **kwargs):
+        fig, ax = plt.subplots()
+        all_idxs = list(itertools.combinations(range(len(self.labels)), 2))
+        for idxs in all_idxs:
+            _, _ = self.popn_hist(popkind=popkind, zone=zone, idxs=idxs, 
+                                  ax=ax, **kwargs)
+        ax.legend(loc=0)
+        ax.set_title('{0} Population, Zone: {1}'.format(popkind, zone))
         return fig, ax
 
 def fam_and_sp_cls(fam_mod, fam_cls, sp_mod, sp_class):
