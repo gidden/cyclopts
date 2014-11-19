@@ -516,12 +516,16 @@ class Context(object):
 
         for s in solver:
             data = reduce_eq(self.data, 'solver', s)
-            a = data[source]
-            x = range(len(a))
-            ax.plot(x, [np.average(a[:i]) for i in x], 
-                    label='avg', **kwargs)
-            ax.plot(x, [np.std(a[:i]) for i in x], 
-                    label='std', **kwargs)
+            a = np.copy(data[source])
+            np.random.shuffle(a)
+            x = np.arange(len(a))
+
+            avg = np.array([np.average(a[:i  + 1]) for i in x])
+            std = np.array([np.std(a[:i + 1]) for i in x])
+            avg_std = np.array([np.std(avg[:i + 1]) for i in x])
+            ax.plot(x, avg, label='avg', **kwargs)
+            ax.plot(x, avg_std, label='std of avg', **kwargs)
+            ax.plot(x, std, label='std', **kwargs)
 
         ax.legend(loc=0)
         ax.set_ylabel(_ax_labels[source])
