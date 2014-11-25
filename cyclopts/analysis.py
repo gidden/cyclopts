@@ -463,7 +463,8 @@ class Context(object):
                     cparam=cparam, param=param, ext='png'))
             fig.savefig(fname)
 
-    def solver_hist(self, solver, source, ax=None, title='', save=True, **kwargs):
+    def solver_hist(self, solver, source, colorby=None, 
+                    ax=None, title='', save=True, **kwargs):
         """Return figure and axis for histograms of solver data.
         
         Parameters
@@ -472,7 +473,13 @@ class Context(object):
             the solvers to include
         source : str
             the histogram source (e.g., time, objective)
+        colorby : str, optional
+            a parameter used to color the histogram
         ax : pyplot.Axes, optional
+        title : str, optional
+            a title for the histogram
+        save : bool, optional
+            an override switch to save or not save this graph
         kwargs : pyplot.Axes.hist kwargs
         """
         fig = None
@@ -481,10 +488,18 @@ class Context(object):
         if ax is None:
             fig, ax = plt.subplots()
 
+        c_it = ipastels()
+        data = self.data
         for s in solver:
-            data = reduce_eq(self.data, 'solver', s)
-            _, _, _ = ax.hist(data[source], **kwargs)
-
+            data = reduce_eq(data, 'solver', s)
+            if colorby is None:
+                _, _, _ = ax.hist(data[source], color=c_it.next(), **kwargs)
+            else:
+                kinds = np.unique(data[colorby])
+                for k in kinds:
+                    idxs = np.where(data[colorby] == k)
+                    _, _, _ = ax.hist(data[idxs][source], color=c_it.next(), 
+                                      label=_legends[colorby][k], **kwargs)
         
         ax.set_ylabel('Number of Observations')
         ax.set_xlabel(_ax_labels[source])
@@ -495,7 +510,7 @@ class Context(object):
         
         return fig, ax
 
-    def avg_std(self, solver, source, ax=None, title='', save=True, **kwargs):
+    def avg_std(self, solver, source, data=None, ax=None, title='', save=True, **kwargs):
         """Return figure and axis for the cumulative average and standard
         devation given solver data.
         
@@ -505,6 +520,8 @@ class Context(object):
             the solvers to include
         source : str
             the histogram source (e.g., time, objective)
+        data : array-like
+            a limited data set to use (e.g., ctx.data[myparam == value])
         ax : pyplot.Axes, optional
         kwargs : pyplot.Axes.hist kwargs
         """
@@ -514,8 +531,9 @@ class Context(object):
         if ax is None:
             fig, ax = plt.subplots()
 
+        data = data if data is not None else self.data
         for s in solver:
-            data = reduce_eq(self.data, 'solver', s)
+            data = reduce_eq(data, 'solver', s)
             a = np.copy(data[source])
             np.random.shuffle(a)
             x = np.arange(len(a))
