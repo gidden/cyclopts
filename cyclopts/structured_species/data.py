@@ -7,8 +7,8 @@ from collections import namedtuple
 
 import warnings
 with warnings.catch_warnings():
-    from pyne.utils import VnVWarning
-    warnings.filterwarnings("ignore", category=VnVWarning)
+    from pyne.utils import QAWarning
+    warnings.filterwarnings("ignore", category=QAWarning)
     from pyne import enrichment
 
 def enum(*keys):
