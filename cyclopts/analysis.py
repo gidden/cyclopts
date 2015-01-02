@@ -491,7 +491,7 @@ class Context(object):
         c_it = ipastels()
         data = self.data
         for s in solver:
-            data = reduce_eq(data, 'solver', s)
+            data = reduce_eq(data, {'solver': s})
             if colorby is None:
                 _, _, _ = ax.hist(data[source], color=c_it.next(), **kwargs)
             else:
@@ -533,7 +533,7 @@ class Context(object):
 
         data = data if data is not None else self.data
         for s in solver:
-            data = reduce_eq(data, 'solver', s)
+            data = reduce_eq(data, {'solver': s})
             a = np.copy(data[source])
             np.random.shuffle(a)
             x = np.arange(len(a))
@@ -787,76 +787,88 @@ def split_group_by(x, y, col, lim, groupby, sortby=True):
                 
     return xret, yret
 
-def reduce(a, k, v, op):
+def reduce(a, d, op):
     """Returns a reduced array where all values given a key equate as True given
     an condition.
     
     Parameters
     ----------
     a : array-like
-    k : column key
-    v : column value
+    d : dict-like, {column keys: column values}
     op : operator to use, given the form f(a, b). See for example,
          https://docs.python.org/2/library/operator.html.
     """
-    return a[op(a[k], v)]
+    ret = a
+    for k, v in d.items():
+        ret = ret[op(ret[k], v)]
+    return ret
 
-def reduce_eq(a, k, v):
+def reduce_eq(a, d):
     """Returns a reduced array where all values given a key are equal to a given
     value.
     
     Parameters
     ----------
     a : array-like
-    k : column key
-    v : column value
+    d : dict-like, {column keys: column values}
     """
-    return a[a[k] == v]
+    ret = a
+    for k, v in d.items():
+        ret = ret[ret[k] == v]
+    return ret
     
-def reduce_gt(a, k, v):
+def reduce_gt(a, d):
     """Returns a reduced array where all values given a key are greater than to
     a given value.
     
     Parameters
     ----------
     a : array-like
-    k : column key
-    v : column value
+    d : dict-like, {column keys: column values}
     """
-    return a[a[k] > v]
+    ret = a
+    for k, v in d.items():
+        ret = ret[ret[k] > v]
+    return ret
     
-def reduce_lt(a, k, v):
+def reduce_lt(a, d):
     """Returns a reduced array where all values given a key are less than to
     a given value.
 
     Parameters
     ----------
     a : array-like
-    k : column key
-    v : column value
+    d : dict-like, {column keys: column values}
     """
-    return a[a[k] < v]
+    ret = a
+    for k, v in d.items():
+        ret = ret[ret[k] < v]
+    return ret
     
-def reduce_in(a, k, v):
+def reduce_in(a, d):
     """Returns a reduced array where entries have values in a collection.
 
     Parameters
     ----------
     a : array-like
-    k : column key
-    v : collection
+    d : dict-like, {column keys: column values}
     """
-    mask = np.array([_[k] in v for _ in a], dtype=bool)
-    return a[mask]
+    ret = a
+    for k, v in d.items():
+        mask = np.array([_[k] in v for _ in ret], dtype=bool)
+        ret = ret[mask]
+    return ret
     
-def reduce_not_in(a, k, v):
+def reduce_not_in(a, d):
     """Returns a reduced array where entries do not have values in a collection.
 
     Parameters
     ----------
     a : array-like
-    k : column key
-    v : collection
+    d : dict-like, {column keys: column values}
     """
-    mask = np.array([_[k] in v for _ in a], dtype=bool)
-    return a[~mask]
+    ret = a
+    for k, v in d.items():
+        mask = np.array([_[k] in v for _ in ret], dtype=bool)
+        ret = ret[~mask]
+    return ret

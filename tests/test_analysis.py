@@ -56,16 +56,16 @@ def test_split_group_by():
 def test_reduce():
     a = np.array(zip(range(10), range(10, 20)), dtype=[('x', int), ('y', int)])
 
-    obs = sis.reduce(a, 'x', 1, op.eq)
+    obs = sis.reduce(a, {'x': 1}, op.eq)
     yield assert_equal, obs, a[1:2]
-    obs = sis.reduce_eq(a, 'x', 1)
+    obs = sis.reduce_eq(a, {'x': 1})
     yield assert_equal, obs, a[1:2]
-    obs = sis.reduce_gt(a, 'x', 1)
+    obs = sis.reduce_gt(a, {'x': 1})
     yield assert_equal, obs, a[2:]
-    obs = sis.reduce_lt(a, 'x', 1)
+    obs = sis.reduce_lt(a, {'x': 1})
     yield assert_equal, obs, a[:1]
-    obs = sis.reduce_in(a, 'x', range(1, 9))
+    obs = sis.reduce_in(a, {'x': range(1, 9)})
     yield assert_equal, obs, a[1:-1]
-    obs = sis.reduce_not_in(a, 'x', range(1, 9))
+    obs = sis.reduce_not_in(a, {'x': range(1, 9)})
     yield assert_equal, obs, np.concatenate((a[:1], a[-1:]))
     
