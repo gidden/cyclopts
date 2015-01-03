@@ -872,3 +872,21 @@ def reduce_not_in(a, d):
         mask = np.array([_[k] in v for _ in ret], dtype=bool)
         ret = ret[~mask]
     return ret
+
+def avg_std(data, col, maxn=None, ax=None, **kwargs):            
+    fig = None
+    if ax is None:
+        fig, ax = plt.subplots()
+    n = min(maxn, len(data)) if maxn is not None else len(data)
+    a = np.copy(data[col][:n])
+    np.random.shuffle(a)
+    x = np.arange(len(a))
+    
+    avg = np.array([np.average(a[:i  + 1]) for i in x])
+    std = np.array([np.std(a[:i + 1]) for i in x])
+    avg_std = np.array([np.std(avg[:i + 1]) for i in x])
+    ax.plot(x, avg, label='avg', **kwargs)
+    ax.plot(x, avg_std, label='std of avg', **kwargs)
+    ax.plot(x, std, label='std', **kwargs)
+    
+    return fig, ax
