@@ -3,6 +3,7 @@ import matplotlib.patches as patches
 from matplotlib.font_manager import FontProperties
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.lines as lines
+import matplotlib.markers as markers
 from matplotlib.colors import colorConverter
 import sys
 from collections import defaultdict
@@ -12,7 +13,7 @@ import os
 import numpy as np
 import inspect
 import itertools
-from itertools import chain, izip
+from itertools import chain, izip, cycle
 
 import cyclopts.cyclopts_io as cycio
 import cyclopts.io_tools as io_tools
@@ -39,10 +40,10 @@ def find(a, predicate, chunk_size=1024):
         i0 = i1
 
 def imarkers():
-    return iter(['x', 's', 'o', 'v', '^', '+'])
+    return cycle(markers.MarkerStyle.markers.keys())
 
 def icolors():
-    return iter(['g', 'b', 'r', 'm', 'c', 'y'])
+    return cycle(['g', 'b', 'r', 'm', 'c', 'y'])
 
 def ipastels():
     for color in icolors():
@@ -889,4 +890,102 @@ def avg_std(data, col, maxn=None, ax=None, **kwargs):
     ax.plot(x, avg_std, label='std of avg', **kwargs)
     ax.plot(x, std, label='std', **kwargs)
     
+    return fig, ax
+
+def hist(data, col, maxn=None, ax=None, colorby=None, **kwargs):
+    fig = None
+    if ax is None:
+        fig, ax = plt.subplots()
+        
+    c_it = ipastels()
+    if colorby is None:
+        _, _, _ = ax.hist(data[col], color=c_it.next(), **kwargs)
+    else:
+        kinds = np.unique(data[colorby])
+        for k in kinds:
+            idxs = np.where(data[colorby] == k)
+            _, _, _ = ax.hist(data[idxs][col], color=c_it.next(), 
+                              label=_legends[colorby][k], **kwargs)        
+            ax.legend(loc=0)
+        
+    return fig, ax
+
+def approach_avg(data, col, maxn=None, fillpercent=None, ax=None, **kwargs):
+    fig = None
+    if ax is None:
+        fig, ax = plt.subplots()
+    n = min(maxn, len(data)) if maxn is not None else len(data)
+    a = np.copy(data[col][:n])
+    np.random.shuffle(a)
+    x = np.arange(len(a))
+    
+    avg = np.average(a)
+    avg_i = np.array([1 - np.average(a[:i + 1]) / avg for i in x])
+    ax.plot(x, avg_i, **kwargs)
+    
+    if fillpercent is not None:
+        ax.fill_between(x, [-fillpercent] * len(x), [fillpercent] * len(x), 
+                        color='grey', alpha=0.2)
+
+    return fig, ax
+
+def approach_std(data, col, maxn=None, ax=None, **kwargs):
+    fig = None
+    if ax is None:
+        fig, ax = plt.subplots()
+    n = min(maxn, len(data)) if maxn is not None else len(data)
+    a = np.copy(data[col][:n])
+    np.random.shuffle(a)
+    x = np.arange(len(a))[1:]
+    
+    std_i = np.array([np.std(a[:i + 1]) / np.average(a[:i + 1]) for i in x])
+    ax.plot(x, std_i, **kwargs)
+    
+    return fig, ax
+        
+def data_to_average_limit(data, avg_col, limit, maxn=None):
+    n = min(maxn, len(data)) if maxn is not None else len(data)
+    a = np.copy(data[:n])
+    np.random.shuffle(a)
+    x = np.arange(len(a))
+
+    vals = a[avg_col]
+    avg = np.average(vals)
+    avg_i = np.array([1 - np.average(vals[:i + 1]) / avg for i in x])
+    # traverse backwards until the first value is greater than the limit
+    try:
+        idx = next(i for i, v in reversed(list(enumerate(avg_i))) if abs(v) > limit)
+    except StopIteration:
+        idx = 0
+    idx = max(idx, 1)
+
+    return a[:idx]
+
+def compare_plot(data, xcol, ycol, base, compare, labels=None, maxn=None, 
+                 ax=None, **kwargs):
+    fig = None
+    if ax is None:
+        fig, ax = plt.subplots()
+    n = min(maxn, len(data)) if maxn is not None else len(data)
+    a = np.copy(data[:n])
+    np.random.shuffle(a)
+    x = np.arange(len(a))
+
+    basedata = reduce_eq(a, base)
+    xbase = np.average(basedata[xcol]) 
+    ybase = np.average(basedata[ycol])
+    xs = [1]
+    ys = [1]
+    
+    for c in compare:
+        d = reduce_eq(a, c)
+        xs.append(np.average(d[xcol]) / xbase)
+        ys.append(np.average(d[ycol]) / ybase)
+        
+    labels = labels or [', '.join('{0}: {1}'.format(k, v) for k, v in x.items()) \
+                            for x in [base] + compare]
+    m = imarkers()
+    for x, y, l in zip(xs, ys, labels):
+        ax.plot(x, y, label=l, linestyle='', **kwargs)
+
     return fig, ax
