@@ -40,7 +40,10 @@ def find(a, predicate, chunk_size=1024):
         i0 = i1
 
 def imarkers():
-    return cycle(markers.MarkerStyle.markers.keys())
+    """Cycle through markers that arent skinny or none"""
+    bad = range(4) + [None, '', ' ', 'None', ',', '.', '|', '_', 'x']
+    return cycle([x for x in markers.MarkerStyle.markers.keys() \
+                      if x not in bad])
 
 def icolors():
     return cycle(['g', 'b', 'r', 'm', 'c', 'y'])
@@ -966,6 +969,21 @@ def compare_plot(data, xcol, ycol, base, compare, labels=None, maxn=None,
     fig = None
     if ax is None:
         fig, ax = plt.subplots()
+        
+    ds, xs, ys = compare_plot_data(data, xcol, ycol, base, compare, maxn=maxn)
+        
+    labels = labels or [', '.join('{0}: {1}'.format(k, v) for k, v in x.items()) \
+                            for x in d]
+    m = imarkers()
+    for x, y, l in zip(xs, ys, labels):
+        if 'marker' in kwargs:
+            ax.plot(x, y, label=l, linestyle='', **kwargs)
+        else:
+            ax.plot(x, y, label=l, linestyle='', marker=m.next(), **kwargs)
+        
+    return fig, ax
+
+def compare_plot_data(data, xcol, ycol, base, compare, maxn=None):
     n = min(maxn, len(data)) if maxn is not None else len(data)
     a = np.copy(data[:n])
     np.random.shuffle(a)
@@ -974,18 +992,12 @@ def compare_plot(data, xcol, ycol, base, compare, labels=None, maxn=None,
     basedata = reduce_eq(a, base)
     xbase = np.average(basedata[xcol]) 
     ybase = np.average(basedata[ycol])
-    xs = [1]
-    ys = [1]
+    xs = [0]
+    ys = [0]
     
     for c in compare:
         d = reduce_eq(a, c)
-        xs.append(np.average(d[xcol]) / xbase)
-        ys.append(np.average(d[ycol]) / ybase)
+        xs.append((np.average(d[xcol]) - xbase) / xbase)
+        ys.append((np.average(d[ycol]) - ybase) / ybase)
         
-    labels = labels or [', '.join('{0}: {1}'.format(k, v) for k, v in x.items()) \
-                            for x in [base] + compare]
-    m = imarkers()
-    for x, y, l in zip(xs, ys, labels):
-        ax.plot(x, y, label=l, linestyle='', **kwargs)
-
-    return fig, ax
+    return [base] + compare, xs, ys
