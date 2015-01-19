@@ -69,14 +69,60 @@ def test_reduce():
     obs = sis.reduce_not_in(a, {'x': range(1, 9)})
     yield assert_equal, obs, np.concatenate((a[:1], a[-1:]))
     
-def test_trees():
+def test_id_tree_prune():
+    from cyclopts.analysis import subtrees
+
+    data = [{'paramid': 'a', 'instid': 'b', 'solnid': 'c', 'solver': 'x'},
+            {'paramid': 'a', 'instid': 'b', 'solnid': 'd', 'solver': 'y'}]
+
+    tree = sis.id_tree(data)
+    assert_equal(len(tree), 1)
+    for pid, pst in subtrees(tree):
+        assert_equal(pid, 'a')
+        assert_equal(len(pst), 1)
+        for iid, ist in subtrees(pst):
+            assert_equal(iid, 'b')
+            assert_equal(len(ist), 2)
+            sids = set([x for x, _ in subtrees(ist)])
+            assert_equal(sids, set(['c', 'd']))
+            solvers = set([x for _, x in subtrees(ist)])
+            assert_equal(solvers, set(['x', 'y']))
+
+    tree = sis.id_tree(data, nsoln_prune=2)
+    assert_equal(len(tree), 1)
+    for pid, pst in subtrees(tree):
+        assert_equal(pid, 'a')
+        assert_equal(len(pst), 1)
+        for iid, ist in subtrees(pst):
+            assert_equal(iid, 'b')
+            assert_equal(len(ist), 2)
+            sids = set([x for x, _ in subtrees(ist)])
+            assert_equal(sids, set(['c', 'd']))
+            solvers = set([x for _, x in subtrees(ist)])
+            assert_equal(solvers, set(['x', 'y']))
+            
+    tree = sis.id_tree(data, nsoln_prune=1)
+    assert_equal(len(tree), 1)
+    for pid, pst in subtrees(tree):
+        assert_equal(pid, 'a')
+        assert_equal(pst, {})
+
+def test_id_tree_from_file():
     from cyclopts import exchange_family
     from cyclopts.structured_species import request 
+    from cyclopts.analysis import subtrees
+
     fname = './files/test_comb.h5'
     fam = exchange_family.ResourceExchange()
     sp = request.StructuredRequest()
     data = sis.cyclopts_data(fname, fam, sp)
-    print(data)
 
-    trees = sis.id_trees(data, nsoln=1)
-    
+    tree = sis.id_tree(data)
+    assert_equal(len(tree), 4)
+    for pid, pst in subtrees(tree):
+        assert_equal(len(pst), 1)
+        for iid, ist in subtrees(pst):
+            assert_equal(len(ist), 1)
+            for sid, solver in subtrees(ist):
+                assert_equal(solver, 'cbc')
+        

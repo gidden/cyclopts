@@ -734,12 +734,41 @@ def idx_map(h5file, fam, sp):
                  idx_map[s].append(soln_idxs[s])
     return idx_map
 
-def id_trees(data, nsoln=3):
-    """return a forest of uuid trees, where each tree has a param id root, inst
-    id nodes, and solution id nodes. inst id nodes where the number of solution
-    nodes is not equal to the number of expected solutions are pruned.
+def Tree(): return defaultdict(Tree)
+def subtrees(tree): 
+    """iterate through a tree, yielding top-level values with their subtrees"""
+    for x in tree:
+        yield x, tree[x]
+
+def id_tree(data, nsoln_prune=None):
+    """return a uuid tree, consisting of param id nodes, inst id nodes, and
+    solution id nodes. inst id nodes where the number of solution nodes is not
+    equal to the number of expected solutions are pruned.
+    
+    Parameters
+    ----------
+    data : array-like
+        e.g., the output of cyclopts_data
+    nsoln_prune : int, optional
+        prune an instance node if the number of solution nodes != nsoln_prune
     """
-    pass
+    tree = Tree()
+    for d in data:
+        tree[d['paramid']][d['instid']][d['solnid']] = d['solver']
+        
+    if nsoln_prune is None:
+        return tree
+
+    # remove instance nodes if number of solutions doesn't match
+    torm = []
+    for pid, pst in subtrees(tree):
+        for iid, ist in subtrees(pst):
+            if len(ist) != nsoln_prune:
+                torm.append((pid, iid))
+    for pid, iid in torm:
+        tree[pid].pop(iid)
+
+    return tree
 
 def cyclopts_data(fname, fam, sp):
     """Return an numpy.ndarray of all aggregate data in a Cyclopts HDF5 file. 
