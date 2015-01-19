@@ -12,12 +12,13 @@ import tables as t
 import os
 import numpy as np
 import inspect
-import itertools
+import itertools as itools
 from itertools import chain, izip, cycle
 
 import cyclopts.cyclopts_io as cycio
 import cyclopts.io_tools as io_tools
 import cyclopts.tools as tools
+from cyclopts.functionals import rms
 
 def find(a, predicate, chunk_size=1024):
     """
@@ -559,6 +560,30 @@ class Context(object):
 
         return fig, ax
 
+# """A utility class for doing aggregate data analyses"""
+# class AggContext(object):
+#     def __init__(self, fname, fam_mod, fam_cls, sp_mod, sp_cls):
+#         self.fam_cls, self.sp_cls = fam_and_sp_cls(fam_mod, fam_cls, sp_mod, sp_cls)
+#         self.fname = fname
+#         self.data = cyclopts_data(self.fname, fam_cls(), sp_cls())
+        
+#     def rms(self, reduce_dict=None, col='flow', 
+#             pathbase='/Family/ResourceExchange/ExchangeInstSolutions'):
+#         """return the root-mean-squared of all logical combinations of data"""
+#         ret = {}
+#         i_to_s = defaultdict(list)
+#         reddata = reduce_eq(self.data, reduce_dict)
+#         for x in reddata:
+#             i_to_s[x['instid']].append(x['solnid'])
+#         with t.open_file(self.fname, mode='r') as f:
+#             for iid, sids in i_to_s.items():
+#                 data = {sid: f.get_node('/'.join([pathbase, sid]))[col] \
+#                             for sid in sids}
+#                 combos = itools.combinations(sids, 2)
+#                 for a, b in combos:
+#                     ret[tuple(iid, a, b)] = funcs.rms(data[a] - data[b])
+#         return ret            
+
 """A utility class for doing Ratio analyses"""
 class RatioContext(object):
     def __init__(self, fnames, labels, fam_mod, fam_cls, sp_mod, sp_cls, 
@@ -677,7 +702,7 @@ class RatioContext(object):
     def group_popn_hist(self, popkind='objective', zone='a', 
                         ax=None, save=True, **kwargs):
         fig, ax = plt.subplots()
-        all_idxs = list(itertools.combinations(range(len(self.labels)), 2))
+        all_idxs = list(itools.combinations(range(len(self.labels)), 2))
         for idxs in all_idxs:
             _, _ = self.popn_hist(popkind=popkind, zone=zone, idxs=idxs, 
                                   ax=ax, **kwargs)
@@ -708,6 +733,13 @@ def idx_map(h5file, fam, sp):
                  idx_map[i].append(soln_idxs[s])
                  idx_map[s].append(soln_idxs[s])
     return idx_map
+
+def id_trees(data, nsoln=3):
+    """return a forest of uuid trees, where each tree has a param id root, inst
+    id nodes, and solution id nodes. inst id nodes where the number of solution
+    nodes is not equal to the number of expected solutions are pruned.
+    """
+    pass
 
 def cyclopts_data(fname, fam, sp):
     """Return an numpy.ndarray of all aggregate data in a Cyclopts HDF5 file. 
@@ -1009,3 +1041,4 @@ def compare_plot_data(data, xcol, ycol, base, compare, maxn=None):
         ys.append((np.average(d[ycol]) - ybase) / ybase)
         
     return [base] + compare, xs, ys
+

@@ -69,3 +69,14 @@ def test_reduce():
     obs = sis.reduce_not_in(a, {'x': range(1, 9)})
     yield assert_equal, obs, np.concatenate((a[:1], a[-1:]))
     
+def test_trees():
+    from cyclopts import exchange_family
+    from cyclopts.structured_species import request 
+    fname = './files/test_comb.h5'
+    fam = exchange_family.ResourceExchange()
+    sp = request.StructuredRequest()
+    data = sis.cyclopts_data(fname, fam, sp)
+    print(data)
+
+    trees = sis.id_trees(data, nsoln=1)
+    
