@@ -148,4 +148,5 @@ def test_rms():
     sp = request.StructuredRequest()
     data = sis.cyclopts_data(fname, fam, sp)
     tree = sis.id_tree(data)
-    #print(sis.flow_rms(fname, tree, 'StructuredRequest'))
+    ret = sis.flow_rms(fname, tree, 'StructuredRequest')
+#print(ret)
