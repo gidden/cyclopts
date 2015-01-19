@@ -729,8 +729,8 @@ def idx_map(h5file, fam, sp):
 def Tree(): return defaultdict(Tree)
 def subtrees(tree): 
     """iterate through a tree, yielding top-level values with their subtrees"""
-    for x in tree:
-        yield x, tree[x]
+    for k, v in tree.items(): # trees are dicts (for now), so this is simple
+        yield k, v
 
 def id_tree(data, nsoln_prune=None):
     """return a uuid tree, consisting of param id nodes, inst id nodes, and
@@ -752,15 +752,16 @@ def id_tree(data, nsoln_prune=None):
         return tree
 
     # remove instance nodes if number of solutions doesn't match
-    torm = []
-    for pid, pst in subtrees(tree):
-        for iid, ist in subtrees(pst):
-            if len(ist) != nsoln_prune:
-                torm.append((pid, iid))
+    torm = [(pid, iid) for pid, pst in subtrees(tree)\
+                for iid, ist in subtrees(pst) if len(ist) != nsoln_prune]
     for pid, iid in torm:
         tree[pid].pop(iid)
 
     return tree
+
+def ninsts(id_tree):
+    """return the number of instances in an id tree"""
+    return np.sum([len(pst) for param, pst in subtrees(id_tree)])
 
 def cyclopts_data(fname, fam, sp):
     """Return an numpy.ndarray of all aggregate data in a Cyclopts HDF5 file. 

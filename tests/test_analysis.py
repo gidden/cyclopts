@@ -126,3 +126,14 @@ def test_id_tree_from_file():
             for sid, solver in subtrees(ist):
                 assert_equal(solver, 'cbc')
         
+
+def test_ninsts():
+    data = [{'paramid': 'a', 'instid': 'b', 'solnid': 'c', 'solver': 'x'},
+            {'paramid': 'a', 'instid': 'b', 'solnid': 'd', 'solver': 'y'}]
+    tree = sis.id_tree(data)
+    assert_equal(sis.ninsts(tree), 1)
+    
+    data.append({'paramid': 'a', 'instid': 'bx', 'solnid': 'c', 'solver': 'x'})
+    data.append({'paramid': 'a', 'instid': 'by', 'solnid': 'd', 'solver': 'y'})
+    tree = sis.id_tree(data)
+    assert_equal(sis.ninsts(tree), 3)
