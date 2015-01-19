@@ -126,7 +126,6 @@ def test_id_tree_from_file():
             for sid, solver in subtrees(ist):
                 assert_equal(solver, 'cbc')
         
-
 def test_ninsts():
     data = [{'paramid': 'a', 'instid': 'b', 'solnid': 'c', 'solver': 'x'},
             {'paramid': 'a', 'instid': 'b', 'solnid': 'd', 'solver': 'y'}]
@@ -137,3 +136,18 @@ def test_ninsts():
     data.append({'paramid': 'a', 'instid': 'by', 'solnid': 'd', 'solver': 'y'})
     tree = sis.id_tree(data)
     assert_equal(sis.ninsts(tree), 3)
+
+def test_leaf_vals():
+    data = [{'paramid': 'a', 'instid': 'b', 'solnid': 'c', 'solver': 'x'},
+            {'paramid': 'a', 'instid': 'b', 'solnid': 'd', 'solver': 'y'}]
+    tree = sis.id_tree(data)
+    assert_equal(sis.leaf_vals(tree), set(['x', 'y']))
+
+# def test_rms():
+#     fname = './files/test_comb.h5'
+#     fam = exchange_family.ResourceExchange()
+#     sp = request.StructuredRequest()
+#     data = sis.cyclopts_data(fname, fam, sp)
+#     tree = sis.id_tree(data)
+    
+        
