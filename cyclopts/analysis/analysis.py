@@ -763,6 +763,14 @@ def ninsts(id_tree):
     """return the number of instances in an id tree"""
     return np.sum([len(pst) for param, pst in subtrees(id_tree)])
 
+def leaf_vals(id_tree):
+    """return unique values of leaves in a tree (on a single DFS iteration)"""
+    for param, pst in subtrees(id_tree):
+        for iid, ist in subtrees(pst):
+            ret = set([solver for _, solver in subtrees(ist)])
+            break
+    return ret
+
 def cyclopts_data(fname, fam, sp):
     """Return an numpy.ndarray of all aggregate data in a Cyclopts HDF5 file. 
     
