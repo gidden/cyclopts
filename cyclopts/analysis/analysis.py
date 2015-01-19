@@ -1078,7 +1078,6 @@ def compare_plot_data(data, xcol, ycol, base, compare, maxn=None):
         
     return [base] + compare, xs, ys
 
-
 def flow_rms(fname, id_tree, species_name, base_solver='cbc'):
     """Take the root-mean-square of the difference of values in two tables.
 
@@ -1101,14 +1100,14 @@ def flow_rms(fname, id_tree, species_name, base_solver='cbc'):
     ret = {'flows': {s: np.zeros(n) for s in solvers},
            'cflows': {s: np.zeros(n) for s in solvers}}
     i = 0
-    convert = lambda x: tools.str_to_uuid(x).hex 
+    convert = lambda x: 'id_' + tools.str_to_uuid(x).hex 
     
     with t.open_file(fname, mode='r') as f:
         for pid, pst in subtrees(id_tree):
             for iid, ist in subtrees(pst):
-                cprefs = f.get_node(cpath + '/id_' + convert(iid)).col('pref_c')
+                cprefs = f.get_node(cpath + '/' + convert(iid)).col('pref_c')
                 flows = {
-                    solver: f.get_node(fpath + '/id_' + convert(sid)).col('flow') \
+                    solver: f.get_node(fpath + '/' + convert(sid)).col('flow') \
                         for sid, solver in subtrees(ist)}
                 for solver in solvers:
                     diff = flows[base_solver] - flows[solver]
