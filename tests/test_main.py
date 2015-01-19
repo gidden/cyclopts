@@ -23,7 +23,7 @@ from cyclopts import tools
 from utils import timeout, TimeoutError
 
 def test_exec():
-    infile = 'obs_valid_in.h5'
+    infile = 'test_in.h5'
     ninst = 4
     
     base = os.path.dirname(os.path.abspath(__file__))
@@ -55,7 +55,7 @@ def test_exec():
 
 def test_convert():
     base = os.path.dirname(os.path.abspath(__file__))
-    rc = os.path.join(base, 'files', 'obs_valid.rc')    
+    rc = os.path.join(base, 'files', 'test.rc')    
     db = os.path.join(base, "tmp_{0}.h5".format(str(uuid.uuid4())))
 
     ninst = 2
@@ -109,8 +109,8 @@ def test_pp():
     base = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                         'files')
     cycrc = os.path.join(base, 'cycloptsrc.py')
-    h5in = os.path.join(base, 'obs_valid_in.h5')
-    h5out = os.path.join(base, 'obs_valid_out.h5')
+    h5in = os.path.join(base, 'test_in.h5')
+    h5out = os.path.join(base, 'test_out.h5')
     h5pp = os.path.join(base, 'tmp_pp.h5')
     if os.path.exists(h5pp):
         os.remove(h5pp)
@@ -203,9 +203,9 @@ def test_collect():
 # test, but not for unit testing. The DAG stack was tested succesfully running
 # the following commands in the cyclopts/tests/files directory:
 #
-# $ cyclopts condor-submit --rc run_rc.py --db obs_valid_in.h5 -d test-one-more -k dag -v
+# $ cyclopts condor-submit --rc run_rc.py --db test_in.h5 -d test-one-more -k dag -v
 # $ cyclopts condor-collect --outdb test-one-more_out.h5 -d test-one-more 
-# $ cyclopts combine --files obs_valid_in.h5 test-one-more_out.h5 -o test-one-more_combined.h5
+# $ cyclopts combine --files test_in.h5 test-one-more_out.h5 -o test-one-more_combined.h5
 
 #
 # And this is a previous draft of such a regression test
@@ -220,7 +220,7 @@ def test_collect():
 #     base = os.path.dirname(os.path.abspath(__file__))
 #     tstdir = os.path.join(base, 'tmp_{0}'.format(uuid.uuid4()))
 #     os.makedirs(tstdir)
-#     dbname = 'obs_valid_in.h5'
+#     dbname = 'test_in.h5'
 
 #     db = os.path.join(base, 'files', dbname)
 #     solvers = "greedy cbc"

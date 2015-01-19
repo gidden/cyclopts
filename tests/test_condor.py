@@ -20,12 +20,12 @@ from nose.tools import assert_equal, assert_true
 from utils import timeout, TimeoutError
 
 """this is a print out of uid hexs and their number of arcs taken from
-cyclopts/tests/files/obs_valid_in.h5 on 6/15/14 via
+cyclopts/tests/files/test_in.h5 on 6/15/14 via
 
 .. code-block::
 
   import tables as t
-  h5f = t.open_file('cyclopts/tests/files/obs_valid_in.h5', 'r')
+  h5f = t.open_file('cyclopts/tests/files/test_in.h5', 'r')
   h5n = h5f.root.Instances.ExchangeInstProperties
   for row in h5n.iterrows():
     print(uuid.UUID(bytes=row['instid']).hex, row['n_arcs'])
@@ -36,7 +36,7 @@ def exp_uuid_arcs():
     global _exp_uuid_arcs    
     if len(_exp_uuid_arcs) == 0:
         base = os.path.dirname(os.path.abspath(__file__))
-        pth = os.path.join(base, 'files', 'obs_valid_in.h5')
+        pth = os.path.join(base, 'files', 'test_in.h5')
         h5file = t.open_file(pth, 'r')
         path = '/Family/ResourceExchange/ExchangeInstProperties'
         tbl = h5file.get_node(path)
@@ -47,7 +47,7 @@ def exp_uuid_arcs():
 
 def test_gen_dag_tar():
     base = os.path.dirname(os.path.abspath(__file__))
-    db = os.path.join(base, 'files', 'obs_valid_in.h5')
+    db = os.path.join(base, 'files', 'test_in.h5')
     prefix='tmp_{0}'.format(uuid.uuid4())
     instids = [x[0] for x in exp_uuid_arcs()[:2]] # 2 ids
     solvers = ['s1', 's2']
@@ -57,7 +57,7 @@ def test_gen_dag_tar():
     if os.path.exists(prefix):
         shutil.rmtree(prefix)    
 
-    exp = ['0.sub', '1.sub', 'run.sh', 'dag.sub', 'obs_valid_in.h5']
+    exp = ['0.sub', '1.sub', 'run.sh', 'dag.sub', 'test_in.h5']
     tarname = '{0}.tar.gz'.format(prefix)
     obs = [] 
     with tarfile.open(tarname, 'r:gz') as tar:
@@ -72,7 +72,7 @@ def test_gen_dag_tar():
 
 def test_gen_q_tar():
     base = os.path.dirname(os.path.abspath(__file__))
-    db = os.path.join(base, 'files', 'obs_valid_in.h5')
+    db = os.path.join(base, 'files', 'test_in.h5')
     prefix='tmp_{0}'.format(uuid.uuid4())
     instids = [x[0] for x in exp_uuid_arcs()[:2]] # 2 ids
     solvers = ['s1', 's2']
@@ -82,7 +82,7 @@ def test_gen_q_tar():
     if os.path.exists(prefix):
         shutil.rmtree(prefix)    
 
-    exp = ['uuids', 'launch_master.py', 'run.sh', 'obs_valid_in.h5']
+    exp = ['uuids', 'launch_master.py', 'run.sh', 'test_in.h5']
     tarname = '{0}.tar.gz'.format(prefix)
     obs = []
     with tarfile.open(tarname, 'r:gz') as tar:

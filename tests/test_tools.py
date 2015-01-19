@@ -38,7 +38,7 @@ class TestCombine:
     def setup(self):
         base = os.path.dirname(os.path.abspath(__file__))
         self.workdir = os.path.join(base, 'files')
-        self.orig_in = 'obs_valid_in.h5'
+        self.orig_in = 'test_in.h5'
         self.cp_in = 'cp_instances.h5'
         self.tmp_out = 'tmp_out.h5'
         self.out1 = '1arcs.h5'
@@ -129,7 +129,7 @@ def test_get_obj():
 
 def test_collect_instids():
     base = os.path.dirname(os.path.abspath(__file__))
-    fpth = os.path.join(base, 'files', 'obs_valid_in.h5')
+    fpth = os.path.join(base, 'files', 'test_in.h5')
     h5file = t.open_file(fpth, 'r')
     path = '/Family/ResourceExchange/ExchangeInstProperties'
     
