@@ -771,7 +771,7 @@ def id_tree(data, nsoln_prune=None):
 
 def nnodes(id_tree, lev=0):
     """return the number of nodes in an id tree at a given level"""
-    ret = np.zeros((4,))
+    ret = [0] * 4
     ret[0] = len(id_tree)
     for _, pst in subtrees(id_tree):
         ret[1] += len(pst)
