@@ -156,6 +156,7 @@ def test_flow_rms():
 def test_flow_rms_diff():
     from cyclopts import exchange_family
     from cyclopts.structured_species import request
+    from cyclopts.functionals import rms
 
     fname = './files/test_comb_2_solvers.h5'
     fam = exchange_family.ResourceExchange()
@@ -164,9 +165,24 @@ def test_flow_rms_diff():
     tree = sis.id_tree(data)
     
     ret = sis.flow_rms_diff(fname, tree, 'StructuredRequest', base_solver='cbc')
-    # this may fail if the db is regenerated with a new 'cyclopts exec', but I
-    # think everything is small enough that this will always be true
-    assert_array_equal(ret['cflows']['greedy'][2:], np.zeros((2,)))
-    assert_array_equal(ret['flows']['greedy'][2:], np.zeros((2,)))
-    assert_array_less(np.zeros((2,)), ret['cflows']['greedy'][:2])
-    assert_array_less(np.zeros((2,)), ret['flows']['greedy'][:2])
+    # This may fail if the db is regenerated with a new 'cyclopts exec', but I
+    # think everything is small enough that this will always be true. Ordering
+    # may also change, but I don't expect that to be the case.
+    exp = [
+        rms(np.array([17500, 17500, 0, 0])), 
+        rms(np.array([17500, 17500, 0])),
+        0,
+        0,
+        ]
+    obs = ret['flows']['greedy']
+    assert_array_equal(obs, exp)
+
+    exp = [
+        rms(0.5 * np.array([17500, 17500, 0, 0])), 
+        rms(0.5 * np.array([17500, 17500, 0])),
+        0,
+        0,
+        ]
+    obs = ret['cflows']['greedy']
+    assert_array_equal(obs, exp)
+    
