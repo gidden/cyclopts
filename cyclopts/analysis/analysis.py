@@ -762,7 +762,6 @@ def id_tree(data, nsoln_prune=None):
     # remove instance nodes if number of solutions doesn't match
     torm = [(pid, iid) for pid, pst in subtrees(tree) \
                 for iid, ist in subtrees(pst) if len(ist) != nsoln_prune]
-    #print(len(torm))
     for pid, iid in torm:
         tree[pid].pop(iid)
         if len(tree[pid]) == 0:
@@ -770,9 +769,19 @@ def id_tree(data, nsoln_prune=None):
 
     return tree
 
+def nnodes(id_tree, lev=0):
+    """return the number of nodes in an id tree at a given level"""
+    ret = np.zeros((4,))
+    ret[0] = len(id_tree)
+    for _, pst in subtrees(id_tree):
+        ret[1] += len(pst)
+        for _, ist in subtrees(pst):
+            ret[2] += len(ist)
+    return ret[lev]
+
 def ninsts(id_tree):
     """return the number of instances in an id tree"""
-    return np.sum([len(pst) for param, pst in subtrees(id_tree)])
+    return nnodes(id_tree, lev=1)
 
 def leaf_vals(id_tree):
     """return unique values of leaves in a tree (on a single DFS iteration)"""
