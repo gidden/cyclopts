@@ -2,7 +2,8 @@ import numpy as np
 import operator as op
 
 from nose.tools import assert_equal, assert_true, assert_false, assert_raises
-from numpy.testing import assert_equal
+from numpy.testing import assert_equal, assert_array_equal, \
+    assert_array_less
 
 import cyclopts.analysis as sis
 
@@ -139,14 +140,33 @@ def test_leaf_vals():
     tree = sis.id_tree(data)
     assert_equal(sis.leaf_vals(tree), set(['x', 'y']))
 
-def test_rms():
+def test_flow_rms():
     from cyclopts import exchange_family
     from cyclopts.structured_species import request
 
-    fname = './files/test_comb.h5'
+    fname = './files/test_comb_2_solvers.h5'
     fam = exchange_family.ResourceExchange()
     sp = request.StructuredRequest()
     data = sis.cyclopts_data(fname, fam, sp)
     tree = sis.id_tree(data)
     ret = sis.flow_rms(fname, tree, 'StructuredRequest')
-#print(ret)
+    assert_array_equal(ret['cflows']['cbc'], ret['cflows']['greedy'])
+    assert_array_equal(ret['flows']['cbc'], ret['flows']['greedy'])
+
+def test_flow_rms_diff():
+    from cyclopts import exchange_family
+    from cyclopts.structured_species import request
+
+    fname = './files/test_comb_2_solvers.h5'
+    fam = exchange_family.ResourceExchange()
+    sp = request.StructuredRequest()
+    data = sis.cyclopts_data(fname, fam, sp)
+    tree = sis.id_tree(data)
+    
+    ret = sis.flow_rms_diff(fname, tree, 'StructuredRequest', base_solver='cbc')
+    # this may fail if the db is regenerated with a new 'cyclopts exec', but I
+    # think everything is small enough that this will always be true
+    assert_array_equal(ret['cflows']['greedy'][2:], np.zeros((2,)))
+    assert_array_equal(ret['flows']['greedy'][2:], np.zeros((2,)))
+    assert_array_less(np.zeros((2,)), ret['cflows']['greedy'][:2])
+    assert_array_less(np.zeros((2,)), ret['flows']['greedy'][:2])
