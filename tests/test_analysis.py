@@ -151,7 +151,21 @@ def test_id_tree_from_file():
             assert_equal(len(ist), 2)
             solvers = set([solver for _, solver in sis.subtrees(ist)])
             assert_equal(solvers, set(['cbc', 'greedy']))
-        
+
+def test_nnodes():
+    data = [{'paramid': 'a', 'instid': 'b', 'solnid': 'd', 'solver': 'x'},
+            {'paramid': 'a', 'instid': 'b', 'solnid': 'e', 'solver': 'y'},
+            {'paramid': 'a', 'instid': 'c', 'solnid': 'f', 'solver': 'z'},
+            {'paramid': 'a', 'instid': 'c', 'solnid': 'g', 'solver': 'a'},
+            {'paramid': 'b', 'instid': 'a', 'solnid': 'h', 'solver': 'x'},
+            {'paramid': 'b', 'instid': 'a', 'solnid': 'i', 'solver': 'y'},
+            {'paramid': 'b', 'instid': 'a', 'solnid': 'j', 'solver': 'z'},
+            {'paramid': 'b', 'instid': 'd', 'solnid': 'k', 'solver': 'a'},]
+    tree = sis.id_tree(data)
+    assert_equal(sis.nnodes(tree, lev=0), 2)
+    assert_equal(sis.nnodes(tree, lev=1), 4)
+    assert_equal(sis.nnodes(tree, lev=2), 8)
+            
 def test_ninsts():
     data = [{'paramid': 'a', 'instid': 'b', 'solnid': 'c', 'solver': 'x'},
             {'paramid': 'a', 'instid': 'b', 'solnid': 'd', 'solver': 'y'}]
