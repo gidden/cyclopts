@@ -752,10 +752,13 @@ def id_tree(data, nsoln_prune=None):
         return tree
 
     # remove instance nodes if number of solutions doesn't match
-    torm = [(pid, iid) for pid, pst in subtrees(tree)\
+    torm = [(pid, iid) for pid, pst in subtrees(tree) \
                 for iid, ist in subtrees(pst) if len(ist) != nsoln_prune]
+    #print(len(torm))
     for pid, iid in torm:
         tree[pid].pop(iid)
+        if len(tree[pid]) == 0:
+            tree.pop(pid)
 
     return tree
 
@@ -1139,3 +1142,30 @@ def flow_rms_diff(fname, id_tree, species_name, base_solver='cbc'):
                     ret['cflows'][solver][i] = rms(cprefs * diff)
                 i += 1
     return ret
+
+def rms_analysis(fname, data, kind='rms_diff', species_name='StructuredRequest',
+                 nsoln_prune=None, base_solver='cbc'):
+    """Return the results of an RMS analysis.
+
+    Parameters
+    ----------
+    fname : str
+        the hdf5 file name
+    data : array-like
+        e.g., the output of cyclopts_data
+    kind : str, optional
+        the kind of analysis ('rms_diff' or 'rms') 
+    species_name : str, optional
+        either 'StructuredRequest' or 'StructuredSupply'
+    nsoln_prune : int, optional
+        the expected number of solution nodes hanging on inst nodes, see 
+        id_tree()
+    base_solver : str, optional
+        the solver on which comparisons are made, required if kind is 'rms_diff'
+    """
+    tree = id_tree(data, nsoln_prune=nsoln_prune)
+    if kind == 'rms_diff':
+        rms_vals = flow_rms_diff(fname, tree, species_name, base_solver)
+    else:
+        rms_vals = flow_rms(fname, tree, species_name)
+    return rms_vals
