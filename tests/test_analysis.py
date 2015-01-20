@@ -70,7 +70,7 @@ def test_reduce():
     obs = sis.reduce_not_in(a, {'x': range(1, 9)})
     yield assert_equal, obs, np.concatenate((a[:1], a[-1:]))
     
-def test_id_tree_prune():
+def test_id_tree():
     data = [{'paramid': 'a', 'instid': 'b', 'solnid': 'c', 'solver': 'x'},
             {'paramid': 'a', 'instid': 'b', 'solnid': 'd', 'solver': 'y'}]
     tree = sis.id_tree(data)
@@ -86,42 +86,71 @@ def test_id_tree_prune():
             solvers = set([x for _, x in sis.subtrees(ist)])
             assert_equal(solvers, set(['x', 'y']))
 
-    tree = sis.id_tree(data, nsoln_prune=2)
-    assert_equal(len(tree), 1)
-    for pid, pst in sis.subtrees(tree):
-        assert_equal(pid, 'a')
-        assert_equal(len(pst), 1)
-        for iid, ist in sis.subtrees(pst):
-            assert_equal(iid, 'b')
-            assert_equal(len(ist), 2)
-            sids = set([x for x, _ in sis.subtrees(ist)])
-            assert_equal(sids, set(['c', 'd']))
-            solvers = set([x for _, x in sis.subtrees(ist)])
-            assert_equal(solvers, set(['x', 'y']))
+def test_id_tree_prune():
+    data = [{'paramid': 'a', 'instid': 'b', 'solnid': 'c', 'solver': 'x'},
+            {'paramid': 'a', 'instid': 'b', 'solnid': 'd', 'solver': 'y'},
+            {'paramid': 'a', 'instid': 'c', 'solnid': 'd', 'solver': 'y'},
+            {'paramid': 'b', 'instid': 'z', 'solnid': 'x', 'solver': 'y'},
+            {'paramid': 'b', 'instid': 'c', 'solnid': 'd', 'solver': 'y'},
+            {'paramid': 'b', 'instid': 'c', 'solnid': 'x', 'solver': 'y'},]
             
-    tree = sis.id_tree(data, nsoln_prune=1)
-    assert_equal(len(tree), 1)
-    for pid, pst in sis.subtrees(tree):
-        assert_equal(pid, 'a')
-        assert_equal(pst, {})
+    obs = sis.id_tree(data, nsoln_prune=0)
+    exp = sis.Tree()
+    assert_equal(obs, exp)
 
+    obs = sis.id_tree(data, nsoln_prune=1)
+    exp = sis.Tree()
+    exp['a']['c']['d'] = 'y'
+    exp['b']['z']['x'] = 'y'
+    assert_equal(obs, exp)
+
+    obs = sis.id_tree(data, nsoln_prune=2)
+    exp = sis.Tree()
+    exp['a']['b']['c'] = 'x'
+    exp['a']['b']['d'] = 'y'
+    exp['b']['c']['d'] = 'y'
+    exp['b']['c']['x'] = 'y'
+    assert_equal(obs, exp)
+
+def test_id_tree_prune2():
+    data = [{'paramid': 'a', 'instid': 'b', 'solnid': 'd', 'solver': 'x'},
+            {'paramid': 'a', 'instid': 'b', 'solnid': 'e', 'solver': 'y'},
+            {'paramid': 'a', 'instid': 'b', 'solnid': 'f', 'solver': 'z'},
+            {'paramid': 'b', 'instid': 'a', 'solnid': 'g', 'solver': 'x'},
+            {'paramid': 'b', 'instid': 'a', 'solnid': 'h', 'solver': 'y'},
+            {'paramid': 'b', 'instid': 'a', 'solnid': 'i', 'solver': 'z'},]
+
+    exp = sis.Tree()
+    assert_equal(exp, sis.id_tree(data, nsoln_prune=0))
+    assert_equal(exp, sis.id_tree(data, nsoln_prune=1))
+    assert_equal(exp, sis.id_tree(data, nsoln_prune=2))
+    assert_equal(exp, sis.id_tree(data, nsoln_prune=4))
+
+    exp['a']['b']['d'] = 'x'
+    exp['a']['b']['e'] = 'y'
+    exp['a']['b']['f'] = 'z'
+    exp['b']['a']['g'] = 'x'
+    exp['b']['a']['h'] = 'y'
+    exp['b']['a']['i'] = 'z'
+    assert_equal(exp, sis.id_tree(data, nsoln_prune=3))
+    
 def test_id_tree_from_file():
     from cyclopts import exchange_family
     from cyclopts.structured_species import request 
 
-    fname = './files/test_comb.h5'
+    fname = './files/test_comb_2_solvers.h5'
     fam = exchange_family.ResourceExchange()
     sp = request.StructuredRequest()
     data = sis.cyclopts_data(fname, fam, sp)
 
-    tree = sis.id_tree(data)
+    tree = sis.id_tree(data, nsoln_prune=2)
     assert_equal(len(tree), 4)
     for pid, pst in sis.subtrees(tree):
         assert_equal(len(pst), 1)
         for iid, ist in sis.subtrees(pst):
-            assert_equal(len(ist), 1)
-            for sid, solver in sis.subtrees(ist):
-                assert_equal(solver, 'cbc')
+            assert_equal(len(ist), 2)
+            solvers = set([solver for _, solver in sis.subtrees(ist)])
+            assert_equal(solvers, set(['cbc', 'greedy']))
         
 def test_ninsts():
     data = [{'paramid': 'a', 'instid': 'b', 'solnid': 'c', 'solver': 'x'},
