@@ -613,6 +613,11 @@ class RatioContext(object):
         ax.set_xlim(xmin, xmax)
         ax.set_ylim(ymin, 1.1 * ymax)
         ax.legend(loc=0)
+        
+        if save:
+            fname = os.path.join(self.savepath, savename)
+            fig.savefig(fname)
+
         return fig, ax
 
     def count_hist(self, solver, lim, save=True, savename='count_hist.png'):
@@ -630,7 +635,10 @@ class RatioContext(object):
         ax.legend((below[0], above[0]), ('Below', 'Above'))
         ax.set_ylabel('Number')
         ax.set_ylim(0, 1.4 * (nbelow[0] + nabove[0]))
-        self._do_save(fig, save, savename)
+
+        if save:
+            fname = os.path.join(self.savepath, savename)
+            fig.savefig(fname)
         return fig, ax
             
     def popn_hist(self, solver='cbc', lim=None, idxs=[0, 1], 
