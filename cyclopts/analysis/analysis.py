@@ -1070,8 +1070,41 @@ def compare_plot_data(data, xcol, ycol, base, compare, maxn=None):
         
     return [base] + compare, xs, ys
 
-def flow_rms(fname, id_tree, species_name, base_solver='cbc'):
-    """Take the root-mean-square of the difference of values in two tables.
+def flow_rms(fname, id_tree, species_name):
+    """Take the root-mean-square of flow values of all solutions in an ID Tree.
+
+    Parameters
+    ----------
+    fname : str
+        the hdf5 file name
+    id_tree : cyclopts.analysis.Tree
+        e.g., from cyclopts.analysis.id_tree()
+    species : str
+        either 'StructuredRequest' or 'StructuredSupply'
+    """
+    cpath = '/Species/{}/Arcs'.format(species_name)
+    fpath = '/Family/ResourceExchange/ExchangeInstSolutions'
+    solvers = set(leaf_vals(id_tree))    
+    n = ninsts(id_tree) 
+    ret = {'flows': {s: np.zeros(n) for s in solvers},
+           'cflows': {s: np.zeros(n) for s in solvers}}
+    convert = lambda x: 'id_' + tools.str_to_uuid(x).hex 
+    i = 0
+    
+    with t.open_file(fname, mode='r') as f:
+        for pid, pst in subtrees(id_tree):
+            for iid, ist in subtrees(pst):
+                cprefs = f.get_node(cpath + '/' + convert(iid)).col('pref_c')
+                for sid, solver in subtrees(ist):
+                    flows = f.get_node(fpath + '/' + convert(sid)).col('flow')
+                    ret['flows'][solver][i] = rms(flows)
+                    ret['cflows'][solver][i] = rms(cprefs * flows)
+                i += 1
+    return ret
+
+def flow_rms_diff(fname, id_tree, species_name, base_solver='cbc'):
+    """Take the root-mean-square of the difference of flow values for all
+    solutions in an ID Tree given a solver type.
 
     Parameters
     ----------
@@ -1086,13 +1119,12 @@ def flow_rms(fname, id_tree, species_name, base_solver='cbc'):
     """
     cpath = '/Species/{}/Arcs'.format(species_name)
     fpath = '/Family/ResourceExchange/ExchangeInstSolutions'
-    solvers = set(leaf_vals(id_tree)) - {base_solver}
-    
+    solvers = set(leaf_vals(id_tree)) - {base_solver}    
     n = ninsts(id_tree) 
     ret = {'flows': {s: np.zeros(n) for s in solvers},
            'cflows': {s: np.zeros(n) for s in solvers}}
-    i = 0
     convert = lambda x: 'id_' + tools.str_to_uuid(x).hex 
+    i = 0
     
     with t.open_file(fname, mode='r') as f:
         for pid, pst in subtrees(id_tree):
