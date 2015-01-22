@@ -965,12 +965,14 @@ def reduce_not_in(a, d):
         ret = ret[~mask]
     return ret
 
-def avg_std(data, col, maxn=None, ax=None, **kwargs):            
+def avg_std(data, col=None, maxn=None, add=['std of avg'], ax=None, **kwargs):            
     fig = None
     if ax is None:
         fig, ax = plt.subplots()
+    
+    data = data if col is None else data[col]
     n = min(maxn, len(data)) if maxn is not None else len(data)
-    a = np.copy(data[col][:n])
+    a = np.copy(data[:n])
     np.random.shuffle(a)
     x = np.arange(len(a))
     
@@ -978,8 +980,34 @@ def avg_std(data, col, maxn=None, ax=None, **kwargs):
     std = np.array([np.std(a[:i + 1]) for i in x])
     avg_std = np.array([np.std(avg[:i + 1]) for i in x])
     ax.plot(x, avg, label='avg', **kwargs)
-    ax.plot(x, avg_std, label='std of avg', **kwargs)
     ax.plot(x, std, label='std', **kwargs)
+    if 'std of avg' in add:
+        ax.plot(x, avg_std, label='std of avg', **kwargs)
+    
+    return fig, ax
+
+def plot_approach(data, vals=['avg'], col=None, maxn=None, ax=None, 
+                  **kwargs):
+    # vals=['avg', 'std', 'std of avg']
+    fig = None
+    if ax is None:
+        fig, ax = plt.subplots()
+    
+    data = data if col is None else data[col]
+    n = min(maxn, len(data)) if maxn is not None else len(data)
+    a = np.copy(data[:n])
+    np.random.shuffle(a)
+    x = np.arange(len(a))
+    
+    if 'avg' in vals:
+        avg = np.array([np.average(a[:i  + 1]) for i in x])
+        ax.plot(x, avg, label='avg', **kwargs)
+    if 'std' in vals:
+        std = np.array([np.std(a[:i + 1]) for i in x])
+        ax.plot(x, std, label='std', **kwargs)
+    if 'std of avg' in vals:
+        avg_std = np.array([np.std(avg[:i + 1]) for i in x])
+        ax.plot(x, avg_std, label='std of avg', **kwargs)
     
     return fig, ax
 
