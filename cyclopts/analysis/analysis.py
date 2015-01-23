@@ -1020,14 +1020,15 @@ def plot_approach(data, vals=['avg'], col=None, maxn=None, ax=None,
     
     return fig, ax
 
-def hist(data, col, maxn=None, ax=None, colorby=None, **kwargs):
+def hist(data, col=None, maxn=None, ax=None, colorby=None, **kwargs):
     fig = None
     if ax is None:
         fig, ax = plt.subplots()
         
     c_it = ipastels()
     if colorby is None:
-        _, _, _ = ax.hist(data[col], color=c_it.next(), **kwargs)
+        data = data if col is None else data[col]
+        _, _, _ = ax.hist(data[col], **kwargs)
     else:
         kinds = np.unique(data[colorby])
         for k in kinds:
