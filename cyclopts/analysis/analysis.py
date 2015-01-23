@@ -10,6 +10,7 @@ from collections import defaultdict
 from pylab import asarray
 import tables as t
 import os
+import operator 
 import numpy as np
 import inspect
 import itertools as itools
@@ -879,20 +880,28 @@ def split_group_by(x, y, col, lim, groupby, sortby=True):
                 
     return xret, yret
 
-def reduce(a, d, op):
+_operators = {
+    '==': operator.eq,
+    '!=': operator.ne, 
+    '>': operator.gt,
+    '>=': operator.ge,  
+    '<': operator.lt,
+    '<=': operator.le, 
+}
+
+def reduce(a, d):
     """Returns a reduced array where all values given a key equate as True given
     an condition.
     
     Parameters
     ----------
     a : array-like
-    d : dict-like, {column keys: column values}
-    op : operator to use, given the form f(a, b). See for example,
-         https://docs.python.org/2/library/operator.html.
+    d : dict-like, {column keys: (op, column values)}, where op is a normal 
+    conditional operator, e.g. '=='.
     """
     ret = a
     for k, v in d.items():
-        ret = ret[op(ret[k], v)]
+        ret = ret[_operators[v[0]](ret[k], v[1])]
     return ret
 
 def reduce_eq(a, d):
