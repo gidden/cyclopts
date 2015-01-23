@@ -76,6 +76,7 @@ def test_convert():
     h5node = h5file.get_node(path, 'ExchangeInstProperties') # a little hacky...
     assert_equal(h5node.nrows, nvalid * ninst)
 
+    h5file.close()
     if os.path.exists(db):
         os.remove(db)
 
