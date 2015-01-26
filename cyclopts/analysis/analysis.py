@@ -54,6 +54,11 @@ def ipastels():
     for color in icolors():
         yield pastel(color)
 
+def colors(n, pastels=False):
+    """return n colors from the pallete"""
+    it = ipastels() if pastels else icolors()
+    return [it.next() for i in range(n)]
+
 #taken from pyplot_examples.py
 def pastel(color, weight=1.75):
     """Color to pastel"""
@@ -187,7 +192,9 @@ _ax_labels = {
     'n_constrs': 'Number of Constraints',
     'n_u_grps': 'Number of Request Groups',
     'n_v_grps': 'Number of Supply Groups',
+    'n_rxtr': 'Number of Reactors',
     'pref_flow': 'Product of Preference and Flow',
+    'c_pref_flow': 'Product of Commodity Preference and Flow',
     'time': 'Time (s)',
     'obj': 'Objective Value',
     'objective': 'Objective Value',
@@ -196,6 +203,7 @@ _ax_labels = {
 _legends = {
     'f_fc': ['Once Through', 'MOX Recycle', 'THOX/MOX Recycle'],
     'f_loc': ['None', 'Region', 'Region + Location'],
+    'f_rxtr': ['Full Batches', 'Individual Assemblies'],
 }
 
 def add_limit_line(ax, x, y):
