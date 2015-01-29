@@ -1003,7 +1003,7 @@ def avg_std(data, col=None, maxn=None, add=['std of avg'], ax=None, **kwargs):
     
     return fig, ax
 
-def plot_approach(data, vals=['avg'], col=None, maxn=None, ax=None, 
+def plot_approach(data, vals=['avg'], col=None, maxn=None, ax=None, label=None,
                   **kwargs):
     # vals=['avg', 'std', 'std of avg']
     fig = None
@@ -1017,14 +1017,17 @@ def plot_approach(data, vals=['avg'], col=None, maxn=None, ax=None,
     x = np.arange(len(a))
     
     if 'avg' in vals:
+        label = label or 'avg'
         avg = np.array([np.average(a[:i  + 1]) for i in x])
-        ax.plot(x, avg, label='avg', **kwargs)
+        ax.plot(x, avg, label=label, **kwargs)
     if 'std' in vals:
+        label = label or 'std'
         std = np.array([np.std(a[:i + 1]) for i in x])
-        ax.plot(x, std, label='std', **kwargs)
+        ax.plot(x, std, label=label, **kwargs)
     if 'std of avg' in vals:
+        label = label or 'std of avg'
         avg_std = np.array([np.std(avg[:i + 1]) for i in x])
-        ax.plot(x, avg_std, label='std of avg', **kwargs)
+        ax.plot(x, avg_std, label=label, **kwargs)
     
     return fig, ax
 
