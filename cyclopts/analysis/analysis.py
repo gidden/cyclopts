@@ -206,6 +206,12 @@ _legends = {
     'f_rxtr': ['Full Batches', 'Individual Assemblies'],
 }
 
+_legends_abbrv = {
+    'f_fc': ['OT', 'MOX', 'ThOX'],
+    'f_loc': ['None', 'Coarse', 'Fine'],
+    'f_rxtr': ['Batches', 'Assemblies'],
+}
+
 def add_limit_line(ax, x, y):
     ax.plot(x, y, c=plt.get_cmap('Greys')(0.75), linestyle='--')
 
