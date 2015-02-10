@@ -988,7 +988,7 @@ def reduce_not_in(a, d):
         ret = ret[~mask]
     return ret
 
-def avg_std(data, col=None, maxn=None, add=['std of avg'], ax=None, **kwargs):            
+def avg_std(data, col=None, maxn=None, add=['std', 'std of avg'], ax=None, **kwargs):            
     fig = None
     if ax is None:
         fig, ax = plt.subplots()
@@ -1000,11 +1000,12 @@ def avg_std(data, col=None, maxn=None, add=['std of avg'], ax=None, **kwargs):
     x = np.arange(len(a))
     
     avg = np.array([np.average(a[:i  + 1]) for i in x])
-    std = np.array([np.std(a[:i + 1]) for i in x])
-    avg_std = np.array([np.std(avg[:i + 1]) for i in x])
     ax.plot(x, avg, label='avg', **kwargs)
-    ax.plot(x, std, label='std', **kwargs)
+    if 'std' in add:
+        std = np.array([np.std(a[:i + 1]) for i in x])
+        ax.plot(x, std, label='std', **kwargs)
     if 'std of avg' in add:
+        avg_std = np.array([np.std(avg[:i + 1]) for i in x])
         ax.plot(x, avg_std, label='std of avg', **kwargs)
     
     return fig, ax
@@ -1042,11 +1043,11 @@ def hist(data, col=None, maxn=None, ax=None, colorby=None, **kwargs):
     if ax is None:
         fig, ax = plt.subplots()
         
-    c_it = ipastels()
     if colorby is None:
         data = data if col is None else data[col]
-        _, _, _ = ax.hist(data[col], **kwargs)
+        _, _, _ = ax.hist(data, **kwargs)
     else:
+        c_it = ipastels()
         kinds = np.unique(data[colorby])
         for k in kinds:
             idxs = np.where(data[colorby] == k)
