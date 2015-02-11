@@ -1109,42 +1109,45 @@ def data_to_average_limit(data, avg_col, limit, maxn=None):
     return a[:idx]
 
 def compare_plot(data, xcol, ycol, base, compare, labels=None, maxn=None, 
-                 ax=None, **kwargs):
+                 ax=None, mit=None, withref=True, **kwargs):
     fig = None
     if ax is None:
         fig, ax = plt.subplots()
         
-    ds, xs, ys = compare_plot_data(data, xcol, ycol, base, compare, maxn=maxn)
+    xs, ys = compare_plot_data(data, xcol, ycol, base, compare, maxn=maxn)
         
     labels = labels or [', '.join('{0}: {1}'.format(k, v) for k, v in x.items()) \
-                            for x in d]
-    m = imarkers()
+                            for x in compare]
+    m = mit or imarkers()
+    if withref:
+        ax.plot(0, 0, label='Reference', linestyle='', marker=m.next(), **kwargs)
     for x, y, l in zip(xs, ys, labels):
         if 'marker' in kwargs:
             ax.plot(x, y, label=l, linestyle='', **kwargs)
         else:
             ax.plot(x, y, label=l, linestyle='', marker=m.next(), **kwargs)
-        
     return fig, ax
 
-def compare_plot_data(data, xcol, ycol, base, compare, maxn=None):
+def compare_plot_data(data, xcol, ycol, base, compare, agg=False, maxn=None):
     n = min(maxn, len(data)) if maxn is not None else len(data)
-    a = np.copy(data[:n])
-    np.random.shuffle(a)
-    x = np.arange(len(a))
-
-    basedata = reduce_eq(a, base)
-    xbase = np.average(basedata[xcol]) 
-    ybase = np.average(basedata[ycol])
-    xs = [0]
-    ys = [0]
-    
+    basedata = reduce_eq(data, base)
+    if agg:
+        basedata.sort(order='instid')
+        instids = basedata['instid']
+    xs, ys = [], []
     for c in compare:
-        d = reduce_eq(a, c)
-        xs.append((np.average(d[xcol]) - xbase) / xbase)
-        ys.append((np.average(d[ycol]) - ybase) / ybase)
-        
-    return [base] + compare, xs, ys
+        d = reduce_eq(data, c)
+        if agg:
+            _d = reduce_in(d, instids)
+            _d.sort(order='instid')
+            xs.append(np.average((_d[xcol] - basedata[xcol]) / basedata[xcol]))
+            ys.append(np.average((_d[ycol] - basedata[ycol]) / basedata[ycol]))
+        else:
+            xavgs = np.average(d[xcol]), np.average(basedata[xcol])
+            xs.append((xavgs[0] - xavgs[1]) / xavgs[1])
+            yavgs = np.average(d[ycol]), np.average(basedata[ycol])
+            ys.append((yavgs[0] - yavgs[1]) / yavgs[1])
+    return xs, ys
 
 def flow_rms(fname, id_tree, species_name):
     """Take the root-mean-square of flow values of all solutions in an ID Tree.
