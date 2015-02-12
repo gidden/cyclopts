@@ -1109,12 +1109,12 @@ def data_to_average_limit(data, avg_col, limit, maxn=None):
     return a[:idx]
 
 def compare_plot(data, xcol, ycol, base, compare, labels=None, maxn=None, 
-                 ax=None, mit=None, withref=True, **kwargs):
+                 ax=None, mit=None, agg=False, withref=True, **kwargs):
     fig = None
     if ax is None:
         fig, ax = plt.subplots()
         
-    xs, ys = compare_plot_data(data, xcol, ycol, base, compare, maxn=maxn)
+    xs, ys = compare_plot_data(data, xcol, ycol, base, compare, maxn=maxn, agg=agg)
         
     labels = labels or [', '.join('{0}: {1}'.format(k, v) for k, v in x.items()) \
                             for x in compare]
@@ -1138,7 +1138,7 @@ def compare_plot_data(data, xcol, ycol, base, compare, agg=False, maxn=None):
     for c in compare:
         d = reduce_eq(data, c)
         if agg:
-            _d = reduce_in(d, instids)
+            _d = reduce_in(d, {'instid': instids})
             _d.sort(order='instid')
             xs.append(np.average((_d[xcol] - basedata[xcol]) / basedata[xcol]))
             ys.append(np.average((_d[ycol] - basedata[ycol]) / basedata[ycol]))
