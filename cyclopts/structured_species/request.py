@@ -139,7 +139,7 @@ class PathMap(io_tools.PathMap):
         if col.startswith('n_') and not col.endswith('_rxtr') \
                 and not col.endswith('_reg'):
             tbl = inst.sum_tbl_name
-        elif col.endswith('pref_flow'):
+        elif col.endswith('pref_flow') or col.endswith('cost_flow'):
             tbl = strtools.pp_tbl_name
         else:
             tbl = inst.param_tbl_name

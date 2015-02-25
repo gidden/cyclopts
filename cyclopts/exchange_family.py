@@ -86,6 +86,7 @@ _dtypes = {
         ("solnid", ('str', 16)), # 16 bytes for uuid
         ("instid", ('str', 16)), # 16 bytes for uuid
         ("pref_flow", np.float64),
+        ("cost_flow", np.float64),
         ("cyclus_version", ('str', 20)),
         ]),
     "pp": np.dtype([
@@ -101,7 +102,7 @@ def column_to_table(col):
         raise RuntimeError('Ambiguous column name.')
     tbl = None
     # hack for now
-    if col == 'pref_flow':
+    if col == 'pref_flow' or col == 'cost_flow':
         return _tbl_names["solution_properties"]
         #return _tbl_names["pp"] # to be fixed later with analysis
     for tbl, dt in _dtypes.items():
@@ -357,7 +358,7 @@ class ResourceExchange(ProblemFamily):
         # solution properties, 1 entry per soln
         tbl = tables[_tbl_names['solution_properties']]
         tbl.append_data([(soln_uuid.bytes, inst_uuid.bytes, soln.pref_flow, 
-                          soln.cyclus_version)])
+                          soln.cost_flow, soln.cyclus_version)])
             
     def read_inst(self, uuid, io_manager):
         """Parameters

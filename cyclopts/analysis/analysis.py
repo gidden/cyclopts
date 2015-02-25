@@ -194,6 +194,7 @@ _ax_labels = {
     'n_v_grps': 'Number of Supply Groups',
     'n_rxtr': 'Number of Reactors',
     'pref_flow': 'Product of Preference and Flow',
+    'cost_flow': 'Product of Cost and Flow',
     'c_pref_flow': 'Product of Commodity Preference and Flow',
     'time': 'Time (s)',
     'obj': 'Objective Value',

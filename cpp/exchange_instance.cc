@@ -143,6 +143,7 @@ ExSolution Run(std::vector<ExGroup>& groups, std::vector<ExNode>& nodes,
     double flow = flows[ctx.arc_map[exa]];
     soln.flows[exa.id] = flow;
     soln.pref_flow += exa.pref * flow;
+    soln.cost_flow += 1 / exa.pref * flow;
   }
 
   return soln;

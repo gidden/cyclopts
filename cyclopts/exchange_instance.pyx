@@ -253,6 +253,15 @@ cdef class ExSolution(_cproblem.ProbSolution):
     
 
     # attributes
+    property cost_flow:
+        """no docstring for cost_flow, please file a bug report!"""
+        def __get__(self):
+            return float((<cpp_exchange_instance.ExSolution *> self._inst).cost_flow)
+    
+        def __set__(self, value):
+            (<cpp_exchange_instance.ExSolution *> self._inst).cost_flow = <double> value
+    
+    
     property cyclus_version:
         """no docstring for cyclus_version, please file a bug report!"""
         def __get__(self):

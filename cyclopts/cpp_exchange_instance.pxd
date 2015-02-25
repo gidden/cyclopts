@@ -26,6 +26,7 @@ cdef extern from "exchange_instance.h" namespace "cyclopts":
         ExSolution(double, double, std_string, std_string) except +
 
         # attributes
+        double cost_flow
         std_string cyclus_version
         cpp_map[int, double] flows
         double pref_flow

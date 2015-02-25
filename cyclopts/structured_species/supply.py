@@ -129,7 +129,7 @@ class PathMap(io_tools.PathMap):
         inst = StructuredSupply()
         if self.col.startswith('n_'):
             tbl = inst.sum_tbl_name
-        elif self.col.endswith('pref_flow'):
+        elif self.col.endswith('pref_flow') or self.col.endswith('cost_flow') :
             tbl = strtools.pp_tbl_name
         else:
             tbl = inst.param_tbl_name
