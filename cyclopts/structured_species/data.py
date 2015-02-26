@@ -156,7 +156,7 @@ sup_rhs = {
     Supports.th_mox: 800e3/12., # 800 t/yr / 12 months/yr
     Supports.f_mox: 800e3/12.,
     Supports.f_thox: 800e3/12.,
-    Supports.repo: 575e3/12., # 575 t/yr / 12 months/yr
+    Supports.repo: 2567e3/12., # 2567 t/yr / 12 months/yr
     }
 
 class Converter(object):
